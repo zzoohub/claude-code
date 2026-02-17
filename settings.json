@@ -1,0 +1,23 @@
+{
+  "enabledPlugins": {
+    "context7@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "pyright-lsp@claude-plugins-official": true,
+    "rust-analyzer-lsp@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "ralph-loop@claude-plugins-official": true,
+    "expo-app-design@expo-plugins": true,
+    "expo-deployment@expo-plugins": true,
+    "upgrading-expo@expo-plugins": true,
+    "playwright@claude-plugins-official": true,
+    "sentry@claude-plugins-official": true,
+    "d2@claude-d2-diagrams": true,
+    "pulumi-authoring@pulumi-agent-skills": true,
+    "Notion@claude-plugins-official": true,
+    "supabase@claude-plugins-official": true,
+    "huggingface-skills@claude-plugins-official": true,
+    "claude-md-management@claude-plugins-official": true,
+    "neon-plugin@neon": true
+  }
+}

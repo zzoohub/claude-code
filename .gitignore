@@ -1,0 +1,14 @@
+# 전부 무시
+*
+
+# 추적할 것만 허용
+!.gitignore
+!README.md
+!CLAUDE.md
+!agents/
+!agents/**
+!commands/
+!commands/**
+!skills/
+!skills/**
+!settings.json
