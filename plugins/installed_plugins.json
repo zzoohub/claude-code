@@ -1,0 +1,195 @@
+{
+  "version": 2,
+  "plugins": {
+    "context7@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/context7/2cd88e7947b7",
+        "version": "2cd88e7947b7",
+        "installedAt": "2026-01-21T08:55:42.497Z",
+        "lastUpdated": "2026-02-07T08:53:46.099Z",
+        "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
+      }
+    ],
+    "typescript-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/typescript-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-21T10:23:31.099Z",
+        "lastUpdated": "2026-01-21T10:23:31.099Z",
+        "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
+      }
+    ],
+    "pyright-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/pyright-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-21T10:23:51.484Z",
+        "lastUpdated": "2026-01-21T10:23:51.484Z",
+        "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
+      }
+    ],
+    "rust-analyzer-lsp@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/rust-analyzer-lsp/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-21T10:24:00.921Z",
+        "lastUpdated": "2026-01-21T10:24:00.921Z",
+        "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
+      }
+    ],
+    "security-guidance@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/security-guidance/2cd88e7947b7",
+        "version": "2cd88e7947b7",
+        "installedAt": "2026-01-21T10:25:11.303Z",
+        "lastUpdated": "2026-02-07T08:53:46.101Z",
+        "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
+      }
+    ],
+    "frontend-design@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/frontend-design/2cd88e7947b7",
+        "version": "2cd88e7947b7",
+        "installedAt": "2026-01-21T10:25:53.719Z",
+        "lastUpdated": "2026-02-07T08:53:46.103Z",
+        "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
+      }
+    ],
+    "ralph-loop@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/ralph-loop/2cd88e7947b7",
+        "version": "2cd88e7947b7",
+        "installedAt": "2026-01-21T10:48:30.060Z",
+        "lastUpdated": "2026-02-07T08:53:46.098Z",
+        "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
+      }
+    ],
+    "expo-app-design@expo-plugins": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/expo-plugins/expo-app-design/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-23T11:41:21.207Z",
+        "lastUpdated": "2026-01-23T11:41:21.207Z",
+        "gitCommitSha": "7b7ecb2a304ae94168aa45ad1de936ec59b9a949"
+      }
+    ],
+    "expo-deployment@expo-plugins": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/expo-plugins/expo-deployment/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-23T11:41:31.635Z",
+        "lastUpdated": "2026-01-23T11:41:31.635Z",
+        "gitCommitSha": "7b7ecb2a304ae94168aa45ad1de936ec59b9a949"
+      }
+    ],
+    "upgrading-expo@expo-plugins": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/expo-plugins/upgrading-expo/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-23T11:41:44.793Z",
+        "lastUpdated": "2026-01-23T11:41:44.793Z",
+        "gitCommitSha": "7b7ecb2a304ae94168aa45ad1de936ec59b9a949"
+      }
+    ],
+    "playwright@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/playwright/2cd88e7947b7",
+        "version": "2cd88e7947b7",
+        "installedAt": "2026-01-28T07:57:59.969Z",
+        "lastUpdated": "2026-02-07T08:53:46.093Z",
+        "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
+      }
+    ],
+    "sentry@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/sentry/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-01-30T06:16:52.864Z",
+        "lastUpdated": "2026-01-30T06:16:52.864Z",
+        "gitCommitSha": "d237d4c314e9066689c401a3d61dd3bbfbb7a209"
+      }
+    ],
+    "d2@claude-d2-diagrams": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-d2-diagrams/d2/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-08T06:38:56.145Z",
+        "lastUpdated": "2026-02-08T06:38:56.145Z",
+        "gitCommitSha": "d78d29994c019dc49db684324fabddd9485dca1c"
+      }
+    ],
+    "pulumi-authoring@pulumi-agent-skills": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/pulumi-agent-skills/pulumi-authoring/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-09T14:05:05.329Z",
+        "lastUpdated": "2026-02-09T14:05:05.329Z",
+        "gitCommitSha": "3230a42ddb5ba4e0aa5cb5584daa8a0de5ca6f63"
+      }
+    ],
+    "Notion@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/Notion/0.1.0",
+        "version": "0.1.0",
+        "installedAt": "2026-02-10T13:38:54.384Z",
+        "lastUpdated": "2026-02-10T13:38:54.384Z",
+        "gitCommitSha": "9847f2aa1a15f25df35ed1fb7b4557dbb60cd651"
+      }
+    ],
+    "supabase@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/supabase/2cd88e7947b7",
+        "version": "2cd88e7947b7",
+        "installedAt": "2026-02-11T12:29:24.777Z",
+        "lastUpdated": "2026-02-11T12:29:24.777Z",
+        "gitCommitSha": "2cd88e7947b7382e045666abee790c7f55f669f3"
+      }
+    ],
+    "huggingface-skills@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/huggingface-skills/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-12T16:17:23.249Z",
+        "lastUpdated": "2026-02-12T16:17:23.249Z",
+        "gitCommitSha": "3f4f55d6264b7baddec94031eeda70780d7e9189"
+      }
+    ],
+    "claude-md-management@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/claude-md-management/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-15T16:50:45.569Z",
+        "lastUpdated": "2026-02-15T16:50:45.569Z",
+        "gitCommitSha": "2cd88e7947b7382e045666abee790c7f55f669f3"
+      }
+    ],
+    "neon-plugin@neon": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/neon/neon-plugin/1.1.0",
+        "version": "1.1.0",
+        "installedAt": "2026-02-17T15:33:46.178Z",
+        "lastUpdated": "2026-02-17T15:33:46.178Z",
+        "gitCommitSha": "eecefdc810e1c56163d7e0aed90f66c6f339ee0a"
+      }
+    ]
+  }
+}

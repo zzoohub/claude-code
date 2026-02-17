@@ -1,0 +1,56 @@
+{
+  "claude-plugins-official": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/claude-plugins-official"
+    },
+    "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/claude-plugins-official",
+    "lastUpdated": "2026-02-17T02:01:41.031Z",
+    "autoUpdate": true
+  },
+  "expo-plugins": {
+    "source": {
+      "source": "github",
+      "repo": "expo/skills"
+    },
+    "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/expo-plugins",
+    "lastUpdated": "2026-02-16T23:38:01.618Z",
+    "autoUpdate": true
+  },
+  "claude-d2-diagrams": {
+    "source": {
+      "source": "git",
+      "url": "https://github.com/heathdutton/claude-d2-diagrams.git"
+    },
+    "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/claude-d2-diagrams",
+    "lastUpdated": "2026-02-11T14:23:51.642Z",
+    "autoUpdate": true
+  },
+  "knowledge-work-plugins": {
+    "source": {
+      "source": "github",
+      "repo": "anthropics/knowledge-work-plugins"
+    },
+    "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/knowledge-work-plugins",
+    "lastUpdated": "2026-02-17T15:33:11.695Z",
+    "autoUpdate": true
+  },
+  "pulumi-agent-skills": {
+    "source": {
+      "source": "github",
+      "repo": "pulumi/agent-skills"
+    },
+    "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/pulumi-agent-skills",
+    "lastUpdated": "2026-02-17T15:34:03.496Z",
+    "autoUpdate": true
+  },
+  "neon": {
+    "source": {
+      "source": "github",
+      "repo": "neondatabase-labs/ai-rules"
+    },
+    "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/neon",
+    "lastUpdated": "2026-02-17T15:57:57.011Z",
+    "autoUpdate": true
+  }
+}
