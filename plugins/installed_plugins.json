@@ -4,10 +4,10 @@
     "context7@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/context7/2cd88e7947b7",
-        "version": "2cd88e7947b7",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/context7/261ce4fba4f2",
+        "version": "261ce4fba4f2",
         "installedAt": "2026-01-21T08:55:42.497Z",
-        "lastUpdated": "2026-02-07T08:53:46.099Z",
+        "lastUpdated": "2026-02-18T06:40:23.856Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -44,30 +44,30 @@
     "security-guidance@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/security-guidance/2cd88e7947b7",
-        "version": "2cd88e7947b7",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/security-guidance/261ce4fba4f2",
+        "version": "261ce4fba4f2",
         "installedAt": "2026-01-21T10:25:11.303Z",
-        "lastUpdated": "2026-02-07T08:53:46.101Z",
+        "lastUpdated": "2026-02-18T06:40:23.854Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
     "frontend-design@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/frontend-design/2cd88e7947b7",
-        "version": "2cd88e7947b7",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/frontend-design/261ce4fba4f2",
+        "version": "261ce4fba4f2",
         "installedAt": "2026-01-21T10:25:53.719Z",
-        "lastUpdated": "2026-02-07T08:53:46.103Z",
+        "lastUpdated": "2026-02-18T06:40:23.859Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
     "ralph-loop@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/ralph-loop/2cd88e7947b7",
-        "version": "2cd88e7947b7",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/ralph-loop/261ce4fba4f2",
+        "version": "261ce4fba4f2",
         "installedAt": "2026-01-21T10:48:30.060Z",
-        "lastUpdated": "2026-02-07T08:53:46.098Z",
+        "lastUpdated": "2026-02-18T06:40:23.866Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -104,10 +104,10 @@
     "playwright@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/playwright/2cd88e7947b7",
-        "version": "2cd88e7947b7",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/playwright/261ce4fba4f2",
+        "version": "261ce4fba4f2",
         "installedAt": "2026-01-28T07:57:59.969Z",
-        "lastUpdated": "2026-02-07T08:53:46.093Z",
+        "lastUpdated": "2026-02-18T06:40:23.869Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -154,10 +154,10 @@
     "supabase@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/supabase/2cd88e7947b7",
-        "version": "2cd88e7947b7",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/supabase/261ce4fba4f2",
+        "version": "261ce4fba4f2",
         "installedAt": "2026-02-11T12:29:24.777Z",
-        "lastUpdated": "2026-02-11T12:29:24.777Z",
+        "lastUpdated": "2026-02-18T06:40:23.867Z",
         "gitCommitSha": "2cd88e7947b7382e045666abee790c7f55f669f3"
       }
     ],
@@ -189,6 +189,16 @@
         "installedAt": "2026-02-17T15:33:46.178Z",
         "lastUpdated": "2026-02-17T15:33:46.178Z",
         "gitCommitSha": "eecefdc810e1c56163d7e0aed90f66c6f339ee0a"
+      }
+    ],
+    "posthog@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/posthog/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-17T19:52:48.435Z",
+        "lastUpdated": "2026-02-17T19:52:48.435Z",
+        "gitCommitSha": "e565d8a53ee57a4a76ca68323b20c3daea205a19"
       }
     ]
   }

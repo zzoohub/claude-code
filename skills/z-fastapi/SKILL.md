@@ -179,7 +179,7 @@ async def validation_handler(request, exc):
 | Item | Value |
 |------|-------|
 | Password hashing | bcrypt, 12 rounds |
-| JWT access token | 1 hour |
+| JWT access token | 15 min |
 | JWT refresh token (web) | 90 days |
 | JWT refresh token (mobile) | 1 year |
 | JWT algorithm | HS256 |

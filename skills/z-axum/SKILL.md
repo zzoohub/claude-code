@@ -126,7 +126,7 @@ PgPoolOptions::new()
 | Item | Value |
 |------|-------|
 | Password | argon2id (64MB) |
-| JWT access | 15-30 min |
+| JWT access | 15 min |
 | JWT refresh | 90 days (web), 1 year (mobile) |
 | CORS | Explicit origins |
 

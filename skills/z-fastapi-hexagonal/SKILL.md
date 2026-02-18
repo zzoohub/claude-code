@@ -199,7 +199,7 @@ For apps with background workers, use `Application` class with `asyncio.TaskGrou
 | Item | Value |
 |------|-------|
 | Password hashing | bcrypt, 12 rounds |
-| JWT access token | 15-30 min |
+| JWT access token | 15 min |
 | JWT refresh (web) | 90 days |
 | JWT refresh (mobile) | 1 year |
 | CORS | Explicit origins only (no wildcard) |
