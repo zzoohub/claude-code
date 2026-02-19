@@ -22,14 +22,14 @@ src/
 ├── app/
 │   ├── main.py              # FastAPI app, lifespan
 │   └── config.py            # pydantic-settings
-├── features/
-│   ├── [feature]/
+├── domains/
+│   ├── [domain]/
 │   │   ├── router.py
 │   │   ├── schemas.py       # Pydantic models
 │   │   ├── models.py        # SQLAlchemy models
 │   │   ├── service.py       # service layer
 │   │   └── dependencies.py  # dependency injection
-│   └── [feature]/
+│   └── [domain]/
 │       └── ...
 ├── shared/
 │   ├── database.py
