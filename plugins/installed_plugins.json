@@ -4,10 +4,10 @@
     "context7@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/context7/261ce4fba4f2",
-        "version": "261ce4fba4f2",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/context7/8deab8460a9d",
+        "version": "8deab8460a9d",
         "installedAt": "2026-01-21T08:55:42.497Z",
-        "lastUpdated": "2026-02-18T06:40:23.856Z",
+        "lastUpdated": "2026-02-19T07:04:44.837Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -44,30 +44,30 @@
     "security-guidance@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/security-guidance/261ce4fba4f2",
-        "version": "261ce4fba4f2",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/security-guidance/8deab8460a9d",
+        "version": "8deab8460a9d",
         "installedAt": "2026-01-21T10:25:11.303Z",
-        "lastUpdated": "2026-02-18T06:40:23.854Z",
+        "lastUpdated": "2026-02-19T07:04:44.837Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
     "frontend-design@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/frontend-design/261ce4fba4f2",
-        "version": "261ce4fba4f2",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/frontend-design/8deab8460a9d",
+        "version": "8deab8460a9d",
         "installedAt": "2026-01-21T10:25:53.719Z",
-        "lastUpdated": "2026-02-18T06:40:23.859Z",
+        "lastUpdated": "2026-02-19T07:04:44.839Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
     "ralph-loop@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/ralph-loop/261ce4fba4f2",
-        "version": "261ce4fba4f2",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/ralph-loop/8deab8460a9d",
+        "version": "8deab8460a9d",
         "installedAt": "2026-01-21T10:48:30.060Z",
-        "lastUpdated": "2026-02-18T06:40:23.866Z",
+        "lastUpdated": "2026-02-19T07:04:44.843Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -104,10 +104,10 @@
     "playwright@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/playwright/261ce4fba4f2",
-        "version": "261ce4fba4f2",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/playwright/8deab8460a9d",
+        "version": "8deab8460a9d",
         "installedAt": "2026-01-28T07:57:59.969Z",
-        "lastUpdated": "2026-02-18T06:40:23.869Z",
+        "lastUpdated": "2026-02-19T07:04:44.835Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -154,10 +154,10 @@
     "supabase@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/supabase/261ce4fba4f2",
-        "version": "261ce4fba4f2",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/supabase/8deab8460a9d",
+        "version": "8deab8460a9d",
         "installedAt": "2026-02-11T12:29:24.777Z",
-        "lastUpdated": "2026-02-18T06:40:23.867Z",
+        "lastUpdated": "2026-02-19T07:04:44.836Z",
         "gitCommitSha": "2cd88e7947b7382e045666abee790c7f55f669f3"
       }
     ],
