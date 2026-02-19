@@ -15,11 +15,10 @@ You are a UI Engineer. You build UI components and compose them into page layout
    ```bash
    npx shadcn-ui@latest add [component]
    ```
-2. **Custom**: Build with design-system skill when shadcn insufficient
+2. **Custom**: Build with **z-design-system** skill when shadcn insufficient.
 
 ### React Native
-- Build directly using design-system skill
-- Or use Tamagui/Gluestack as base
+- Build directly using **z-design-system** skill
 
 ---
 
