@@ -23,13 +23,13 @@ src/
 │   ├── main.py              # FastAPI app, lifespan
 │   └── config.py            # pydantic-settings
 ├── features/
-│   ├── auth/
+│   ├── [feature]/
 │   │   ├── router.py
 │   │   ├── schemas.py       # Pydantic models
 │   │   ├── models.py        # SQLAlchemy models
-│   │   ├── service.py       # JWT, password
-│   │   └── dependencies.py  # get_current_user
-│   └── items/
+│   │   ├── service.py       # service layer
+│   │   └── dependencies.py  # dependency injection
+│   └── [feature]/
 │       └── ...
 ├── shared/
 │   ├── database.py
