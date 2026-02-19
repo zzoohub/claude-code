@@ -175,8 +175,18 @@ NOT by technical component.
 
 ### 7. User Journeys (Functional)
 
+**MANDATORY: Before writing this section, you MUST invoke the `/z-ux-design` skill using the Skill tool.** This is not optional. The z-ux-design skill provides UX design principles, cognitive frameworks, and interaction patterns that are essential for designing high-quality user journeys. Do NOT attempt to write user journeys without first loading z-ux-design — the quality difference is significant.
+
+**Workflow:**
+1. Call the Skill tool with `skill: "z-ux-design"` to load UX design context
+2. Apply its cognitive principles, ergonomics, and design process frameworks to inform the user journey design
+3. Then write the user journeys below using both PRD rigor and UX design expertise
+
+**User Journey requirements:**
 - Describe key user journeys as step-by-step functional flows (e.g., "User clicks 'Sign Up' → enters email → receives verification → lands on dashboard")
 - Focus on WHAT happens at each step, not HOW it looks
+- Apply UX principles from z-ux-design: cognitive load management, progressive disclosure, error prevention, and feedback loops
+- Identify friction points, decision points, and moments of delight in each journey
 - Do NOT include wireframes, mockups, UI layouts, or any visual/UX specifications — these belong in separate design documents
 - The goal is to capture functional logic, decision points, and edge cases, not screen designs
 
