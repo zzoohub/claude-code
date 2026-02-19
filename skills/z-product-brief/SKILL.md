@@ -23,6 +23,17 @@ A product brief is NOT a PRD (Product Requirements Document). This distinction m
 
 The brief is the first stage that evolves into a PRD as the team gains confidence. Do not conflate them. If the user needs a PRD, clarify the distinction and offer to help with either or both.
 
+### What a Product Brief Must NEVER Include
+
+The following belong in downstream documents (PRD, design spec, technical spec), NOT in the brief:
+
+- **UI/UX design**: Wireframes, mockups, screen layouts, interaction patterns, visual specifications
+- **Technical implementation**: Architecture, database schema, URL/route mapping, API endpoints, tech stack choices
+- **Page or screen definitions**: Specific pages, navigation structures, URL paths
+- **Detailed feature specs**: Acceptance criteria, user stories with implementation detail
+
+The brief stays at the **problem and strategy level**. If you find yourself describing how something looks or how it is built, you have left the brief's scope.
+
 ## Why This Matters
 
 Roughly 30,000 consumer products launch each year, yet only about 40% reach the market, and around 95% fail to generate meaningful revenue. The leading causes are fuzzy goals, scope creep, and teams working at cross-purposes. A well-crafted brief is the single most effective countermeasure.

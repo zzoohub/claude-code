@@ -161,8 +161,7 @@ NOT by technical component.
 - Focus on FUNCTIONALITY: "User can reset their password via email"
 - Include telemetry: "Product team can monitor onboarding funnel completion rates"
 - Consider full lifecycle: creation, usage, maintenance, edge cases, deletion
-- Link to UX sketches or wireframes when available
-- Don't include design details: "Blue button with 16px font"
+- Don't include UI/UX details, wireframes, or design specifications — these belong in separate design documents
 - Don't include implementation details: "Store in PostgreSQL with B-tree index"
 - Don't include performance metrics unless users specifically need them for adoption
 
@@ -174,12 +173,12 @@ NOT by technical component.
 5. Edge cases and error states (what can go wrong?)
 6. Off-boarding / data export (how does a user leave?)
 
-### 7. User Flow & Design Direction
+### 7. User Journeys (Functional)
 
-- Include rough user flows or wireframes if available
-- Describe key screens or interaction patterns at a conceptual level
-- Reference existing design patterns in the product for consistency
-- Note: Detailed UX is the designer's responsibility, but the PM should demonstrate enough thinking to catch edge cases and entry points
+- Describe key user journeys as step-by-step functional flows (e.g., "User clicks 'Sign Up' → enters email → receives verification → lands on dashboard")
+- Focus on WHAT happens at each step, not HOW it looks
+- Do NOT include wireframes, mockups, UI layouts, or any visual/UX specifications — these belong in separate design documents
+- The goal is to capture functional logic, decision points, and edge cases, not screen designs
 
 ### 8. Scope & Non-Goals
 
@@ -211,9 +210,7 @@ Link to supporting materials rather than inlining them:
 - User research findings
 - Competitive analysis
 - Technical feasibility notes
-- Design explorations
 - Go-to-market plan
-- Detailed UX specifications
 
 ---
 
@@ -276,7 +273,7 @@ that would have the highest impact on PRD quality.
 
 3. **The Novel** — 30+ pages that nobody reads. If your PRD is longer than 10 pages, split it into a Product PRD + linked Feature PRDs.
 
-4. **The Delegation Document** — PM hands designers a blank wireframe section and engineers a vague requirement. The PM must demonstrate enough thinking to catch edge cases.
+4. **The Design Document in Disguise** — PRD contains wireframes, UI mockups, layout specs, or UX flows. A PRD defines WHAT to build and WHY, not how it looks. Visual design belongs in separate design documents.
 
 5. **The Metrics-Free Zone** — No numbers anywhere. No way to know if the product succeeded or failed.
 
