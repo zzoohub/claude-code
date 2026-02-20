@@ -1,52 +1,111 @@
 # Platform: React Native
 
-## Token Output (TypeScript)
+## Token Output — TypeScript
 
 ```typescript
 export const tokens = {
   color: {
-    bg: { primary: '#ffffff', secondary: '#f9fafb' },
-    text: { primary: '#0f172a', secondary: '#475569' },
-    interactive: { primary: '#2563eb' },
+    bg: {
+      primary: '#ffffff',
+      secondary: '#f9fafb',
+      tertiary: '#f3f4f6',
+      inverse: '#111827',
+    },
+    text: {
+      primary: '#111827',
+      secondary: '#4b5563',
+      tertiary: '#6b7280',
+      inverse: '#f9fafb',
+      link: '#2563eb',
+    },
+    interactive: {
+      primary: '#2563eb',
+      primaryHover: '#1d4ed8',
+      primaryActive: '#1e40af',
+    },
+    border: {
+      default: '#e5e7eb',
+      strong: '#d1d5db',
+      focus: '#3b82f6',
+    },
+    status: {
+      error: '#dc2626',
+      errorBg: '#fef2f2',
+      warning: '#d97706',
+      warningBg: '#fffbeb',
+      success: '#16a34a',
+      successBg: '#f0fdf4',
+    },
   },
   spacing: {
     component: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 },
     layout: { xs: 16, sm: 24, md: 32, lg: 48, xl: 64 },
+  },
+  radius: { none: 0, sm: 4, md: 8, lg: 12, xl: 16, full: 9999 },
+  typography: {
+    display:    { fontSize: 30, lineHeight: 36, fontWeight: '700' as const, letterSpacing: -0.75 },
+    headingLg:  { fontSize: 24, lineHeight: 32, fontWeight: '600' as const, letterSpacing: -0.48 },
+    headingMd:  { fontSize: 20, lineHeight: 28, fontWeight: '600' as const, letterSpacing: -0.3 },
+    headingSm:  { fontSize: 16, lineHeight: 24, fontWeight: '600' as const, letterSpacing: -0.16 },
+    bodyLg:     { fontSize: 18, lineHeight: 28, fontWeight: '400' as const, letterSpacing: 0 },
+    bodyMd:     { fontSize: 16, lineHeight: 24, fontWeight: '400' as const, letterSpacing: 0 },
+    bodySm:     { fontSize: 14, lineHeight: 20, fontWeight: '400' as const, letterSpacing: 0 },
+    caption:    { fontSize: 12, lineHeight: 16, fontWeight: '500' as const, letterSpacing: 0.24 },
+  },
+  motion: {
+    duration: { instant: 100, fast: 200, normal: 300, slow: 500 },
+    easing: {
+      default: { x1: 0.4, y1: 0, x2: 0.2, y2: 1 },
+      enter:   { x1: 0, y1: 0, x2: 0.2, y2: 1 },
+      exit:    { x1: 0.4, y1: 0, x2: 1, y2: 1 },
+    },
   },
 } as const;
 ```
 
 ## Dark Mode
 
-- Use `useColorScheme()` hook to detect system preference
-- Theme provider swaps semantic token set — components stay unchanged
-
 ```typescript
 import { useColorScheme } from 'react-native';
 
-const scheme = useColorScheme(); // 'light' | 'dark'
-const theme = scheme === 'dark' ? darkTokens : lightTokens;
+const darkOverrides = {
+  color: {
+    bg: { primary: '#111827', secondary: '#1f2937', tertiary: '#374151', inverse: '#f9fafb' },
+    text: { primary: '#f9fafb', secondary: '#d1d5db', tertiary: '#9ca3af', inverse: '#111827', link: '#60a5fa' },
+    interactive: { primary: '#3b82f6', primaryHover: '#60a5fa', primaryActive: '#2563eb' },
+    border: { default: '#374151', strong: '#4b5563', focus: '#60a5fa' },
+  },
+} as const;
+
+// Theme provider merges tokens + dark overrides
+function useThemeTokens() {
+  const scheme = useColorScheme();
+  if (scheme === 'dark') {
+    return { ...tokens, color: { ...tokens.color, ...darkOverrides.color } };
+  }
+  return tokens;
+}
 ```
 
 ## Styled Component Example
 
-Headless hook + tokens applied to a React Native component:
+Headless hook + tokens = complete component.
 
 ```tsx
 import { useButton } from '../headless/useButton';
 import { tokens } from '@/shared/ui/tokens';
 
 const variants = {
-  solid: { bg: tokens.color.interactive.primary, text: tokens.color.text.inverse },
+  solid:   { bg: tokens.color.interactive.primary, text: tokens.color.text.inverse },
   outline: { bg: 'transparent', text: tokens.color.interactive.primary, border: tokens.color.interactive.primary },
-  ghost: { bg: 'transparent', text: tokens.color.interactive.primary },
-};
+  ghost:   { bg: 'transparent', text: tokens.color.interactive.primary },
+} as const;
 
 const sizes = {
-  sm: { px: tokens.spacing.component.md, py: tokens.spacing.component.xs, fontSize: 14 },
-  md: { px: tokens.spacing.component.lg, py: tokens.spacing.component.sm, fontSize: 16 },
-  lg: { px: tokens.spacing.component.xl, py: tokens.spacing.component.md, fontSize: 18 },
-};
+  sm: { px: tokens.spacing.component.md, py: tokens.spacing.component.xs, ...tokens.typography.bodySm },
+  md: { px: tokens.spacing.component.lg, py: tokens.spacing.component.sm, ...tokens.typography.bodyMd },
+  lg: { px: tokens.spacing.component.xl, py: tokens.spacing.component.md, ...tokens.typography.bodyLg },
+} as const;
 
 interface ButtonProps {
   variant?: keyof typeof variants;
@@ -63,58 +122,67 @@ export function Button({ variant = 'solid', size = 'md', children, ...props }: B
   const s = sizes[size];
 
   return (
-    <Pressable {...buttonProps} style={{
-      backgroundColor: v.bg,
-      paddingHorizontal: s.px,
-      paddingVertical: s.py,
-      borderRadius: tokens.radius.md,
-      opacity: state.isDisabled ? 0.5 : 1,
-    }}>
-      {state.isLoading ? <ActivityIndicator color={v.text} /> : (
-        <Text style={{ color: v.text, fontSize: s.fontSize, fontWeight: '600' }}>{children}</Text>
+    <Pressable
+      {...buttonProps}
+      style={{
+        backgroundColor: v.bg,
+        paddingHorizontal: s.px,
+        paddingVertical: s.py,
+        borderRadius: tokens.radius.md,
+        borderWidth: 'border' in v ? 1 : 0,
+        borderColor: 'border' in v ? v.border : undefined,
+        opacity: state.isDisabled ? 0.5 : 1,
+        minHeight: 44, // touch target
+        minWidth: 44,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {state.isLoading ? (
+        <ActivityIndicator color={v.text} />
+      ) : (
+        <Text style={{ color: v.text, fontSize: s.fontSize, fontWeight: s.fontWeight }}>
+          {children}
+        </Text>
       )}
     </Pressable>
   );
 }
 ```
 
-**Rule: Variant/size maps use tokens only. No hardcoded colors or spacing.**
-
-## Token Usage
-
-```typescript
-import { tokens } from '@/tokens';
-
-const styles = StyleSheet.create({
-  buttonPrimary: {
-    backgroundColor: tokens.color.interactive.primary,
-    paddingHorizontal: tokens.spacing.component.lg,
-    paddingVertical: tokens.spacing.component.md,
-    borderRadius: tokens.radius.md,
-  },
-});
-```
-
 ## Responsive
-
-Use `useWindowDimensions` for layout adaptation:
 
 ```typescript
 import { useWindowDimensions } from 'react-native';
 
-const { width } = useWindowDimensions();
-const isTablet = width >= 768;
-const isDesktop = width >= 1024;
+function useBreakpoint() {
+  const { width } = useWindowDimensions();
+  return {
+    isMobile: width < 768,
+    isTablet: width >= 768 && width < 1024,
+    isDesktop: width >= 1024,
+  };
+}
 ```
-
-## Icons
-
-- Package: `lucide-react-native`
-- Import: `import { ChevronRight } from 'lucide-react-native'`
 
 ## Accessibility
 
-- Use `accessibilityRole`, `accessibilityLabel` instead of ARIA attributes
-- Decorative icons: `accessibilityElementsHidden={true}`
-- Touch targets: 44×44pt minimum enforced via `minHeight` / `minWidth`
-- Reduced motion: `useReducedMotion()` from `react-native-reanimated`
+| Web | React Native | Purpose |
+|-----|-------------|---------|
+| `role="button"` | `accessibilityRole="button"` | Semantic role |
+| `aria-label="Close"` | `accessibilityLabel="Close"` | Screen reader text |
+| `aria-disabled={true}` | `accessibilityState={{ disabled: true }}` | State announcement |
+| `aria-hidden={true}` | `accessibilityElementsHidden={true}` | Hide decorative |
+| `tabIndex={-1}` | `focusable={false}` | Remove from tab order |
+
+Touch targets: Enforce `minHeight: 44, minWidth: 44` on all interactive elements.
+
+## Reduced Motion
+
+React Native has no built-in `prefers-reduced-motion` equivalent. The animation library used in the project (configured in the platform skill) should provide a reduced motion hook. When reduced motion is active, skip animation entirely — set duration to 0.
+
+## Icons
+
+- Package: `lucide-react-native` (or project's icon set)
+- Decorative: `accessibilityElementsHidden={true}`
+- Meaningful: `accessibilityLabel="description"` on the icon

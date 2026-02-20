@@ -1,127 +1,144 @@
 ---
 name: z-design-system
 description: |
-  Design token systems and component architecture for web and React Native.
-  Use when: implementing design-system, building UI components, defining tokens, creating themed interfaces.
-  Do not use for: UX decisions (use z-ux-design), business logic, data fetching.
-  Workflow: z-ux-design (what/why) → this skill (tokens, components) → z-nextjs | z-react-native (integration).
+  Design token architecture, component patterns, and cross-platform UI for web and React Native.
+  Use when: building UI components, defining design tokens, creating themed interfaces, setting up typography or motion systems, choosing component API patterns (flat vs compound).
+  Do not use for: UX research or user journey decisions (use z-ux-design), business logic, data fetching, API design.
+  Workflow: z-ux-design (what/why) → this skill (tokens, components, patterns) → z-nextjs | z-react-native (platform integration).
 references:
-  - references/token-examples.md    # W3C DTCG format examples, theme files
-  - references/examples.md          # Headless hooks, Compound components, Variant props
-  - references/platform-web.md      # Web/Next.js: CSS custom properties, dark mode, usage
-  - references/platform-rn.md       # React Native: TS tokens, color scheme, styled example
+  - references/tokens.md
+  - references/typography.md
+  - references/motion.md
+  - references/components.md
+  - references/platform-web.md
+  - references/platform-rn.md
+  - references/pipeline.md
 ---
 
 # Design System
 
+## Philosophy
+
+A design system exists to make the next UI decision faster than the last one. Every token, pattern, and component should reduce future decision cost. When you find yourself hesitating on a color, spacing, or animation value — the system has a gap. Fill it.
+
+Consistency comes from making the right choice the easiest choice, not from enforcing rules. If a pattern is being bypassed, the pattern is wrong — fix it instead of fighting it.
+
 ## Token Architecture
 
-### Multi-Tier Hierarchy
+Tokens are the single source of truth. Components never hardcode visual values.
 
 ```
-Tier 1: Primitive     →  Raw values, no meaning
-Tier 2: Semantic      →  Intent/purpose ← USE THIS
-Tier 3: Component     →  (Optional) Component-specific overrides
+Primitive   →  Raw values (gray.500, spacing.4). Never use in components.
+Semantic    →  Intent (color.bg.primary, spacing.component.md). USE THIS.
+Component   →  Override only when a component must deviate from semantic.
 ```
 
-```
-color.blue.500              (primitive) - NEVER use directly
-    ↓
-color.interactive.primary   (semantic) ← use this in components
-    ↓
-button.bg.primary           (component, optional)
-```
+Why three tiers: Primitive gives a bounded palette. Semantic gives meaning so themes work (dark mode swaps semantic, not every component). Component tier exists for rare exceptions — most components should only need semantic.
 
-**Rule: Components only reference Semantic tokens. Never Primitive.**
+→ Full token definitions, dark theme, and W3C DTCG format: `references/tokens.md`
 
-→ W3C DTCG format examples and theme files: `references/token-examples.md`
+## Typography
 
-### Semantic Token Categories
+A type scale, not ad-hoc font sizes. Every text in the UI maps to a named style.
 
-| Category | Purpose | Examples |
-|----------|---------|----------|
-| `color.bg.*` | Backgrounds | primary, secondary, inverse |
-| `color.text.*` | Typography | primary, secondary, link |
-| `color.interactive.*` | Actions | primary, primaryHover, primaryActive |
-| `color.border.*` | Borders | default, strong, focus |
-| `color.status.*` | Feedback | error, success, warning |
-| `spacing.component.*` | Inside components | xs, sm, md, lg, xl |
-| `spacing.layout.*` | Between sections | xs, sm, md, lg, xl |
+| Style | Size | Line Height | Weight | Use |
+|-------|------|-------------|--------|-----|
+| `display` | 30px | 36px | bold | Hero sections |
+| `heading.lg` | 24px | 32px | semibold | Page titles |
+| `heading.md` | 20px | 28px | semibold | Section titles |
+| `heading.sm` | 16px | 24px | semibold | Card titles |
+| `body.lg` | 18px | 28px | normal | Long-form |
+| `body.md` | 16px | 24px | normal | Default body |
+| `body.sm` | 14px | 20px | normal | Secondary text |
+| `caption` | 12px | 16px | medium | Labels, metadata |
 
-→ Platform-specific token output: `references/platform-web.md` | `references/platform-rn.md`
+Why fixed scale: Prevents the "is this 15px or 16px?" decision. Every text element picks from the scale. If nothing fits, the scale needs a new entry — not a one-off value.
 
----
+→ Full type tokens, responsive scaling, font stack: `references/typography.md`
 
-## Component Architecture
+## Motion
 
-### Headless + Styled Separation
+Consistent timing and easing across all animations.
 
-```
-┌──────────────────────────────────────┐
-│  Headless Layer                      │
-│  Behavior + A11y + Keyboard          │
-│  No styles, reusable across brands   │
-└──────────────────────────────────────┘
-                 ↓
-┌──────────────────────────────────────┐
-│  Styled Layer                        │
-│  Headless + Tokens = UI Component    │
-└──────────────────────────────────────┘
-```
+| Token | Value | Use |
+|-------|-------|-----|
+| `duration.instant` | 100ms | Micro-interactions (toggle, checkbox) |
+| `duration.fast` | 200ms | Hovers, fades, small transitions |
+| `duration.normal` | 300ms | Modals, drawers, page transitions |
+| `duration.slow` | 500ms | Complex choreography, emphasis |
+| `easing.default` | cubic-bezier(0.4, 0, 0.2, 1) | Most transitions |
+| `easing.enter` | cubic-bezier(0, 0, 0.2, 1) | Elements entering view |
+| `easing.exit` | cubic-bezier(0.4, 0, 1, 1) | Elements leaving view |
 
-**Rule: Headless handles behavior. Styled handles appearance. Never mix.**
+Always respect `prefers-reduced-motion`. When reduced, skip animation entirely — don't just shorten duration.
 
-### File Structure
+→ Motion tokens, platform implementation, reduced motion: `references/motion.md`
+
+## Component Patterns
+
+### Choosing the Right API
+
+Not every component needs the same level of flexibility. Pick based on complexity:
+
+| Complexity | Pattern | Example |
+|------------|---------|---------|
+| Simple, few variations | **Flat** — props only | `<Button variant="primary" size="md">` |
+| Moderate, customizable layout | **Compound** — sub-components | `<Card><Card.Header>...<Card.Content>...` |
+| Complex, headless needed | **Headless + Styled** | `useDialog()` hook + styled wrapper |
+
+Why both flat and compound: Flat is fast for simple things — a Button doesn't need sub-components. Compound shines when internal layout varies (Card, Dialog, Dropdown). Forcing compound everywhere adds ceremony without value. Forcing flat everywhere blocks flexibility.
+
+When a component grows past ~5 configuration props, that's the signal to consider compound.
+
+### Architecture
 
 ```
 src/shared/ui/
 ├── tokens/          # primitive, semantic, themes
-├── headless/        # useButton, useToggle, useDialog
-├── styled/          # Button, Toggle, Dialog (uses headless)
-├── primitives/      # Box, Text, Stack
-└── patterns/        # FormField, ConfirmDialog
+├── headless/        # useButton, useToggle, useDialog (behavior + a11y)
+├── styled/          # Button, Toggle, Dialog (headless + tokens = UI)
+├── primitives/      # Box, Text, Stack (layout atoms)
+└── patterns/        # FormField, ConfirmDialog (compositions)
 ```
 
----
+Headless hooks own behavior: ARIA, keyboard, focus, state. Styled components own appearance: tokens, variants, sizing. This separation means a Button's click/keyboard/focus logic is written once and reused whether it looks like a primary button, ghost button, or icon button.
 
-## Preferred Patterns
+→ Full patterns with Flat, Compound, Headless examples: `references/components.md`
 
-| Pattern | Preferred | Avoid | Why |
-|---------|-----------|-------|-----|
-| Props | `variant="primary" size="lg"` | `primary large` (booleans) | Explicit, mutually exclusive |
-| Composition | `<Card><Card.Header>` | `<Card showHeader headerTitle="">` | Flexible, readable |
-| Polymorphic | `<Box as="section">` | Separate `<Section>` component | Semantic HTML, less components |
-| State | Headless hook + Styled | Mixed logic/styles | Separation of concerns |
-| Icons | Lucide only | Mixed icon libs, inline SVG | Consistent, tree-shakeable |
-| Layout | Mobile-first, scale up | Desktop-first, scale down | Progressive enhancement |
+## Icons
 
-**Rule: Variant props over booleans. Composition over configuration.**
+Use one icon library per project and enforce it. Mixing libraries causes visual inconsistency (different stroke widths, sizing, metaphors) and bundle bloat.
 
-→ Headless hooks and compound component examples: `references/examples.md`
+Recommended defaults: `lucide-react` (web), `lucide-react-native` (RN). These are lightweight and tree-shakeable. But if the project has an existing icon set, use that — the principle is consistency, not a specific library.
 
----
+Decorative icons are hidden from the a11y tree. Meaningful icons get `aria-label` (web) or `accessibilityLabel` (RN).
 
-## Accessibility Requirements
+## Accessibility
 
-| Requirement | Value | Non-negotiable |
-|-------------|-------|----------------|
-| Text contrast | 4.5:1 minimum | ✅ |
-| UI component contrast | 3:1 minimum | ✅ |
-| Focus indicator | 2px+ visible outline | ✅ |
-| Touch targets | 44×44pt minimum | ✅ |
+Built into every component from the start. Not a review step after implementation.
 
-**Rule: Color is never the only indicator. Always pair with icon, text, or pattern.**
+| Requirement | Minimum | Why |
+|-------------|---------|-----|
+| Text contrast | 4.5:1 | WCAG AA readability |
+| UI contrast | 3:1 | Controls must be distinguishable |
+| Focus indicator | 2px visible outline | Keyboard users need to see focus |
+| Touch targets | 44×44pt | Fingers are imprecise |
 
----
+Color is never the sole indicator of state. Error states use color + icon + text. Disabled states use opacity + cursor change.
 
-## Quick Checklist
+## Quick Decision Guide
 
-- [ ] No hardcoded values — all colors, spacing, radii use Semantic tokens
-- [ ] Dark theme remaps Semantic tokens only, system preference respected
-- [ ] Headless hook for behavior/a11y, Styled component for appearance
-- [ ] `variant` / `size` props, not booleans
-- [ ] All states: default, hover, focus, active, disabled, loading
-- [ ] Mobile-first responsive, no horizontal scroll
-- [ ] Lucide icons only, decorative icons hidden from a11y tree
-- [ ] Focus visible, touch targets 44pt+, reduced motion respected
-- [ ] ARIA attributes correct (web) / accessibilityRole correct (RN)
+- **Picking a color?** → Find it in semantic tokens. If it doesn't exist, add to semantic first, then use.
+- **Spacing a component?** → `spacing.component.*`. Between sections → `spacing.layout.*`.
+- **Sizing text?** → Pick from type scale. If nothing fits, extend the scale.
+- **Animating?** → Use motion tokens. Respect reduced motion.
+- **Building a simple component?** → Flat API. Props for variants.
+- **Building a complex component?** → Compound API. Sub-components for layout flexibility.
+- **Need custom behavior?** → Headless hook first, styled wrapper on top.
+- **Cross-platform?** → Tokens defined once, transformed per platform. See `references/pipeline.md`.
+
+## Platform References
+
+→ Web/Next.js (CSS custom properties, dark mode, responsive): `references/platform-web.md`
+→ React Native (TS tokens, color scheme, a11y): `references/platform-rn.md`
+→ Token pipeline (Style Dictionary, single-source workflow): `references/pipeline.md`
