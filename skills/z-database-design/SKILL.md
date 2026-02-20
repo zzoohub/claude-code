@@ -179,9 +179,9 @@ Produce **3 files**:
 
 | File | Content |
 |---|---|
-| `docs/database-design.md` | Requirements summary → ERD (Mermaid) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. SADD deviations noted inline. |
-| `api/migrations/001_initial_schema.sql` | Executable DDL (tables, indexes, constraints, comments) + matching `_rollback.sql` |
-| `docs/erd.mermaid` | Standalone Mermaid ERD (also embedded in the design doc) |
+| `database/database-design.md` | Requirements summary → ERD (Mermaid) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. SADD deviations noted inline. |
+| `database/migrations/001_initial_schema.sql` | Executable DDL (tables, indexes, constraints, comments) + matching `_rollback.sql` |
+| `database/erd.mermaid` | Standalone Mermaid ERD (also embedded in the design doc) |
 
 ## Critical Rules
 

@@ -19,6 +19,7 @@
     "huggingface-skills@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
     "neon-plugin@neon": true,
-    "posthog@claude-plugins-official": true
+    "posthog@claude-plugins-official": true,
+    "vercel@claude-plugins-official": true
   }
 }

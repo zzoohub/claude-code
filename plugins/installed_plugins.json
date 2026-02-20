@@ -200,6 +200,16 @@
         "lastUpdated": "2026-02-17T19:52:48.435Z",
         "gitCommitSha": "e565d8a53ee57a4a76ca68323b20c3daea205a19"
       }
+    ],
+    "vercel@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/vercel/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-20T16:41:03.651Z",
+        "lastUpdated": "2026-02-20T16:41:03.651Z",
+        "gitCommitSha": "ae067751b4f42c97d13054211657275029ca8b6d"
+      }
     ]
   }
 }
