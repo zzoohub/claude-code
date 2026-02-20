@@ -201,37 +201,3 @@ Only when a component needs to deviate from semantic tokens.
   }
 }
 ```
-
----
-
-## Usage in Code
-
-### Web (CSS)
-
-```css
-.button-primary {
-  background-color: var(--color-interactive-primary);
-  color: var(--color-text-inverse);
-  padding: var(--spacing-component-md) var(--spacing-component-lg);
-  border-radius: var(--radius-md);
-}
-
-.button-primary:hover {
-  background-color: var(--color-interactive-primaryHover);
-}
-```
-
-### React Native
-
-```typescript
-import { tokens } from '@/tokens';
-
-const styles = StyleSheet.create({
-  buttonPrimary: {
-    backgroundColor: tokens.color.interactive.primary,
-    paddingHorizontal: tokens.spacing.component.lg,
-    paddingVertical: tokens.spacing.component.md,
-    borderRadius: tokens.radius.md,
-  },
-});
-```

@@ -7,7 +7,9 @@ description: |
   Workflow: z-ux-design (what/why) → this skill (tokens, components) → z-nextjs | z-react-native (integration).
 references:
   - references/token-examples.md    # W3C DTCG format examples, theme files
-  - references/examples.md          # Headless hooks, Compound components examples
+  - references/examples.md          # Headless hooks, Compound components, Variant props
+  - references/platform-web.md      # Web/Next.js: CSS custom properties, dark mode, usage
+  - references/platform-rn.md       # React Native: TS tokens, color scheme, styled example
 ---
 
 # Design System
@@ -34,14 +36,6 @@ button.bg.primary           (component, optional)
 
 → W3C DTCG format examples and theme files: `references/token-examples.md`
 
-### Why 3 Tiers?
-
-| Change | What to update | Impact |
-|--------|----------------|--------|
-| Brand refresh | Tier 1 (Primitive) | All semantics auto-update |
-| Dark mode | Tier 2 (Semantic) | Components unchanged |
-| One-off exception | Tier 3 (Component) | Isolated change |
-
 ### Semantic Token Categories
 
 | Category | Purpose | Examples |
@@ -53,6 +47,8 @@ button.bg.primary           (component, optional)
 | `color.status.*` | Feedback | error, success, warning |
 | `spacing.component.*` | Inside components | xs, sm, md, lg, xl |
 | `spacing.layout.*` | Between sections | xs, sm, md, lg, xl |
+
+→ Platform-specific token output: `references/platform-web.md` | `references/platform-rn.md`
 
 ---
 
@@ -75,14 +71,6 @@ button.bg.primary           (component, optional)
 
 **Rule: Headless handles behavior. Styled handles appearance. Never mix.**
 
-### Why Separate?
-
-| Change | What to update | Other layer |
-|--------|----------------|-------------|
-| Keyboard navigation fix | Headless hook | Styled unchanged |
-| Brand color change | Styled component | Headless unchanged |
-| New accessibility requirement | Headless hook | Styled unchanged |
-
 ### File Structure
 
 ```
@@ -104,44 +92,12 @@ src/shared/ui/
 | Composition | `<Card><Card.Header>` | `<Card showHeader headerTitle="">` | Flexible, readable |
 | Polymorphic | `<Box as="section">` | Separate `<Section>` component | Semantic HTML, less components |
 | State | Headless hook + Styled | Mixed logic/styles | Separation of concerns |
+| Icons | Lucide only | Mixed icon libs, inline SVG | Consistent, tree-shakeable |
+| Layout | Mobile-first, scale up | Desktop-first, scale down | Progressive enhancement |
 
 **Rule: Variant props over booleans. Composition over configuration.**
 
 → Headless hooks and compound component examples: `references/examples.md`
-
----
-
-## Platform Output
-
-### Web (CSS Custom Properties)
-
-```css
-:root {
-  --color-bg-primary: #ffffff;
-  --color-text-primary: #0f172a;
-  --color-interactive-primary: #2563eb;
-}
-
-[data-theme="dark"] {
-  --color-bg-primary: #0f172a;
-  --color-text-primary: #f9fafb;
-}
-```
-
-### React Native (TypeScript)
-
-```typescript
-export const tokens = {
-  color: {
-    bg: { primary: '#ffffff', secondary: '#f9fafb' },
-    text: { primary: '#0f172a', secondary: '#475569' },
-    interactive: { primary: '#2563eb' },
-  },
-  spacing: {
-    component: { xs: 4, sm: 8, md: 12, lg: 16, xl: 24 },
-  },
-} as const;
-```
 
 ---
 
@@ -156,48 +112,16 @@ export const tokens = {
 
 **Rule: Color is never the only indicator. Always pair with icon, text, or pattern.**
 
-### Focus States
-
-```css
-:focus-visible {
-  outline: 2px solid var(--color-border-focus);
-  outline-offset: 2px;
-}
-
-:focus:not(:focus-visible) {
-  outline: none;
-}
-```
-
-### Reduced Motion
-
-```css
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-```
-
 ---
 
 ## Quick Checklist
 
-### Tokens
-- [ ] No hardcoded values in components (colors, spacing, etc.)
-- [ ] Using Semantic tokens, not Primitive
-- [ ] Dark theme remaps Semantic tokens only
-
-### Components
-- [ ] Headless hook for behavior + a11y
-- [ ] Styled component uses tokens only
-- [ ] Using `variant` / `size` / `colorScheme` props (not booleans)
-- [ ] All states defined: default, hover, focus, active, disabled, loading
-
-### Accessibility
-- [ ] Color not sole indicator
-- [ ] Focus visible (2px+ outline)
-- [ ] Touch targets 44pt+
-- [ ] Reduced motion respected
-- [ ] ARIA attributes correct
+- [ ] No hardcoded values — all colors, spacing, radii use Semantic tokens
+- [ ] Dark theme remaps Semantic tokens only, system preference respected
+- [ ] Headless hook for behavior/a11y, Styled component for appearance
+- [ ] `variant` / `size` props, not booleans
+- [ ] All states: default, hover, focus, active, disabled, loading
+- [ ] Mobile-first responsive, no horizontal scroll
+- [ ] Lucide icons only, decorative icons hidden from a11y tree
+- [ ] Focus visible, touch targets 44pt+, reduced motion respected
+- [ ] ARIA attributes correct (web) / accessibilityRole correct (RN)
