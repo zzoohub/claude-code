@@ -104,7 +104,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class AppConfig(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./db.sqlite"
     secret_key: str = "change-me"
-    port: int = 8000
+    port: int = 8080
     cors_origins: list[str] = ["http://localhost:3000"]
     access_token_expire_minutes: int = 30
 
