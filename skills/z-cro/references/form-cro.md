@@ -1,0 +1,180 @@
+# Form CRO
+
+Optimize any form that is NOT signup/registration — lead capture, contact, demo request, application, survey, checkout forms.
+
+---
+
+## Core Principles
+
+### 1. Every Field Has a Cost
+Each field reduces completion rate:
+- 3 fields: Baseline
+- 4-6 fields: 10-25% reduction
+- 7+ fields: 25-50%+ reduction
+
+For each field, ask: Is this necessary? Can we get this another way? Can we ask later?
+
+### 2. Value Must Exceed Effort
+Clear value proposition above form. Make what they get obvious.
+
+### 3. Reduce Cognitive Load
+One question per field. Clear labels. Logical grouping. Smart defaults.
+
+---
+
+## Field-by-Field Optimization
+
+| Field | Best Practice |
+|-------|--------------|
+| **Email** | Single field, no confirmation, inline validation, typo detection, proper mobile keyboard |
+| **Name** | Test single "Name" vs First/Last — single reduces friction |
+| **Phone** | Make optional if possible, explain why if required, auto-format |
+| **Company** | Auto-suggest, enrichment after submission, infer from email domain |
+| **Job Title** | Dropdown if categories matter, free text if wide variation, consider optional |
+| **Message** | Make optional, reasonable character guidance, expand on focus |
+| **Dropdowns** | "Select one..." placeholder, searchable if many options, radio buttons if < 5 |
+
+---
+
+## Form Layout
+
+### Field Order
+1. Start with easiest fields (name, email)
+2. Build commitment before asking more
+3. Sensitive fields last (phone, company size)
+
+### Labels and Placeholders
+- Labels: Always visible (not just placeholder)
+- Placeholders: Examples, not labels
+- Help text: Only when genuinely helpful
+
+### Visual Design
+- Single column preferred (higher completion, mobile-friendly)
+- Multi-column only for short related fields (First/Last name)
+- Sufficient spacing, clear hierarchy, CTA stands out
+- Mobile-friendly tap targets (44px+)
+
+---
+
+## Multi-Step Forms
+
+### When to Use
+- More than 5-6 fields
+- Logically distinct sections
+- Conditional paths based on answers
+
+### Best Practices
+- Progress indicator (step X of Y)
+- Start with easy, end with sensitive
+- One topic per step
+- Allow back navigation
+- Save progress
+
+### Progressive Commitment Pattern
+1. Low-friction start (just email)
+2. More detail (name, company)
+3. Qualifying questions
+4. Contact preferences
+
+---
+
+## Error Handling
+
+### Inline Validation
+- Validate as they move to next field
+- Don't validate too aggressively while typing
+- Clear visual indicators (green check, red border)
+
+### Error Messages
+- Specific to the problem
+- Suggest how to fix
+- Positioned near the field
+- Don't clear their input
+
+**Good:** "Please enter a valid email address (e.g., name@company.com)"
+**Bad:** "Invalid input"
+
+---
+
+## Submit Button Optimization
+
+### Button Copy
+Weak: "Submit" | "Send"
+Strong: "[Action] + [What they get]"
+- "Get My Free Quote"
+- "Download the Guide"
+- "Request Demo"
+
+### Post-Submit States
+- Loading state (disable button, show spinner)
+- Success confirmation (clear next steps)
+- Error handling (clear message, focus on issue)
+
+---
+
+## Trust and Friction Reduction
+
+### Near the Form
+- Privacy statement: "We'll never share your info"
+- Security badges if collecting sensitive data
+- Testimonial or social proof
+- Expected response time
+
+### Reducing Perceived Effort
+- "Takes 30 seconds"
+- Field count indicator
+- Remove visual clutter
+
+---
+
+## Form Types: Specific Guidance
+
+| Type | Key Optimization |
+|------|-----------------|
+| **Lead Capture** | Minimum fields (often just email), clear value prop, enrichment post-download |
+| **Contact** | Email + Name + Message essential, phone optional, set response expectations |
+| **Demo Request** | Name/Email/Company required, calendar embed increases show rate |
+| **Quote Request** | Multi-step works well, start easy, technical details later |
+| **Survey** | Progress bar essential, one question per screen, skip logic |
+
+---
+
+## Mobile Optimization
+
+- Larger touch targets (44px minimum)
+- Appropriate keyboard types (email, tel, number)
+- Autofill support
+- Single column only
+- Sticky submit button
+
+---
+
+## Key Metrics
+
+| Metric | Description |
+|--------|-------------|
+| Form start rate | Page views → Started form |
+| Completion rate | Started → Submitted |
+| Field drop-off | Which fields lose people |
+| Error rate | By field |
+| Time to complete | Total and by field |
+
+---
+
+## Experiment Ideas
+
+### Layout & Flow
+- Single-step vs. multi-step with progress bar
+- Form embedded on page vs. separate page
+- Form above fold vs. after content
+
+### Field Optimization
+- Reduce to minimum viable fields
+- Add or remove phone/company field
+- Progressive profiling (ask more over time)
+- Hide fields for returning/known visitors
+
+### CTAs & Trust
+- Button text variations ("Submit" vs. "Get My Quote")
+- Add privacy assurance near form
+- Display expected response time

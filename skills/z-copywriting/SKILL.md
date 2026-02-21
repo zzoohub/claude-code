@@ -11,6 +11,42 @@ metadata:
 
 Guidelines for creating high-converting digital product copy, UX microcopy, brand messaging, and user-facing text. Apply these principles and processes whenever writing or reviewing marketing copy, onboarding text, CTAs, push notifications, email campaigns, or landing pages.
 
+## References
+
+| File | When to Use |
+|------|------------|
+| `references/copy-frameworks.md` | Writing new pages, restructuring copy, CTA optimization |
+| `references/editing-sweeps.md` | Reviewing/editing existing copy, quality improvement |
+| `references/plain-english.md` | Simplifying language, removing jargon, tone checks |
+| `references/transitions.md` | Improving flow, connecting sections, long-form content |
+
+## Related Skills
+
+- **z-cro** — When copy changes need conversion rate validation
+- **z-marketing-psychology** — For psychological principles behind persuasive copy
+- **z-email-marketing** — For email-specific copy patterns
+- **z-search-visibility** — For SEO-optimized content writing
+
+## Content Types
+
+Headlines and taglines, product descriptions, onboarding flows, email campaigns, push notifications, landing pages, in-app messaging, tooltips, error states, empty states, success messages, CTAs, banner copy.
+
+## Writing Techniques (Detail: `references/copy-frameworks.md`)
+
+Page structure, CTA formulas, and page-specific copywriting frameworks. Consult this reference when writing complete pages or restructuring existing copy.
+
+## Copy Editing Process (Detail: `references/editing-sweeps.md`)
+
+Seven systematic editing sweeps to transform draft copy into polished, high-converting text. Use this when reviewing or improving existing copy.
+
+## Plain English Guide (Detail: `references/plain-english.md`)
+
+Word-level clarity improvements, jargon elimination, and conversational tone guidelines. Reference during any editing pass.
+
+## Transitions & Flow (Detail: `references/transitions.md`)
+
+Techniques for smooth transitions between copy sections. Use when copy feels disjointed or when building long-form content.
+
 ## 8 Principles for High-Converting Copy
 
 Apply these as a mandatory checklist for all marketing copy, banners, CTAs, and user-facing promotional text.
@@ -171,7 +207,3 @@ Before delivering any copy, verify:
 - [ ] Is it accessible and inclusive (no jargon, slang, or in-group terms)?
 - [ ] Is it scannable? Can a skimmer get the point in 3 seconds?
 - [ ] Is there proof or social validation supporting the claim?
-
-## Content Types
-
-Headlines and taglines, product descriptions, onboarding flows, email campaigns, push notifications, landing pages, in-app messaging, tooltips, error states, empty states, success messages, CTAs, banner copy.

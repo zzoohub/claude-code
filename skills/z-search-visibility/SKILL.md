@@ -192,6 +192,18 @@ Traditional SEO metrics (rankings, clicks, traffic) + AEO metrics (featured snip
 
 ---
 
+### AI Platform Optimization (Detail: `references/ai-platform-optimization.md`)
+
+Beyond GEO principles, specific tactics for maximizing visibility in AI-powered search and answer platforms. Covers platform-specific optimization for ChatGPT, Perplexity, Google AI Mode, and Claude. Includes practical audit methodology and monitoring strategies for AI citations.
+
+Key focus areas:
+1. **Platform-Specific Signals**: Each AI platform weighs different content signals — optimize for the platforms your audience uses
+2. **Citation Triggers**: Patterns that increase the probability of being cited in AI-generated answers (statistics +37%, source citations +40%)
+3. **Monitoring & Measurement**: Tracking brand mentions and citations across AI platforms with tools like Otterly, Peec AI, ZipTie
+4. **Content Structure for AI**: Beyond extractability — how to format content that AI systems prefer to reference
+
+---
+
 ## Important Caveats
 
 Always communicate to users:
