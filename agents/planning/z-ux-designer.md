@@ -2,7 +2,7 @@
 name: z-ux-designer
 description: Design user experiences, create interaction flows, develop wireframes, and improve usability of interfaces. Invoke when designing new features, redesigning existing flows, planning user journeys, or diagnosing UX problems that need a full design solution. Do NOT use for quick UX questions or principle lookups (skill handles those). Do NOT use for frontend implementation or marketing copy.
 model: opus
-skill: z-ux-design
+skills: z-ux-design
 metadata:
   author: product-team
   version: 3.2.0

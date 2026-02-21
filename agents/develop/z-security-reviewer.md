@@ -2,7 +2,9 @@
 name: z-security-reviewer
 description: |
   Security code review and vulnerability detection.
-  Use when: reviewing code for vulnerabilities, auditing auth implementation, pre-deployment security check.  
+  Use when: reviewing code for vulnerabilities, auditing auth/authorization implementation, pre-deployment security check, checking for injection risks (SQL, XSS, command), identifying data exposure, reviewing dependency security, or when user mentions "security review", "vulnerability scan", "audit".
+  Do NOT use for: general code review (style, performance), infrastructure/DevOps security, compliance documentation, or implementing security features (developer task).
+tools: Read, Grep, Glob
 model: sonnet
 color: red
 skills: z-security-checklists

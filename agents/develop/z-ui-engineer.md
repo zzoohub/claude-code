@@ -1,6 +1,9 @@
 ---
 name: z-ui-engineer
-description: Use for building UI components and page layouts. Creates pure UI without data fetching or business logic. Outputs visual scaffolds that frontend developers wire up with state and handlers.
+description: |
+  Build UI components and page layouts as pure visual scaffolds without data fetching or business logic.
+  Use when: creating new components, building page layouts, setting up design tokens, implementing design system elements, composing screens from components, or when user asks to "build a page", "create a component", "make a UI for".
+  Do NOT use for: state management, data fetching, API integration, business logic, form validation, or routing logic (frontend developer adds these later).
 model: opus
 color: blue
 skills: frontend-design, building-native-ui, z-design-system
