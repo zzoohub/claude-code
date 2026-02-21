@@ -4,10 +4,10 @@
     "context7@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/context7/8deab8460a9d",
-        "version": "8deab8460a9d",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/context7/aa296ec81e8c",
+        "version": "aa296ec81e8c",
         "installedAt": "2026-01-21T08:55:42.497Z",
-        "lastUpdated": "2026-02-19T07:04:44.837Z",
+        "lastUpdated": "2026-02-21T01:33:11.708Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -44,30 +44,30 @@
     "security-guidance@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/security-guidance/8deab8460a9d",
-        "version": "8deab8460a9d",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/security-guidance/aa296ec81e8c",
+        "version": "aa296ec81e8c",
         "installedAt": "2026-01-21T10:25:11.303Z",
-        "lastUpdated": "2026-02-19T07:04:44.837Z",
+        "lastUpdated": "2026-02-21T01:33:11.709Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
     "frontend-design@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/frontend-design/8deab8460a9d",
-        "version": "8deab8460a9d",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/frontend-design/aa296ec81e8c",
+        "version": "aa296ec81e8c",
         "installedAt": "2026-01-21T10:25:53.719Z",
-        "lastUpdated": "2026-02-19T07:04:44.839Z",
+        "lastUpdated": "2026-02-21T01:33:11.712Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
     "ralph-loop@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/ralph-loop/8deab8460a9d",
-        "version": "8deab8460a9d",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/ralph-loop/aa296ec81e8c",
+        "version": "aa296ec81e8c",
         "installedAt": "2026-01-21T10:48:30.060Z",
-        "lastUpdated": "2026-02-19T07:04:44.843Z",
+        "lastUpdated": "2026-02-21T01:33:11.714Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -104,10 +104,10 @@
     "playwright@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/playwright/8deab8460a9d",
-        "version": "8deab8460a9d",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/playwright/aa296ec81e8c",
+        "version": "aa296ec81e8c",
         "installedAt": "2026-01-28T07:57:59.969Z",
-        "lastUpdated": "2026-02-19T07:04:44.835Z",
+        "lastUpdated": "2026-02-21T01:33:11.707Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -154,10 +154,10 @@
     "supabase@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/supabase/8deab8460a9d",
-        "version": "8deab8460a9d",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/supabase/aa296ec81e8c",
+        "version": "aa296ec81e8c",
         "installedAt": "2026-02-11T12:29:24.777Z",
-        "lastUpdated": "2026-02-19T07:04:44.836Z",
+        "lastUpdated": "2026-02-21T01:33:11.708Z",
         "gitCommitSha": "2cd88e7947b7382e045666abee790c7f55f669f3"
       }
     ],
@@ -209,6 +209,16 @@
         "installedAt": "2026-02-20T16:41:03.651Z",
         "lastUpdated": "2026-02-20T16:41:03.651Z",
         "gitCommitSha": "ae067751b4f42c97d13054211657275029ca8b6d"
+      }
+    ],
+    "code-simplifier@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/code-simplifier/1.0.0",
+        "version": "1.0.0",
+        "installedAt": "2026-02-21T01:34:10.118Z",
+        "lastUpdated": "2026-02-21T01:34:10.118Z",
+        "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
       }
     ]
   }

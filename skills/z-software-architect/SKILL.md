@@ -5,7 +5,7 @@ description: Produce a Software Architecture Design Document from a PRD. Use whe
 
 # Software Architect Skill
 
-When given a Product Requirements Document (PRD), produce a **Software Architecture Design Document (SADD)** — a decision record that captures the system's structure, trade-offs, and rationale with enough clarity that any engineer can pick it up and start implementing.
+When given a Product Requirements Document (PRD), produce a **Design Doc** — a decision record that captures the system's structure, trade-offs, and rationale with enough clarity that any engineer can pick it up and start implementing.
 
 ## Philosophy
 
@@ -21,10 +21,10 @@ This skill produces architecture-level decisions. It deliberately **excludes** t
 
 | Excluded Topic | Reason |
 |---|---|
-| Table schemas, column types, indexes, migrations | Implementation detail — derived from data models in the SADD |
-| API endpoint lists, request/response shapes | Implementation detail — derived from component interfaces in the SADD |
+| Table schemas, column types, indexes, migrations | Implementation detail — derived from data models in the Design Doc |
+| API endpoint lists, request/response shapes | Implementation detail — derived from component interfaces in the Design Doc |
 | Folder structure, code conventions, linting rules | Codebase concern — belongs in CLAUDE.md or project config |
-| Concrete UI component trees, page layouts | Implementation detail — derived from system context in the SADD |
+| Concrete UI component trees, page layouts | Implementation detail — derived from system context in the Design Doc |
 
 If the user asks for any of the above, explain that this skill focuses on architecture-level decisions and offer to note it as a requirement for the implementation phase.
 
@@ -323,3 +323,6 @@ Consult `references/architecture-patterns.md` for the full decision framework wi
 The final document should pass the **"3 AM Test"**: If an on-call engineer gets paged at 3 AM for a production issue in this system, can they open this design doc and understand the system well enough to orient themselves within 5 minutes?
 
 If yes, the doc is good enough. If not, it needs more clarity.
+
+## Output 
+Save to `docs/design-doc.md`.
