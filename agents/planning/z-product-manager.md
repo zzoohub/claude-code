@@ -1,5 +1,5 @@
 ---
-name: product-manager
+name: z-product-manager
 description: Drives end-to-end product planning — from product brief through PRD. Invoke when the user wants to plan a new product or feature, create a product brief and PRD together, or run the full product definition workflow. Do NOT use for quick one-off questions about product strategy or when the user explicitly asks for only a brief or only a PRD.
 model: opus
 skills: z-product-brief, z-prd-craft
