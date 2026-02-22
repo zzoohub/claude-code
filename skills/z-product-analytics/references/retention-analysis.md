@@ -213,21 +213,19 @@ Priority segments:
 
 ---
 
-## Tools & Implementation
+## Implementation in PostHog
 
-| Tool | Strength |
-|------|----------|
-| **PostHog** | Retention tables with behavioral cohorts. Lifecycle view (new/returning/resurrecting/dormant). |
-| **Amplitude** | Retention analysis with advanced segmentation. Stickiness charts. |
-| **Mixpanel** | Retention reports with flexible cohort definitions. Signal reports for automated correlation. |
-| **SQL/Warehouse** | Full control for custom analysis. Required for revenue retention cohorts. |
-| **ChartMogul** | Revenue cohort analysis. GRR/NRR tracking by cohort. |
+All retention analysis is executed via PostHog MCP server:
 
-### PostHog Specifics
-- **Retention insight**: Set start event (signup) and return event (core action). Choose period (day/week/month).
-- **Lifecycle view**: Shows new, returning, resurrecting, dormant users per period. Rising "resurrecting" = win-back is working.
-- **Stickiness**: Shows distribution of how many days/weeks users were active. Bimodal distribution = healthy (casual + power users).
-- **Paths**: Show common user journeys. Compare paths of retained vs. churned users.
+| Analysis | PostHog Feature | How |
+|----------|----------------|-----|
+| Cohort retention curves | **Retention** insight | Set start event (signup), return event (core action). Period: day/week/month |
+| Lifecycle breakdown | **Lifecycle** view | New/returning/resurrecting/dormant per period. Rising "resurrecting" = win-back working |
+| Stickiness | **Stickiness** insight | Distribution of active days/weeks. Bimodal = healthy (casual + power users) |
+| User journey analysis | **Paths** | Compare paths of retained vs churned users |
+| Behavioral segments | **Cohorts** | Create cohorts by behavior, plan, channel for segmented retention |
+| Revenue retention (GRR/NRR) | **HogQL** | Custom SQL queries on revenue events. PostHog has no built-in revenue analytics — build cohort tables manually via HogQL |
+| Custom cohort tables | **HogQL** | Full SQL control for any analysis the UI doesn't support |
 
 ---
 

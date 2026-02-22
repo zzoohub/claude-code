@@ -121,17 +121,17 @@ Both should be tracked by cohort, by segment, and over time. Improvements to onb
 
 ---
 
-## Tools & Implementation
+## Implementation in PostHog
 
-| Tool | How to Use |
-|------|-----------|
-| **PostHog** | Cohort analysis + retention tables. Create behavioral cohorts for each candidate action. |
-| **Amplitude** | Path analysis to see what retained users do differently. Compass feature automates correlation analysis. |
-| **Mixpanel** | Signal report identifies behaviors correlated with retention. |
-| **SQL/Warehouse** | Custom queries for the 4-group segmentation when tools don't support parameter sweeping. |
+All Aha Moment discovery is executed via PostHog MCP server:
 
-### PostHog Specifics
-- Use **Retention** insight with behavioral cohorts
-- Create **Lifecycle** view to track new/returning/resurrecting/dormant
-- Use **Paths** to see common sequences before retention
-- Use **Correlation Analysis** feature if available (automates RPV calculation)
+| Step | PostHog Feature | How |
+|------|----------------|-----|
+| Identify power users | **Cohort** | Create cohort: retained D30+ users |
+| List candidate actions | **Paths** | Compare paths of retained vs churned |
+| Correlation analysis | **Correlation Analysis** | Automates RPV calculation across events |
+| Behavioral cohorts | **Cohort** | Create cohort per candidate action (e.g., "completed_import in first 3 days") |
+| Retention comparison | **Retention** insight | Compare retention curves: did-action vs didn't |
+| Parameter sweeping | **HogQL** | Custom SQL for frequency×timewindow matrix when UI doesn't support it |
+| Lifecycle tracking | **Lifecycle** view | Monitor new/returning/resurrecting/dormant after activation changes |
+| A/B validation | **Experiments** | Test causal effect of nudging users toward Aha Moment |
