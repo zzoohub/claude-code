@@ -273,7 +273,6 @@ that would have the highest impact on PRD quality.
 - Use tables for structured data (metrics, requirements, timelines)
 - Keep total length between 4-10 pages depending on complexity
 - Use plain English; avoid jargon unless the audience is technical
-- Save to `docs/prd-[product-or-feature-name].md`
 
 ## Common PRD Anti-Patterns to Actively Avoid
 

@@ -65,10 +65,7 @@ These fail the "Does this help the user complete their goal?" test:
 
 ---
 
-## Output
-Save to `docs/ux-design.md`.
-
-___
+---
 
 ## Quick Checklist
 

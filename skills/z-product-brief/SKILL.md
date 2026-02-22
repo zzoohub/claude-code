@@ -284,4 +284,3 @@ If the user asks to review or improve a product brief, evaluate against these cr
 - If the user requests DOCX, PDF, or slides: adapt accordingly
 - If the user has a company template: follow their structure, supplement missing sections from this framework
 - Always prioritize clarity and brevity over comprehensiveness
-- Save to `docs/product-brief.md`
