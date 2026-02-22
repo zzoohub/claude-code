@@ -132,9 +132,10 @@ Produce `biz/analytics/reports/week-YYYY-WW.md` using the template in z-product-
 | Funnels + retention analysis | `biz/analytics/funnels.md` |
 | Dashboard specs | `biz/analytics/dashboards.md` |
 | Kill/Keep/Scale + CC | `biz/analytics/kill-criteria.md` |
+| Customer health score | `biz/analytics/health-score.md` |
 | Weekly reports | `biz/analytics/reports/week-YYYY-WW.md` |
-| Deep-dives | `biz/analytics/reports/[topic]-analysis.md` |
-| A/B test analysis | `biz/analytics/reports/[experiment]-results.md` |
+| Deep-dives | `biz/analytics/reports/{topic}-analysis.md` |
+| A/B test analysis | `biz/analytics/reports/{experiment}-results.md` |
 
 ---
 
@@ -143,6 +144,7 @@ Produce `biz/analytics/reports/week-YYYY-WW.md` using the template in z-product-
 - `docs/product-brief.md` — what success looks like
 - `biz/marketing/strategy.md` — channel strategy, viral loop design
 - `biz/ops/feedback-log.md` — qualitative data to cross-reference with metrics
+- `biz/growth/experiments.md` — experiment log from z-growth-optimizer
 - **z-growth-optimizer** — for experiment design and CRO
 - **z-marketer** — for acquisition strategy context
 - **z-product-analytics** — Aha Moment discovery, retention analysis, Carrying Capacity, Kill/Keep/Scale methodology

@@ -118,11 +118,9 @@ Based on cancellation reason:
 
 | Deliverable | Path |
 |------------|------|
-| Churn analysis | `biz/growth/churn-analysis.md` |
-| Cancel flow design | `biz/growth/cancel-flow.md` |
-| Dunning sequence | `biz/growth/dunning-sequence.md` |
-| Health score model | `biz/analytics/health-score.md` |
-| Win-back campaigns | `biz/growth/win-back.md` |
+| Churn prevention strategy | `biz/growth/churn-prevention.md` |
+| Dunning / payment recovery | `biz/growth/dunning.md` |
+| Customer health score | `biz/analytics/health-score.md` |
 
 ## Cross-References
 

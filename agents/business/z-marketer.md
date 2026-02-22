@@ -122,12 +122,13 @@ Before delivering any content, verify against **z-copywriting's 8 Principles**. 
 |-------------|------|
 | Marketing strategy | `biz/marketing/strategy.md` |
 | Launch materials | `biz/marketing/launch/` |
-| Content | `biz/marketing/content/` |
+| Content + editorial calendar | `biz/marketing/content/` |
+| Free tool strategy | `biz/marketing/content/free-tools.md` |
 | Marketing assets | `biz/marketing/assets/` |
 | Pricing strategy | `biz/marketing/pricing.md` |
 | Competitor analysis | `biz/marketing/competitors.md` |
-| Free tool strategy | `biz/marketing/free-tools.md` |
 | Terms / Privacy | `biz/legal/` |
+| Operational docs (FAQ, runbook) | `biz/ops/` |
 
 ---
 
@@ -135,6 +136,7 @@ Before delivering any content, verify against **z-copywriting's 8 Principles**. 
 
 - `docs/product-brief.md` — product context (always read first)
 - `biz/analytics/tracking-plan.md` — UTM and conversion tracking
+- `biz/ops/feedback-log.md` — customer feedback for content ideas
 - **z-growth-optimizer** — conversion optimization, referral programs, churn prevention
 - **z-data-analyst** — analytics, experiment results, retention metrics
 - **z-copywriting** — copy quality, brand voice, 8 Principles checklist

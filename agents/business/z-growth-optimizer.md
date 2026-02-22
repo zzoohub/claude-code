@@ -129,11 +129,11 @@ When experiments produce data, hand off to z-data-analyst for:
 
 | Deliverable | Path |
 |------------|------|
-| Referral program design | `biz/growth/referral-program.md` |
 | Growth experiments log | `biz/growth/experiments.md` |
-| CRO analysis | `biz/growth/cro/[page-or-flow]-analysis.md` |
+| Referral + viral loop design | `biz/growth/referral-program.md` |
 | Churn prevention strategy | `biz/growth/churn-prevention.md` |
-| Viral loop design | `biz/growth/viral-loops.md` |
+| Dunning / payment recovery | `biz/growth/dunning.md` |
+| CRO analyses | `biz/growth/cro/{page-or-flow}-analysis.md` |
 
 ---
 
@@ -143,3 +143,5 @@ When experiments produce data, hand off to z-data-analyst for:
 - **z-marketer** — For acquisition strategy (this agent handles post-acquisition)
 - `docs/product-brief.md` — Product context
 - `biz/analytics/tracking-plan.md` — Event tracking for experiments
+- `biz/analytics/health-score.md` — Customer health score model
+- `biz/ops/feedback-log.md` — Qualitative churn signals
