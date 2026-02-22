@@ -1,5 +1,8 @@
 ---
 name: z-search-visibility
+metadata:
+  version: 1.0.0
+  category: marketing
 description: Comprehensive search visibility strategy skill covering SEO, AEO (Answer Engine Optimization), and GEO (Generative Engine Optimization). Covers traditional SEO (keyword research, on-page optimization, technical SEO, link building, content strategy), AEO (featured snippets, voice search, People Also Ask, zero-click optimization, FAQ schema, direct answer formatting), and GEO (AI search visibility, content extractability, entity clarity, multi-platform presence). Use when user asks about SEO, AEO, GEO, search optimization, AI visibility, keyword research, on-page SEO, technical SEO, backlinks, content strategy, AI citations, content extractability, featured snippets, voice search, answer engine, zero-click search, People Also Ask, FAQ optimization, direct answers, or mentions "SEO", "AEO", "GEO", "AI search", "search optimization", "ranking", "organic traffic", "AI visibility", "generative engine", "answer engine", "featured snippet", "voice search".
 ---
 

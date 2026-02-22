@@ -110,32 +110,32 @@ You need traditional SEO metrics, AEO metrics, and GEO metrics to see the full p
 ### AI Citation Frequency
 - **What**: How often AI platforms mention your brand when answering questions related to your domain
 - **Why it matters**: Direct measure of AI visibility. Higher frequency means more brand exposure through AI channels.
-- **Tools**: Semrush Enterprise AIO, Profound, manual tracking
-- **Track**: Citation count by AI platform (ChatGPT, Google AI Mode, Perplexity, Claude), citation count by topic area, citation count by query type
+- **How to track (free)**: Maintain a spreadsheet of 20-50 target queries relevant to your domain. Test monthly across ChatGPT, Perplexity, Google AI Mode, and Claude. Record: cited (yes/no), position in response, exact wording used, competitors also mentioned.
+- **Track**: Citation count by AI platform, citation count by topic area, citation count by query type
 - **Segment by**: AI platform, topic area, query type
 
 ### Share of Voice in AI Answers
 - **What**: Your mention frequency compared to competitors for the same queries
 - **Why it matters**: Shows competitive positioning in AI discovery
-- **Tools**: Track a set of target queries across AI platforms and compare mention rates
-- **Example**: For 100 queries about "best CRM software," Brand A appears 45 times, Brand B appears 30 times, your brand appears 12 times.
+- **How to track (free)**: Use the same query spreadsheet. For each query, note which brands are mentioned. Calculate your share: your mentions / total brand mentions across all queries.
+- **Example**: For 50 queries about "best CRM software," Brand A appears 25 times, Brand B appears 18 times, your brand appears 8 times. Your share of voice = 8/51 = 16%.
 
 ### Sentiment in AI Mentions
 - **What**: Whether AI answers frame your brand positively, neutrally, or negatively
 - **Why it matters**: Being mentioned is not enough. Negative framing is worse than not being mentioned.
-- **Tools**: Categorize each AI mention as positive, neutral, or negative. Track trends over time.
-- **Improve by**: Addressing root causes of negative sentiment (product issues, support gaps), building positive content and reviews.
+- **How to track (free)**: When recording citations, add a sentiment column (positive/neutral/negative). Note the exact framing. Track trends over time.
+- **Improve by**: Addressing root causes of negative sentiment (product issues, support gaps), building positive content and reviews on third-party platforms.
 
 ### Context / Prompt Tracking
 - **What**: Which specific questions, topics, or prompts trigger mentions of your brand in AI answers
 - **Why it matters**: Reveals which topics you "own" in AI perception vs. where you are invisible
-- **Tools**: Maintain a set of target queries across key topics. Test regularly against multiple AI platforms.
-- **Use for**: Identifying content gaps and strengths, and competitive opportunities.
+- **How to track (free)**: Organize your query spreadsheet by topic cluster. After 2-3 months, patterns emerge showing which topics consistently cite you and which don't.
+- **Use for**: Identifying content gaps (topics where you should appear but don't) and strengths (topics where you consistently appear).
 
-### AI Referral Traffic (Emerging)
+### AI Referral Traffic
 - **What**: Visits to your site that originated from AI platforms
-- **Tools**: GA4 with proper referral tracking, UTM parameters where possible
-- **Reality check**: Still difficult to track accurately. Many AI-driven visits appear as direct traffic or branded organic search.
+- **How to track (free)**: In GA4, set up a custom channel group called "AI Referral" that includes sources: `chatgpt.com`, `perplexity.ai`, `gemini.google.com`, `claude.ai`. Also check server access logs for AI crawler user agents: GPTBot, ChatGPT-User, PerplexityBot, ClaudeBot, Google-Extended.
+- **Reality check**: Many AI-driven visits appear as direct traffic or branded organic search. Supplement with "how did you hear about us?" surveys that include an AI option.
 - **Track what you can**: Referral traffic from perplexity.ai, chatgpt.com, and other AI platforms that include referral information.
 
 ---
@@ -210,10 +210,12 @@ While direct attribution across all three layers is limited, look for correlatin
 - **Rich Results Test**: Validates structured data eligibility.
 - **Manual voice assistant testing**: Direct testing on Google Assistant, Siri, Alexa for priority queries.
 
-### GEO / AI Visibility
-- **Semrush Enterprise AIO**: AI visibility tracking across ChatGPT, Google AI Mode, Perplexity.
-- **Profound**: AI search monitoring and competitive analysis.
-- **Manual monitoring**: Regularly test target queries across AI platforms and document results.
+### GEO / AI Visibility (Zero-Cost)
+- **Manual prompt testing**: Spreadsheet of 20-50 queries, test monthly across ChatGPT/Perplexity/Google AI Mode/Claude. See GEO Metrics section above for tracking details.
+- **GA4 AI referral channel**: Custom channel group for `chatgpt.com`, `perplexity.ai`, `gemini.google.com`.
+- **GSC brand query trends**: Rising branded searches = indirect GEO attribution.
+- **Server logs**: Check AI crawler user agents (GPTBot, ChatGPT-User, PerplexityBot, ClaudeBot, Google-Extended).
+- **Signup survey**: Add "AI tool recommended it" option.
 
 ### Integrated
 - **Semrush**: Offers traditional SEO tools, SERP feature tracking (AEO), and AI visibility tracking in Enterprise tier.

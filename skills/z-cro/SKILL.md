@@ -1,5 +1,8 @@
 ---
 name: z-cro
+metadata:
+  version: 1.0.0
+  category: growth
 description: |
   Conversion Rate Optimization for pages, forms, signup flows, onboarding, popups, and paywalls.
   Use when: analyzing page conversion, optimizing signup flows, improving onboarding activation,

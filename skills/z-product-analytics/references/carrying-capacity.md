@@ -263,6 +263,21 @@ This reveals which segment to double down on.
 
 ---
 
+## CC and Revenue Metrics
+
+CC measures product health (user retention). It doesn't measure revenue health. When CC looks good but revenue doesn't (or vice versa), these diagnostics help:
+
+| Situation | Diagnosis | Fix |
+|-----------|-----------|-----|
+| CC rising + revenue flat | Users stay but don't pay enough | Pricing/packaging problem. See z-pricing. |
+| CC flat + revenue rising | Existing users expand, but no new organic growth | Good short-term, fragile long-term. Improve product or top-of-funnel. |
+| CC rising + revenue rising | Healthy | Keep going. |
+| Both declining | Urgent | Fix retention first (see Kill/Keep/Scale above). |
+
+For solopreneurs without paid acquisition, track your **organic ratio** (organic signups / total signups). Target > 70%. If it's high and CC is rising, your business is fundamentally healthy.
+
+---
+
 ## Common Mistakes
 
 ### Counting Paid Traffic in CC

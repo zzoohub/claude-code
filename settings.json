@@ -16,7 +16,6 @@
     "pulumi-authoring@pulumi-agent-skills": true,
     "Notion@claude-plugins-official": true,
     "supabase@claude-plugins-official": true,
-    "huggingface-skills@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
     "neon-plugin@neon": true,
     "posthog@claude-plugins-official": true,

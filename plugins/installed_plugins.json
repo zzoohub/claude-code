@@ -161,16 +161,6 @@
         "gitCommitSha": "2cd88e7947b7382e045666abee790c7f55f669f3"
       }
     ],
-    "huggingface-skills@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/huggingface-skills/1.0.0",
-        "version": "1.0.0",
-        "installedAt": "2026-02-12T16:17:23.249Z",
-        "lastUpdated": "2026-02-12T16:17:23.249Z",
-        "gitCommitSha": "3f4f55d6264b7baddec94031eeda70780d7e9189"
-      }
-    ],
     "claude-md-management@claude-plugins-official": [
       {
         "scope": "user",

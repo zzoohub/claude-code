@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-02-22T00:12:29.076Z",
+    "lastUpdated": "2026-02-22T01:38:02.810Z",
     "autoUpdate": true
   },
   "expo-plugins": {
@@ -14,7 +14,7 @@
       "repo": "expo/skills"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/expo-plugins",
-    "lastUpdated": "2026-02-21T01:38:36.057Z",
+    "lastUpdated": "2026-02-22T02:09:16.886Z",
     "autoUpdate": true
   },
   "claude-d2-diagrams": {

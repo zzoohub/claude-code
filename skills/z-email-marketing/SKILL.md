@@ -1,5 +1,8 @@
 ---
 name: z-email-marketing
+metadata:
+  version: 1.0.0
+  category: marketing
 description: |
   Email marketing strategy, sequence design, and campaign execution for SaaS products.
   Use when: creating email sequences (welcome, nurture, onboarding, re-engagement, win-back),

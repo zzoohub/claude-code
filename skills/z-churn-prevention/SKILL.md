@@ -1,5 +1,8 @@
 ---
 name: z-churn-prevention
+metadata:
+  version: 1.0.0
+  category: growth
 description: |
   Churn prevention strategies, cancel flow optimization, payment recovery, and customer health scoring.
   Use when: designing cancel flows, creating save offers, implementing dunning sequences,

@@ -1,5 +1,8 @@
 ---
 name: z-pricing
+metadata:
+  version: 1.0.0
+  category: marketing
 description: |
   SaaS pricing strategy, tier design, packaging, and pricing page optimization.
   Use when: setting prices, designing tiers, choosing pricing models, creating pricing pages,

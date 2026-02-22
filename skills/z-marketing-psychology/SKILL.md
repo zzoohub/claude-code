@@ -1,5 +1,8 @@
 ---
 name: z-marketing-psychology
+metadata:
+  version: 1.0.0
+  category: marketing
 description: |
   70+ mental models and psychological principles for marketing, pricing, and growth decisions.
   Use when: applying persuasion principles, understanding buyer psychology, choosing pricing tactics,

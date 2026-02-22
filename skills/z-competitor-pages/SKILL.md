@@ -1,5 +1,8 @@
 ---
 name: z-competitor-pages
+metadata:
+  version: 1.0.0
+  category: marketing
 description: |
   Competitor comparison pages, alternative pages, and vs pages for SEO and conversion.
   Use when: creating "[Competitor] alternative" pages, "vs" comparison pages, competitor
