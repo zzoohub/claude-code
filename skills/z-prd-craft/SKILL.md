@@ -175,20 +175,16 @@ NOT by technical component.
 
 ### 7. User Journeys (Functional)
 
-**MANDATORY: Before writing this section, you MUST invoke the `/z-ux-design` skill using the Skill tool.** This is not optional. The z-ux-design skill provides UX design principles, cognitive frameworks, and interaction patterns that are essential for designing high-quality user journeys. Do NOT attempt to write user journeys without first loading z-ux-design — the quality difference is significant.
+Describe key user journeys as step-by-step functional flows. These capture the logical sequence of what happens — not how screens look.
 
-**Workflow:**
-1. Call the Skill tool with `skill: "z-ux-design"` to load UX design context
-2. Apply its cognitive principles, ergonomics, and design process frameworks to inform the user journey design
-3. Then write the user journeys below using both PRD rigor and UX design expertise
-
-**User Journey requirements:**
-- Describe key user journeys as step-by-step functional flows (e.g., "User clicks 'Sign Up' → enters email → receives verification → lands on dashboard")
+**For each journey:**
+- Write as a numbered step sequence (e.g., "1. User clicks 'Sign Up' → 2. Enters email → 3. Receives verification → 4. Lands on dashboard")
 - Focus on WHAT happens at each step, not HOW it looks
-- Apply UX principles from z-ux-design: cognitive load management, progressive disclosure, error prevention, and feedback loops
-- Identify friction points, decision points, and moments of delight in each journey
-- Do NOT include wireframes, mockups, UI layouts, or any visual/UX specifications — these belong in separate design documents
-- The goal is to capture functional logic, decision points, and edge cases, not screen designs
+- Call out decision points ("If user already has an account → redirect to login")
+- Call out error states ("If email is invalid → show inline error, do not advance")
+- Note where the user might drop off or feel friction
+- Keep cognitive load in mind: avoid steps that ask for too much at once, prefer progressive disclosure (collect only what's needed at each stage)
+- Do NOT include wireframes, mockups, UI layouts, or visual specs — those belong in design documents
 
 ### 8. Scope & Non-Goals
 

@@ -267,68 +267,71 @@ export async function POST(request: Request) {
 
 ## Auth Patterns
 
-### Middleware Protection
+> **Auth.js v5** (`next-auth@5`) uses a unified `auth()` function that replaces `getServerSession`, `getToken`, `withAuth`, and `useSession` from v4. The examples below use Auth.js v5 patterns.
+>
+> **Security note**: After CVE-2025-29927, do NOT rely solely on middleware for auth. Always validate auth at the route/component level. Middleware is useful for redirects but should not be the only guard.
+
+### Auth Configuration (Auth.js v5)
 
 ```typescript
-// middleware.ts
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+// shared/lib/auth.ts
+import NextAuth from 'next-auth';
+import GitHub from 'next-auth/providers/github';
 
-const protectedRoutes = ['/dashboard', '/settings', '/profile'];
-const authRoutes = ['/login', '/register'];
-
-export async function middleware(request: NextRequest) {
-  const token = await getToken({ req: request });
-  const { pathname } = request.nextUrl;
-
-  // Redirect authenticated users away from auth pages
-  if (authRoutes.some(route => pathname.startsWith(route))) {
-    if (token) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-    return NextResponse.next();
-  }
-
-  // Protect routes
-  if (protectedRoutes.some(route => pathname.startsWith(route))) {
-    if (!token) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('callbackUrl', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-  }
-
-  return NextResponse.next();
-}
-
-export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
-};
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  providers: [GitHub],
+});
 ```
 
-### Server Component Auth Check
+```typescript
+// app/api/auth/[...nextauth]/route.ts
+import { handlers } from '@/shared/lib/auth';
+export const { GET, POST } = handlers;
+```
+
+### Server Component Auth Check (primary auth layer)
 
 ```tsx
 // app/dashboard/page.tsx
 import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/shared/lib/auth';
+import { auth } from '@/shared/lib/auth';
 
 export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
-  
+  const session = await auth();
+
   if (!session) {
     redirect('/login');
   }
 
   return (
     <div>
-      <h1>Welcome, {session.user.name}</h1>
+      <h1>Welcome, {session.user?.name}</h1>
       {/* Dashboard content */}
     </div>
   );
 }
+```
+
+### Middleware (redirects only, NOT sole auth layer)
+
+```typescript
+// middleware.ts
+import { auth } from '@/shared/lib/auth';
+
+export default auth((req) => {
+  const { pathname } = req.nextUrl;
+
+  // Redirect unauthenticated users to login (convenience redirect, not security boundary)
+  if (!req.auth && pathname.startsWith('/dashboard')) {
+    const loginUrl = new URL('/login', req.url);
+    loginUrl.searchParams.set('callbackUrl', pathname);
+    return Response.redirect(loginUrl);
+  }
+});
+
+export const config = {
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+};
 ```
 
 ### Client-Side Auth Hook
@@ -484,7 +487,7 @@ function CartBadge() {
 function CartItems() {
   const items = useCartStore((state) => state.items);
   const removeItem = useCartStore((state) => state.removeItem);
-  
+
   return (
     <ul>
       {items.map((item) => (
@@ -495,5 +498,106 @@ function CartItems() {
       ))}
     </ul>
   );
+}
+```
+
+---
+
+## Route Handlers
+
+### Basic CRUD Route Handler
+
+```typescript
+// app/api/products/route.ts
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { auth } from '@/shared/lib/auth';
+
+const createSchema = z.object({
+  name: z.string().min(1),
+  price: z.number().positive(),
+});
+
+// GET is uncached by default in Next.js 15+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const page = Number(searchParams.get('page') ?? '1');
+
+  const products = await db.product.findMany({
+    take: 20,
+    skip: (page - 1) * 20,
+  });
+
+  return NextResponse.json(products);
+}
+
+export async function POST(request: Request) {
+  const session = await auth();
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await request.json();
+  const result = createSchema.safeParse(body);
+
+  if (!result.success) {
+    return NextResponse.json({ error: result.error.flatten() }, { status: 400 });
+  }
+
+  const product = await db.product.create({ data: result.data });
+  return NextResponse.json(product, { status: 201 });
+}
+```
+
+### Dynamic Route Handler
+
+```typescript
+// app/api/products/[id]/route.ts
+import { NextResponse } from 'next/server';
+
+// params is a Promise in Next.js 15+ — must await
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const product = await db.product.findUnique({ where: { id } });
+
+  if (!product) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  return NextResponse.json(product);
+}
+```
+
+### Webhook Handler
+
+```typescript
+// app/api/webhooks/stripe/route.ts
+import { headers } from 'next/headers';
+import Stripe from 'stripe';
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+
+export async function POST(request: Request) {
+  const body = await request.text();
+  const headersList = await headers();
+  const signature = headersList.get('stripe-signature')!;
+
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
+  } catch {
+    return new Response('Invalid signature', { status: 400 });
+  }
+
+  switch (event.type) {
+    case 'checkout.session.completed':
+      await handleCheckoutComplete(event.data.object);
+      break;
+  }
+
+  return new Response('OK', { status: 200 });
 }
 ```

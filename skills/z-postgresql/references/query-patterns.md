@@ -274,7 +274,159 @@ DROP TABLE event_2024_01;
 
 **Rule**: Queries MUST include the partition key (`created_at`) in WHERE for partition pruning to work.
 
-## 12. Efficient Filtering Patterns
+## 12. UPSERT (INSERT ON CONFLICT)
+
+```sql
+-- Insert or update a single row
+INSERT INTO user_setting (user_id, key, value, updated_at)
+VALUES (:user_id, :key, :value, now())
+ON CONFLICT (user_id, key) DO UPDATE SET
+    value = EXCLUDED.value,
+    updated_at = EXCLUDED.updated_at;
+```
+
+**Pitfall**: `ON CONFLICT` requires a unique constraint or unique index on the conflict target columns. Without it, PostgreSQL raises an error.
+
+```sql
+-- Insert-only if not exists (no update on conflict)
+INSERT INTO user_account (email, name)
+VALUES ('user@example.com', 'New User')
+ON CONFLICT (email) DO NOTHING;
+
+-- Return the row whether inserted or existing
+INSERT INTO tag (name) VALUES ('postgresql')
+ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name  -- no-op update
+RETURNING id, name;
+```
+
+## 13. Window Functions
+
+Window functions compute values across a set of rows related to the current row without collapsing them into a single output row (unlike GROUP BY).
+
+### Top-N Per Group
+```sql
+-- Latest 3 orders per user
+SELECT * FROM (
+    SELECT o.*,
+        ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS rn
+    FROM "order" o
+) sub
+WHERE rn <= 3;
+```
+
+### Running Total
+```sql
+SELECT id, amount,
+    SUM(amount) OVER (ORDER BY created_at) AS running_total
+FROM payment
+WHERE user_id = :user_id;
+```
+
+### Compare to Previous Row
+```sql
+-- Revenue change from previous day
+SELECT
+    day,
+    revenue,
+    revenue - LAG(revenue) OVER (ORDER BY day) AS daily_change,
+    ROUND(100.0 * (revenue - LAG(revenue) OVER (ORDER BY day))
+        / NULLIF(LAG(revenue) OVER (ORDER BY day), 0), 2) AS pct_change
+FROM mv_daily_revenue;
+```
+
+### Ranking with Ties
+```sql
+-- RANK: same rank for ties, gaps after (1, 1, 3)
+-- DENSE_RANK: same rank for ties, no gaps (1, 1, 2)
+SELECT name, score,
+    RANK() OVER (ORDER BY score DESC) AS rank,
+    DENSE_RANK() OVER (ORDER BY score DESC) AS dense_rank
+FROM leaderboard;
+```
+
+## 14. DISTINCT ON (PostgreSQL-Specific)
+
+Returns one row per group — simpler than window function + subquery when you only need the first match.
+
+```sql
+-- Latest order per user (single query, no subquery)
+SELECT DISTINCT ON (user_id) *
+FROM "order"
+ORDER BY user_id, created_at DESC;
+```
+
+`ORDER BY` must start with the `DISTINCT ON` columns. PostgreSQL picks the first row per group according to that ordering.
+
+```sql
+-- Most recent login per user, only active users
+SELECT DISTINCT ON (u.id) u.id, u.name, l.logged_in_at
+FROM user_account u
+JOIN login l ON l.user_id = u.id
+WHERE u.status = 'active'
+ORDER BY u.id, l.logged_in_at DESC;
+```
+
+## 15. Conditional Aggregation
+
+### FILTER Clause (PG 9.4+)
+```sql
+-- Count orders by status in a single pass
+SELECT
+    COUNT(*) AS total,
+    COUNT(*) FILTER (WHERE status = 'pending') AS pending,
+    COUNT(*) FILTER (WHERE status = 'completed') AS completed,
+    SUM(total) FILTER (WHERE status = 'completed') AS completed_revenue
+FROM "order"
+WHERE created_at > now() - interval '30 days';
+```
+
+### CASE-Based Aggregation (portable alternative)
+```sql
+SELECT
+    date_trunc('month', created_at) AS month,
+    SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END) AS credits,
+    SUM(CASE WHEN type = 'debit' THEN amount ELSE 0 END) AS debits
+FROM transaction
+GROUP BY 1
+ORDER BY 1;
+```
+
+## 16. Date Gap-Filling with generate_series
+
+Time-series queries often have missing intervals. `generate_series` fills them.
+
+```sql
+-- Daily revenue including days with zero orders
+SELECT
+    d.day,
+    COALESCE(SUM(o.total), 0) AS revenue,
+    COALESCE(COUNT(o.id), 0) AS order_count
+FROM generate_series(
+    date_trunc('day', now() - interval '30 days'),
+    date_trunc('day', now()),
+    interval '1 day'
+) AS d(day)
+LEFT JOIN "order" o ON date_trunc('day', o.created_at) = d.day
+    AND o.status = 'completed'
+GROUP BY d.day
+ORDER BY d.day;
+```
+
+Also works for hourly, weekly, monthly:
+```sql
+-- Hourly signups (last 24 hours)
+SELECT h.hour, COUNT(u.id) AS signups
+FROM generate_series(
+    date_trunc('hour', now() - interval '24 hours'),
+    date_trunc('hour', now()),
+    interval '1 hour'
+) AS h(hour)
+LEFT JOIN user_account u ON date_trunc('hour', u.created_at) = h.hour
+GROUP BY h.hour
+ORDER BY h.hour;
+```
+
+## 17. Efficient Filtering Patterns
 
 ### Filter Early with CTEs
 ```sql

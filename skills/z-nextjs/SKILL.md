@@ -1,12 +1,12 @@
 ---
 name: z-nextjs
 description: |
-  Next.js 15+ App Router patterns and conventions.
-  Use when: setup or building web apps with Next.js, setting up project structure, implementing features, creating pages/components, writing Server Actions, data fetching.
+  Next.js 15/16 App Router patterns and conventions.
+  Use when: setup or building web apps with Next.js, setting up project structure, implementing features, creating pages/components, writing Server Actions, data fetching, error handling, metadata/SEO, route handlers.
   Do not use for: UX decisions (use z-ux-design), token/component design (use z-design-system), mobile apps.
   Workflow: this skill (building web apps) -> vercel-react-best-practices (refactoring and performance optimization if needed).
 references:
-  - references/examples.md    # Server Actions, Data Fetching, Auth patterns code
+  - references/examples.md    # Server Actions, Data Fetching, Auth, Route Handler examples
 ---
 
 # Next.js App Router Patterns
@@ -222,17 +222,104 @@ const [state, dispatch, isPending] = useActionState(serverAction, initialState);
 
 ## Data Caching
 
-**For latest caching APIs, use `context7` MCP or see [Next.js Caching docs](https://nextjs.org/docs/app/building-your-application/caching).**
+**For latest caching APIs, use `context7` MCP or see [Next.js Caching docs](https://nextjs.org/docs/app/getting-started/caching-and-revalidating).**
+
+**Critical mental model shift (Next.js 15+): Nothing is cached by default.** In Next.js 14, fetch requests and GET Route Handlers were cached automatically. In 15+, all caching is opt-in. You must explicitly declare what should be cached.
 
 | Pattern | Use for |
 |---------|---------|
 | `React.cache()` | Per-request deduplication (multiple components, one DB query) |
-| LRU cache (`lru-cache`) | Cross-request caching with TTL (preferred for stability) |
-| `revalidatePath()` | Invalidate specific path |
-| `revalidateTag()` | Invalidate by tag |
-| `after()` | Non-blocking post-response work (logging, analytics, cache invalidation) |
+| LRU cache (`lru-cache`) | Cross-request caching with TTL (stable, no config flags needed) |
+| `fetch()` with `next: { revalidate, tags }` | Fetch-level caching with time-based or tag-based revalidation |
+| `revalidatePath()` | Invalidate specific path after mutation |
+| `revalidateTag()` | Invalidate by tag after mutation |
+| `after()` | Non-blocking post-response work (logging, analytics, cache warming) |
 
-**Rule: Always set revalidation strategy. Don't cache indefinitely.**
+**Async dynamic APIs**: `cookies()`, `headers()`, `draftMode()` are all async in Next.js 15+ — must be awaited.
+
+**Rule: Caching is opt-in. Always set an explicit revalidation strategy when you cache.**
+
+---
+
+## Error Handling
+
+Every production app needs these file conventions:
+
+| File | Purpose | Notes |
+|------|---------|-------|
+| `error.tsx` | Route-level error boundary | Must be `'use client'`. Catches errors in `page.tsx` and nested children. |
+| `global-error.tsx` | Root layout error boundary | Must define its own `<html>` and `<body>` (replaces root layout on error). |
+| `not-found.tsx` | 404 page | Place at `app/not-found.tsx` for global 404. Also works per-segment. |
+| `loading.tsx` | Suspense boundary for route | Auto-wraps `page.tsx`. Shows instantly while streaming. |
+
+**Rendering hierarchy**: `layout` > `template` > `error` (error boundary) > `loading` (suspense boundary) > `not-found` (error boundary) > `page`
+
+```tsx
+// app/error.tsx — must be 'use client'
+'use client';
+
+export default function Error({ error, reset }: { error: Error; reset: () => void }) {
+  return (
+    <div>
+      <h2>Something went wrong</h2>
+      <button onClick={reset}>Try again</button>
+    </div>
+  );
+}
+```
+
+Use `notFound()` from `next/navigation` to trigger `not-found.tsx` for missing resources (e.g., user not found by ID).
+
+---
+
+## Metadata & SEO
+
+**For latest metadata APIs, use context7.**
+
+```tsx
+// Viewport must be a separate export (not inside metadata)
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
+// Static metadata
+export const metadata: Metadata = {
+  title: 'My App',
+  description: 'Description',
+};
+
+// OR dynamic metadata (async, for pages with params)
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id } = await params;
+  const product = await getProduct(id);
+  return {
+    title: product.name,
+    description: product.description,
+    openGraph: { title: product.name, images: [product.image] },
+    alternates: { canonical: `https://example.com/products/${id}` },
+  };
+}
+```
+
+**File-based conventions**: Place `favicon.ico`, `icon.png`, `apple-icon.png`, `opengraph-image.png` in `app/` directory. Use `sitemap.ts` and `robots.ts` for generated SEO files.
+
+---
+
+## Route Handlers vs Server Actions
+
+| Use case | Choose |
+|----------|--------|
+| Form mutations from your React components | **Server Actions** (simpler, type-safe) |
+| Public API for external clients | **Route Handlers** |
+| Webhook endpoints (Stripe, GitHub) | **Route Handlers** |
+| Proxy / BFF pattern | **Route Handlers** |
+
+Route Handlers go in `route.ts` files and export HTTP method functions (`GET`, `POST`, etc.) using Web Request/Response APIs. GET handlers are **uncached by default** in Next.js 15+.
+
+Do not call Route Handlers from Server Components — fetch data directly instead (avoids unnecessary network hop).
+
+-> Route Handler examples: `references/examples.md`
 
 ---
 
@@ -290,16 +377,27 @@ const [state, dispatch, isPending] = useActionState(serverAction, initialState);
 - [ ] Server data fetched in Server Components
 - [ ] Slow data wrapped in Suspense (async child SCs, non-async parent)
 - [ ] Forms use Server Actions + useActionState
+- [ ] Caching is opt-in (nothing cached by default in Next.js 15+)
 - [ ] Proper cache invalidation (revalidatePath/revalidateTag)
 - [ ] `React.cache()` for repeated queries within a request
+- [ ] Dynamic APIs awaited: `cookies()`, `headers()`, `params`, `searchParams`
+
+### Error Handling & SEO
+- [ ] `app/error.tsx` for route errors
+- [ ] `app/global-error.tsx` with own `<html>`/`<body>`
+- [ ] `app/not-found.tsx` for 404
+- [ ] `generateMetadata` or static `metadata` on pages
+- [ ] `viewport` exported separately from `metadata`
 
 ### Bundle
 - [ ] No barrel file imports (or `optimizePackageImports` configured)
 - [ ] Heavy components use `next/dynamic`
 - [ ] Analytics/logging deferred after hydration
 
-### Data Fetching & Auth
-→ Data fetching, auth guard, and middleware examples: `references/examples.md`
+### Auth & Security
+- [ ] Auth validated at route/component level, not just middleware (CVE-2025-29927)
+- [ ] Middleware used for routing concerns (rewrites, redirects, headers), not as sole auth layer
+→ Auth patterns: `references/examples.md`
 
 ### Design System
 - [ ] Using tokens from z-design-system (no hardcoded values)
@@ -319,3 +417,5 @@ const [state, dispatch, isPending] = useActionState(serverAction, initialState);
 | Cookies httpOnly | `true` |
 | Cookies secure | `true` |
 | Cookies sameSite | `strict` |
+
+**Middleware security**: After CVE-2025-29927 (critical severity 9.1, fixed in 15.2.3), Vercel recommends not relying solely on middleware for auth. Always validate authentication at the route/Server Component level as defense-in-depth. Middleware is best used for routing concerns: rewrites, redirects, header manipulation, locale detection.

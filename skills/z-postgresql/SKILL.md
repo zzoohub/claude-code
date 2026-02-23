@@ -5,14 +5,15 @@ description: >
   Implements schemas designed by z-database-design skill with correct query patterns.
   Use when: writing SELECT/INSERT/UPDATE/DELETE queries, optimizing slow queries,
   debugging EXPLAIN plans, implementing pagination, full-text search, bulk operations,
+  window functions, UPSERT, DISTINCT ON, conditional aggregation, time-series gap-filling,
   concurrency control, zero-downtime migrations, connection pooling, VACUUM strategy,
-  or any PostgreSQL query-level work.
+  batched backfills, pg_stat_statements setup, or any PostgreSQL query-level work.
   Do NOT use for: schema design or data modeling (use z-database-design skill first),
   basic SQL syntax lookup (use context7).
   Workflow: z-database-design (design) → this skill (implement queries).
 metadata:
   author: custom
-  version: 2.0.0
+  version: 2.1.0
   database: postgresql
 ---
 
@@ -56,7 +57,7 @@ Every query should aim for under 10,000 rows returned. Use LIMIT, keyset paginat
 ### Step 2: Write the Query
 - SELECT only needed columns (never `SELECT *` in production)
 - Filter early to reduce intermediate data volume
-- Use CTEs for readability; be aware of CTE materialization behavior
+- Use CTEs for readability. Since PG12, CTEs referenced once are automatically inlined (optimized like subqueries). Use `MATERIALIZED` to force materialization (useful as an optimization fence), or `NOT MATERIALIZED` to force inlining even when referenced multiple times
 - Use appropriate JOIN type and ensure join columns are indexed
 - Consult `references/query-patterns.md` for pattern-specific guidance
 
@@ -102,17 +103,24 @@ Key checks:
 | Hierarchical data | Recursive CTE with depth limit | `references/query-patterns.md` |
 | JSONB queries | GIN or expression index | `references/query-patterns.md` |
 | Concurrent edits | Optimistic locking (version column) | `references/query-patterns.md` |
+| Upsert / merge | INSERT ON CONFLICT | `references/query-patterns.md` |
+| Top-N per group | Window function + DISTINCT ON | `references/query-patterns.md` |
+| Running totals | SUM() OVER (ORDER BY) | `references/query-patterns.md` |
+| Pivot / crosstab | Conditional aggregation (FILTER) | `references/query-patterns.md` |
+| Missing time intervals | generate_series + LEFT JOIN | `references/query-patterns.md` |
 | Stale planner stats | ANALYZE after bulk operations | `references/production-ops.md` |
+| pg_stat_statements setup | Extension + config | `references/production-ops.md` |
 
 ## Critical Rules
 
-- **Never `SELECT *` in production** — specify columns explicitly
-- **Always EXPLAIN before and after optimization** — measure, don't guess
-- **Composite index order matters** — equality → range → sort (leftmost prefix rule)
-- **Partial index WHERE must match query WHERE exactly** — PostgreSQL won't infer implied conditions
-- **Run ANALYZE after bulk DELETE/INSERT** — stale statistics cause wrong plan choices
-- **Index FK columns** — PostgreSQL does not auto-index foreign keys; missing FK indexes cause slow CASCADE deletes
-- **Use TIMESTAMPTZ** — never bare TIMESTAMP (inherited from z-database-design)
-- **Use NUMERIC for money** — never FLOAT/REAL (inherited from z-database-design)
-- **Keyset pagination over OFFSET** — OFFSET has O(n) cost
-- **CONCURRENTLY for production indexes** — regular CREATE INDEX blocks writes
+- **Specify columns in SELECT** — `SELECT *` fetches unnecessary data, breaks index-only scans, and couples code to schema changes
+- **EXPLAIN before and after optimization** — guessing at performance is unreliable; measure with `EXPLAIN (ANALYZE, BUFFERS)` to confirm the plan changed
+- **Composite index order: equality → range → sort** — PostgreSQL uses composite indexes left-to-right. Once a range condition is hit, subsequent columns are less effective (leftmost prefix rule). See `references/indexing-pitfalls.md`
+- **Partial index WHERE must match query WHERE exactly** — PostgreSQL won't infer that your application logic guarantees the condition
+- **Run ANALYZE after bulk operations** — the planner relies on row-count statistics; stale stats after large INSERT/UPDATE/DELETE cause it to pick wrong plans
+- **Index FK columns** — PostgreSQL does not auto-index foreign keys. Missing FK indexes cause slow CASCADE deletes and slow joins
+- **TIMESTAMPTZ over TIMESTAMP** — bare TIMESTAMP loses timezone context and breaks across timezones (inherited from z-database-design)
+- **NUMERIC for money, not FLOAT** — floating-point arithmetic introduces rounding errors in financial calculations (inherited from z-database-design)
+- **Keyset pagination over OFFSET** — OFFSET scans and discards rows with O(n) cost that worsens with page depth; keyset is O(1)
+- **CONCURRENTLY for production indexes** — `CREATE INDEX` without CONCURRENTLY takes a write lock on the entire table, blocking inserts/updates until done
+- **Use PROCEDURE for batched backfills** — DO blocks run in a single transaction and cannot COMMIT between batches; use `CREATE PROCEDURE` + `CALL` for incremental commits (see `references/production-ops.md`)

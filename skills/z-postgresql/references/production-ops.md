@@ -61,10 +61,12 @@ ALTER TABLE user_account DROP COLUMN name;
 
 Single UPDATE on millions of rows = table lock + WAL bloat. Always batch.
 
+Transaction control (COMMIT between batches) requires a `PROCEDURE` — `DO` blocks run in a single transaction and cannot commit mid-execution.
+
 ```sql
-DO $$
+CREATE OR REPLACE PROCEDURE backfill_new_column(batch_size INT DEFAULT 5000)
+LANGUAGE plpgsql AS $$
 DECLARE
-    batch_size INT := 5000;
     affected INT;
 BEGIN
     LOOP
@@ -80,10 +82,32 @@ BEGIN
 
         GET DIAGNOSTICS affected = ROW_COUNT;
         EXIT WHEN affected = 0;
-        COMMIT;
-        PERFORM pg_sleep(0.1);  -- reduce load
+        COMMIT;  -- releases locks, writes WAL for this batch only
+        PERFORM pg_sleep(0.1);  -- reduce load between batches
     END LOOP;
 END $$;
+
+-- Run it:
+CALL backfill_new_column(5000);
+
+-- Clean up when done:
+DROP PROCEDURE backfill_new_column;
+```
+
+**Alternative (simple loop from application code)** — if your migration framework doesn't support procedures, loop from the app:
+```sql
+-- Run this in a loop from application code, each call in its own transaction:
+WITH batch AS (
+    SELECT id FROM user_account
+    WHERE new_column IS NULL
+    LIMIT 5000
+    FOR UPDATE SKIP LOCKED
+)
+UPDATE user_account u
+SET new_column = compute_value(u.old_column)
+FROM batch b WHERE u.id = b.id;
+-- Check affected rows; stop when 0
+```
 ```
 
 ## 3. VACUUM & ANALYZE Strategy
@@ -208,7 +232,36 @@ checkpoint_completion_target = 0.9
 max_wal_size = '4GB'
 ```
 
-## 7. Monitoring Checklist
+## 7. Enabling pg_stat_statements
+
+Several diagnostic queries in this skill rely on `pg_stat_statements`. It's not enabled by default.
+
+```sql
+-- 1. Add to postgresql.conf (requires restart)
+-- shared_preload_libraries = 'pg_stat_statements'
+
+-- 2. Create the extension (no restart needed after library is loaded)
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+
+-- 3. Verify it's working
+SELECT count(*) FROM pg_stat_statements;
+```
+
+Key settings (postgresql.conf):
+```ini
+pg_stat_statements.max = 5000          # max tracked statements (default 5000)
+pg_stat_statements.track = top         # track top-level statements only (default)
+pg_stat_statements.track_utility = on  # track utility commands (CREATE, ALTER, etc.)
+```
+
+On managed PostgreSQL services (RDS, Cloud SQL, Neon, Supabase), this extension is usually pre-installed — you just need `CREATE EXTENSION`.
+
+```sql
+-- Reset statistics (useful after deploying query changes)
+SELECT pg_stat_statements_reset();
+```
+
+## 8. Monitoring Checklist
 
 | What to Monitor | Query / Tool | Threshold |
 |-----------------|-------------|-----------|
