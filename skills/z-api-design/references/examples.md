@@ -2,6 +2,19 @@
 
 Full request/response examples for common patterns.
 
+## Table of Contents
+
+- [CRUD Operations](#crud-operations) — Create, Read, Update, Delete + Idempotency Key
+- [Error Responses (RFC 9457)](#error-responses-rfc-9457) — 422, 404, 409, 401, 429
+- [Pagination](#pagination) — Cursor-based, Offset-based
+- [Filtering & Sorting](#filtering--sorting) — Filters, Sort, Field Selection
+- [Caching](#caching) — ETag, Conditional Requests, Cache Headers
+- [Authentication](#authentication) — Bearer Token, API Key
+- [Async Operations (202)](#async-operations-202) — Job Start, Polling
+- [Bulk Operations](#bulk-operations) — Batch Create/Delete
+- [Health Checks](#health-checks) — Liveness, Readiness
+- [Webhooks](#webhooks) — Sending, HMAC Verification
+
 ---
 
 ## CRUD Operations
@@ -32,6 +45,40 @@ Content-Type: application/json
   }
 }
 ```
+
+### Create with Idempotency Key
+
+For operations that must not be duplicated on retry (payments, transfers):
+
+```http
+POST /payments HTTP/2
+Content-Type: application/json
+Idempotency-Key: txn_8a3b2c1d-e5f6-7890-abcd-ef1234567890
+
+{
+  "amount": 5000,
+  "currency": "USD",
+  "recipient": "user_456"
+}
+```
+
+```http
+HTTP/2 201 Created
+Location: /payments/pay_789
+Content-Type: application/json
+
+{
+  "data": {
+    "id": "pay_789",
+    "amount": 5000,
+    "currency": "USD",
+    "status": "completed",
+    "createdAt": "2024-10-24T12:00:00Z"
+  }
+}
+```
+
+Retry with the same `Idempotency-Key` returns the original response without creating a duplicate.
 
 ### Read Single (GET)
 
@@ -356,19 +403,21 @@ Vary: Accept, Authorization
 
 ## Authentication
 
-### Bearer Token
+### Bearer Token (JWT)
 
 ```http
 GET /users/me HTTP/2
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Authorization: Bearer eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 ### API Key
 
 ```http
 GET /data HTTP/2
-X-API-Key: sk_live_abc123def456
+Authorization: Bearer sk_live_abc123def456
 ```
+
+Note: Prefer `Authorization` header over custom headers like `X-API-Key`. The `Authorization` header is standard HTTP and works well with proxies, logging tools, and security middleware.
 
 ---
 
@@ -450,4 +499,91 @@ Content-Type: application/json
     }
   }
 }
+```
+
+---
+
+## Health Checks
+
+### Liveness
+
+```http
+GET /health HTTP/2
+```
+
+```http
+HTTP/2 200 OK
+Content-Type: application/json
+
+{
+  "status": "ok"
+}
+```
+
+### Readiness (checks dependencies)
+
+```http
+GET /health/ready HTTP/2
+```
+
+```http
+HTTP/2 200 OK
+Content-Type: application/json
+
+{
+  "status": "ok",
+  "checks": {
+    "database": "ok",
+    "cache": "ok",
+    "queue": "ok"
+  }
+}
+```
+
+```http
+HTTP/2 503 Service Unavailable
+Content-Type: application/json
+
+{
+  "status": "degraded",
+  "checks": {
+    "database": "ok",
+    "cache": "timeout",
+    "queue": "ok"
+  }
+}
+```
+
+---
+
+## Webhooks
+
+### Sending a Webhook
+
+```http
+POST https://customer.example.com/webhooks HTTP/2
+Content-Type: application/json
+X-Webhook-Signature: sha256=a1b2c3d4e5f6...
+X-Webhook-Timestamp: 1699900000
+X-Webhook-Id: evt_abc123
+
+{
+  "event": "order.completed",
+  "data": {
+    "orderId": 789,
+    "total": 4999,
+    "currency": "USD"
+  },
+  "occurredAt": "2024-10-24T12:00:00Z"
+}
+```
+
+### Verifying a Webhook (receiver side)
+
+```
+expected = HMAC-SHA256(webhook_secret, timestamp + "." + raw_body)
+if expected != signature_from_header:
+    return 401
+if now() - timestamp > 300:  # 5 minute tolerance
+    return 401  # replay attack
 ```

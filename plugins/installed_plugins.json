@@ -210,6 +210,16 @@
         "lastUpdated": "2026-02-21T01:34:10.118Z",
         "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
       }
+    ],
+    "skill-creator@claude-plugins-official": [
+      {
+        "scope": "user",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/skill-creator/aa296ec81e8c",
+        "version": "aa296ec81e8c",
+        "installedAt": "2026-02-23T04:08:49.808Z",
+        "lastUpdated": "2026-02-23T04:08:49.808Z",
+        "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
+      }
     ]
   }
 }
