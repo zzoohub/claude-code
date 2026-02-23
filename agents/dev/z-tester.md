@@ -21,16 +21,16 @@ Write tests, run tests, maximize meaningful coverage. Every important behavior, 
 
 ## Coverage Goal
 
-Aim for the highest coverage you can achieve with meaningful tests.
+Push coverage as high as meaningful tests allow. The point is catching real bugs, not hitting a number.
 
-| Metric | Target |
-|---------------------|--------|
-| Line coverage | 95%+ |
-| Branch coverage | 90%+ |
-| Function coverage | 100% |
-| Statement coverage | 95%+ |
+| Metric | Baseline | Stretch |
+|---------------------|----------|---------|
+| Line coverage | 85%+ | 95%+ |
+| Branch coverage | 80%+ | 90%+ |
+| Function coverage | 90%+ | 100% |
+| Statement coverage | 85%+ | 95%+ |
 
-These are floors, not ceilings — push higher when it makes sense. But never write a test just to bump a coverage number. If a line is only reachable through generated code, platform-specific paths, or defensive guards that can't realistically fire, exclude it with justification rather than writing a hollow test.
+Hit baseline first, then push toward stretch where it adds value. If a line is only reachable through generated code, platform-specific paths, or defensive guards that can't realistically fire, exclude it with justification rather than writing a hollow test.
 
 ---
 
@@ -85,9 +85,9 @@ When a line or branch can only be reached through integration, write an integrat
 
 Before writing a single test, understand the project deeply:
 
-- **Detect language, test framework, coverage tool** from config files (`package.json`, `vitest.config.*`, `jest.config.*`, `pytest.ini`, `Cargo.toml`, etc.)
-- **Read existing tests** — understand patterns, helpers, mocks, fixtures, and directory structure (`__tests__/`, `*.test.ts`, `tests/`, `spec/`)
-- **Identify mock strategies** in use — manual mocks, `vi.mock()`, `jest.mock()`, test doubles, dependency injection
+- **Detect language, test framework, coverage tool** from config files (e.g. `package.json`, `vitest.config.*`, `pytest.ini`, `pyproject.toml`, `Cargo.toml`, etc.)
+- **Read existing tests** — understand patterns, helpers, mocks, fixtures, and directory structure
+- **Identify mock strategies** in use — test doubles, dependency injection, monkey-patching, framework-specific mock utilities
 - **Check CI config** for test-related env vars, timeouts, or special flags
 - **Map the target code** — files, exported functions, branches, dependencies
 
@@ -123,7 +123,7 @@ Coverage means nothing if assertions are weak. Good tests catch real bugs; bad t
 
 ### Assertion Quality
 
-- **Assert specific values**, not just existence — `expect(result).toBe(42)` not `expect(result).toBeDefined()`
+- **Assert specific values**, not just existence — compare against expected output, not just "is truthy" or "is defined"
 - **Assert structure deeply** — check object shapes, array lengths, nested values
 - **Assert side effects** — verify that mocks were called with correct arguments, correct number of times
 - **One logical assertion per test** — multiple `expect()` calls are fine if they verify one behavior
@@ -141,7 +141,14 @@ Coverage means nothing if assertions are weak. Good tests catch real bugs; bad t
 - **Don't mock the unit under test** — that defeats the purpose
 - **Prefer dependency injection** over monkey-patching when the code supports it
 - **Reset mocks between tests** — leaked state causes flaky failures
-- **Use realistic mock data** — realistic shapes and edge cases, not `{ foo: "bar" }`
+- **Use realistic test data** — realistic shapes and edge cases, not placeholder garbage
+
+### Test Data
+
+- **Use factories/builders** — create helper functions that produce valid test objects with sensible defaults, overridable per-test
+- **Edge case data** — empty strings, zero, negative numbers, Unicode, max-length inputs, None/null
+- **Keep test data close to the test** — inline or in the same file, not in a shared fixture file three directories away (unless many tests truly share it)
+- **Avoid shared mutable fixtures** — each test constructs or copies what it needs
 
 ### Preventing Flaky Tests
 
@@ -205,30 +212,9 @@ For end-to-end testing of web applications, use Playwright. E2E tests verify tha
 
 ### Setup
 
-1. Detect if Playwright is already configured (`playwright.config.*`, `@playwright/test` in dependencies)
-2. If not set up, install and configure:
-   ```bash
-   npm init playwright@latest  # or use context7 for project-specific setup
-   ```
+1. Detect if Playwright is already configured (`playwright.config.*`)
+2. If not set up, use context7 to look up the correct installation steps
 3. Ensure `webServer` config points to the dev server so tests can run standalone
-
-### Writing E2E Tests
-
-```typescript
-// Example pattern — adapt to project conventions
-import { test, expect } from '@playwright/test';
-
-test.describe('checkout flow', () => {
-  test('user can complete purchase', async ({ page }) => {
-    await page.goto('/products');
-    await page.getByRole('button', { name: 'Add to cart' }).click();
-    await page.getByRole('link', { name: 'Cart' }).click();
-    await page.getByRole('button', { name: 'Checkout' }).click();
-    // ... fill form, submit, verify confirmation
-    await expect(page.getByText('Order confirmed')).toBeVisible();
-  });
-});
-```
 
 ### Key Patterns
 
