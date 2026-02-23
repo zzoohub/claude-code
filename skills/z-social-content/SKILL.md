@@ -1,121 +1,219 @@
 ---
 name: z-social-content
 metadata:
-  version: 1.0.0
+  version: 2.0.0
   category: marketing
 description: |
   Social media content creation, content strategy, and multi-platform publishing.
   Use when: creating social posts, planning content calendars, developing content pillars,
-  writing LinkedIn/Twitter/Instagram content, repurposing content across platforms,
-  building topic clusters, or when user mentions "social media", "content strategy",
-  "content calendar", "social post", "LinkedIn post", "Twitter thread", "content pillar",
-  "content repurposing", "topic cluster", "editorial calendar".
-  Do NOT use for: email content (use z-email-marketing skill), ad creative (use z-ad-creative skill),
-  SEO/blog optimization (use z-search-visibility skill), or UX copy (use z-copywriting skill).
+  writing LinkedIn/Twitter/Instagram/TikTok/YouTube content, repurposing content across platforms,
+  building topic clusters, planning launch campaigns (Product Hunt, Hacker News, Reddit),
+  analyzing viral content, reverse-engineering top creators, building in public,
+  or when user mentions "social media", "content strategy", "content calendar", "social post",
+  "LinkedIn post", "Twitter thread", "Instagram carousel", "TikTok script", "YouTube script",
+  "content pillar", "content repurposing", "topic cluster", "editorial calendar",
+  "build in public", "launch strategy", "Product Hunt", "Hacker News", "Reddit marketing",
+  "viral content", "hook formula", "social media analytics", "engagement rate".
+  Make sure to use this skill even when the user doesn't explicitly mention social media --
+  if they're asking about content distribution, audience building, or platform strategy, this skill applies.
+  Do NOT use for: email content (use z-email-marketing), ad creative (use z-ad-creative),
+  SEO/blog optimization (use z-search-visibility), UX copy (use z-copywriting).
 ---
 
 # Social Content & Strategy
 
-Social media content creation, content strategy, and multi-platform publishing for SaaS products.
+Social media content creation, strategy, and multi-platform publishing -- built on research from 50+ sources including academic papers on virality, platform algorithm documentation, and methods from top practitioners (Justin Welsh, Alex Hormozi, Naval Ravikant, Sahil Bloom).
 
-**If `docs/product-brief.md` exists, read it first** for product context and audience info. If `biz/marketing/strategy.md` exists, read it for brand voice and channel priorities. If neither exists, ask the user for product context or infer from the request.
+**Read product context first.** If `docs/product-brief.md` exists, read it for product and audience info. If `biz/marketing/strategy.md` exists, read it for brand voice and channel priorities. If neither exists, ask the user or infer from the request.
+
+---
+
+## Core Principles
+
+These patterns hold across every platform and every successful practitioner:
+
+1. **Shares > Likes.** Across Instagram (DM shares = top signal), TikTok (+45% share growth), Twitter (retweets = 20x weight) -- sharing is the dominant algorithmic signal. Create content people want to SEND to someone specific.
+2. **Early engagement drives everything.** Twitter's 2-hour window, HN's 45-minute gravity, TikTok's follower-first testing -- every algorithm rewards fast initial engagement. Build a core community that engages quickly.
+3. **Hook in 3 seconds.** First line of text, first second of video. This determines everything. Invest 80% of creative effort here.
+4. **Platform-native wins.** Same insight, different execution per platform. Adapted repurposing beats copy-paste cross-posting.
+5. **Long-form creates short-form.** Start with one substantial piece, fragment into platform-specific content. This is how Welsh, Hormozi, and every efficient creator operates.
+6. **Consistency is the baseline.** No strategy works without showing up regularly. Algorithms reward predictability.
+7. **Authenticity is non-negotiable.** Personal stories and genuine insights outperform polished corporate messaging on every platform.
+8. **Community > Audience.** 1,000 real fans who interact > 10,000 silent followers. Brands with active communities see 53% higher retention.
+
+---
+
+## Platform Selection
+
+Not every platform matters. Pick 2-3 based on your audience and goal.
+
+| Goal | Primary | Secondary | Launch |
+|------|---------|-----------|--------|
+| B2B leads / thought leadership | LinkedIn | Twitter/X | - |
+| Developer audience | Twitter/X | YouTube | Hacker News |
+| Brand awareness (B2C) | TikTok | Instagram | - |
+| Product launch | Twitter/X | LinkedIn | Product Hunt, HN, Reddit |
+| Community building | Twitter/X | Reddit | Discord |
+| E-commerce / visual | Instagram | TikTok | - |
+| Indie hacker / solopreneur | Twitter/X | LinkedIn | PH, HN, Reddit |
+
+### The Solopreneur Content Stack
+
+**Primary Hub** (choose one): Newsletter, YouTube, or Blog
+**Distribution** (choose 2-3): Twitter/X, LinkedIn, Instagram
+**Launch platforms** (use strategically): Product Hunt, Hacker News, Reddit
+
+**Weekly workflow:**
+1. Create one long-form piece (hub content)
+2. Fragment into 5-10 platform-specific posts
+3. Engage 15-20 min/day on each active platform
+4. Review analytics weekly; adjust monthly
+5. Build email list from day one
+
+For detailed platform strategies, algorithms, and formatting -- read `references/platforms.md`.
 
 ---
 
 ## Content Strategy Framework
 
 ### 1. Define Content Pillars (3-5 themes)
-Content pillars are the core topics you consistently create around. Each pillar should:
+Content pillars are the core topics you consistently create around. Algorithms reward topic consistency -- LinkedIn explicitly tracks it, YouTube evaluates channels holistically, TikTok builds micro-community clusters. Going deep on a niche beats being broad.
+
+Each pillar should:
 - Align with your product's value proposition
-- Address your audience's interests and pain points
-- Be broad enough to generate many pieces, specific enough to be ownable
+- Address your audience's pain points and interests
+- Be broad enough for many pieces, specific enough to be ownable
 
 ### 2. Map Pillars to Platforms
-Not every pillar works on every platform. Match content themes to platform strengths.
+Match content themes to platform strengths. Not every pillar works everywhere.
 
-### 3. Create Editorial Calendar
-Plan content weekly, batch creation, schedule distribution.
+### 3. Build Repurposing Workflow (Waterfall System)
+One piece of content, many platforms and formats:
 
-### 4. Build Repurposing Workflow
-One piece of content → multiple platforms and formats.
+```
+Long-form (blog/video/podcast)
+  -> Twitter thread + LinkedIn post
+  -> Instagram carousel + TikTok clip
+  -> Email newsletter excerpt
+  -> Quote graphics + audiograms
+```
+
+### 4. Create Editorial Calendar
+Plan weekly, batch creation, schedule distribution. See `references/topic-clusters.md` for calendar templates and batching system.
 
 ### 5. Measure and Optimize
-Track engagement per pillar and platform. Double down on what works.
-
----
-
-## Platform Quick Reference
-
-| Platform | Best For | Frequency | Key Formats |
-|----------|----------|-----------|-------------|
-| **LinkedIn** | B2B, thought leadership | 3-5/week | Text posts, carousels, articles |
-| **Twitter/X** | Real-time, community, build-in-public | 1-3/day | Threads, quick takes, polls |
-| **Instagram** | Visual brands, lifestyle | 3-5/week | Reels, carousels, stories |
-| **TikTok** | Discovery, younger audience | 3-5/week | Short-form video |
-| **Facebook** | Communities, local | 3-5/week | Groups, long-form, video |
-
----
-
-## When to Use Which Reference
-
-| Scenario | Reference |
-|----------|-----------|
-| Platform-specific best practices | `references/platforms.md` |
-| Post templates, hook formulas | `references/post-templates.md` |
-| Analyzing viral content | `references/reverse-engineering.md` |
-| Content pillars, topic clusters, editorial planning | `references/topic-clusters.md` |
+Track engagement per pillar and platform. Double down on what works. See `references/metrics-benchmarks.md` for benchmarks and what to track.
 
 ---
 
 ## Content Creation Process
 
-1. **Check context** — Read `docs/product-brief.md` for product/audience info
-2. **Choose platform and format** — Match content to platform strength
-3. **Write the hook first** — Use hook formulas from `references/post-templates.md`
-4. **Apply z-copywriting principles** — One message, specific, scannable
-5. **Add value** — 80% value, 20% product mention
-6. **Plan repurposing** — How can this work on other platforms?
+1. **Check context** -- Read product brief for product/audience info
+2. **Choose platform and format** -- Match content to platform strength (see `references/platforms.md`)
+3. **Write the hook first** -- Use frameworks from `references/post-templates.md`
+   - Hook-Story-Offer (HSO): hook, relatable narrative, present solution
+   - Hook-Retain-Reward (Hormozi): stop scroll, maintain attention, deliver value
+   - PAS: Problem, Agitation, Solution
+4. **Apply viral psychology** -- Content spreads via high-arousal emotions (awe 25%, laughter 17%, amusement 15%). Optimize for shares, not just likes. See `references/reverse-engineering.md` for the science.
+5. **Follow 80/20 rule** -- 80% pure value, 20% product mention
+6. **Plan repurposing** -- How does this fragment for other platforms?
+7. **Engage after posting** -- Respond to comments within 30-60 min. Comments-as-content is one of the most underused growth tactics.
 
 ---
 
-## Hook Formulas
+## Hook System (Quick Reference)
 
 ### Curiosity Hooks
 - "Most people don't know this about [topic]..."
 - "I spent [time] studying [topic]. Here's what I found:"
-- "The [counterintuitive thing] about [topic]:"
+- "The real reason [outcome] happens isn't what you think."
 
 ### Story Hooks
 - "3 years ago, I [struggle]. Today, [outcome]."
 - "I almost [gave up/failed] when [pivotal moment]..."
-- "Here's what happened when I [bold action]:"
+- "Here's a story I've never shared:"
 
 ### Value Hooks
 - "[Number] [things] I wish I knew about [topic]:"
 - "Stop doing [common mistake]. Do this instead:"
-- "The simplest way to [desirable outcome]:"
+- "How to [desirable outcome] (without [common pain]):"
 
 ### Contrarian Hooks
 - "[Common belief] is wrong. Here's why:"
-- "Unpopular opinion: [contrarian take]"
+- "I stopped [common practice] and [positive result]."
 - "Everyone talks about [X]. Nobody mentions [Y]."
+
+### Data Hooks
+- "We analyzed [N] [things]. Here's what the data shows:"
+- "[Surprising statistic]. Here's why that matters:"
+
+For the full hook library, content frameworks (HSO, AIDA, PAS, STEPPS), and platform-specific templates -- read `references/post-templates.md`.
 
 ---
 
-## Build-in-Public Content Ideas
+## Build-in-Public Framework
 
-- Daily/weekly updates on building your product
-- Metric shares (revenue, users, lessons)
-- Feature decisions and why you made them
-- Customer feedback highlights
-- Mistakes and lessons learned
-- Behind-the-scenes of your process
+Building in public creates authentic content and compounds audience before launch.
+
+**What to share:**
+- Revenue numbers and user milestones (transparent, real)
+- Technical challenges and how you solved them
+- Failed experiments and learnings
+- Feature decisions and the reasoning behind them
+- Customer feedback stories
+
+**Where to share:**
+- Twitter/X (#buildinpublic), Indie Hackers, Reddit (r/SideProject, r/startups)
+- LinkedIn for professional narrative, personal blog for long-form
+
+**Why it works:** People root for transparent builders. Behind-the-scenes content triggers relatability and trust. Indie-style launches convert 3-8x better than Product Hunt alone because the audience is already invested.
+
+---
+
+## Community Building
+
+Community > broadcast. The shift from audience to community is real.
+
+**Implementation:**
+- **Reply to every comment** thoughtfully (not just "Thanks!"). 76% of consumers feel more loyal to brands that reply.
+- **Ask follow-up questions** to deepen conversations
+- **Turn great comments** into new post ideas
+- **Create exclusive spaces** (broadcast channels, Discord, groups) for superfans
+- **Feature community members** in your content
+- **Facilitate member-to-member connections** -- not just you-to-them
+
+**Micro-communities** (Twitter Communities, LinkedIn Groups, Instagram Broadcast Channels) often outperform large passive followings.
+
+---
+
+## Practitioner Methods (Quick Summary)
+
+| Creator | Platform | Method | Key Insight |
+|---------|----------|--------|-------------|
+| **Justin Welsh** | LinkedIn | Daily post, niche down, 45-min engagement window | Profile = storefront. Content > newsletter > digital products. $8.3M, zero ads. |
+| **Alex Hormozi** | Multi | Long-form first, repurpose everything, Hook-Retain-Reward | "Give 10x more value than expected." Volume + clarity. $4M content budget. |
+| **Naval Ravikant** | Twitter/X | Extreme brevity, timeless principles, low frequency | 5-10 posts/month. Each ignites platform-wide discussion. Quality compounds. |
+| **Sahil Bloom** | Twitter + Newsletter | Zone of Genius, frameworks as pillars, newsletter as hub | Intersection of skills, passion, and market need. |
+
+---
+
+## When to Read Which Reference
+
+| Scenario | Reference |
+|----------|-----------|
+| Platform-specific strategies, algorithms, formatting | `references/platforms.md` |
+| Hook formulas, content frameworks, post templates | `references/post-templates.md` |
+| Viral psychology, reverse-engineering creators, why content spreads | `references/reverse-engineering.md` |
+| Content pillars, topic clusters, editorial calendars, repurposing system | `references/topic-clusters.md` |
+| Engagement benchmarks, metrics to track, analytics framework | `references/metrics-benchmarks.md` |
 
 ---
 
 ## Cross-References
 
-- **z-copywriting** (skill) — For copy quality and persuasion principles
-- **z-search-visibility** (skill) — For SEO-driven content strategy
-- **z-marketing-psychology** (skill) — For engagement psychology
-- **z-ad-creative** (skill) — For paid social content
+- **z-copywriting** (skill) -- Copy quality, persuasion principles, microcopy
+- **z-search-visibility** (skill) -- SEO-driven content strategy, AEO, GEO
+- **z-marketing-psychology** (skill) -- 70+ mental models for engagement and persuasion
+- **z-ad-creative** (skill) -- Paid social content and ad creative
+- **z-email-marketing** (skill) -- Email sequences and newsletter strategy
+- **z-cro** (skill) -- Conversion optimization for landing pages and signup flows

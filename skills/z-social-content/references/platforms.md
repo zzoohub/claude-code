@@ -1,15 +1,41 @@
 # Platform-Specific Strategies
 
-Detailed strategy, formatting, and best practices for each social platform.
+Detailed strategy, algorithm mechanics, formatting, and best practices for each platform. Updated for 2025-2026.
+
+---
+
+## Table of Contents
+
+1. [LinkedIn](#linkedin)
+2. [Twitter/X](#twitterx)
+3. [Instagram](#instagram)
+4. [TikTok](#tiktok)
+5. [YouTube](#youtube)
+6. [Reddit](#reddit)
+7. [Product Hunt](#product-hunt)
+8. [Hacker News](#hacker-news)
+9. [Cross-Platform Principles](#cross-platform-principles)
 
 ---
 
 ## LinkedIn
 
-### Profile
-- B2B thought leadership, professional networking
-- Highest organic reach of major platforms (2024-2026)
-- Algorithm rewards conversation, not links
+### Algorithm Mechanics
+LinkedIn is fundamentally different from other platforms -- it's designed to **prevent virality**, not encourage it. The algorithm prioritizes relevance to professional interests over raw engagement.
+
+**Three-step filter:**
+1. **Content quality check** -- spam detection, engagement bait filtering (aggressive in 2025-2026)
+2. **Early engagement test** -- shown to small subset; comments and dwell time measured
+3. **Broader distribution** -- if early signals are strong, shown to wider network
+
+**Key signals (in order of weight):**
+- Comments and meaningful discussions (comments >> likes)
+- Dwell time (how long people spend reading)
+- "See more" clicks (longer posts that hold attention)
+- Topic relevance to viewer's professional interests
+- Creator recognition (consistent posting on a specific topic builds algorithmic authority)
+
+**Important:** Posts can resurface 2-3 weeks later if still relevant. LinkedIn values relevance over recency.
 
 ### Content Formats
 
@@ -24,49 +50,58 @@ Detailed strategy, formatting, and best practices for each social platform.
 | External link | Low | Blog traffic (put link in comments) |
 
 ### Posting Strategy
-- **Frequency**: 3-5x/week
+- **Frequency**: 1x/day (Justin Welsh posts daily, early morning East Coast)
 - **Best times**: Tue-Thu, 8-10am local time
-- **Post length**: 1,200-1,500 characters sweet spot
-- **Hashtags**: 3-5 relevant hashtags, mix broad and niche
+- **Post length**: 1,200-1,500 characters sweet spot. Longer posts trigger "see more" which counts as engagement.
+- **Hashtags**: 3-5 relevant via Creator Mode
 
-### Algorithm Tips
-- First 90 minutes matter most — engage with comments immediately
-- "Dwell time" matters — longer posts that hold attention perform better
-- External links suppress reach — put links in first comment
-- Carousels keep users on-platform longer = more reach
-- Tag people sparingly (only if they'll engage)
-- Avoid engagement bait ("Like if you agree")
+### Tactical Playbook
+- **First 45 minutes are critical** -- respond to all comments immediately. Welsh's rule: engage within 45 minutes.
+- External links suppress reach -- put links in first comment
+- Carousels keep users on-platform longer = more algorithmic favor
+- Tag people sparingly and only if they'll engage back
+- Engage with 6-8 professionals in your niche weekly
+- **Profile optimization**: Banner = clear CTA, Headline = value proposition, Featured section = storefront, About = PAS narrative
 
-### LinkedIn-Specific Formatting
+### Formatting Template
 ```
-[Hook line — bold statement or question]
+[Hook line -- bold statement, question, or surprising insight]
 
 [Line break]
 
-[Short paragraph — context or story]
+[Short paragraph -- context, story, or setup]
 
 [Line break]
 
-[Bullet points or numbered list — the value]
-• Point 1
-• Point 2
-• Point 3
+[Bullets or numbered list -- the core value]
+- Point 1
+- Point 2
+- Point 3
 
 [Line break]
 
 [Closing thought or question to drive comments]
 
-[Hashtags]
+#hashtag1 #hashtag2 #hashtag3
 ```
 
 ---
 
 ## Twitter/X
 
-### Profile
-- Real-time conversation, tech community, news
-- Thread format for long-form
-- Community building through replies and quote tweets
+### Algorithm Mechanics
+Three-stage pipeline via "Home Mixer": candidate retrieval (~1,500 tweets), ranking, filtering.
+
+**Engagement scoring weights:**
+- Retweets: **20x** multiplier
+- Replies: **13.5x**
+- Profile clicks: **12x**
+- Link clicks: **11x**
+- Bookmarks: **10x**
+
+**Critical window:** First 2 hours determine reach. Speed of engagement matters more than total engagement.
+
+**Twitter Blue/Premium:** ~4x visibility boost for followers, ~2x for non-followers. Pay-to-play is real for serious growth.
 
 ### Content Formats
 
@@ -77,83 +112,108 @@ Detailed strategy, formatting, and best practices for each social platform.
 | Quote tweet + insight | Riding trending topics |
 | Poll | Quick engagement |
 | Image + text | Data, screenshots, infographics |
-| Video (< 2 min) | Demos, behind-scenes |
+| Video (< 2 min) | Demos, behind-scenes (2-4x more reach than text) |
 
 ### Posting Strategy
-- **Frequency**: 3-10x/day (mix of original + replies)
+- **Frequency**: 3-5 tweets/day for growth (mix of original + replies)
 - **Best times**: Mon-Fri, 8-10am and 12-1pm
-- **Thread length**: 5-15 tweets (front-load value)
+- **Thread length**: 5-15 tweets, front-load value
 - **Hashtags**: 0-2 (less is more on Twitter)
 
-### Algorithm Tips
+### Tactical Playbook
+- **First tweet of a thread determines everything** -- invest 80% of effort there
+- Media-rich tweets get ~2x algorithmic boost vs text-only
 - Replies and conversations boost reach more than likes
-- First tweet of a thread determines everything — invest 80% of effort there
-- Images stop the scroll — use screenshots, charts, diagrams
-- Consistency matters more than virality
 - Engage in others' threads to build reciprocity
 - Quote tweets with added insight > plain retweets
+- Respond to replies within first 30 minutes
+- Build "reply chains" with high-influence accounts in your niche
 
 ### Thread Structure
 ```
-Tweet 1 (Hook): [Bold claim or promise — this determines if anyone reads]
+Tweet 1 (Hook): [Bold claim or promise -- this determines everything]
 
-Tweet 2: [Context — why this matters]
+Tweet 2: [Context -- why this matters, personal credibility]
 
-Tweets 3-N: [The content — one point per tweet]
+Tweets 3-N: [Content -- one point per tweet, visual when possible]
 
 Tweet N+1: [Summary or actionable takeaway]
 
-Tweet N+2: [CTA + retweet ask]
-"If this was helpful, RT the first tweet so others see it too."
+Tweet N+2: [CTA: "If this was helpful, RT the first tweet so others see it too."]
 ```
 
 ---
 
 ## Instagram
 
-### Profile
-- Visual brands, lifestyle, personal brands
-- Reels dominate for reach; Stories for engagement
-- Shopping and product discovery
+### Algorithm Mechanics
+Instagram runs **separate algorithms** for Feed, Stories, Reels, and Explore. The unified metric across all formats is now "Views."
+
+**Key signals (2025-2026):**
+- **DM shares are the strongest signal.** If users send your content to friends, the algorithm treats it as highly distributable. Design content that passes "the DM test" -- would someone send this to a specific friend?
+- Watch time: 50%+ must watch past the first 3 seconds or content gets deprioritized
+- Saves and shares weight more than likes
+- Originality: algorithm detects duplicate sounds, recycled formats, heavily templated visuals
+
+**Engagement behavior shift:**
+- Comments per post fell -16%
+- Shares per post rose +12%
+- DM sharing is now the dominant signal
 
 ### Content Formats
 
 | Format | Reach | Engagement | Best For |
 |--------|-------|-----------|----------|
-| Reels (15-60s) | Highest | Medium | Discovery, trends |
-| Carousels (slides) | High | Highest | Education, tips |
-| Stories | Low (followers only) | High | Daily updates, polls |
+| Reels (15-60s) | Highest | 2.46% avg | Discovery, trends, reach |
+| Carousels (slides) | High | Highest | Education, tips, shareable |
+| Stories | Low (followers only) | High | Daily updates, polls, depth |
 | Static post | Medium | Medium | Quotes, announcements |
-| Live | Low | Very High | Q&A, events |
+| Collab posts | Very High | High | Shared audiences |
 
 ### Posting Strategy
 - **Frequency**: 1-2 posts/day + 3-5 Stories
+- **Optimal mix**: 3-4 Reels/week + 2-3 carousels + 1-2 static posts
 - **Best times**: Mon-Fri, 11am-1pm and 7-9pm
-- **Caption length**: First 125 chars visible — front-load hook
-- **Hashtags**: 5-15 relevant hashtags (test in caption vs. comment)
+- **Caption**: First 125 chars visible -- front-load hook
+- **Hashtags**: 5-15 relevant (test in caption vs comment)
 
-### Algorithm Tips
-- Reels get 2-3x more reach than static posts
-- Saves and shares weight more than likes
-- Carousels get the highest engagement rate of any format
+### Tactical Playbook
+- Design content people want to **send to friends** (the "DM test")
+- First 3 seconds must hook -- text overlays, pattern interrupts, surprising visuals
+- Carousels for educational/shareable; Reels for reach
 - Stories with interactive stickers (polls, questions) boost algorithm signals
-- Post consistently — gaps in posting reduce reach
-- Use alt text for accessibility and SEO
+- Optimize captions with searchable keywords (Social SEO)
+- Use alt text for discoverability and accessibility
+- Collaborate via Collab posts for shared audiences
+- Post consistently -- gaps reduce reach
 
 ### Carousel Best Practices
-- Slide 1: Hook (bold text, visual intrigue)
-- Slides 2-8: Content (one point per slide, large text)
-- Final slide: CTA ("Save this", "Share with a friend", "Follow for more")
-- Design: Consistent brand colors, readable fonts, minimal text per slide
+```
+Slide 1 (Cover): Hook -- bold text, visual intrigue, curiosity gap
+Slides 2-8: Content -- one point per slide, large readable text
+Final slide: CTA -- "Save this", "Share with a friend", "Follow for more"
+Design: Consistent brand colors, readable fonts, minimal text per slide
+```
 
 ---
 
 ## TikTok
 
-### Profile
-- Youngest audience, highest organic reach potential
-- Authenticity over production quality
-- Trend-driven, sound-driven
+### Algorithm Mechanics
+**Major 2025-2026 shift: Follower-First Testing.** New videos are now shown primarily to existing followers first. Performance among followers determines whether content reaches non-followers. This fundamentally changed TikTok from a "anyone can go viral" platform to one where building a loyal follower base matters.
+
+**Three main signals:**
+1. User interactions (watch, like, share, comment, skip)
+2. Video information (captions, hashtags, sounds)
+3. User information (language, country, device)
+
+**Critical metrics:**
+- Rewatch/loop rate (highest priority)
+- Completion rate: **70%+ needed to go viral in 2026** (up from 50% in 2024)
+- Shares and meaningful comments
+- "Qualified Views" = users watching past the 5-second mark
+
+**"Micro-virality" model:** Algorithm is built around communities, not random viral hits. Niche focus builds algorithmic identity.
 
 ### Content Formats
 
@@ -166,80 +226,202 @@ Tweet N+2: [CTA + retweet ask]
 | Live | Q&A, building community |
 
 ### Posting Strategy
-- **Frequency**: 1-4x/day (quantity helps on TikTok)
-- **Best times**: Varies widely — test and use analytics
-- **Video length**: 30-60 seconds sweet spot for most content
+- **Frequency**: 1-4x/day (but quality over quantity in 2026)
+- **Video length**: 30-60 seconds sweet spot
 - **Hashtags**: 3-5, include 1-2 trending + niche
+- **Best times**: Check TikTok analytics -- varies widely by audience
 
-### Algorithm Tips
-- Watch time percentage is the #1 signal — hook fast, keep it tight
-- First 3 seconds determine if people watch — lead with action/text
+### Tactical Playbook
+- **Build loyal follower base first** -- they are your "test audience" under the new algorithm
+- Create content that encourages rewatches (hidden details, complex info, satisfying loops)
+- Keep niche-focused to build community identity
+- Front-load the hook in first 1-2 seconds
+- Use trending sounds but with original visuals and angles
+- Captions/subtitles improve completion rates
 - Reply to comments with video for extra reach
-- Jump on trending sounds early (first 48 hours)
-- Post when your audience is online (check TikTok analytics)
-- Don't delete underperforming videos — they can resurface
+- Don't delete underperforming videos -- they can resurface
 
-### TikTok Content Formula
+### Content Formula
 ```
-0-3 sec: [Hook — text on screen + verbal hook]
-3-15 sec: [Setup — context for the value]
-15-45 sec: [Delivery — the actual content]
-45-60 sec: [CTA or loop back to start]
+0-1 sec: [Hook -- text on screen + verbal hook, pattern interrupt]
+1-3 sec: [Setup -- context for the value, build curiosity]
+3-30 sec: [Delivery -- the actual content, tight and dense]
+30-60 sec: [Payoff + CTA or loop back to start for rewatch]
 ```
 
 ---
 
-## Facebook
+## YouTube
 
-### Profile
-- Communities and groups
-- Local businesses
-- Older demographics (35+)
-- Paid reach increasingly necessary for Pages
+### Algorithm Mechanics
+YouTube runs **five separate recommendation systems**: Home, Suggested Videos, Search, Subscriptions, and Shorts. Each has different ranking factors.
+
+**2025-2026 shift: Satisfaction-weighted discovery.** Beyond clicks and watch time, YouTube now measures whether viewers **felt their time was well spent** (via surveys, sentiment analysis). Content that generates high satisfaction gets boosted.
+
+**Key insights:**
+- Shorts recommendation engine is now **fully decoupled** from long-form (poor Shorts won't drag down your long-form)
+- **Channel-level evaluation** -- YouTube judges channels holistically, not just individual videos
+- New channels can gain traction based on content quality alone -- subscriber count matters less
+- 3 uploads/week = 8x faster view growth, 3x faster subscriber growth vs <1/month
 
 ### Content Formats
 
 | Format | Best For |
 |--------|----------|
-| Groups | Community building, discussion |
-| Native video | Engagement, sharing |
-| Live video | Events, Q&A, launches |
-| Link posts | Driving traffic (lower reach) |
-| Photo albums | Products, events, behind-scenes |
+| Long-form (8-20 min) | Authority, deep dives, tutorials |
+| Shorts (< 60s) | Discovery, top-of-funnel |
+| Live streams | Community, events, Q&A |
+| Community posts | Engagement, polling, updates |
 
 ### Posting Strategy
-- **Frequency**: 1-2x/day for Pages, more for Groups
-- **Best times**: Wed-Fri, 1-4pm
-- **Groups**: Focus on facilitating discussion, not broadcasting
+- **Long-form frequency**: 3/week for growth (or 1-2 for consistent quality)
+- **Shorts frequency**: 3-5/week for discovery
+- **Focus**: Thumbnails and titles are the most critical investment
 
-### Algorithm Tips
-- Groups > Pages for organic reach
-- Native video gets 10x more reach than link posts
-- "Meaningful interactions" (comments, shares) boost visibility
-- Avoid engagement bait (Facebook actively penalizes it)
-- Go Live — Facebook prioritizes live video in feed
+### Tactical Playbook
+- Invest heavily in **thumbnail design and A/B testing** -- CTR determines everything
+- First 30 seconds determine retention; front-load value or curiosity
+- Structure videos with **pattern interrupts every 2-3 minutes** to maintain retention
+- Create "bingeable" content series that encourage session time
+- Use Shorts as top-of-funnel, long-form for depth and authority
+- End screens and cards for cross-video promotion
+- Community tab for audience engagement and polling
+
+### Video Structure
+```
+0-30s: Hook + promise (what viewers will get)
+30s-2m: Context (why this matters)
+2m-end: Delivery (structured value with pattern interrupts every 2-3 min)
+Last 30s: CTA (subscribe, next video, link in description)
+```
+
+---
+
+## Reddit
+
+### Algorithm Mechanics
+Community-driven; each subreddit has unique norms. 116M daily active users, 443M+ weekly.
+
+**Key signals:**
+- Upvote velocity -- fresh posts with fast early upvotes surface quickly
+- Comment quality and depth signal value
+- Ring detection is sophisticated -- coordinated upvoting = domain bans
+
+### The 90/10 Rule
+- **90% pure value contribution** (answering questions, sharing insights, helping others)
+- **10% subtle product mentions** (only when genuinely relevant)
+- Listen first, post second -- understand subreddit culture before participating
+
+### Posting Strategy
+- **Minimum**: 6-8 weeks of consistent engagement before posting own content
+- **Daily**: 15-20 minutes genuine participation
+- **Build karma** through helpful comments first
+- **Frame**: "Sharing what I learned" not "promoting my product"
+
+### Tactical Playbook
+- Target relevant subs: r/Entrepreneur, r/startups, r/SideProject, r/indiehackers, niche-specific
+- AMA sessions generate thousands of interactions
+- Behind-the-scenes and transparency content resonates strongly
+- "Build in public" stories with honest numbers
+- **Never** use multiple accounts for upvoting
+- Share genuine expertise; Reddit's audience is highly BS-sensitive
+- Comment quality > post quantity
+
+### What Gets Upvoted
+- Original research or data analysis
+- Honest failure stories with specific lessons
+- Detailed how-to posts with actual steps
+- Resources that save people significant time
+- Transparent revenue/growth posts
+
+---
+
+## Product Hunt
+
+### Pre-Launch (30+ days before)
+1. Start participating in PH discussions (comments, upvotes, feedback to other makers)
+2. Build "hunter" network -- get people to follow your product page and maker profiles
+3. Prepare assets: compelling headline, description, gallery images, video demo
+4. Structure: headline communicates value, supporting sentence reinforces, gallery feels connected
+
+### Launch Day Execution
+1. **Launch at midnight PST** for maximum voting window
+2. Assign one person to own the PH thread and respond to ALL comments
+3. Have first comment ready: explain the "why" behind the product
+4. Activate supporters via **private DMs** (not public social media blasts)
+5. Respond to every comment within minutes
+
+### Title/Positioning Formula
+- Use simple language
+- Clearly state who the product is for
+- Lead with the problem solved, not features
+- Example: "Loom -- Video messaging for work" (clear, benefit-focused)
+
+### Post-Launch
+- Thank supporters personally
+- Follow up with everyone who signed up
+- Collect and act on feedback
+- Can relaunch with significant product iterations (PH allows multiple launches)
+
+### What Kills a Launch
+- Asking publicly for upvotes (against PH rules)
+- Generic description that could apply to any product
+- No video or demo
+- Slow comment response
+- No pre-launch community
+
+---
+
+## Hacker News
+
+### Algorithm & Ranking
+- Time-decayed vote scoring: every 45 minutes the gravity multiplier increases
+- A story with 10 upvotes in 15 minutes outranks one with 50 upvotes in 6 hours
+- High-karma comments amplify visibility
+- Aggressive filtering of voting rings -- domains can be banned permanently
+
+### Optimal Timing (Pacific Time)
+- **Best**: Tuesday-Thursday, 8:00-10:00 AM (engineers reading before standup)
+- **Alt**: Sunday 6:00-9:00 PM (low competition, engaged audience)
+- **Avoid**: Friday afternoons, Monday mornings
+
+### Title Formula
+- **45-65 characters** for full mobile display
+- Front-load quantifiable results
+- Use digits, version numbers, or time-boxed results
+- Example: "Show HN: I cut my AWS bill 82% with a 200-line Lambda"
+- **Avoid**: listicles, superlatives, clickbait, marketing language
+
+### Content Requirements
+- 1,200+ words with original visuals and novel insights
+- Best formats: technical deep-dives with benchmarks, Show HN with live demo + GitHub repo, failure/revenue transparency posts
+- Must feel educational, not promotional
+
+### First 30 Minutes Playbook
+1. Post from home IP or mobile hotspot (avoid known VPN IPs)
+2. Add a 60-word TL;DR as first comment
+3. Activate pre-selected helpers via **private Slack/DM** (not public social media)
+4. Aim for 8-10 genuine upvotes and 2-3 thoughtful comments
+5. Respond to all comments within 10 minutes
+6. Share demo/repo as a top-level comment
+
+### What Kills Submissions
+- Duplicate content, paywalls, email gates
+- Multiple title edits (resets timestamps)
+- Public upvote requests
+- Fresh accounts without comment history
+- Any paid upvote services
 
 ---
 
 ## Cross-Platform Principles
 
 ### What Works Everywhere
-1. **Hook fast** — first line/second determines everything
-2. **Native content** — don't cross-post identical content
-3. **Consistency** — regular posting beats occasional virality
-4. **Engagement** — comment and interact, don't just broadcast
-5. **Value first** — teach, entertain, or inspire before promoting
-
-### Platform Selection Guide
-
-| If your goal is... | Primary | Secondary |
-|---------------------|---------|-----------|
-| B2B leads | LinkedIn | Twitter/X |
-| Brand awareness | TikTok | Instagram |
-| Community | Facebook Groups | Discord |
-| Thought leadership | LinkedIn | Twitter/X |
-| E-commerce | Instagram | TikTok |
-| Developer audience | Twitter/X | YouTube |
+1. **Hook fast** -- first line/second determines everything
+2. **Native content** -- adapt, don't duplicate across platforms
+3. **Consistency** -- regular posting beats occasional virality
+4. **Engagement** -- reply to comments, don't just broadcast
+5. **Value first** -- teach, entertain, or inspire before promoting
 
 ### Content Adaptation (Not Duplication)
 
@@ -247,8 +429,22 @@ Same insight, different execution:
 
 | Platform | Adaptation |
 |----------|-----------|
-| LinkedIn | Professional framing, business impact, structured post |
-| Twitter/X | Punchy take, thread for depth, conversational tone |
-| Instagram | Visual carousel, aesthetic, save-worthy |
-| TikTok | Talking head, authentic, trend-adapted |
-| Facebook | Community discussion prompt, longer narrative |
+| LinkedIn | Professional framing, business impact, structured post, ask a question |
+| Twitter/X | Punchy take, thread for depth, conversational tone, visual media |
+| Instagram | Visual carousel, aesthetic, save-worthy, DM-shareable |
+| TikTok | Talking head, authentic, trend-adapted, subtitles, loop-friendly |
+| YouTube | Long-form authority piece, strong thumbnail, retention structure |
+| Reddit | Educational framing, honest/transparent, community-first language |
+| PH/HN | Technical depth, show results with data, demo/repo links |
+
+### Platform-Specific Engagement Windows
+
+| Platform | Critical Window | Action |
+|----------|----------------|--------|
+| LinkedIn | First 45 min | Reply to all comments |
+| Twitter/X | First 2 hours | Engage in replies |
+| Instagram | First 1 hour | Reply + story boost |
+| TikTok | First 1 hour | Reply to comments (video replies) |
+| YouTube | First 24 hours | Reply to comments, community post |
+| Reddit | First 1 hour | Upvote velocity is everything |
+| HN | First 30 min | 8-10 upvotes + thoughtful comments |

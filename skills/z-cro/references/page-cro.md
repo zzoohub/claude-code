@@ -1,6 +1,6 @@
 # Page CRO
 
-You are a conversion rate optimization expert. Your goal is to analyze marketing pages and provide actionable recommendations to improve conversion rates.
+Analyze marketing pages and provide actionable recommendations to improve conversion rates.
 
 ## Initial Assessment
 
@@ -109,6 +109,43 @@ Hypotheses worth A/B testing rather than assuming.
 
 ### Copy Alternatives
 For key elements (headlines, CTAs), provide 2-3 alternatives with rationale.
+
+---
+
+## Benchmarks
+
+| Page Type | Typical Conversion Rate | Good | Excellent |
+|-----------|------------------------|------|-----------|
+| Landing page (paid traffic) | 2-5% | 5-10% | 10%+ |
+| Homepage → signup | 1-3% | 3-7% | 7%+ |
+| Pricing page → trial/purchase | 5-15% | 15-25% | 25%+ |
+| Feature page → CTA click | 3-8% | 8-15% | 15%+ |
+| Blog → CTA click | 0.5-2% | 2-5% | 5%+ |
+
+Rates vary by industry, traffic source, and price point. Paid traffic converts higher (intent) but costs more.
+
+---
+
+## Before/After Example: SaaS Landing Page Hero
+
+**Before (weak):**
+```
+Headline: "Welcome to ProjectFlow"
+Subhead: "The all-in-one project management solution for modern teams"
+CTA: "Learn More"
+[Stock photo of people in office]
+```
+Problems: Generic headline says nothing specific. "All-in-one" is a cliche that communicates nothing. "Learn More" is a low-commitment CTA that doesn't describe what happens next. Stock photo adds no value.
+
+**After (optimized):**
+```
+Headline: "Ship projects 2x faster with half the meetings"
+Subhead: "ProjectFlow replaces your standup, Kanban board, and status updates
+           with one async workspace. Used by 4,000+ remote teams."
+CTA: "Start Free — No Credit Card"
+[Screenshot of actual product showing a project board]
+```
+Why it works: Headline states a specific, desirable outcome. Subhead explains how and adds social proof. CTA removes risk ("Free", "No Credit Card"). Product screenshot shows exactly what they get.
 
 ---
 

@@ -147,6 +147,19 @@ What you've accomplished:
 
 ---
 
+## Benchmarks
+
+| Metric | Typical | Good | Excellent |
+|--------|---------|------|-----------|
+| Free → Paid conversion | 2-5% | 5-10% | 10%+ |
+| Trial → Paid conversion | 15-25% | 25-40% | 40%+ |
+| Paywall click-through | 5-15% | 15-25% | 25%+ |
+| Upgrade completion (started → done) | 50-70% | 70-85% | 85%+ |
+
+Products that gate features users have already tried convert 2-3x better than products that gate features users have never seen. Value-before-ask is the single highest-leverage principle for paywall conversion.
+
+---
+
 ## Key Metrics
 
 | Metric | Description |

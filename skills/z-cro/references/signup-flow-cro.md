@@ -1,6 +1,6 @@
 # Signup Flow CRO
 
-You are an expert in optimizing signup and registration flows. Your goal is to reduce friction, increase completion rates, and set users up for successful activation.
+Reduce friction in signup and registration flows, increase completion rates, and set users up for successful activation.
 
 ## Initial Assessment
 
@@ -228,6 +228,52 @@ Organized by:
 
 ---
 
+## Benchmarks
+
+| Flow Type | Typical Completion Rate | Good | Excellent |
+|-----------|------------------------|------|-----------|
+| Single-step (email + password) | 40-60% | 60-75% | 75%+ |
+| Single-step with social auth | 50-70% | 70-85% | 85%+ |
+| Multi-step (3+ screens) | 20-40% | 40-55% | 55%+ |
+| B2B with company fields | 15-30% | 30-45% | 45%+ |
+| Waitlist (email only) | 60-80% | 80-90% | 90%+ |
+
+Adding social auth typically lifts completion by 20-30% relative. Every additional required field drops completion by roughly 5-10%.
+
+---
+
+## Before/After Example: B2B SaaS Signup
+
+**Before (high friction):**
+```
+Create Your Account
+[First Name]  [Last Name]
+[Work Email]
+[Password]  [Confirm Password]
+[Company Name]
+[Company Size ▼]
+[Your Role ▼]
+[How did you hear about us? ▼]
+[□ I agree to the Terms of Service]
+[Create Account]
+```
+Problems: 9 fields. Confirm password is unnecessary with a show/hide toggle. Company size, role, and attribution can all be collected later. No social auth. No trust signals. Generic CTA.
+
+**After (optimized):**
+```
+Start your free trial
+[Continue with Google]
+[Continue with Microsoft]
+─── or ───
+[Work Email]
+[Password 👁]
+[Start Free Trial — No Credit Card]
+"Join 4,000+ teams. Setup takes 30 seconds."
+```
+Why it works: Social auth handles 60%+ of signups with zero typing. Only 2 fields for email signup. Trust signals ("No Credit Card", "30 seconds", social proof) directly at the form. Company/role collected during onboarding when the user is already committed.
+
+---
+
 ## Common Signup Flow Patterns
 
 ### B2B SaaS Trial
@@ -254,77 +300,4 @@ Organized by:
 
 ## Experiment Ideas
 
-### Form Design Experiments
-
-**Layout & Structure**
-- Single-step vs. multi-step signup flow
-- Multi-step with progress bar vs. without
-- 1-column vs. 2-column field layout
-- Form embedded on page vs. separate signup page
-- Horizontal vs. vertical field alignment
-
-**Field Optimization**
-- Reduce to minimum fields (email + password only)
-- Add or remove phone number field
-- Single "Name" field vs. "First/Last" split
-- Add or remove company/organization field
-- Test required vs. optional field balance
-
-**Authentication Options**
-- Add SSO options (Google, Microsoft, GitHub, LinkedIn)
-- SSO prominent vs. email form prominent
-- Test which SSO options resonate (varies by audience)
-- SSO-only vs. SSO + email option
-
-**Visual Design**
-- Test button colors and sizes for CTA prominence
-- Plain background vs. product-related visuals
-- Test form container styling (card vs. minimal)
-- Mobile-optimized layout testing
-
----
-
-### Copy & Messaging Experiments
-
-**Headlines & CTAs**
-- Test headline variations above signup form
-- CTA button text: "Create Account" vs. "Start Free Trial" vs. "Get Started"
-- Add clarity around trial length in CTA
-- Test value proposition emphasis in form header
-
-**Microcopy**
-- Field labels: minimal vs. descriptive
-- Placeholder text optimization
-- Error message clarity and tone
-- Password requirement display (upfront vs. on error)
-
-**Trust Elements**
-- Add social proof next to signup form
-- Test trust badges near form (security, compliance)
-- Add "No credit card required" messaging
-- Include privacy assurance copy
-
----
-
-### Trial & Commitment Experiments
-
-**Free Trial Variations**
-- Credit card required vs. not required for trial
-- Test trial length impact (7 vs. 14 vs. 30 days)
-- Freemium vs. free trial model
-- Trial with limited features vs. full access
-
-**Friction Points**
-- Email verification required vs. delayed vs. removed
-- Test CAPTCHA impact on completion
-- Terms acceptance checkbox vs. implicit acceptance
-- Phone verification for high-value accounts
-
----
-
-### Post-Submit Experiments
-
-- Clear next steps messaging after signup
-- Instant product access vs. email confirmation first
-- Personalized welcome message based on signup data
-- Auto-login after signup vs. require login
+High-impact areas to test: field count, social auth prominence, single vs. multi-step, CTA copy, trust signals placement, credit card requirement, and post-submit experience. For rigorous experiment design methodology, see `references/experiments.md`.

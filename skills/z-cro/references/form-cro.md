@@ -139,6 +139,55 @@ Strong: "[Action] + [What they get]"
 
 ---
 
+## Benchmarks
+
+| Form Type | Typical Completion | Good | Excellent |
+|-----------|-------------------|------|-----------|
+| Lead capture (email only) | 30-50% | 50-70% | 70%+ |
+| Contact form (3-4 fields) | 15-30% | 30-45% | 45%+ |
+| Demo request (5-6 fields) | 10-20% | 20-35% | 35%+ |
+| Quote/application (7+ fields) | 5-15% | 15-25% | 25%+ |
+| Survey (10+ questions) | 10-25% | 25-40% | 40%+ |
+
+Each additional field beyond 3 typically reduces completion by 5-10%. Multi-step forms with progress bars can recover 10-20% of that loss.
+
+---
+
+## Before/After Example: Demo Request Form
+
+**Before (high friction):**
+```
+Request a Demo
+[First Name]  [Last Name]
+[Email]
+[Phone Number]
+[Company]
+[Job Title]
+[Company Size ▼]
+[Industry ▼]
+[What are you looking for? ____________]
+[How did you hear about us? ▼]
+[Submit]
+```
+Problems: 10 fields, many of which can be enriched post-submission or collected on the call. "Submit" CTA communicates nothing. No trust signals. No expectation setting.
+
+**After (optimized):**
+```
+See [Product] in Action
+Book a 15-min demo tailored to your workflow.
+
+[Work Email]
+[Company]
+[What challenge are you trying to solve? (optional) ___]
+[Book My Demo]
+
+"We'll email you a calendar link within 1 hour."
+⭐ "The demo sold us immediately." — VP Eng, Acme Corp
+```
+Why it works: 3 fields (email + company is enough to enrich name, title, size via Clearbit/Apollo). Optional free-text shows interest without blocking. CTA sets expectation. Social proof and response time promise reduce uncertainty.
+
+---
+
 ## Mobile Optimization
 
 - Larger touch targets (44px minimum)

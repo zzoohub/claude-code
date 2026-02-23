@@ -154,6 +154,20 @@ Identify biggest drops and focus there.
 
 ---
 
+## Benchmarks
+
+| Metric | Typical | Good | Excellent |
+|--------|---------|------|-----------|
+| Signup → Activation | 20-40% | 40-60% | 60%+ |
+| Onboarding completion | 30-50% | 50-70% | 70%+ |
+| Day 1 retention | 25-40% | 40-60% | 60%+ |
+| Day 7 retention | 10-20% | 20-35% | 35%+ |
+| Time to first value | Minutes to days | < 5 min | < 1 min |
+
+B2B products tend toward lower activation rates but higher retention once activated. Products with strong empty-state design consistently outperform those with blank-slate experiences.
+
+---
+
 ## Output Format
 
 ### Onboarding Audit

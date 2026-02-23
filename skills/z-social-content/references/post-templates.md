@@ -1,6 +1,94 @@
-# Post Templates & Hook Formulas
+# Post Templates, Content Frameworks & Hook Formulas
 
-Ready-to-use templates and hook patterns for social media content.
+Ready-to-use templates, proven content frameworks, and hook patterns for social media content.
+
+---
+
+## Table of Contents
+
+1. [Content Frameworks](#content-frameworks)
+2. [Hook Formulas by Category](#hook-formulas-by-category)
+3. [LinkedIn Templates](#linkedin-post-templates)
+4. [Twitter/X Templates](#twitterx-thread-templates)
+5. [Instagram Templates](#instagram-carousel-templates)
+6. [TikTok/Reels Script Templates](#tiktokreels-script-templates)
+7. [Reddit Post Templates](#reddit-post-templates)
+8. [Content Calendar Templates](#content-calendar-templates)
+9. [Engagement Prompts](#engagement-prompts)
+
+---
+
+## Content Frameworks
+
+### Hook-Story-Offer (HSO)
+The foundational framework used by Russell Brunson, Alex Hormozi, and direct response marketers.
+
+1. **Hook**: A captivating headline or statement that stops the scroll
+2. **Story**: A relatable narrative mirroring the audience's challenges; builds trust through emotional connection
+3. **Offer**: Present your solution, highlighting urgency and value
+
+Works for: social posts, emails, videos, blogs, funnel pages -- virtually anything.
+
+### Hook-Retain-Reward (Alex Hormozi)
+Hormozi's three-part formula optimized for social media content consumption:
+
+1. **Hook** (first 1-3 seconds): Stop the scroll
+   - Shock/surprise with unexpected facts
+   - Provocative questions that trigger curiosity
+   - Bold promises with clear, achievable benefits
+2. **Retain** (keep them through the middle): Maintain engagement through completion
+   - Storytelling with open loops (unanswered questions that create tension)
+   - Concise, actionable insights -- eliminate all filler
+   - Structured content (headings, bullets, visuals)
+   - Pain-point relevance throughout
+3. **Reward** (deliver at the end): Give tangible value
+   - Specific, immediately actionable takeaways
+   - Over-deliver on the promise (give 10x more value than expected)
+   - Frictionless next steps (free templates, resources)
+
+### PAS (Problem-Agitation-Solution)
+Best for sales-oriented content, emails, product-focused posts:
+
+1. **Problem**: Identify the reader's pain point
+2. **Agitation**: Heighten urgency -- make them feel the pain
+3. **Solution**: Present your answer
+
+### AIDA (Attention-Interest-Desire-Action)
+Best for longer-form content, carousels, landing pages:
+
+1. **Attention**: Engaging headline/visual that stands out
+2. **Interest**: Storytelling and highlighting benefits
+3. **Desire**: Emotional connection, demonstrating value
+4. **Action**: Clear, compelling CTA
+
+### Berger's STEPPS (Why Content Goes Viral)
+Six elements from Jonah Berger's research on what makes content contagious:
+
+1. **Social Currency**: Makes the sharer look good/smart/in-the-know
+2. **Triggers**: Associates with everyday cues (reminds people to think of it)
+3. **Emotion**: Evokes high-arousal emotions (awe, anger, amusement, anxiety)
+4. **Public**: Makes behavior observable and imitatable
+5. **Practical Value**: Useful information people want to pass along
+6. **Stories**: Wraps messages in narratives people naturally retell
+
+When creating content, aim for 2-3 STEPPS elements minimum.
+
+### 6 Psychological Hook Techniques (Buffer Research)
+
+1. **Open Loop (Curiosity Gap)**: Tease a concept without fully revealing it
+   - "I discovered something that changed how I write forever..."
+2. **Bandwagon Effect**: Emphasize popularity using numbers
+   - "200+ people asked me about this..."
+3. **Storytelling**: Start at the moment of highest tension
+   - "My friend's dad built a waste management empire. Here's how..."
+4. **Social Proof**: Showcase impressive stats, results
+   - "After working with [notable brand]..."
+5. **Contrarian Statement**: Challenge popular beliefs
+   - "Becoming a better writer isn't about writing more frequently"
+6. **FOMO**: Highlight what readers might miss
+   - "The career mistake 90% of professionals make..."
+
+**Key stat**: Posts with 80-100 characters in the hook receive 66% higher engagement. You have ~3 seconds to hook on social (vs 8 seconds on a website).
 
 ---
 
@@ -9,10 +97,11 @@ Ready-to-use templates and hook patterns for social media content.
 ### Curiosity Hooks
 - "I was wrong about [common belief]."
 - "The real reason [outcome] happens isn't what you think."
-- "[Impressive result] — and it only took [surprisingly short time]."
+- "[Impressive result] -- and it only took [surprisingly short time]."
 - "Nobody talks about this, but [insight]."
 - "I spent [time] studying [topic]. Here's what I found:"
 - "The [adjective] truth about [topic]:"
+- "Most people don't know this about [topic]..."
 
 ### Story Hooks
 - "Last week, [unexpected thing] happened."
@@ -49,13 +138,19 @@ Ready-to-use templates and hook patterns for social media content.
 - "[Surprising statistic]. Here's why that matters:"
 - "The numbers don't lie: [data point]."
 
+### Build-in-Public Hooks
+- "Month [N] of building [product]: $[revenue] MRR"
+- "I launched [product] [time ago]. Here's what actually happened:"
+- "The feature nobody asked for that doubled our retention:"
+- "We lost [N] customers last month. Here's why:"
+
 ---
 
 ## LinkedIn Post Templates
 
-### Template 1: Insight Post
+### Template 1: Insight Post (HSO)
 ```
-[Bold opening statement or question]
+[Bold opening statement or question -- the hook]
 
 Most people think [common belief].
 
@@ -82,13 +177,13 @@ The takeaway?
 ```
 [Emotional or surprising opening line]
 
-[Set the scene — 1-2 sentences]
+[Set the scene -- 1-2 sentences]
 
-[The conflict/challenge — what went wrong]
+[The conflict/challenge -- what went wrong]
 
-[The turning point — what changed]
+[The turning point -- what changed]
 
-[The lesson — what you learned]
+[The lesson -- what you learned]
 
 [How the reader can apply this]
 
@@ -104,17 +199,17 @@ Most [personas] struggle with [problem].
 Here's the [N]-step framework I use:
 
 Step 1: [Action]
-→ [Why it works]
+-> [Why it works]
 
 Step 2: [Action]
-→ [Why it works]
+-> [Why it works]
 
 Step 3: [Action]
-→ [Why it works]
+-> [Why it works]
 
 The key insight: [connecting principle]
 
-Save this for later. ♻️ Share if helpful.
+Save this for later. Share if helpful.
 ```
 
 ### Template 4: Behind-the-Scenes
@@ -134,7 +229,7 @@ Here's something we don't usually share:
 Would you want to see more posts like this?
 ```
 
-### Template 5: Hot Take
+### Template 5: Hot Take / Contrarian
 ```
 [Controversial statement]
 
@@ -151,6 +246,27 @@ Does this mean [extreme conclusion]? No.
 It means [nuanced takeaway].
 
 Agree or disagree? I want to hear your take.
+```
+
+### Template 6: Build-in-Public Update
+```
+[Milestone or metric -- transparent number]
+
+[Context -- where you started]
+
+What worked:
+- [Tactic 1]
+- [Tactic 2]
+
+What didn't work:
+- [Failure 1]
+- [Failure 2]
+
+Biggest lesson: [One actionable insight]
+
+Next goal: [What's next]
+
+Anyone else building something similar?
 ```
 
 ---
@@ -173,9 +289,9 @@ Tweet 4: Step 2: [Action]
 Tweet 5-N: [Continue steps]
 
 Tweet N+1: Quick recap:
-• Step 1
-• Step 2
-• Step 3
+- Step 1
+- Step 2
+- Step 3
 [Summary]
 
 Tweet N+2: If this helped, RT the first tweet.
@@ -217,10 +333,29 @@ Reality: [What's actually true]
 [Continue...]
 
 Tweet N+1: The biggest myth of all?
-
 That there's one right way to [topic].
-
 [Nuanced conclusion]
+```
+
+### Template 4: Data/Research Thread
+```
+Tweet 1: We analyzed [N] [things]. Here's what we found:
+
+(Some of these surprised us)
+
+Tweet 2: Finding 1: [Surprising data point]
+[Visual: chart/screenshot]
+
+Tweet 3: Finding 2: [Data point]
+What this means: [Insight]
+
+[Continue with findings...]
+
+Tweet N+1: The #1 takeaway?
+[Single most important insight]
+
+Tweet N+2: Full analysis: [link]
+RT if you found this useful.
 ```
 
 ---
@@ -229,20 +364,20 @@ That there's one right way to [topic].
 
 ### Template 1: Educational Carousel
 ```
-Slide 1 (Cover): [Bold title — The [N] [Things] You Need to [Outcome]]
-Slide 2: [Point 1 — big text + brief explanation]
+Slide 1 (Cover): [Bold title -- "The [N] [Things] You Need to [Outcome]"]
+Slide 2: [Point 1 -- big text + brief explanation]
 Slide 3: [Point 2]
 Slide 4: [Point 3]
 ...
 Slide N: [Summary or key takeaway]
-Final Slide: [CTA — "Save this for later" / "Follow @handle for more"]
+Final Slide: [CTA -- "Save this for later" / "Follow @handle for more"]
 ```
 
 ### Template 2: Before/After Carousel
 ```
 Slide 1: [Before] vs [After]
-Slide 2: Before: [Common mistake — visual example]
-Slide 3: After: [Better approach — visual example]
+Slide 2: Before: [Common mistake -- visual example]
+Slide 3: After: [Better approach -- visual example]
 Slide 4: Before: [Another mistake]
 Slide 5: After: [Better approach]
 ...
@@ -252,7 +387,7 @@ Final Slide: [Key principle + CTA]
 ### Template 3: Story Carousel
 ```
 Slide 1: [Intriguing title that creates curiosity]
-Slide 2: [The setup — what happened]
+Slide 2: [The setup -- what happened]
 Slide 3: [The complication]
 Slide 4: [The turning point]
 Slide 5: [The resolution]
@@ -260,40 +395,167 @@ Slide 6: [The lesson]
 Final Slide: [CTA]
 ```
 
+### Template 4: Framework Carousel
+```
+Slide 1: "The [Name] Framework" (bold, branded)
+Slide 2: The problem [framework solves]
+Slide 3: Step 1 -- [Action + why]
+Slide 4: Step 2 -- [Action + why]
+Slide 5: Step 3 -- [Action + why]
+Slide 6: Real example / case study
+Final Slide: Save + Share CTA
+```
+
+### Design Principles
+- Consistent brand colors across all slides
+- Readable fonts, large text (mobile-first)
+- Minimal text per slide (one point per slide)
+- First slide must hook -- curiosity gap, bold statement, visual intrigue
+- Last slide always has a CTA
+
+---
+
+## TikTok/Reels Script Templates
+
+### Template 1: Quick Tip
+```
+[0-1s] TEXT ON SCREEN: "[Bold statement or surprising fact]"
+VERBAL: "Here's something most people get wrong about [topic]..."
+
+[1-5s] SETUP:
+"Most people think [common approach]. But that's actually backwards."
+
+[5-20s] DELIVERY:
+"Instead, try [method]. Here's why it works:
+- [Reason 1]
+- [Reason 2]"
+
+[20-30s] PROOF + CTA:
+"I did this and [result]. Try it and let me know."
+```
+
+### Template 2: Story Format
+```
+[0-1s] TEXT ON SCREEN: "[Intriguing statement]"
+VERBAL: "So this crazy thing happened..."
+
+[1-10s] SETUP:
+"I was [situation] when [unexpected event]..."
+
+[10-25s] CONFLICT + RESOLUTION:
+"[What went wrong] ... [What I realized] ... [What I did differently]"
+
+[25-30s] LESSON:
+"The takeaway? [One clear lesson]. Follow for more [topic]."
+```
+
+### Template 3: Before/After
+```
+[0-1s] TEXT: "Before vs After [topic]"
+
+[1-15s] BEFORE:
+Show the "wrong" way with visible frustration/inefficiency
+
+[15-25s] AFTER:
+Show the "right" way -- clean, satisfying, effective
+
+[25-30s] CTA:
+"Which are you? Comment below."
+```
+
+---
+
+## Reddit Post Templates
+
+### Template 1: "What I Learned" Post
+```
+Title: [Specific result] -- here's what I learned after [time/effort]
+
+Body:
+Hey [subreddit],
+
+[Brief context -- who you are, what you were trying to do]
+
+[The journey -- 3-5 key learnings, each with specific detail]
+
+1. **[Learning]**: [Details, numbers if possible]
+2. **[Learning]**: [Details]
+3. **[Learning]**: [Details]
+
+[What surprised you most]
+
+[What you'd do differently]
+
+Happy to answer questions.
+```
+
+### Template 2: Resource Share
+```
+Title: I built/compiled [resource] for [audience] -- free to use
+
+Body:
+I've been [doing X] for [time] and noticed [problem].
+
+So I [created resource] that [solves it].
+
+Here's what it includes:
+- [Feature/section 1]
+- [Feature/section 2]
+- [Feature/section 3]
+
+[Link -- direct, no email gate]
+
+Feedback welcome. What should I add?
+```
+
 ---
 
 ## Content Calendar Templates
 
-### Weekly Calendar (B2B SaaS)
+### Weekly Calendar (B2B SaaS / Solopreneur)
 
 | Day | LinkedIn | Twitter/X |
 |-----|----------|-----------|
-| Mon | Industry insight (data/trend) | Thread on weekly topic |
-| Tue | Behind-the-scenes | Engagement tweets (replies) |
-| Wed | Educational framework | Tips thread |
-| Thu | Customer story | Quick insights |
-| Fri | Hot take or personal | Weekend question |
+| Mon | Industry insight (data/trend) | Awareness/educational thread |
+| Tue | Behind-the-scenes | Tactical how-to tweets |
+| Wed | Educational framework | Personal story or hot take |
+| Thu | Customer story / case study | Community engagement (polls, questions) |
+| Fri | Hot take or personal reflection | Newsletter tease / CTA |
 
 ### Monthly Themes
 
 | Week | Theme | Content Type |
 |------|-------|-------------|
-| 1 | Industry trends | Data posts, predictions |
-| 2 | How-to / educational | Frameworks, tutorials |
-| 3 | Stories / social proof | Case studies, testimonials |
-| 4 | Behind-the-scenes | Process, team, culture |
+| 1 | Industry trends | Data posts, predictions, analysis |
+| 2 | How-to / educational | Frameworks, tutorials, step-by-steps |
+| 3 | Stories / social proof | Case studies, testimonials, transformations |
+| 4 | Behind-the-scenes | Process, team, culture, build-in-public |
 
 ---
 
 ## Engagement Prompts
 
-Questions that drive comments:
+Questions that drive comments and conversation:
 
-- "What's your experience with [topic]?"
+### Opinion Drivers
 - "Agree or disagree?"
-- "What would you add to this list?"
-- "What's your biggest challenge with [topic]?"
-- "Share your [topic] in the comments."
-- "Which of these resonates most?"
 - "Hot take or common sense?"
+- "What would you add to this list?"
+- "Unpopular opinion: [statement]. What's yours?"
+
+### Experience Sharers
+- "What's your experience with [topic]?"
 - "What's the worst [topic] advice you've received?"
+- "Share your [topic] in the comments."
+- "When did you first realize [insight]?"
+
+### Choice Prompts
+- "Which of these resonates most?"
+- "If you could only do one, which would it be?"
+- "[Option A] or [Option B]?"
+
+### Engagement Multipliers
+- Ask a **specific** question (not generic "thoughts?")
+- Make people feel smart for answering
+- Respond to every comment to encourage threads
+- Pin the best comment to reward participation

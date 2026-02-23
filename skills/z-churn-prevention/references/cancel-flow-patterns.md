@@ -151,25 +151,6 @@ Trigger → Survey → Dynamic Offer → Confirmation → Post-Cancel
 | Data export initiated | Critical | Days before cancel |
 | NPS score drops below 6 | Medium | 1-3 months before cancel |
 
-### Health Score Model
-
-```
-Health Score = (
-  Login frequency score × 0.30 +
-  Feature usage score   × 0.25 +
-  Support sentiment     × 0.15 +
-  Billing health        × 0.15 +
-  Engagement score      × 0.15
-)
-```
-
-| Score | Status | Action |
-|-------|--------|--------|
-| 80-100 | Healthy | Upsell opportunities |
-| 60-79 | Needs attention | Proactive check-in |
-| 40-59 | At risk | Intervention campaign |
-| 0-39 | Critical | Personal outreach |
-
 ### Proactive Interventions
 
 | Trigger | Intervention |

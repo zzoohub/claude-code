@@ -3,13 +3,15 @@ name: z-churn-prevention
 description: |
   Churn prevention strategies, cancel flow optimization, payment recovery, and customer health scoring.
   Use when: designing cancel flows, creating save offers, implementing dunning sequences,
-  building health scores, reducing involuntary churn, analyzing churn patterns,
+  building health scores, reducing involuntary churn, diagnosing churn patterns,
   or when user mentions "churn", "cancel", "retention", "dunning", "payment failed",
-  "win-back", "save offer", "cancel flow", "downgrade", "customer health".
-  Do NOT use for: onboarding optimization (use z-cro skill), email sequences (use z-email-marketing skill),
-  or pricing changes (use z-pricing skill).
+  "failed payment", "payment recovery", "save offer", "cancel flow", "downgrade",
+  "customer health", "at-risk customers", "subscription cancellation", "reduce churn rate",
+  "churn analysis", "why are users leaving", "customer at risk".
+  Do NOT use for: onboarding optimization (use z-cro skill), email sequences including
+  win-back campaigns (use z-email-marketing skill), or pricing changes (use z-pricing skill).
 metadata:
-  version: 1.0.1
+  version: 1.1.0
   category: growth
 ---
 
@@ -37,7 +39,6 @@ Strategies for reducing both voluntary and involuntary churn through proactive i
 2. Identify at-risk users early (health scoring)
 3. Intervene before they decide to cancel (proactive outreach)
 4. Optimize the cancel flow (save offers, alternatives)
-5. Win back churned users (re-engagement campaigns)
 
 ---
 
@@ -45,8 +46,10 @@ Strategies for reducing both voluntary and involuntary churn through proactive i
 
 | Scenario | Reference |
 |----------|-----------|
-| Cancel flow design, save offers, exit surveys | `references/cancel-flow-patterns.md` |
+| Cancel flow design, save offers, exit surveys, proactive retention | `references/cancel-flow-patterns.md` |
 | Payment failure recovery, dunning emails, retry logic | `references/dunning-playbook.md` |
+
+Read the relevant reference when you need implementation details for a specific area. The sections below provide the strategic framework.
 
 ---
 
@@ -59,7 +62,7 @@ Catch at-risk users before they decide to leave. A user considering cancellation
 No dark patterns. Make cancellation possible (don't hide it). Offer alternatives, not obstacles. Trust builds re-subscription later.
 
 ### Understand WHY Before Offering Saves
-Exit survey data should drive save offer design. Don't offer a discount to someone who found an alternative — offer a feature comparison instead.
+Exit survey data should drive save offer design. Don't offer a discount to someone who found an alternative — offer a feature comparison instead. See the dynamic save offers table in `references/cancel-flow-patterns.md` for the full reason-to-offer mapping with primary and fallback offers.
 
 ### Involuntary Churn is the Easiest Win
 Payment failures are mechanical problems with mechanical solutions. Fix these first before tackling harder voluntary churn.
@@ -88,7 +91,21 @@ Track these signals to identify at-risk users before they churn:
 - Seat/usage reduction
 - Contract renewal timing
 
-### Health Score Actions
+### Implementation
+
+Use a weighted composite score. A good starting point:
+
+```
+Health Score = (
+  Login frequency score × 0.30 +
+  Feature usage score   × 0.25 +
+  Support sentiment     × 0.15 +
+  Billing health        × 0.15 +
+  Engagement score      × 0.15
+)
+```
+
+Each component is scored 0-100. Normalize raw data (e.g., logins per week) into scores using percentile ranks or simple thresholds based on your user base.
 
 | Score | Status | Action |
 |-------|--------|--------|
@@ -97,33 +114,41 @@ Track these signals to identify at-risk users before they churn:
 | 40-59 | Declining | Intervention: success call, personalized help |
 | 0-39 | Critical | Urgent: executive outreach, retention offer |
 
----
-
-## Save Offer Decision Tree
-
-Based on cancellation reason:
-
-| Reason | Offer |
-|--------|-------|
-| Too expensive | Discount, downgrade option, annual pricing |
-| Missing feature | Roadmap preview, workaround, feature education |
-| Found alternative | Competitive comparison, switching cost reminder |
-| Not using enough | Onboarding reset, use case guidance |
-| Temporary need | Pause subscription option |
-| Budget/downsizing | Pause or reduced plan |
+For risk signals with specific timeframes and proactive intervention triggers, see the "Churn Prediction & Proactive Retention" section in `references/cancel-flow-patterns.md`.
 
 ---
 
-## Output Locations
+## Churn Diagnosis
 
-| Deliverable | Path |
-|------------|------|
-| Churn prevention strategy | `biz/growth/churn-prevention.md` |
-| Dunning / payment recovery | `biz/growth/dunning.md` |
-| Customer health score | `biz/analytics/health-score.md` |
+When analyzing why users are leaving, segment churn data to find patterns:
+
+### Cohort Dimensions
+- **Time cohort** — When did they sign up? (monthly cohorts reveal onboarding issues)
+- **Plan tier** — Which plans churn most? (pricing or value mismatch)
+- **Acquisition channel** — Organic vs paid vs referral (lead quality differences)
+- **Usage pattern** — Power users vs casual (feature adoption gaps)
+- **Cancel reason** — Exit survey data grouped by theme
+
+### Key Questions
+- What's the churn rate by cohort over time? (improving or worsening?)
+- When do users churn? (first 30 days = onboarding problem, months 3-6 = value realization gap)
+- What's the last action before churn? (reveals friction points)
+- Which features do retained users use that churned users don't? (the "aha moment" gap)
+- Is churn voluntary or involuntary? (very different solutions — check the split first)
+
+### Churn Rate Benchmarks
+
+| Segment | Poor | Average | Good |
+|---------|------|---------|------|
+| B2C monthly | >8% | 5-8% | <5% |
+| B2B monthly | >5% | 2-5% | <2% |
+| B2B annual (logo churn) | >15% | 8-15% | <8% |
+
+---
 
 ## Cross-References
 
 - **z-cro** (skill) — For optimizing specific flows (signup, onboarding, paywall)
-- **z-email-marketing** (skill) — For win-back and re-engagement email sequences
+- **z-email-marketing** (skill) — For win-back campaigns, re-engagement sequences, and dunning email copywriting
 - **z-marketing-psychology** (skill) — For psychological principles in save offers (loss aversion, endowment effect)
+- **z-product-analytics** (skill) — For retention cohort analysis and aha moment discovery

@@ -1,15 +1,18 @@
 ---
 name: z-cro
 description: |
-  Conversion Rate Optimization for pages, forms, signup flows, onboarding, popups, and paywalls.
+  Conversion Rate Optimization for pages, forms, signup flows, onboarding, popups, paywalls, and checkout.
   Use when: analyzing page conversion, optimizing signup flows, improving onboarding activation,
   reducing form abandonment, creating/optimizing popups, improving paywall conversion,
-  designing A/B tests, or when user mentions "conversion", "CRO", "optimize", "drop-off",
-  "abandon", "friction", "paywall", "upgrade flow", "popup", "modal", "signup optimization".
+  designing A/B tests, optimizing checkout flows, or when user mentions "conversion", "CRO",
+  "optimize", "drop-off", "abandon", "friction", "paywall", "upgrade flow", "popup", "modal",
+  "signup optimization", "landing page optimization", "why aren't people signing up",
+  "improve my pricing page", "reduce bounce rate", "increase sign-ups", "cart abandonment",
+  "checkout optimization", "not converting", "low conversion", "funnel optimization".
   Do NOT use for: writing copy (use z-copywriting skill), psychological principles (use z-marketing-psychology skill),
   or email optimization (use z-email-marketing skill).
 metadata:
-  version: 1.0.1
+  version: 1.1.0
   category: growth
 ---
 
@@ -37,6 +40,13 @@ Analyze in this priority order (highest impact first):
 4. **Trust Signals** — Is there enough social proof and credibility?
 5. **Objection Handling** — Are common concerns addressed before the CTA?
 
+Score each recommendation using **ICE**:
+- **Impact** (1-10): How much will this move the conversion rate?
+- **Confidence** (1-10): How sure are we this will work? (data > best practice > gut)
+- **Ease** (1-10): How quickly can this be implemented?
+
+ICE Score = (Impact + Confidence + Ease) / 3. Rank recommendations by score. Present the top items first.
+
 ### 4. Generate Recommendations
 Structure output as:
 - **Quick Wins** — Changes implementable in < 1 day
@@ -55,7 +65,10 @@ Structure output as:
 | Lead capture/contact/checkout forms | `references/form-cro.md` |
 | Popups/modals/overlays/banners | `references/popup-cro.md` |
 | In-app upgrade/paywall/upsell | `references/paywall-upgrade-cro.md` |
+| Checkout/cart/purchase flow | `references/checkout-cro.md` |
 | A/B test design and analysis | `references/experiments.md` |
+
+**Multi-area requests** (e.g., "optimize my SaaS funnel"): Read the most relevant reference first, then pull in additional references as needed. For full-funnel work, read in order: page → signup → onboarding → paywall. Synthesize into a single cohesive analysis — don't produce separate reports per area.
 
 ---
 

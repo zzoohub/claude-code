@@ -1,14 +1,16 @@
 ---
 name: z-email-marketing
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   category: marketing
 description: |
   Email marketing strategy, sequence design, and campaign execution for SaaS products.
   Use when: creating email sequences (welcome, nurture, onboarding, re-engagement, win-back),
   designing drip campaigns, writing cold outreach, planning email strategy, optimizing email copy,
-  or when user mentions "email sequence", "drip campaign", "welcome email", "onboarding email",
-  "cold email", "outreach", "email marketing", "newsletter", "email copy", "subject line".
+  building email automations, or when user mentions "email sequence", "drip campaign", "welcome email",
+  "onboarding email", "cold email", "outreach", "email marketing", "newsletter", "email copy",
+  "subject line", "email campaign", "email flow", "email funnel", "automated emails",
+  "follow-up sequence", "lead magnet delivery", "email automation".
   Do NOT use for: in-app copy (use z-copywriting skill), popup/modal design (use z-cro skill),
   churn-specific emails like dunning (use z-churn-prevention skill), or analytics (use z-product-analytics skill).
 ---
@@ -27,10 +29,14 @@ Strategy, sequence design, and execution for email marketing across SaaS lifecyc
 - **Goals**: Activation, conversion, retention, re-engagement, sales?
 
 ### 2. Core Principles
-- **One Email, One Job** — Every email has exactly one purpose and one CTA
-- **Value Before Ask** — Provide value in early emails before asking for conversion
-- **Relevance Over Volume** — Better to send fewer, targeted emails than many generic ones
-- **Clear Path Forward** — Every email tells the reader exactly what to do next
+
+- **One Email, One Job** — Every email has exactly one purpose and one CTA. When an email tries to do two things, neither gets done well — and you can't tell from metrics which one failed. If you need to accomplish two goals, that's two emails.
+
+- **Value Before Ask** — Provide value in early emails before asking for conversion. People ignore emails from senders who only take. The first 2-3 emails in any sequence should make the reader's life better with zero strings attached — that builds the trust that makes later conversion emails work.
+
+- **Relevance Over Volume** — Better to send fewer, targeted emails than many generic ones. Every irrelevant email trains the reader to stop opening your emails. One well-timed, behavior-triggered email outperforms five time-based blasts.
+
+- **Clear Path Forward** — Every email tells the reader exactly what to do next. Ambiguity kills action. If the reader finishes your email thinking "nice, but what now?", the email failed regardless of how good the copy was.
 
 ### 3. Sequence Strategy
 - **Length**: Match sequence length to the buying cycle (SaaS trial: 5-7 emails, Enterprise: 8-12)
@@ -44,34 +50,11 @@ Strategy, sequence design, and execution for email marketing across SaaS lifecyc
 
 | Scenario | Reference |
 |----------|-----------|
-| Understanding email categories | `references/email-types.md` |
-| Designing specific sequence flows | `references/sequence-templates.md` |
-| Writing email copy, subject lines | `references/copy-guidelines.md` |
+| Designing sequence flows and timing | `references/sequence-templates.md` |
+| Writing email copy, subject lines, CTAs | `references/copy-guidelines.md` |
+| Understanding email categories and what to build first | `references/email-types.md` |
 | B2B cold outreach and follow-ups | `references/cold-outreach.md` |
-
----
-
-## Sequence Types Overview
-
-### Welcome Sequence (5-7 emails, 12-14 days)
-Goal: Activate new users, deliver first value, build relationship
-Flow: Welcome → Quick win → Feature discovery → Social proof → Conversion nudge
-
-### Lead Nurture (6-8 emails, 2-3 weeks)
-Goal: Move leads from awareness to consideration
-Flow: Value content → Problem education → Solution introduction → Social proof → Offer
-
-### Re-engagement (3-4 emails, 2 weeks)
-Goal: Reactivate dormant users
-Flow: "We miss you" → New value/feature → Last chance → Sunset
-
-### Onboarding (5-7 emails, 14 days)
-Goal: Guide users to Aha Moment
-Flow: Setup help → First action → Feature education → Success story → Upgrade prompt
-
-### Cold Outreach (3-5 emails with follow-ups)
-Goal: Start B2B conversations
-Flow: Personal hook → Value offer → Social proof → Final ask
+| Deliverability, DNS, warm-up, list hygiene | `references/deliverability.md` |
 
 ---
 
@@ -79,21 +62,55 @@ Flow: Personal hook → Value offer → Social proof → Final ask
 
 1. **Define the goal** — One clear outcome for the entire sequence
 2. **Map the flow** — Each email's job and how it connects to the next
-3. **Set timing** — Delays between emails based on urgency and user behavior
-4. **Write emails** — Use `references/copy-guidelines.md` for structure and tone
-5. **Set up measurement** — Track opens, clicks, conversions, unsubscribes per email
+3. **Add branch points** — Where should the sequence split based on user behavior? (See `references/sequence-templates.md` for branching patterns)
+4. **Set timing** — Delays between emails based on urgency and user behavior
+5. **Write emails** — Use `references/copy-guidelines.md` for structure and tone
+6. **Set up measurement** — Track opens, clicks, conversions, unsubscribes per email
 
 ---
 
-## Key Metrics
+## Default Output Format
 
-| Metric | Good | Great |
-|--------|------|-------|
-| Open rate | 20-30% | 30%+ |
-| Click rate | 2-5% | 5%+ |
-| Unsubscribe rate | < 0.5% | < 0.2% |
-| Reply rate (cold) | 5-10% | 10%+ |
-| Sequence completion | 60-70% | 80%+ |
+When creating email sequences, produce this structure unless the user requests something different:
+
+### Sequence Overview
+```
+Sequence: [Name]
+Trigger: [What starts the sequence]
+Goal: [Primary outcome]
+Length: [N emails over N days]
+Exit conditions: [When someone leaves the sequence early]
+```
+
+### Per Email
+```
+Email [#]: [Name]
+Send: [Timing / trigger]
+Subject: [Subject line]
+Preview: [Preview text]
+---
+[Full email copy]
+---
+CTA: [Button text] → [Destination]
+Branch: [If applicable — what happens based on action/inaction]
+```
+
+For strategy-only requests (no copy), produce the overview table with timing, purpose, and subject line direction per email — skip full copy.
+
+---
+
+## Diagnosing Email Problems
+
+When metrics are underperforming, the problem usually lives in a specific layer. Work top-down:
+
+| Symptom | Likely cause | What to check |
+|---------|-------------|---------------|
+| Low open rate (<20%) | Subject line or deliverability | Are you landing in spam? Check `references/deliverability.md`. If deliverability is fine, the subject lines aren't earning opens — test curiosity and benefit hooks. |
+| Opens but low clicks (<2%) | Copy or CTA mismatch | The email isn't delivering on the subject line's promise, or the CTA is unclear/high-friction. Check body copy relevance and CTA placement. |
+| Clicks but no conversion | Landing page or offer | The email did its job — the problem is downstream. Check landing page alignment with email promise. |
+| High unsubscribe (>0.5%) | Frequency or relevance | Sending too often, or content doesn't match what they signed up for. Segment harder or reduce frequency. |
+| Low reply rate on cold (<5%) | Personalization or ask | The email reads like a template or asks too much. See `references/cold-outreach.md`. |
+| Declining open rates over time | List fatigue | Re-engagement sequence needed. Sunset non-openers after 90 days. |
 
 ---
 

@@ -238,3 +238,79 @@ Same specs as Feed, but test separately — performance varies significantly.
 | Twitter/X | 280 chars | 70 chars | 200 chars | 1200×675 |
 
 *Recommended visible length; max is higher.
+
+---
+
+## Performance Benchmarks (2025-2026)
+
+### Meta (Facebook/Instagram)
+
+| Metric | Average | Good | Top Quartile |
+|--------|---------|------|-------------|
+| CTR (Feed) | 1.4-1.7% | 2.0%+ | 3.0%+ |
+| CPC (Traffic) | $0.70-0.80 | <$0.60 | <$0.40 |
+| CPC (Lead Gen) | $1.90-2.10 | <$1.50 | <$1.00 |
+| CPL (Lead Ads) | $27.66 | <$20 | <$12 |
+| Lead Ad CVR | 7.72% | 10%+ | 15%+ |
+| Hook Rate (video) | 20-25% | 25-30% | 30%+ |
+
+**Key 2025-2026 insights**:
+- 70-80% of ad performance is creative quality (AppsFlyer report)
+- 4:5 vertical outperforms 1:1 by ~15% in Feed
+- Poster videos (still + short clips) lift watch time by ~18%
+- 60%+ of user time on FB/IG is spent watching video
+- Andromeda algorithm update: creative diversity > creative volume
+- Advantage+ Shopping Campaigns use AI to auto-optimize creative delivery
+
+### TikTok
+
+| Metric | Average | Good | Top Quartile |
+|--------|---------|------|-------------|
+| Hook Rate | 25-30% | 30-40% | 40%+ |
+| Hold Rate (6s) | 15-20% | 25-30% | 35%+ |
+| CTR | 0.5-1.0% | 1.0-2.0% | 2.0%+ |
+
+**Key 2025-2026 insights**:
+- UGC outperforms non-UGC by +55% ROI
+- Unbranded UGC +19% better than branded UGC
+- Content without logos: +81% ROI vs branded content
+- 90% of ad recall happens in first 6 seconds
+- Refresh creative every 7 days (TikTok recommendation)
+- Test 10-20 creative variations per campaign
+
+### Google Ads
+
+**Key 2025-2026 insights**:
+- PMax with video-enabled asset groups: 25-40% better performance
+- Asset Studio (genAI tools) now free for all advertisers
+- Brand guidelines let you control colors/fonts for AI-generated ads
+- Asset-level reporting now shows impressions, clicks, cost (not just conversions)
+- Replace low-rated assets every 4-6 weeks
+
+### LinkedIn
+
+| Metric | Average | Good | Top Quartile |
+|--------|---------|------|-------------|
+| CTR (Sponsored) | 0.4-0.6% | 0.7-1.0% | 1.0%+ |
+| CPC | $5-8 | $3-5 | <$3 |
+| CPL | $50-80 | $30-50 | <$30 |
+
+**Key 2025-2026 insights**:
+- Thought Leader Ads: 1.7x higher CTR, 1.6x more engagement
+- B2B creator content outperforms brand content
+- Algorithm weights meaningful interactions (comments > likes)
+- Refresh every 4-6 weeks; narrow B2B audiences fatigue faster
+
+---
+
+## Platform Creative Philosophy (2025-2026)
+
+Each platform has a different content culture. Ads that match it outperform.
+
+| Platform | Culture | Creative That Wins | Creative That Loses |
+|----------|---------|-------------------|-------------------|
+| **Meta** | Social sharing, discovery | UGC, native video, carousel stories | Corporate stock photos, text-heavy images |
+| **TikTok** | Raw, authentic, entertainment | Phone-shot UGC, trending sounds, lo-fi | Polished brand videos, static images |
+| **Google** | Intent-driven search | Keyword-match headlines, specific benefits | Vague claims, brand-first messaging |
+| **LinkedIn** | Professional insight | Thought leadership, data-driven content | Hard sell, consumer-style creative |
+| **Display** | Quick impression | Bold visuals, minimal text, clear CTA | Cluttered designs, multiple messages |
