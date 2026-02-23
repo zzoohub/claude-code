@@ -127,8 +127,8 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0",
     "aiosqlite>=0.20",
     "pydantic-settings>=2.7",
-    "python-jose[cryptography]>=3.3",
-    "passlib[bcrypt]>=1.7",
+    "PyJWT>=2.9",
+    "bcrypt>=4.2",
     "httpx>=0.28",
 ]
 
@@ -136,6 +136,7 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.25",
+    "alembic>=1.14",
 ]
 
 [project.scripts]
@@ -234,4 +235,155 @@ async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
 # Use SqliteAuthorRepository.from_engine() for integration tests:
 engine = create_async_engine("sqlite+aiosqlite:///:memory:")
 repo = SqliteAuthorRepository.from_engine(engine)
+```
+
+### conftest.py
+
+```python
+# tests/conftest.py
+import pytest
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import create_async_engine
+
+from app.config import AppConfig
+from domain.authors.service import AuthorServiceImpl
+from inbound.http.shell import Shell
+from outbound.sqlite.repository import SqliteAuthorRepository
+from tests.mocks import NoOpMetrics, NoOpNotifier
+
+
+@pytest.fixture
+def test_config() -> AppConfig:
+    return AppConfig(database_url="sqlite+aiosqlite:///:memory:", secret_key="test")
+
+
+@pytest.fixture
+async def db_engine():
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield engine
+    await engine.dispose()
+
+
+@pytest.fixture
+async def repo(db_engine):
+    return SqliteAuthorRepository.from_engine(db_engine)
+
+
+@pytest.fixture
+async def service(repo):
+    return AuthorServiceImpl(repo, NoOpMetrics(), NoOpNotifier())
+
+
+@pytest.fixture
+async def client(service, test_config):
+    app = Shell.build_test_app(service, test_config)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
+        yield c
+```
+
+```ini
+# pyproject.toml — pytest-asyncio config
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+```
+
+---
+
+## Alembic Migrations
+
+Migrations are infrastructure — they live outside the hex layers alongside config.
+
+```
+src/
+├── alembic/
+│   ├── env.py
+│   ├── versions/
+│   └── script.py.mako
+├── alembic.ini
+```
+
+### Setup
+
+```bash
+uv run alembic init src/alembic
+```
+
+### env.py (async)
+
+```python
+# src/alembic/env.py
+import asyncio
+from alembic import context
+from sqlalchemy.ext.asyncio import create_async_engine
+from app.config import AppConfig
+from outbound.postgres.models import Base  # ORM metadata lives in outbound
+
+config = context.config
+target_metadata = Base.metadata
+
+
+def run_migrations_offline():
+    context.configure(url=AppConfig().database_url, target_metadata=target_metadata)
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def do_run_migrations(connection):
+    context.configure(connection=connection, target_metadata=target_metadata)
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+async def run_migrations_online():
+    engine = create_async_engine(AppConfig().database_url)
+    async with engine.connect() as connection:
+        await connection.run_sync(do_run_migrations)
+    await engine.dispose()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    asyncio.run(run_migrations_online())
+```
+
+### Usage
+
+```bash
+uv run alembic revision --autogenerate -m "add authors table"
+uv run alembic upgrade head
+uv run alembic downgrade -1
+```
+
+---
+
+## Graceful Shutdown
+
+```python
+# src/app/application.py — improved with cleanup
+class Application:
+    def __init__(self, config: AppConfig) -> None:
+        self.config = config
+        self._engine = None
+
+    async def run(self) -> None:
+        self._engine = create_async_engine(
+            self.config.database_url,
+            pool_size=10,
+            pool_timeout=3,
+            pool_pre_ping=True,
+        )
+        repo = PostgresAuthorRepository.from_engine(self._engine)
+        metrics = PrometheusMetrics()
+        notifier = EmailNotifier()
+        service = AuthorServiceImpl(repo, metrics, notifier)
+
+        try:
+            async with asyncio.TaskGroup() as tg:
+                shell = Shell(self.config, service)
+                tg.create_task(shell.run())
+        finally:
+            await self._engine.dispose()
 ```

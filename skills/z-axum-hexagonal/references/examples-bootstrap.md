@@ -1,13 +1,39 @@
 # Examples: Bootstrap & Testing
 
-main.rs, CI, and hex-specific test mocks.
+Config, main.rs, graceful shutdown, CI, and hex-specific test mocks.
 
 ---
+
+## Config
+
+```rust
+// src/config.rs
+#[derive(Debug, Clone)]
+pub struct Config {
+    pub database_url: String,
+    pub server_port: String,
+    pub cors_origin: String,
+}
+
+impl Config {
+    pub fn from_env() -> anyhow::Result<Self> {
+        Ok(Self {
+            database_url: std::env::var("DATABASE_URL")
+                .context("DATABASE_URL must be set")?,
+            server_port: std::env::var("PORT")
+                .unwrap_or_else(|_| "3000".to_string()),
+            cors_origin: std::env::var("CORS_ORIGIN")
+                .unwrap_or_else(|_| "http://localhost:3000".to_string()),
+        })
+    }
+}
+```
 
 ## Bootstrap
 
 ```rust
 // src/bin/server/main.rs — no axum, no sqlx imports
+use myapp::config::Config;
 use myapp::domain::authors::service::AuthorServiceImpl;
 use myapp::inbound::http::{HttpServer, HttpServerConfig};
 use myapp::outbound::{sqlite::Sqlite, prometheus::Prometheus, email_client::EmailClient};
@@ -18,14 +44,18 @@ async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
     let sqlite = Sqlite::new(&config.database_url).await?;
     let service = AuthorServiceImpl::new(sqlite, Prometheus::new(), EmailClient::new());
-    HttpServer::new(service, HttpServerConfig { port: &config.server_port }).await?.run().await
+    HttpServer::new(service, HttpServerConfig {
+        port: &config.server_port,
+        cors_origin: &config.cors_origin,
+    }).await?.run().await
 }
 ```
 
 ## CI/CD
 
 ```bash
-cargo sqlx prepare && git add .sqlx/    # offline builds
+# SQLx 0.8+: one file per query (not merged). Commit .sqlx/ directory.
+cargo sqlx prepare && git add .sqlx/    # generate offline query data
 SQLX_OFFLINE=true cargo build           # CI without DB
 ```
 
@@ -116,7 +146,7 @@ async fn test_app() -> Router {
     HttpServer::build_router(service, test_config()).unwrap()
 }
 
-// Use with tower::ServiceExt::oneshot
+// Pattern 1: oneshot — single request per test
 let app = test_app().await;
 let res = app.oneshot(
     Request::post("/authors")
@@ -124,6 +154,33 @@ let res = app.oneshot(
         .body(Body::from(r#"{"name":"Test"}"#)).unwrap(),
 ).await.unwrap();
 assert_eq!(res.status(), StatusCode::CREATED);
+
+// Read response body
+let body = res.into_body().collect().await.unwrap().to_bytes();
+let data: serde_json::Value = serde_json::from_slice(&body).unwrap();
+```
+
+### Multiple requests in one test
+
+```rust
+// Pattern 2: ready().call() — reuse the same service for multiple requests
+use tower::{Service, ServiceExt};
+
+let mut app = test_app().await.into_service();
+
+// First request
+let req = Request::post("/authors")
+    .header("Content-Type", "application/json")
+    .body(Body::from(r#"{"name":"Alice"}"#)).unwrap();
+let res = ServiceExt::<Request<Body>>::ready(&mut app)
+    .await.unwrap().call(req).await.unwrap();
+assert_eq!(res.status(), StatusCode::CREATED);
+
+// Second request on same service
+let req = Request::get("/authors").body(Body::empty()).unwrap();
+let res = ServiceExt::<Request<Body>>::ready(&mut app)
+    .await.unwrap().call(req).await.unwrap();
+assert_eq!(res.status(), StatusCode::OK);
 ```
 
 ### Integration test with `#[sqlx::test]`

@@ -34,7 +34,7 @@ Separate **business domain** from **infrastructure**. Domain defines *what*; ada
 ```
 src/
 ├── bin/server/main.rs           # Bootstrap only — no axum/sqlx imports
-├── config.rs
+├── config.rs                    # Config struct, from_env()
 ├── domain/
 │   └── authors/
 │       ├── models.rs            # Author, AuthorName, CreateAuthorRequest
@@ -54,7 +54,7 @@ src/
     ├── postgres.rs              # impl AuthorRepository for Postgres
     ├── prometheus.rs            # impl AuthorMetrics
     └── email_client.rs          # impl AuthorNotifier
-.sqlx/                 # Commit this
+.sqlx/                 # Commit this (one file per query in SQLx 0.8+)
 ```
 
 **Rule:** `domain/` never imports from `inbound/` or `outbound/`.
@@ -65,6 +65,7 @@ src/
 
 ### Models
 - Validate on construction (newtype pattern). Private fields, public getters.
+- Implement `Display` for newtypes that need `.to_string()` — derive won't work on newtypes.
 - No `serde::Deserialize` — Serde bypasses constructors, creating invalid objects.
   Exception: Serde is OK if the model performs no validation (any field value is valid).
 - Separate `CreateAuthorRequest` from `Author` — they WILL diverge as app grows.
@@ -88,6 +89,7 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 
 ### Service
 - Trait declaring business API + struct `Service<R, M, N>` implementing it.
+- Constructor takes all dependencies: `fn new(repo: R, metrics: M, notifier: N) -> Self`.
 - Orchestrates: repo → metrics → notifications → return result.
 - Handlers call Service, never Repository directly.
 
@@ -99,8 +101,11 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 
 - **HttpServer wrapper** — wrap axum so `main` never imports axum.
   Expose `build_router()` for tests — returns `Router` without binding a port.
-- **DI via State** — services wrapped in `Arc` inside `AppState<AS>`.
-  Handler generic `AS: AuthorService` ensures dependency on trait, never concrete.
+- **Path params use `{id}` syntax** (not `:id`). Axum 0.8 changed this.
+  Wildcards: `{*path}` (not `*path`). Literal braces: `{{` / `}}`.
+- **DI via State** — services wrapped in `Arc` inside `AppState`.
+  - **Single service:** generic `AppState<AS>`.
+  - **Multiple services:** concrete `AppState` with `FromRef` for sub-extraction.
 - **Handlers** do three things only: parse input → call service → map response. No SQL.
 - **Request types** decoupled from domain — `try_into_domain()` validates into domain type.
 - **Response types** built via `From<&Author>` — never expose domain structs.
@@ -108,6 +113,7 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
   `Unknown` → log server-side, return generic message. Use RFC 9457 ProblemDetails.
 - **Middleware (Tower layers)** — lives in inbound layer, invisible to domain.
   Layers wrap services: `TraceLayer → TimeoutLayer → CompressionLayer → CorsLayer`.
+- **Health checks** live in the inbound layer (not domain). Readiness probes check DB pool.
 
 ### Non-HTTP Inbound Adapters
 
@@ -147,6 +153,8 @@ All three are wired into the same HttpServer. Domain doesn't know which triggere
 - Expose `from_pool()` constructor for tests.
 - **Transactions encapsulated in adapter**, invisible to callers.
 - Keep transactions short. **No external calls (HTTP, queues) inside tx.**
+- **SQLx 0.8+**: `Transaction` and `PoolConnection` no longer implement `Executor` directly.
+  Use `&mut **tx` when executing queries inside a transaction.
 - Map DB-specific errors (e.g. unique constraint codes) to domain error variants.
 - Unknown DB errors wrapped with `anyhow` context.
 - For complex row types or ORM (diesel, sea-orm), use explicit `to_domain()` mapper in outbound.
@@ -189,6 +197,7 @@ Auth middleware lives in the inbound layer. Domain never handles raw tokens.
 ## Bootstrap (main.rs)
 
 Construct adapters → assemble service → start server. **No axum/sqlx imports.**
+Include graceful shutdown with `SIGINT`/`SIGTERM` handling.
 
 ```rust
 let sqlite = Sqlite::new(&config.database_url).await?;
@@ -197,7 +206,42 @@ let server = HttpServer::new(service, HttpServerConfig { port: &config.port }).a
 server.run().await
 ```
 
-→ Full bootstrap and CI examples: `references/examples-bootstrap.md`
+→ Full bootstrap, config, graceful shutdown, and CI examples: `references/examples-bootstrap.md`
+
+---
+
+## Graceful Shutdown
+
+- Use `axum::serve(...).with_graceful_shutdown(signal)`.
+- **Always pair with `TimeoutLayer`** — without it, in-flight requests hang forever during drain.
+- Handle both `SIGINT` (Ctrl+C) and `SIGTERM` (container orchestration).
+- Shutdown logic lives in `HttpServer::run()` — invisible to domain.
+
+→ Full shutdown signal example: `references/examples-bootstrap.md`
+
+---
+
+## Scaling to Multiple Domains
+
+When `AppState` grows beyond one service, switch from generic `AppState<AS>` to a concrete struct with `FromRef`:
+
+```rust
+#[derive(Clone)]
+struct AppState {
+    author_service: Arc<dyn AuthorService>,
+    billing_service: Arc<dyn BillingService>,
+}
+
+// Each handler extracts only what it needs via FromRef
+impl FromRef<AppState> for Arc<dyn AuthorService> { ... }
+```
+
+**Rules:**
+- All merged/nested routers must share the same `AppState` type.
+- Handlers extract substates via `State<Arc<dyn AuthorService>>` — still depends on trait, not concrete.
+- Switch from generics to trait objects (`Arc<dyn Trait>`) when you have 3+ services.
+
+→ Full multi-domain example: `references/examples-adapters.md`
 
 ---
 
@@ -224,6 +268,10 @@ server.run().await
 | Middleware not running | Layer order wrong | `route_layer` for per-route, `layer` for global |
 | Mutex poisoned | Panic while holding lock | Never panic — return errors |
 | DB pool exhausted | No acquire timeout | Set `acquire_timeout(Duration::from_secs(3))` |
+| `execute(tx)` won't compile | SQLx 0.8 removed `Executor` on `Transaction` | Use `execute(&mut **tx)` |
+| Path `/:id` panics | Axum 0.8 changed syntax | Use `/{id}` (and `{*path}` for wildcards) |
+| Handlers not `Sync` | Axum 0.8 requires `Sync` on all handlers | Ensure all captured state is `Sync` |
+| `Option<T>` extracts always `None` | Axum 0.8 stricter `Option` extraction | Inner type must impl `OptionalFromRequestParts` |
 
 ---
 
@@ -231,15 +279,18 @@ server.run().await
 
 | Question | Answer |
 |----------|--------|
-| Transactions? | Adapter (repository impl) |
+| Transactions? | Adapter (repository impl), use `&mut **tx` |
 | Validation? | Domain model constructors |
 | Error mapping? | `From<DomainError> for ApiError` in inbound |
 | Business orchestration? | Service impl |
 | Handler responsibility? | Parse → service → response |
 | main responsibility? | Construct adapters → assemble → start |
-| DI mechanism? | `State<AppState<AS>>` with `Arc` |
+| DI (single service)? | `State<AppState<AS>>` with `Arc` |
+| DI (multi service)? | Concrete `AppState` with `FromRef` |
 | DB row ↔ domain? | `to_domain()` mapper in outbound |
 | Test app? | `HttpServer::build_router()` + `tower::oneshot` |
+| Health checks? | Inbound layer, not domain |
+| Graceful shutdown? | `with_graceful_shutdown()` + `TimeoutLayer` |
 
 ---
 
@@ -249,18 +300,22 @@ server.run().await
 - [ ] Domain never imports from inbound/ or outbound/
 - [ ] Port traits: `Clone + Send + Sync + 'static`, futures `+ Send`
 - [ ] All handlers (HTTP, tasks, webhooks): parse → service → respond
-- [ ] Transactions in adapters only, `to_domain()` mapper in outbound
+- [ ] Transactions in adapters only, `&mut **tx` for SQLx 0.8+
 - [ ] Errors: domain enum → `From<DomainError> for ApiError` → RFC 9457
 
 ### Framework
 - [ ] Axum wrapped in `HttpServer`, `build_router()` for tests
-- [ ] DI via `State<AppState<AS>>` with `Arc`
+- [ ] Path params use `{id}` syntax (not `:id`)
+- [ ] DI via `State<AppState<AS>>` with `Arc` (or `FromRef` for multi-service)
 - [ ] Tower layers: trace, timeout, compression, CORS
 - [ ] `acquire_timeout` set on pool
+- [ ] Graceful shutdown with `SIGINT`/`SIGTERM` + `TimeoutLayer`
+- [ ] Health check endpoint (readiness probe checks DB)
 
 ### Testing
 → Test mocks (stub, saboteur, spy, noop) and test app helper: `references/examples-bootstrap.md`
 
 ### Setup
 - [ ] `main.rs` has no axum/sqlx imports
-- [ ] `.sqlx/` committed (compile-time query check)
+- [ ] `.sqlx/` committed (one file per query in SQLx 0.8+)
+- [ ] `Config` struct with `from_env()` in `config.rs`

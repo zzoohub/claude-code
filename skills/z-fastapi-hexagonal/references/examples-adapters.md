@@ -8,8 +8,9 @@ Inbound (Shell, handlers, task handlers, webhooks, auth, errors) and outbound (D
 
 ```python
 # src/outbound/postgres/models.py
-from sqlalchemy import String
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from uuid import UUID
+
+from sqlalchemy import String, Uuid
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -20,12 +21,11 @@ class Base(DeclarativeBase):
 class AuthorModel(Base):
     """SQLAlchemy ORM model — outbound only. Never import in domain."""
     __tablename__ = "authors"
-    id: Mapped[str] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
+    id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
 
 
 # src/outbound/postgres/mapper.py
-from uuid import UUID
 from domain.authors.models import Author, AuthorName
 from outbound.postgres.models import AuthorModel
 
@@ -35,10 +35,7 @@ class AuthorMapper:
 
     @staticmethod
     def to_domain(row: AuthorModel) -> Author:
-        return Author(
-            id=row.id if isinstance(row.id, UUID) else UUID(str(row.id)),
-            name=AuthorName(row.name),
-        )
+        return Author(id=row.id, name=AuthorName(row.name))
 
     @staticmethod
     def to_orm(author: Author) -> dict:
@@ -78,6 +75,14 @@ class PostgresAuthorRepository:
         self._session_factory = async_sessionmaker(
             self._engine, expire_on_commit=False,
         )
+
+    @classmethod
+    def from_engine(cls, engine) -> "PostgresAuthorRepository":
+        """Construct from existing engine (for testing)."""
+        instance = object.__new__(cls)
+        instance._engine = engine
+        instance._session_factory = async_sessionmaker(engine, expire_on_commit=False)
+        return instance
 
     async def create_author(self, req: CreateAuthorRequest) -> Author:
         author_id = uuid.uuid4()
@@ -296,33 +301,38 @@ def with_author_service(request: Request) -> AuthorService:
 ```python
 # src/inbound/http/auth.py
 """Auth lives entirely in the inbound layer. Domain never handles tokens."""
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+
+import bcrypt
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
-from passlib.context import CryptContext
+
 from app.config import AppConfig
 
 _settings = AppConfig()
-_pwd_context = CryptContext(schemes=["bcrypt"])
 _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def hash_password(password: str) -> str:
-    return _pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return _pwd_context.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 def create_access_token(user_id: int, expires_minutes: int = 30) -> str:
-    expire = datetime.utcnow() + timedelta(minutes=expires_minutes)
-    return jwt.encode({"sub": str(user_id), "exp": expire}, _settings.secret_key, algorithm="HS256")
+    expire = datetime.now(UTC) + timedelta(minutes=expires_minutes)
+    return jwt.encode(
+        {"sub": str(user_id), "exp": expire},
+        _settings.secret_key,
+        algorithm="HS256",
+    )
 
 def _decode_token(token: str) -> int | None:
     try:
         payload = jwt.decode(token, _settings.secret_key, algorithms=["HS256"])
         return int(payload.get("sub"))
-    except (JWTError, ValueError, TypeError):
+    except (jwt.InvalidTokenError, ValueError, TypeError):
         return None
 
 async def get_current_user(token: str = Depends(_oauth2_scheme)) -> int:
@@ -473,4 +483,79 @@ class Ok(ApiSuccess[T], Generic[T]):
 
 class NoContent(BaseModel):
     pass
+
+class PaginatedList(BaseModel, Generic[T]):
+    data: list[T]
+    total: int
+    page: int
+    page_size: int
+    has_next: bool
+```
+
+## Inbound: Pagination (cursor and offset)
+
+```python
+# src/domain/authors/ports.py — add to AuthorRepository
+class AuthorRepository(Protocol):
+    async def list_authors(self, page: int, page_size: int) -> tuple[list[Author], int]: ...
+
+# src/outbound/postgres/repository.py — offset pagination
+async def list_authors(self, page: int, page_size: int) -> tuple[list[Author], int]:
+    async with self._session_factory() as session:
+        count = await session.scalar(select(func.count()).select_from(AuthorModel))
+        result = await session.execute(
+            select(AuthorModel)
+            .order_by(AuthorModel.name)
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        rows = result.scalars().all()
+        return [AuthorMapper.to_domain(r) for r in rows], count or 0
+
+# src/inbound/http/authors/router.py — handler
+@router.get("")
+async def list_authors(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    service: AuthorService = Depends(with_author_service),
+) -> PaginatedList[AuthorResponseData]:
+    authors, total = await service.list_authors(page, page_size)
+    return PaginatedList(
+        data=[AuthorResponseData.from_domain(a) for a in authors],
+        total=total,
+        page=page,
+        page_size=page_size,
+        has_next=(page * page_size) < total,
+    )
+```
+
+## Inbound: Healthcheck
+
+```python
+# src/inbound/http/health.py
+"""Healthcheck is infrastructure — not a domain concern.
+Wire directly in Shell, no service needed."""
+from fastapi import APIRouter
+from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy import text
+
+
+def health_routes(engine: AsyncEngine) -> APIRouter:
+    router = APIRouter(tags=["health"])
+
+    @router.get("/healthz")
+    async def healthz():
+        return {"status": "ok"}
+
+    @router.get("/readyz")
+    async def readyz():
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return {"status": "ready"}
+
+    return router
+
+
+# In Shell._build_app():
+# app.include_router(health_routes(engine))
 ```

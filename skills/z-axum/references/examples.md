@@ -78,6 +78,48 @@ where
 }
 ```
 
+### ValidatedJson Extractor
+
+Wraps `Json` + `validator::Validate`. Rejects bad input with a 400 before the handler runs.
+
+```rust
+// src/extractors.rs (continued)
+use axum::{extract::rejection::JsonRejection, Json};
+use validator::Validate;
+use crate::error::AppError;
+
+pub struct ValidatedJson<T>(pub T);
+
+impl<S, T> axum::extract::FromRequest<S> for ValidatedJson<T>
+where
+    S: Send + Sync,
+    T: serde::de::DeserializeOwned + Validate,
+    Json<T>: axum::extract::FromRequest<S, Rejection = JsonRejection>,
+{
+    type Rejection = AppError;
+
+    async fn from_request(
+        req: axum::extract::Request,
+        state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        let Json(value) = Json::<T>::from_request(req, state)
+            .await
+            .map_err(|e| AppError::BadRequest(e.body_text()))?;
+        value.validate().map_err(|e| AppError::BadRequest(e.to_string()))?;
+        Ok(ValidatedJson(value))
+    }
+}
+
+// Usage: derive Validate on input types
+// #[derive(Deserialize, Validate)]
+// pub struct CreateUser {
+//     #[validate(email)]
+//     pub email: String,
+//     #[validate(length(min = 1, max = 100))]
+//     pub name: String,
+// }
+```
+
 ### AppError (RFC 9457)
 
 ```rust
@@ -162,7 +204,12 @@ impl AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, problem) = self.to_problem();
-        (status, Json(problem)).into_response()
+        (
+            status,
+            [(axum::http::header::CONTENT_TYPE, "application/problem+json")],
+            Json(problem),
+        )
+            .into_response()
     }
 }
 ```
@@ -424,6 +471,26 @@ pub async fn create_order(db: &PgPool, input: CreateOrderInput) -> Result<Order,
 
 ## Middleware (Tower Layers)
 
+### Database Connection
+
+```rust
+// src/db.rs
+use sqlx::postgres::PgPoolOptions;
+use sqlx::PgPool;
+use std::time::Duration;
+
+pub async fn connect() -> PgPool {
+    let url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    PgPoolOptions::new()
+        .max_connections(10)
+        .acquire_timeout(Duration::from_secs(3))
+        .connect(&url)
+        .await
+        .expect("Failed to connect to database")
+}
+```
+
 ### App Composition
 
 ```rust
@@ -443,6 +510,8 @@ async fn main() {
     tracing_subscriber::fmt::init();
 
     let db = db::connect().await;
+    sqlx::migrate!().run(&db).await.expect("Failed to run migrations");
+
     let state = AppState { db };
 
     let app = Router::new()
@@ -461,7 +530,17 @@ async fn main() {
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8080").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
+}
+
+async fn shutdown_signal() {
+    tokio::signal::ctrl_c()
+        .await
+        .expect("Failed to install CTRL+C handler");
+    tracing::info!("Shutting down");
 }
 ```
 
@@ -566,15 +645,29 @@ async fn test_delete_nonexistent_returns_not_found(pool: PgPool) {
 }
 ```
 
+### Test App Helper
+
+```rust
+use axum::Router;
+use sqlx::PgPool;
+
+/// Build a fully-wired app for integration tests.
+/// Uses #[sqlx::test] to get a pool with migrations applied.
+async fn test_app(pool: PgPool) -> Router {
+    let state = crate::AppState { db: pool };
+    crate::features::users::router().with_state(state)
+}
+```
+
 ### HTTP Tests
 
 ```rust
 use axum::{body::Body, http::{Request, StatusCode}};
 use tower::ServiceExt;
 
-#[tokio::test]
-async fn test_get_returns_404_for_nonexistent() {
-    let app = test_app().await;
+#[sqlx::test]
+async fn test_get_returns_404_for_nonexistent(pool: PgPool) {
+    let app = test_app(pool).await;
 
     let res = app
         .oneshot(
@@ -588,9 +681,9 @@ async fn test_get_returns_404_for_nonexistent() {
     assert_eq!(res.status(), StatusCode::NOT_FOUND);
 }
 
-#[tokio::test]
-async fn test_create_returns_201() {
-    let app = test_app().await;
+#[sqlx::test]
+async fn test_create_returns_201(pool: PgPool) {
+    let app = test_app(pool).await;
 
     let res = app
         .oneshot(

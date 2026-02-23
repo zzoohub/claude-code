@@ -3,7 +3,7 @@ name: z-fastapi-hexagonal
 description: |
   FastAPI with hexagonal architecture patterns in Python.
   Use when: building Python APIs that need testability, maintainability, and scalability.
-  Covers: domain modeling, ports & adapters, service layer, error handling, async patterns, testing.
+  Covers: domain modeling, ports & adapters, service layer, error handling, async patterns, testing, Alembic migrations, pagination, healthcheck endpoints.
   Do not use for: API design decisions (use z-api-design skill), thin CRUD apps (use z-fastapi skill).
   Workflow: z-api-design (design) → this skill (implementation).
 references:
@@ -48,7 +48,8 @@ src/
 │       ├── shell.py             # Shell class — wraps FastAPI, owns uvicorn
 │       ├── errors.py            # exception handlers → RFC 9457
 │       ├── dependencies.py      # with_author_service
-│       ├── response.py          # ApiSuccess, Created, Ok, NoContent
+│       ├── health.py            # /healthz, /readyz — no domain involvement
+│       ├── response.py          # ApiSuccess, Created, Ok, PaginatedList
 │       └── authors/
 │           ├── router.py        # Parse → call service → map response
 │           ├── request.py       # CreateAuthorHttpRequestBody
@@ -62,6 +63,12 @@ src/
 │   │   └── repository.py       # impl AuthorRepository for SQLite
 │   ├── prometheus.py            # impl AuthorMetrics
 │   └── email_client.py          # impl AuthorNotifier
+├── alembic/                     # DB migrations — infrastructure, not a hex layer
+│   ├── env.py
+│   └── versions/
+tests/
+├── conftest.py                  # Fixtures: test_config, db_engine, client
+└── mocks.py                     # Stub, Saboteur, Spy, NoOp
 ```
 
 **Rule:** `domain/` never imports from `inbound/` or `outbound/`.
@@ -187,10 +194,63 @@ create_async_engine(url, pool_size=10, pool_timeout=3, pool_pre_ping=True)
 
 ---
 
+## Pagination
+
+List endpoints need pagination. The pattern flows through all three layers:
+- **Domain port**: `list_authors(page, page_size) -> tuple[list[Author], int]`
+- **Outbound adapter**: offset/limit + `COUNT(*)` query
+- **Inbound handler**: return `PaginatedList[T]` with `data`, `total`, `page`, `page_size`, `has_next`
+
+Cap `page_size` at the handler level (e.g. `Query(20, ge=1, le=100)`). The domain doesn't care about max page size — that's a transport concern.
+
+> Full pagination examples (port, adapter, handler): `references/examples-adapters.md`
+
+---
+
+## Healthcheck
+
+Healthcheck endpoints are infrastructure — they bypass the domain entirely. Wire them directly in Shell.
+
+- `/healthz` — always returns 200 (liveness, "is the process alive?")
+- `/readyz` — checks DB connectivity (readiness, "can it serve traffic?")
+
+> Healthcheck example: `references/examples-adapters.md`
+
+---
+
+## Migrations (Alembic)
+
+Migrations are infrastructure. They sit alongside the app, not inside any hex layer. Alembic reads ORM metadata from `outbound/` models to generate migrations.
+
+```
+src/alembic/
+├── env.py          # Reads Base.metadata from outbound/postgres/models.py
+└── versions/       # Generated migration files
+```
+
+Use async engine in `env.py` since the app is async throughout.
+
+> Full Alembic setup (env.py, commands): `references/examples-bootstrap.md`
+
+---
+
+## Logging
+
+Use stdlib `logging` throughout. Each module gets its own logger via `logging.getLogger(__name__)`.
+
+- **Domain**: log business events at INFO, wrap unexpected exceptions at ERROR
+- **Inbound**: exception handlers log server errors before returning generic messages
+- **Outbound**: log DB errors, slow queries
+
+For structured logging (JSON output), add `structlog` and configure it once in `main.py`. The domain code stays the same — `structlog` wraps stdlib loggers.
+
+---
+
 ## App Orchestrator
 
 For apps with background workers, use `Application` class with `asyncio.TaskGroup`.
 `TaskGroup` cancels sibling tasks on failure. HTTP-only apps can skip this.
+Ensure `engine.dispose()` in a `finally` block for clean shutdown.
 
 ---
 
@@ -198,10 +258,12 @@ For apps with background workers, use `Application` class with `asyncio.TaskGrou
 
 | Item | Value |
 |------|-------|
-| Password hashing | bcrypt, 12 rounds |
+| Password hashing | `bcrypt` package (not passlib) |
+| JWT library | `PyJWT` (not python-jose, which is unmaintained) |
 | JWT access token | 15 min |
 | JWT refresh (web) | 90 days |
 | JWT refresh (mobile) | 1 year |
+| Timestamps | `datetime.now(UTC)` (not deprecated `utcnow()`) |
 | CORS | Explicit origins only (no wildcard) |
 
 Auth dependency (`get_current_user`) lives in inbound layer. Domain never handles raw tokens.
@@ -214,7 +276,7 @@ Construct adapters → assemble service → start. **No FastAPI/SQLAlchemy impor
 
 Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 
-→ Full bootstrap, Application orchestrator, and CI examples: `references/examples-bootstrap.md`
+→ Full bootstrap, Application orchestrator, Alembic setup, and CI examples: `references/examples-bootstrap.md`
 
 ---
 
@@ -242,6 +304,9 @@ Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 | Domain imports FastAPI | Leaky boundary | Move to inbound layer |
 | HTTPException in domain | Transport leak | Use domain error classes |
 | ORM model in handler | Missing mapper | Translate in adapter via mapper |
+| `utcnow()` deprecation | Python 3.12+ | Use `datetime.now(UTC)` |
+| jose/passlib issues | Unmaintained deps | Use `PyJWT` + `bcrypt` |
+| No migrations | Missing Alembic | Set up `alembic/` alongside app |
 
 ---
 
@@ -257,8 +322,13 @@ Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 | main responsibility? | Construct adapters → assemble → start |
 | DI mechanism? | Lifespan state + `request.state` |
 | ORM ↔ domain? | `AuthorMapper.to_domain()` in outbound |
+| ORM type for UUID? | `sqlalchemy.Uuid` (native, not dialect-specific) |
 | Test app? | `Shell.build_test_app()` + `httpx.AsyncClient` |
 | Background workers? | `Application` + `asyncio.TaskGroup` |
+| Migrations? | Alembic, lives alongside app (not in hex layers) |
+| Healthcheck? | `/healthz` + `/readyz` in inbound, no domain |
+| Pagination? | `PaginatedList[T]` wrapper, offset in adapter |
+| JWT / passwords? | `PyJWT` + `bcrypt` (not jose/passlib) |
 
 ---
 
@@ -276,10 +346,25 @@ Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 - [ ] DI via `lifespan` state + `request.state`
 - [ ] `expire_on_commit=False`, `selectinload()`, `pool_timeout` set
 - [ ] No blocking calls in async routes, CORS before routers
+- [ ] `/healthz` and `/readyz` endpoints
+- [ ] ORM uses `sqlalchemy.Uuid` (not dialect-specific `PG_UUID`)
+
+### Dependencies
+- [ ] `PyJWT` for JWT (not `python-jose`)
+- [ ] `bcrypt` for passwords (not `passlib`)
+- [ ] `datetime.now(UTC)` everywhere (not `utcnow()`)
+
+### Database
+- [ ] Alembic configured with async engine
+- [ ] Migrations import ORM metadata from outbound models
+- [ ] `from_engine()` on adapters for test injection
 
 ### Testing
+- [ ] `conftest.py` with fixtures: `test_config`, `db_engine`, `client`
+- [ ] `asyncio_mode = "auto"` in pytest config
 → Test mocks (stub, saboteur, spy, noop) and test app helper: `references/examples-bootstrap.md`
 
 ### Setup
 - [ ] `main.py` has no FastAPI/SQLAlchemy imports
 - [ ] `uv.lock` committed
+- [ ] `engine.dispose()` in shutdown path

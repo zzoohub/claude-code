@@ -26,11 +26,13 @@ impl Sqlite {
 
 impl AuthorRepository for Sqlite {
     async fn create_author(&self, req: &CreateAuthorRequest) -> Result<Author, CreateAuthorError> {
+        // SQLx 0.8+: Transaction no longer implements Executor.
+        // Use &mut **tx when executing queries inside a transaction.
         let mut tx = self.pool.begin().await.context("failed to start tx")?;
         let id = Uuid::new_v4();
         sqlx::query!("INSERT INTO authors (id, name) VALUES ($1, $2)",
             id.to_string(), req.name().to_string())
-            .execute(&mut *tx).await
+            .execute(&mut **tx).await  // Note: &mut **tx, not &mut *tx
             .map_err(|e| {
                 if let sqlx::Error::Database(ref db_err) = e {
                     if db_err.code().map_or(false, |c| c == UNIQUE_CONSTRAINT_VIOLATION) {
@@ -54,6 +56,27 @@ impl AuthorRepository for Sqlite {
             ))),
             None => Ok(None),
         }
+    }
+
+    async fn list_authors(&self, pagination: &Pagination) -> Result<Page<Author>, anyhow::Error> {
+        let offset = pagination.offset() as i64;
+        let limit = pagination.per_page() as i64;
+
+        let rows = sqlx::query!("SELECT id, name FROM authors ORDER BY name LIMIT $1 OFFSET $2",
+            limit, offset)
+            .fetch_all(&self.pool).await.context("failed to list authors")?;
+
+        let total = sqlx::query_scalar!("SELECT COUNT(*) FROM authors")
+            .fetch_one(&self.pool).await.context("failed to count authors")?;
+
+        let items = rows.into_iter()
+            .map(|r| Ok(Author::new(
+                Uuid::parse_str(&r.id)?,
+                AuthorName::new(&r.name).map_err(|e| anyhow!(e))?,
+            )))
+            .collect::<Result<Vec<_>, anyhow::Error>>()?;
+
+        Ok(Page { items, total: total as u64, page: pagination.page(), per_page: pagination.per_page() })
     }
 }
 ```
@@ -92,7 +115,7 @@ impl AuthorRepository for Postgres {
             })?;
         Ok(Author::new(id, req.name().clone()))
     }
-    // find_author omitted — same pattern as SQLite
+    // find_author, list_authors omitted — same pattern as SQLite
 }
 ```
 
@@ -182,7 +205,12 @@ impl HttpServer {
         let state = AppState { author_service: Arc::new(author_service) };
         let origin = config.cors_origin.parse::<HeaderValue>()?;
         Ok(Router::new()
+            // Axum 0.8+: use {id} syntax, not :id
             .route("/authors", post(handlers::create_author::<AS>))
+            .route("/authors", get(handlers::list_authors::<AS>))
+            .route("/authors/{id}", get(handlers::get_author::<AS>))
+            .route("/health", get(|| async { StatusCode::OK }))
+            .route("/ready", get(Self::readiness_check))
             .layer(
                 ServiceBuilder::new()
                     .layer(TraceLayer::new_for_http())
@@ -194,11 +222,87 @@ impl HttpServer {
     }
 
     pub async fn run(self) -> anyhow::Result<()> {
-        axum::serve(self.listener, self.router).await?;
+        axum::serve(self.listener, self.router)
+            .with_graceful_shutdown(Self::shutdown_signal())
+            .await?;
         Ok(())
+    }
+
+    async fn shutdown_signal() {
+        let ctrl_c = async {
+            tokio::signal::ctrl_c().await.expect("failed to install Ctrl+C handler");
+        };
+        #[cfg(unix)]
+        let terminate = async {
+            tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+                .expect("failed to install SIGTERM handler")
+                .recv().await;
+        };
+        #[cfg(not(unix))]
+        let terminate = std::future::pending::<()>();
+        tokio::select! { _ = ctrl_c => {}, _ = terminate => {} }
+    }
+}
+
+// Health check — readiness probe (lives in inbound, not domain)
+impl HttpServer {
+    async fn readiness_check<AS: AuthorService>(
+        State(_state): State<AppState<AS>>,
+    ) -> StatusCode {
+        // For real apps: check DB pool health, external service connectivity
+        StatusCode::OK
     }
 }
 ```
+
+## Inbound: Multi-Service AppState with FromRef
+
+When you outgrow a single generic service, switch to a concrete `AppState` with `FromRef`:
+
+```rust
+// src/inbound/http/server.rs — multi-domain variant
+use axum::extract::FromRef;
+
+#[derive(Clone)]
+struct AppState {
+    author_service: Arc<dyn AuthorService>,
+    billing_service: Arc<dyn BillingService>,
+}
+
+// Each handler extracts only the service it needs
+impl FromRef<AppState> for Arc<dyn AuthorService> {
+    fn from_ref(state: &AppState) -> Self { state.author_service.clone() }
+}
+impl FromRef<AppState> for Arc<dyn BillingService> {
+    fn from_ref(state: &AppState) -> Self { state.billing_service.clone() }
+}
+
+// Handlers depend on trait, not concrete AppState
+async fn create_author(
+    State(service): State<Arc<dyn AuthorService>>,
+    Json(body): Json<CreateAuthorHttpRequestBody>,
+) -> Result<ApiSuccess<AuthorResponseData>, ApiError> {
+    let domain_req = body.try_into_domain()?;
+    service.create_author(&domain_req).await
+        .map_err(ApiError::from)
+        .map(|ref author| ApiSuccess::new(StatusCode::CREATED, author.into()))
+}
+
+// All routers share the same AppState
+fn build_router(state: AppState) -> Router {
+    let author_routes = Router::new()
+        .route("/authors", post(create_author))
+        .route("/authors/{id}", get(get_author));
+    let billing_routes = Router::new()
+        .route("/invoices", get(list_invoices));
+    Router::new()
+        .merge(author_routes)
+        .merge(billing_routes)
+        .with_state(state)
+}
+```
+
+> **When to switch:** generic `AppState<AS>` is simpler for 1-2 services. Switch to `FromRef` + trait objects when you have 3+ services or the generic bounds become unwieldy.
 
 ## Inbound: Auth Middleware
 
@@ -219,7 +323,7 @@ pub async fn require_auth<AS: AuthorService>(
     Ok(next.run(req).await)
 }
 
-// Apply per-route
+// Apply per-route — Axum 0.8+: {id} syntax
 Router::new()
     .route("/authors", post(create_author::<AS>))
     .route_layer(middleware::from_fn_with_state(state.clone(), require_auth::<AS>))
@@ -238,6 +342,23 @@ impl CreateAuthorHttpRequestBody {
     }
 }
 
+// Pagination query params — maps to domain Pagination
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    #[serde(default = "default_page")]
+    pub page: u32,
+    #[serde(default = "default_per_page")]
+    pub per_page: u32,
+}
+fn default_page() -> u32 { 1 }
+fn default_per_page() -> u32 { 20 }
+
+impl PaginationParams {
+    pub fn into_domain(self) -> Pagination {
+        Pagination::new(self.page, self.per_page)
+    }
+}
+
 // src/inbound/http/authors/response.rs
 #[derive(Debug, Serialize)]
 pub struct AuthorResponseData { pub id: String, pub name: String }
@@ -247,9 +368,32 @@ impl From<&Author> for AuthorResponseData {
         Self { id: a.id().to_string(), name: a.name().to_string() }
     }
 }
+
+#[derive(Debug, Serialize)]
+pub struct PageResponse<T: Serialize> {
+    pub items: Vec<T>,
+    pub total: u64,
+    pub page: u32,
+    pub per_page: u32,
+    pub total_pages: u32,
+}
+
+impl<T: Serialize, D> From<&Page<D>> for PageResponse<T>
+where T: for<'a> From<&'a D>
+{
+    fn from(page: &Page<D>) -> Self {
+        Self {
+            items: page.items.iter().map(T::from).collect(),
+            total: page.total,
+            page: page.page,
+            per_page: page.per_page,
+            total_pages: page.total_pages(),
+        }
+    }
+}
 ```
 
-## Inbound: Handler
+## Inbound: Handlers
 
 ```rust
 // src/inbound/http/authors/handlers.rs
@@ -261,6 +405,16 @@ pub async fn create_author<AS: AuthorService>(
     state.author_service.create_author(&domain_req).await
         .map_err(ApiError::from)
         .map(|ref author| ApiSuccess::new(StatusCode::CREATED, author.into()))
+}
+
+pub async fn list_authors<AS: AuthorService>(
+    State(state): State<AppState<AS>>,
+    Query(params): Query<PaginationParams>,
+) -> Result<ApiSuccess<PageResponse<AuthorResponseData>>, ApiError> {
+    let pagination = params.into_domain();
+    state.author_service.list_authors(&pagination).await
+        .map_err(|e| ApiError::from(e))
+        .map(|ref page| ApiSuccess::new(StatusCode::OK, PageResponse::from(page)))
 }
 ```
 
@@ -274,6 +428,17 @@ pub enum ApiError {
     UnprocessableEntity(String),
     NotFound,
     Unauthorized,
+}
+
+impl fmt::Display for ApiError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InternalServerError(msg) => write!(f, "{}", msg),
+            Self::UnprocessableEntity(msg) => write!(f, "{}", msg),
+            Self::NotFound => write!(f, "Not Found"),
+            Self::Unauthorized => write!(f, "Unauthorized"),
+        }
+    }
 }
 
 impl From<CreateAuthorError> for ApiError {
@@ -295,12 +460,20 @@ impl From<AuthorNameEmptyError> for ApiError {
     }
 }
 
+// Generic anyhow → ISE (for list operations that return anyhow::Error)
+impl From<anyhow::Error> for ApiError {
+    fn from(e: anyhow::Error) -> Self {
+        tracing::error!("{:?}", e);
+        Self::InternalServerError("An unexpected error occurred".into())
+    }
+}
+
 #[derive(Serialize)]
 struct ProblemDetails { r#type: String, title: String, status: u16, detail: String }
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        let (status, problem) = match &self {
+        let (status, problem, title) = match &self {
             Self::NotFound => (StatusCode::NOT_FOUND, "not-found", "Not Found"),
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized", "Unauthorized"),
             Self::UnprocessableEntity(_) =>
@@ -314,7 +487,7 @@ impl IntoResponse for ApiError {
         };
         (status, Json(ProblemDetails {
             r#type: format!("https://api.example.com/errors/{}", problem),
-            title: problem.into(), status: status.as_u16(), detail,
+            title: title.into(), status: status.as_u16(), detail,
         })).into_response()
     }
 }

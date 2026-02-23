@@ -43,9 +43,10 @@ Router::new()
 
 ```
 src/
-├── main.rs
+├── main.rs            # Server startup, graceful shutdown
 ├── lib.rs             # AppState, re-exports
-├── error.rs           # AppError (RFC 9457)
+├── db.rs              # Pool connection
+├── error.rs           # AppError (RFC 9457, application/problem+json)
 ├── extractors.rs      # Db, ValidatedJson
 ├── response.rs        # Created<T>, Ok<T>
 └── features/
@@ -76,6 +77,14 @@ async fn delete(...) -> Result<NoContent, AppError>      // 204
 async fn handler(Db(db): Db, Path(id): Path<Uuid>) -> Result<Ok<User>, AppError>
 ```
 
+### ValidatedJson
+
+Rejects malformed input with a 400 + RFC 9457 body before the handler runs.
+
+```rust
+async fn create(Db(db): Db, ValidatedJson(input): ValidatedJson<CreateUser>) -> Result<Created<User>, AppError>
+```
+
 ### Repository
 
 ```rust
@@ -83,7 +92,7 @@ User::find_or_404(&db, id).await?
 User::create(&db, input).await?
 ```
 
-→ Full examples (AppState, response types, Db extractor, AppError, CRUD model/handlers/router): `references/examples.md`
+→ Full examples (AppState, response types, extractors, AppError, CRUD, testing): `references/examples.md`
 
 ---
 
@@ -137,9 +146,12 @@ PgPoolOptions::new()
 → Middleware (app composition, auth layer, request ID) and testing examples: `references/examples.md`
 
 - [ ] Response types (`Created`, `Ok`, `NoContent`)
-- [ ] RFC 9457 error responses
+- [ ] RFC 9457 error responses with `application/problem+json` content type
 - [ ] `Db` extractor
+- [ ] `ValidatedJson` for input validation
 - [ ] Repository pattern
 - [ ] Tower layers for cross-cutting concerns
 - [ ] `acquire_timeout` set
-- [ ] using compile time query check. and `.sqlx/` must be committed
+- [ ] Graceful shutdown
+- [ ] `sqlx::migrate!()` in main
+- [ ] Compile-time query check — `.sqlx/` must be committed
