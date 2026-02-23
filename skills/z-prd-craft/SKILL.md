@@ -34,11 +34,22 @@ a formal requirements document.
 
 When the user asks you to write a PRD, follow this process:
 
+### Phase 0: Check for Existing Context
+
+Before starting discovery, check if a product brief or similar strategic document
+already exists (look for `docs/product-brief.md` or ask the user). If one exists,
+use it as your primary context source — the problem, target users, hypotheses,
+and success criteria are likely already defined. Skip discovery questions that
+the brief already answers and focus Phase 1 only on filling gaps (detailed use
+cases, edge cases, technical constraints, prioritization).
+
+If no brief exists, proceed normally with Phase 1.
+
 ### Phase 1: Discovery Interview
 
-Before writing anything, gather critical context by asking the user these questions.
-Do NOT skip this phase. Present questions conversationally, not as a wall of text.
-Adapt based on what the user has already provided.
+Gather critical context by asking the user questions. Present questions
+conversationally, not as a wall of text. Adapt based on what the user (or an
+existing brief) has already provided — skip questions that are already answered.
 
 **Essential questions (ask what's missing):**
 

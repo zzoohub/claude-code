@@ -30,9 +30,9 @@ The following belong in downstream documents (PRD, design spec, technical spec),
 - **UI/UX design**: Wireframes, mockups, screen layouts, interaction patterns, visual specifications
 - **Technical implementation**: Architecture, database schema, URL/route mapping, API endpoints, tech stack choices
 - **Page or screen definitions**: Specific pages, navigation structures, URL paths
-- **Detailed feature specs**: Acceptance criteria, user stories with implementation detail
+- **Detailed feature specs**: Acceptance criteria, user stories with implementation detail, prioritized feature lists (P0/P1/P2 — that's PRD territory)
 
-The brief stays at the **problem and strategy level**. If you find yourself describing how something looks or how it is built, you have left the brief's scope.
+The brief stays at the **problem and strategy level**. It can name broad capability areas ("users need to export data") but should not list specific features or define MVP scope — that belongs in the PRD.
 
 ## Why This Matters
 
@@ -162,21 +162,16 @@ Avoid vanity metrics. "Improve engagement" is not a success criterion. "Increase
 
 ## 6. Scope & Timeline
 
-### MVP definition
-What is the minimum version that lets us test our core hypothesis?
-
-- **Must-have:** [Features required to test the core value hypothesis]
-- **Should-have:** [Features for fast follow if hypothesis validates]
-- **Won't-have (this phase):** [Features explicitly deferred]
+### What needs to be true to test our hypothesis?
+[Describe the minimum scope directionally — not as a feature list, but as the capabilities or experiences needed to validate the core hypothesis. Detailed MVP feature breakdown belongs in the PRD.]
 
 ### Rough timeline
-[Estimates, not commitments. Include key phases.]
+[Estimates, not commitments. High-level phases only.]
 
 | Phase | Duration | Key Activities |
 |-------|----------|---------------|
 | Discovery | [e.g., 2 weeks] | User interviews, prototype, eng spike |
-| Build | [e.g., 4 weeks] | MVP development |
-| Test | [e.g., 1 week] | Beta with charter customers |
+| Build + Test | [e.g., 4-5 weeks] | Development and beta |
 | Launch | [e.g., target date] | Rollout + measurement |
 
 ---
@@ -240,10 +235,28 @@ After presenting the brief, recommend:
 
 | Project Size | What to Include |
 |-------------|----------------|
-| **Small feature** (less than 1 week) | Problem + Direction + Non-Goals. One paragraph each. |
+| **Small feature** (less than 1 week) | Use the lightweight template below. |
 | **Medium feature** (1-4 weeks) | Full brief, lighter on market context. |
 | **Large initiative** (1+ months) | Full brief with all sections. Add press release exercise if helpful. |
 | **New product** | Full brief + Amazon-style internal press release + detailed competitive analysis in appendix. |
+
+### Lightweight Brief (Small Features)
+
+For features under a week, use this minimal structure instead of the full 9-section template:
+
+```markdown
+# [Feature Name] — Brief
+
+**Problem:** [2-3 sentences. What's broken, for whom, and how do we know?]
+
+**Direction:** [1-2 sentences. What experience we want to create.]
+
+**Non-Goals:** [Bullet list of what this is NOT.]
+
+**Success:** [1-2 metrics with targets.]
+
+**Open Questions:** [Anything unresolved.]
+```
 
 ## The Press Release Exercise (Optional)
 

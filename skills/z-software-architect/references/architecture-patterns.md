@@ -217,7 +217,7 @@ Is this a single-purpose service or product?
 
 Step 2: Language (Code structure is always Hexagonal)
 ─────────────────────────────────────────────────────
-Python-only 라이브러리가 반드시 필요한가? (LangGraph, PyTorch, transformers 등)
+Are Python-only libraries required? (LangGraph, PyTorch, transformers, etc.)
 ├── YES → Python (FastAPI) + Hexagonal
 └── NO  → Rust (Axum) + Hexagonal
 

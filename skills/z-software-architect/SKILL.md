@@ -1,6 +1,6 @@
 ---
 name: z-software-architect
-description: Produce a Software Architecture Design Document from a PRD. Use when the user says "design doc", "software architecture", "system design", "architect this", "architecture design", or provides a PRD and asks for technical architecture. Generates a comprehensive design document covering system context, component architecture, data flow, infrastructure decisions, cross-cutting concerns, and ADRs — while explicitly excluding DB schemas, API endpoint lists, folder structures, and UI specifics. Outputs a markdown design doc that serves as the source of truth for implementation.
+description: Produce a Software Architecture Design Document from a PRD. Use when the user says "design doc", "software architecture", "system design", "architect this", "architecture design", or provides a PRD and asks for technical architecture. Also use when the system involves AI/LLM features (RAG, agents, chat, copilot, semantic search). Generates a comprehensive design document covering system context, component architecture, data flow, infrastructure decisions, AI/LLM integration patterns, cross-cutting concerns, and ADRs — while explicitly excluding DB schemas, API endpoint lists, folder structures, and UI specifics. Produces D2 architecture diagrams and outputs a markdown design doc that serves as the source of truth for implementation.
 ---
 
 # Software Architect Skill
@@ -84,12 +84,12 @@ Use the following structure. Every section is mandatory unless marked (optional)
 One paragraph. What problem does this system solve? Why does it need to exist now?
 
 ### 1.2 System Context Diagram
-Describe (in text or ASCII) where this system sits in the broader landscape:
+Generate a D2 diagram showing where this system sits in the broader landscape:
 - Who are the **actors** (users, external systems, third-party APIs)?
 - What existing systems does this interact with?
 - What data flows in and out?
 
-Use C4 Level 1 thinking: the system as a black box within its environment.
+Use C4 Level 1 thinking: the system as a black box within its environment. Invoke the `d2:diagram` skill to produce the diagram.
 
 ### 1.3 Assumptions
 List assumptions that the architecture depends on. If any assumption is wrong, the architecture may need to change.
@@ -124,7 +124,7 @@ Architecture decisions:
 **Rationale**: Explain trade-offs for the system architecture choice. Reference team size, expected scale, operational complexity budget, and data consistency needs.
 
 ### 3.2 Container Diagram
-Describe (C4 Level 2) the major runtime containers:
+Generate a D2 diagram (C4 Level 2) showing the major runtime containers:
 - Frontend app(s)
 - Backend service(s)
 - Database(s)
@@ -284,6 +284,20 @@ Include ADRs for at minimum:
 4. Compute platform choice
 5. Frontend platform choice (if applicable)
 6. Authentication approach
+7. LLM integration approach (if AI features present)
+
+---
+
+## 11. AI/LLM Architecture (if applicable)
+
+Include this section when the system uses LLM-powered features. Cover:
+- LLM integration pattern (direct API, gateway, model cascading)
+- RAG architecture (if applicable): retrieval strategy, vector storage, chunking approach
+- Agent architecture (if applicable): pattern, state management, human-in-the-loop
+- Streaming approach for user-facing AI features
+- Cost optimization strategy (model cascading, caching, batch vs. real-time)
+- Guardrails and safety (input/output validation, PII handling, content safety)
+- AI-specific observability (token tracking, cost per request, quality monitoring)
 
 ```
 
@@ -293,7 +307,7 @@ Include ADRs for at minimum:
 
 When making infrastructure decisions, use the following preferences as the **starting point** — but always justify deviations based on project requirements.
 
-Consult `references/infra-preferences.md` for the full decision matrix.
+**Read `references/infra-preferences.md`** before making any infrastructure decision — it contains the full decision matrix with platform choices, region strategy, and supporting services.
 
 ---
 
@@ -301,7 +315,29 @@ Consult `references/infra-preferences.md` for the full decision matrix.
 
 Code structure is always **Hexagonal (Ports & Adapters)**. The only architectural decision is **system architecture** (how services communicate) and **language** (Rust default, Python when Python-only libraries required).
 
-Consult `references/architecture-patterns.md` for the full decision framework with flowcharts, real-world examples, and anti-patterns.
+**Read `references/architecture-patterns.md`** before choosing system architecture — it contains the full decision framework with flowcharts, real-world examples, and anti-patterns.
+
+---
+
+## AI/LLM Architecture
+
+If the PRD includes AI-powered features (LLM generation, RAG, agents, semantic search, copilot, chat), **read `references/ai-architecture.md`** before making AI-related decisions. It covers LLM integration tiers, RAG architecture, agent patterns, streaming, vector storage, cost optimization, guardrails, and observability — all aligned with our infrastructure preferences.
+
+Add an **optional Section 11: AI/LLM Architecture** to the design document when AI features are present. Cover: LLM integration pattern (direct/gateway/cascade), RAG tier if applicable, agent architecture if applicable, streaming approach, cost strategy, and guardrails.
+
+---
+
+## Complexity Scaling
+
+Not every project deserves the same depth. Calibrate the document to the system's complexity:
+
+| Complexity | Signals | Document Depth |
+|---|---|---|
+| **Light** | Single service, CRUD-dominant, no async, no external integrations beyond DB | 5-8 pages. Sections 8 (Migration) and 7 (Integration) can be omitted. Keep ADRs to 2-3. Combine sections where there's little to say. |
+| **Standard** | Multiple components, some async processing, a few external integrations, auth required | 10-15 pages. Full template. This is the default. |
+| **Complex** | Distributed services, event-driven, real-time features, multiple data stores, compliance requirements, AI/LLM integration | 15-25 pages. Full template with deeper treatment. Consider separate D2 diagrams for each major subsystem. Data flow diagrams for all critical paths, not just top 2-3. |
+
+The self-review checklist item "10-20 pages equivalent" is a guideline for the Standard tier. Use your judgment — a 6-page doc for a simple API is better than a padded 15-page doc that says the same thing with more words.
 
 ---
 
@@ -310,7 +346,7 @@ Consult `references/architecture-patterns.md` for the full decision framework wi
 - **Direct and opinionated**. State what you chose and why. Don't hedge excessively.
 - **Trade-offs over descriptions**. Every choice should discuss what was gained and what was sacrificed.
 - **Concrete over abstract**. "Redis with 15-minute TTL" beats "a caching layer."
-- **Diagrams in text**. Use ASCII/text diagrams or describe diagrams clearly. Use Mermaid syntax when the rendering environment supports it.
+- **Diagrams with D2**. Generate architecture diagrams using D2 (invoke the `d2:diagram` skill). Produce a System Context diagram (C4 Level 1) and Container diagram (C4 Level 2) at minimum. Use D2 classes for consistent styling — `person` for actors, `cylinder` for databases, `queue` for message brokers, dashed borders for system boundaries. For inline sketches within the doc text, simple ASCII is fine.
 - **No filler**. If you catch yourself writing "it is important to note that" — delete it.
 - **Reference real-world precedent** when helpful: "Netflix uses a similar circuit-breaker pattern for their API gateway" adds credibility and context.
 
@@ -322,5 +358,6 @@ The final document should pass the **"3 AM Test"**: If an on-call engineer gets 
 
 If yes, the doc is good enough. If not, it needs more clarity.
 
-## Output 
+## Output
+
 Save to `docs/design-doc.md`.

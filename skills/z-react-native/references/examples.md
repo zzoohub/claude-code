@@ -226,24 +226,24 @@ function SwipeableCard({ children, onSwipeLeft, onSwipeRight }: SwipeableCardPro
 
   const gesture = Gesture.Pan()
     .onUpdate((e) => {
-      translateX.value = e.translationX;
+      translateX.set(e.translationX);
     })
     .onEnd((e) => {
       if (e.translationX > SWIPE_THRESHOLD) {
-        translateX.value = withTiming(500, {}, () => {
+        translateX.set(withTiming(500, {}, () => {
           if (onSwipeRight) runOnJS(onSwipeRight)();
-        });
+        }));
       } else if (e.translationX < -SWIPE_THRESHOLD) {
-        translateX.value = withTiming(-500, {}, () => {
+        translateX.set(withTiming(-500, {}, () => {
           if (onSwipeLeft) runOnJS(onSwipeLeft)();
-        });
+        }));
       } else {
-        translateX.value = withSpring(0);
+        translateX.set(withSpring(0));
       }
     });
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
+    transform: [{ translateX: translateX.get() }],
   }));
 
   return (
@@ -310,10 +310,10 @@ import Animated, { SharedTransition } from 'react-native-reanimated';
 
 ---
 
-## FlashList with Pull-to-Refresh
+## LegendList with Pull-to-Refresh
 
 ```tsx
-import { FlashList } from '@shopify/flash-list';
+import { LegendList } from '@legendapp/list';
 import { RefreshControl } from 'react-native';
 
 function ProductList() {
@@ -324,10 +324,11 @@ function ProductList() {
   };
 
   return (
-    <FlashList
+    <LegendList
       data={data?.pages.flatMap(p => p.items) ?? []}
       renderItem={({ item }) => <ProductCard product={item} />}
       estimatedItemSize={120}
+      recycleItems
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.5}
       refreshControl={

@@ -3,6 +3,7 @@ name: z-react-native
 description: |
   React Native (Expo) project conventions and patterns.
   Use when: building cross-platform mobile apps with Expo, React Native screens, mobile-specific logic.
+  Also use when: user mentions "mobile app", "iOS app", "Android app", "build an app" (when mobile is implied), Expo Router, or any React Native libraries/components.
   Do not use for: UX decisions (use z-ux-design), token/component design (use z-design-system), web-only features.
   Workflow: this skill (building mobile apps) -> vercel-react-native-skills (refactoring and performance optimization if needed).
 references:

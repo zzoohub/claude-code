@@ -6,13 +6,15 @@ description: |
   Use when: finding or validating Aha Moments, analyzing retention curves, calculating Carrying Capacity,
   assessing product-market fit, making Kill/Keep/Scale decisions, diagnosing activation bottlenecks,
   building cohort tables, segmenting retained vs churned users, evaluating CC trends,
+  designing event tracking plans, setting up GA4/GTM, analyzing A/B test results,
   or when user mentions "Aha Moment", "retention curve", "cohort analysis", "Carrying Capacity",
   "PMF", "product-market fit", "kill criteria", "activation rate", "retention plateau",
-  "churn analysis", "user segmentation", "D7 retention", "D30 retention".
-  Do NOT use for: event tracking implementation (developer task), dashboard UI design (use z-data-analyst),
-  CRO experiments (use z-cro), marketing analytics (use z-data-analyst), or A/B test design (use z-cro).
+  "churn analysis", "user segmentation", "D7 retention", "D30 retention",
+  "tracking plan", "GA4", "GTM", "UTM", "A/B test results".
+  Do NOT use for: tracking code implementation (developer task),
+  CRO experiment design (use z-cro skill), marketing content (use z-copywriting skill).
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   category: analytics
 ---
 
@@ -42,6 +44,9 @@ These are not independent. Aha Moment drives activation rate, activation rate dr
 | Finding/validating Aha Moments, activation analysis | `references/aha-moment-discovery.md` |
 | Retention cohorts, PMF assessment, plateau detection | `references/retention-analysis.md` |
 | Carrying Capacity calculation, Kill/Keep/Scale criteria | `references/carrying-capacity.md` |
+| Event naming, tracking plan design, validation | `references/event-tracking-design.md` |
+| GA4 setup, GTM configuration, UTM strategy | `references/ga4-gtm-setup.md` |
+| A/B test results analysis, statistical rigor | `references/ab-test-analysis.md` |
 
 ---
 
@@ -92,7 +97,6 @@ Usage frequency matters: products used <3x/month rarely develop a retention plat
 
 ## Cross-References
 
-- **z-data-analyst** — Orchestrates these frameworks, manages dashboards and reports
-- **z-cro** — For experiment design to improve activation flows
-- **z-growth-optimizer** — For referral loops and growth experiments
-- **z-churn-prevention** — For post-retention churn interventions
+- **z-cro** (skill) — For experiment design to improve activation flows
+- **z-growth-optimizer** (skill) — For referral loops and growth experiments
+- **z-churn-prevention** (skill) — For post-retention churn interventions
