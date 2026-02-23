@@ -6,9 +6,9 @@
 export const tokens = {
   color: {
     bg: {
-      primary: '#ffffff',
-      secondary: '#f9fafb',
-      tertiary: '#f3f4f6',
+      primary: '#f9fafb',
+      secondary: '#f3f4f6',
+      tertiary: '#e5e7eb',
       inverse: '#111827',
     },
     text: {
@@ -52,6 +52,14 @@ export const tokens = {
     bodySm:     { fontSize: 14, lineHeight: 20, fontWeight: '400' as const, letterSpacing: 0 },
     caption:    { fontSize: 12, lineHeight: 16, fontWeight: '500' as const, letterSpacing: 0.24 },
   },
+  shadow: {
+    card:     { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 },
+    dropdown: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 6, elevation: 3 },
+    modal:    { shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 15, elevation: 8 },
+    toast:    { shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.1, shadowRadius: 25, elevation: 12 },
+  },
+  opacity: { disabled: 0.5, overlay: 0.5, hover: 0.8 },
+  zIndex: { base: 0, dropdown: 100, sticky: 200, overlay: 300, modal: 400, toast: 500 },
   motion: {
     duration: { instant: 100, fast: 200, normal: 300, slow: 500 },
     easing: {

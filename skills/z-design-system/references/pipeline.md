@@ -16,6 +16,7 @@ tokens/                          ← Source (JSON, W3C DTCG format)
    Style Dictionary              ← Transform engine
          │
          ├──→  web/variables.css       (CSS custom properties)
+         ├──→  web/tailwind.config.js  (Tailwind theme extension)
          ├──→  rn/tokens.ts            (TypeScript const object)
          └──→  figma/tokens.json       (Figma Variables import)
 ```
@@ -108,6 +109,38 @@ If using Figma for design, keep tokens in sync:
 - Run Style Dictionary build
 
 Option A is recommended if you iterate frequently in Figma. Option B is fine for code-first workflows where Figma is documentation rather than source of truth.
+
+## Tailwind Config Generation
+
+If using Tailwind, add a pipeline output that generates Tailwind theme config from your tokens. This keeps Tailwind utilities in sync with your design tokens automatically.
+
+For Tailwind v4 (CSS-based), the CSS custom properties output already works — just reference them in `@theme`. No extra pipeline step needed.
+
+For Tailwind v3 (JS config), add a custom Style Dictionary format:
+
+```javascript
+// In style-dictionary.config.js, add:
+platforms: {
+  // ...existing platforms...
+  tailwind: {
+    transformGroup: 'js',
+    buildPath: 'src/shared/ui/generated/',
+    files: [{
+      destination: 'tailwind-tokens.js',
+      format: 'tailwind/theme',
+    }],
+  },
+}
+```
+
+Then import in `tailwind.config.js`:
+
+```javascript
+const tokens = require('./src/shared/ui/generated/tailwind-tokens');
+module.exports = { theme: { extend: tokens } };
+```
+
+This way, a token change flows through the pipeline to update both CSS variables and Tailwind config in one build step.
 
 ## When to Set This Up
 

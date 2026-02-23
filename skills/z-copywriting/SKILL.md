@@ -2,7 +2,7 @@
 name: z-copywriting
 description: Create, refine, or optimize written content for digital products including marketing copy, UX microcopy, brand messaging, and user-facing text. Use when user asks to write feature announcements, improve onboarding text, create headlines or CTAs, develop brand voice guidelines, define tone of voice, write push notifications, craft email campaigns, write landing page copy, or optimize copy for conversion. Do NOT use for technical documentation, API docs, code comments, or developer-facing content.
 metadata:
-  version: 3.0.0
+  version: 3.1.0
   category: marketing
   author: product-team
 ---
@@ -27,25 +27,19 @@ Guidelines for creating high-converting digital product copy, UX microcopy, bran
 - **z-email-marketing** — For email-specific copy patterns
 - **z-search-visibility** — For SEO-optimized content writing
 
-## Content Types
+## Task Routing
 
-Headlines and taglines, product descriptions, onboarding flows, email campaigns, push notifications, landing pages, in-app messaging, tooltips, error states, empty states, success messages, CTAs, banner copy.
+Match the task to the right workflow:
 
-## Writing Techniques (Detail: `references/copy-frameworks.md`)
-
-Page structure, CTA formulas, and page-specific copywriting frameworks. Consult this reference when writing complete pages or restructuring existing copy.
-
-## Copy Editing Process (Detail: `references/editing-sweeps.md`)
-
-Seven systematic editing sweeps to transform draft copy into polished, high-converting text. Use this when reviewing or improving existing copy.
-
-## Plain English Guide (Detail: `references/plain-english.md`)
-
-Word-level clarity improvements, jargon elimination, and conversational tone guidelines. Reference during any editing pass.
-
-## Transitions & Flow (Detail: `references/transitions.md`)
-
-Techniques for smooth transitions between copy sections. Use when copy feels disjointed or when building long-form content.
+| Task | Approach | Reference |
+|------|----------|-----------|
+| **Write new page** (landing, homepage, pricing, feature) | Gather context → Structure with frameworks → Write sections → Apply 8 Principles | `references/copy-frameworks.md` |
+| **Write headlines & CTAs** | Generate 3+ variations → Apply Principles 1-4 → Pick strongest | `references/copy-frameworks.md` (CTA section) |
+| **Edit/improve existing copy** | Run Seven Sweeps in order → Fix issues per sweep → Re-check | `references/editing-sweeps.md` |
+| **Write UX microcopy** (tooltips, errors, empty states, buttons) | Clarity over cleverness → Anticipate questions → Progressive disclosure | UX Standards below |
+| **Develop brand voice** | Define traits → Set tone spectrum → Create do's/don'ts | Brand Voice section below |
+| **Write long-form content** (blog, email, narrative) | Build narrative arc → Use transitions → Maintain scannable flow | `references/transitions.md` |
+| **Simplify/clarify copy** | Cut jargon → Use plain alternatives → Read aloud test | `references/plain-english.md` |
 
 ## 8 Principles for High-Converting Copy
 
@@ -125,45 +119,30 @@ Solve one acute, pressing problem — not a vague, catch-all solution. Tailored 
 
 Why: Audiences are more savvy than ever. Algorithms serve hyper-personalized ads, so vague messaging feels outdated. Speak directly to one pain point and deliver a focused solution. Personalized beats generic every time.
 
-## Voice & Authenticity Guidelines
+## Voice & Authenticity
 
-### Show, Don't Just Tell
+For detailed voice guidelines (plain English alternatives, jargon elimination, conversational tone, the "EveryPerson" factor), consult `references/plain-english.md`.
 
-Buyers are smarter than ever. They price-shop, comparison-shop, read reviews, and spot fake testimonials. Proof is mandatory:
-
-- Always recommend including case studies, testimonials, and behind-the-scenes evidence
-- Suggest specific metrics and results wherever possible
-- Advise "always be gathering" when it comes to proof and social validation
-
-### The "EveryPerson" Factor
-
-Audiences don't just want the process — they want to see how YOU execute the process. If they just want a list of tips, they can ask AI. Copy that shows real execution, real quirks, and real struggles outperforms polished theory.
-
-- Frame advice as "here's what's working for us" rather than detached expertise
-- Encourage first-person, front-lines reporting style
-- Authentic beats polished: "I tried this and here's what happened" energy
-
-### Speak Like a Normal Person
-
-No word salads. No thesaurus marketing. Clear, direct messaging wins trust. Bold opinions win attention.
-
-- Have an opinion and state it confidently — even if not everyone agrees
-- Use conversational tone: write like you'd type in a group chat
-- Transparency is an instant trust-builder
-- Wishy-washy generalizations lose to well-formulated, tested perspectives
+Core rule: Write like a real person talking to another real person. Proof everything. Have an opinion.
 
 ## Process
 
 ### 1. Context Gathering
 
-Before writing anything, clarify:
-- Who is the target audience? (demographics, psychographics, familiarity level)
-- What is the single most important action we want them to take?
-- What constraints exist (character limits, tone, platform)?
-- What does success look like (clicks, signups, conversions)?
-- Are there existing brand voice guidelines to follow?
-- What is the competitive landscape? How should we differentiate?
-- Is this content going to be localized? Flag potential translation challenges early.
+Ask briefly for missing context, but don't block on it. If the user provides minimal info, state your assumptions and proceed.
+
+**Ask for:**
+- Target audience and desired action
+- Constraints (character limits, tone, platform)
+- Brand voice guidelines if they exist
+
+**Defaults when not provided:**
+- Audience: infer from the product/context described
+- Tone: professional but friendly
+- Goal: conversion (clicks, signups) unless clearly informational
+- Constraints: standard web copy lengths
+
+State assumptions at the top of your output so the user can correct them.
 
 ### 2. Brand Voice Development
 
@@ -194,7 +173,18 @@ Output a reusable reference document that any team member can apply consistently
 - Write error messages that help, not frustrate
 - Frame negatives as positives ("You can do X" instead of "You can't do Y")
 
-### 5. Quality Checklist
+### 5. Output Format
+
+For every copy deliverable, provide:
+
+1. **The copy itself** — organized by section (headline, subheadline, body, CTA)
+2. **Annotations** — brief notes on key choices and which principles apply
+3. **2-3 alternatives** — for headlines and CTAs, always provide variations with rationale
+4. **Assumptions stated** — if context was missing, list what you assumed
+
+For page-level copy, follow the section structure in `references/copy-frameworks.md`.
+
+### 6. Quality Checklist
 
 Before delivering any copy, verify:
 - [ ] Does it pass all 8 Principles?

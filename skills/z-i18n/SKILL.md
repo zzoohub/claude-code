@@ -13,10 +13,10 @@ description: |
 
 ## Platform → Library Matrix
 
-| Platform | Library | Message Format |
-|---|---|---|
-| Next.js App Router | `next-intl` | ICU MessageFormat |
-| Expo / React Native | `expo-localization` + `react-i18next` + `i18next` | i18next JSON v4 |
+| Platform | Library | Version | Message Format |
+|---|---|---|---|
+| Next.js App Router | `next-intl` | 4.x | ICU MessageFormat |
+| Expo / React Native | `expo-localization` + `react-i18next` + `i18next` | expo-localization 17.x, i18next 25.x | i18next JSON v4 |
 
 Both platforms share the same JSON translation files. The difference is how they load and render them.
 
@@ -75,9 +75,9 @@ Use **camelCase**, **2-3 levels max**, namespace by feature. The key is a contra
 
 ### 3. Type Safety Is Mandatory
 
-Both platforms support type-safe keys. See platform references for setup:
-- Next.js: `references/nextjs-i18n.md` → TypeScript augmentation via `next-intl`
-- Expo: `references/expo-i18n.md` → Custom resource typing via `react-i18next`
+Both platforms support type-safe keys via module augmentation. See platform references for setup:
+- Next.js: `references/nextjs-i18n.md` → `AppConfig` interface in `next-intl` (v4+: typed locale, messages, and ICU arguments)
+- Expo: `references/expo-i18n.md` → `CustomTypeOptions` in `i18next` (typed resources and namespaces)
 
 ### 4. Never Use Intl Formatters in Translation Strings When Avoidable
 
@@ -141,15 +141,18 @@ export const useFormat = () => {
 
 Detailed setup, patterns, and code for each platform:
 
-- **Next.js (next-intl):** `references/nextjs-i18n.md`
+- **Next.js (next-intl v4):** `references/nextjs-i18n.md`
   - Routing setup, middleware, Server/Client Component patterns
-  - Type augmentation with `createMessagesDeclaration`
+  - `AppConfig` type augmentation with strictly-typed locale and ICU arguments
+  - `hasLocale()` utility for type-safe locale validation
   - ICU pluralization, rich text, static rendering
+  - `NextIntlClientProvider` auto-inherits messages from server
   - SEO: `<html lang>`, `alternateLinks`, metadata localization
 
-- **Expo (react-i18next):** `references/expo-i18n.md`
-  - `expo-localization` device detection, language persistence (MMKV)
-  - i18next init, namespace loading, JSON v4 pluralization
+- **Expo (react-i18next + i18next v25):** `references/expo-i18n.md`
+  - `expo-localization` v17 device detection, `supportedLocales` for OS language picker
+  - i18next init, namespace loading, JSON v4 pluralization (only format since i18next v24)
+  - Lazy loading namespaces with `i18next-resources-to-backend`
   - RTL with `I18nManager`, app reload pattern
   - iOS/Android native locale config in `app.json`
 
@@ -159,11 +162,11 @@ Detailed setup, patterns, and code for each platform:
 
 - [ ] Translations split by feature namespace (auth, common, errors, etc.)
 - [ ] Key naming: camelCase, 2-3 levels max, descriptive purpose
-- [ ] Type-safe keys configured (next-intl augmentation or react-i18next typing)
+- [ ] Type-safe keys configured (`AppConfig` for next-intl v4, `CustomTypeOptions` for i18next)
 - [ ] `common` namespace for shared strings only, with strict governance
 - [ ] Pluralization uses platform-native syntax (ICU for next-intl, JSON v4 suffixes for i18next)
 - [ ] Formatting (dates, numbers, currency) done in code, not in translation strings
 - [ ] RTL support planned if targeting Arabic/Hebrew/Persian
-- [ ] Language persistence configured (cookie for web, MMKV/AsyncStorage for mobile)
+- [ ] Language persistence configured (`localeCookie` for web, MMKV for mobile)
 - [ ] SEO: `<html lang>`, `hreflang` alternates, localized metadata (web only)
 - [ ] No string concatenation in translations — full sentences always

@@ -2,7 +2,7 @@
 name: z-design-system
 description: |
   Design token architecture, component patterns, and cross-platform UI for web and React Native.
-  Use when: building UI components, defining design tokens, creating themed interfaces, setting up typography or motion systems, choosing component API patterns (flat vs compound).
+  Use when: building UI components, defining design tokens, creating themed interfaces, setting up dark mode or theming, configuring Tailwind with design tokens, setting up typography or motion systems, choosing component API patterns (flat vs compound), adding shadows or elevation, or any task involving consistent styling across components. Use this skill whenever the user mentions design tokens, theming, dark mode toggle, component variants, or cross-platform styling — even if they don't explicitly say "design system".
   Do not use for: UX research or user journey decisions (use z-ux-design), business logic, data fetching, API design.
   Workflow: z-ux-design (what/why) → this skill (tokens, components, patterns) → z-nextjs | z-react-native (platform integration).
 references:
@@ -51,6 +51,7 @@ A type scale, not ad-hoc font sizes. Every text in the UI maps to a named style.
 | `body.md` | 16px | 24px | normal | Default body |
 | `body.sm` | 14px | 20px | normal | Secondary text |
 | `caption` | 12px | 16px | medium | Labels, metadata |
+| `code` | 14px | 20px | normal | Code snippets (mono) |
 
 Why fixed scale: Prevents the "is this 15px or 16px?" decision. Every text element picks from the scale. If nothing fits, the scale needs a new entry — not a one-off value.
 
@@ -73,6 +74,36 @@ Consistent timing and easing across all animations.
 Always respect `prefers-reduced-motion`. When reduced, skip animation entirely — don't just shorten duration.
 
 → Motion tokens, platform implementation, reduced motion: `references/motion.md`
+
+## Shadow & Elevation
+
+Shadows communicate depth and hierarchy. Like colors and spacing, shadow values come from tokens — not ad-hoc `box-shadow` strings.
+
+| Token | Use |
+|-------|-----|
+| `shadow.sm` | Subtle lift — cards, inputs |
+| `shadow.md` | Moderate elevation — dropdowns, popovers |
+| `shadow.lg` | High elevation — modals, dialogs |
+| `shadow.xl` | Max elevation — toasts, command palette |
+
+Dark mode shadows use lower opacity and sometimes darker colors since the base surface is already dark. The semantic shadow tokens remap automatically per theme.
+
+> Full shadow definitions, dark theme overrides, and platform implementation: `references/tokens.md`
+
+## Z-Index
+
+Layering tokens prevent z-index wars. Every layer has a named token.
+
+| Token | Value | Use |
+|-------|-------|-----|
+| `zIndex.base` | 0 | Default content |
+| `zIndex.dropdown` | 100 | Dropdowns, popovers |
+| `zIndex.sticky` | 200 | Sticky headers, navbars |
+| `zIndex.overlay` | 300 | Overlay backdrops |
+| `zIndex.modal` | 400 | Modals, dialogs |
+| `zIndex.toast` | 500 | Toast notifications |
+
+If you need a z-index not on this list, add a new token — don't use a magic number.
 
 ## Component Patterns
 
@@ -131,10 +162,13 @@ Color is never the sole indicator of state. Error states use color + icon + text
 - **Picking a color?** → Find it in semantic tokens. If it doesn't exist, add to semantic first, then use.
 - **Spacing a component?** → `spacing.component.*`. Between sections → `spacing.layout.*`.
 - **Sizing text?** → Pick from type scale. If nothing fits, extend the scale.
+- **Adding depth/elevation?** → Use shadow tokens (`shadow.sm` through `shadow.xl`). Never inline box-shadow values.
+- **Layering elements?** → Use z-index tokens. Never use magic numbers.
 - **Animating?** → Use motion tokens. Respect reduced motion.
 - **Building a simple component?** → Flat API. Props for variants.
 - **Building a complex component?** → Compound API. Sub-components for layout flexibility.
 - **Need custom behavior?** → Headless hook first, styled wrapper on top.
+- **Using Tailwind?** → Map tokens to `tailwind.config`. See `references/platform-web.md`.
 - **Cross-platform?** → Tokens defined once, transformed per platform. See `references/pipeline.md`.
 
 ## Platform References

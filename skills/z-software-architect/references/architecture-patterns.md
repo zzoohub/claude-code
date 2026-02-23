@@ -1,13 +1,13 @@
 # Backend Architecture Decision Framework
 
-Architecture decisions happen on **two independent axes**. Pick one from each, then compose them.
+Architecture decisions happen on **two axes**: system architecture and language.
 
 | Axis | Question | Options |
 |---|---|---|
 | **System Architecture** | How do services/components communicate? | Request-Response, Event-Driven, CQRS, Event Sourcing, Hybrid |
-| **Code Structure** | How is each service organized internally? | Hexagonal, Clean, Layered |
+| **Language** | What language/framework? | Rust (Axum) default, Python (FastAPI) when Python-only libraries required |
 
-These are orthogonal. A single service can be "event-driven + hexagonal" or "request-response + layered." The system architecture decision often has more impact on long-term complexity than the code structure decision.
+**Code structure is always Hexagonal (Ports & Adapters).** AI-assisted development eliminates the boilerplate cost that previously made hexagonal feel heavy for simple services. The benefits (testability, swappable adapters, clean domain isolation) apply universally.
 
 ---
 
@@ -143,11 +143,9 @@ One deployable unit, but internally organized into strictly isolated modules wit
 
 ---
 
-## Axis 2: Code Structure Patterns
+## Code Structure: Hexagonal (Always)
 
-These describe how code is organized **inside a single service or module**.
-
-### Hexagonal Architecture (Ports & Adapters)
+Every service uses **Hexagonal Architecture (Ports & Adapters)** regardless of complexity.
 
 ```
          ┌─────────────────────────────────────┐
@@ -163,33 +161,9 @@ Events)  │  │                               │   │   APIs)
          └─────────────────────────────────────┘
 ```
 
-**Strengths**: Domain isolated from infrastructure, swap adapters freely, pure domain unit tests.
-**Trade-offs**: More upfront boilerplate, overkill for thin CRUD.
-**Choose when**: Meaningful business logic, multiple integration points, or requirements will evolve.
+**Why always hexagonal**: AI-assisted development (Claude Code) generates boilerplate instantly — the traditional cost of hexagonal (more files, more wiring) is near-zero. The benefits remain: domain isolation, swappable adapters, pure domain unit tests, and no refactoring needed when complexity grows.
 
-### Clean Architecture
-
-Same spirit as hexagonal, with more explicit concentric layers (Entities → Use Cases → Interface Adapters → Frameworks). Dependency arrows point inward only.
-
-**Strengths**: Self-documenting use-case layer, strictest separation of concerns.
-**Trade-offs**: Most boilerplate of all three, feels heavy for small services.
-**Choose when**: Complex domain with many distinct business operations.
-
-### Layered Architecture
-
-```
-  ┌─────────────────┐
-  │  Presentation    │  (HTTP handlers, serialization)
-  ├─────────────────┤
-  │  Service/Logic   │  (Business rules, orchestration)
-  ├─────────────────┤
-  │  Data Access     │  (Repository, ORM, queries)
-  └─────────────────┘
-```
-
-**Strengths**: Simple, universal understanding, minimal boilerplate, fast to scaffold.
-**Trade-offs**: Layers tend to leak, harder to swap infrastructure.
-**Choose when**: Simple service, thin domain logic, speed of development is priority.
+**Dependencies always point inward.** Domain code never imports framework or infrastructure code.
 
 ---
 
@@ -197,8 +171,8 @@ Same spirit as hexagonal, with more explicit concentric layers (Entities → Use
 
 | Priority | Language | When to Use |
 |---|---|---|
-| 1st | **Rust** | Default for B2C services. Sub-ms response times, 10-30MB memory, near-zero cold starts. Compiler as second reviewer — if it compiles, entire error classes are eliminated. Lower cloud cost (critical for solopreneur economics). |
-| 2nd | **Python (FastAPI)** | Heavy AI/ML API integration (OpenAI, Anthropic, LangChain), data processing pipelines, or when Python-only libraries are required. FastAPI's async support is production-ready. |
+| **Default** | **Rust (Axum)** | All services unless Python-only libraries are required. Sub-ms response times, 10-30MB memory, near-zero cold starts. Compiler as second reviewer — if it compiles, entire error classes are eliminated. Lower cloud cost (critical for solopreneur economics). |
+| **Exception** | **Python (FastAPI)** | Only when Python-only libraries are required: LangGraph, PyTorch, transformers, pandas/numpy pipelines, or SDKs with no Rust equivalent. Simple HTTP API calls to OpenAI/Anthropic do NOT qualify — use Rust with reqwest. |
 
 ### Rust Ecosystem (Recommended)
 - **Web**: Axum (tower-based, async)
@@ -228,32 +202,27 @@ Is this a single-purpose service or product?
 │         Does it need async processing (notifications, analytics, ML)?
 │         ├── YES → Add event-driven for those flows (Hybrid)
 │         └── NO  → Request-Response is fine
-└── NO (multiple services) → 
+└── NO (multiple services) →
     Do services need to react to shared events?
     ├── YES → Event-Driven (with Saga for distributed transactions)
     └── NO  → Request-Response between services
-    
+
     Is read/write ratio heavily skewed (10:1+)?
     ├── YES → Consider CQRS for read-heavy paths
     └── NO  → Standard data access
-    
+
     Is full audit trail / state history a hard requirement?
     ├── YES → Event Sourcing for that domain
     └── NO  → Don't add it
 
-Step 2: Code Structure
-──────────────────────
-Is there meaningful business logic beyond CRUD?
-├── YES → Hexagonal or Clean
-│         Many distinct business operations? → Clean
-│         Multiple integration points that may change? → Hexagonal
-└── NO  → Layered
+Step 2: Language (Code structure is always Hexagonal)
+─────────────────────────────────────────────────────
+Python-only 라이브러리가 반드시 필요한가? (LangGraph, PyTorch, transformers 등)
+├── YES → Python (FastAPI) + Hexagonal
+└── NO  → Rust (Axum) + Hexagonal
 
-Step 3: Language
-────────────────
-Heavy AI/ML Python-only APIs?
-├── YES → Python (FastAPI)
-└── NO  → Rust (Axum)
+Note: Simple HTTP API calls to OpenAI/Anthropic do NOT require Python.
+Use Rust with reqwest for standard LLM API integration.
 ```
 
 ---
@@ -267,7 +236,7 @@ Heavy AI/ML Python-only APIs?
 | **Stripe** | SOA + Event Sourcing (payment state) + Request-Response (API surface) | Clean/hexagonal per service | Synchronous API surface, event-sourced internals for audit. Design docs before code. |
 | **Toss** | Modular Monolith + Event-Driven (inter-module) | Clean Architecture per module | Massive Korean fintech — modular monolith proven at scale. Team autonomy without microservice overhead. |
 | **Discord** | Microservices + hybrid sync/async | Rust for hot paths (Read States), Elixir for real-time | Migrated Go → Rust for 10x perf. Choose language per service based on performance profile. |
-| **Shopify** | Modular Monolith → selective extraction | Rails conventions (layered) | Start monolithic, extract only when data proves the boundary. Premature decomposition = distributed monolith. |
+| **Shopify** | Modular Monolith → selective extraction | Rails conventions | Start monolithic, extract only when data proves the boundary. Premature decomposition = distributed monolith. |
 | **Airbnb** | Monolith → SOA by domain boundary | Service-specific | Split only when natural domain boundaries are clear. |
 
 ---

@@ -55,6 +55,25 @@ Tokens compile to CSS variables. Components reference variables, never raw value
   --radius-lg: 12px;
   --radius-xl: 16px;
   --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-dropdown: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-modal: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-toast: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+  /* Z-Index */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-overlay: 300;
+  --z-modal: 400;
+  --z-toast: 500;
+
+  /* Opacity */
+  --opacity-disabled: 0.5;
+  --opacity-overlay: 0.5;
+  --opacity-hover: 0.8;
 }
 ```
 
@@ -76,6 +95,11 @@ Two-layer approach: respect system preference, allow manual override.
     --color-interactive-primaryHover: #60a5fa;
     --color-border-default: #374151;
     --color-border-focus: #60a5fa;
+
+    --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+    --shadow-dropdown: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2);
+    --shadow-modal: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+    --shadow-toast: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -83,7 +107,7 @@ Two-layer approach: respect system preference, allow manual override.
 [data-theme="dark"] {
   --color-bg-primary: #111827;
   --color-bg-secondary: #1f2937;
-  /* ... same remaps ... */
+  /* ... same color remaps + shadow overrides ... */
 }
 ```
 
@@ -146,3 +170,119 @@ Visible for keyboard users, hidden for mouse.
   background-color: var(--color-interactive-primaryHover);
 }
 ```
+
+## Tailwind CSS Integration
+
+If the project uses Tailwind, map design tokens to the Tailwind config so you get utility classes that use your tokens. This is the recommended approach for Next.js + Tailwind projects.
+
+### Tailwind v4 (CSS-based config)
+
+Tailwind v4 uses CSS `@theme` to define tokens, which works directly with CSS custom properties:
+
+```css
+/* app/globals.css */
+@import "tailwindcss";
+
+@theme {
+  --color-bg-primary: var(--color-bg-primary);
+  --color-bg-secondary: var(--color-bg-secondary);
+  --color-bg-inverse: var(--color-bg-inverse);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-link: var(--color-text-link);
+  --color-interactive-primary: var(--color-interactive-primary);
+  --color-interactive-primary-hover: var(--color-interactive-primaryHover);
+  --color-border-default: var(--color-border-default);
+  --color-border-focus: var(--color-border-focus);
+  --color-status-error: var(--color-status-error);
+  --color-status-success: var(--color-status-success);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-dropdown: var(--shadow-dropdown);
+  --shadow-modal: var(--shadow-modal);
+  --shadow-toast: var(--shadow-toast);
+
+  --spacing-component-xs: var(--spacing-component-xs);
+  --spacing-component-sm: var(--spacing-component-sm);
+  --spacing-component-md: var(--spacing-component-md);
+  --spacing-component-lg: var(--spacing-component-lg);
+  --spacing-component-xl: var(--spacing-component-xl);
+  --spacing-layout-xs: var(--spacing-layout-xs);
+  --spacing-layout-sm: var(--spacing-layout-sm);
+  --spacing-layout-md: var(--spacing-layout-md);
+  --spacing-layout-lg: var(--spacing-layout-lg);
+  --spacing-layout-xl: var(--spacing-layout-xl);
+}
+```
+
+Usage: `bg-bg-primary`, `text-text-secondary`, `shadow-card`, `p-component-md`.
+
+### Tailwind v3 (JS config)
+
+```javascript
+// tailwind.config.js
+module.exports = {
+  theme: {
+    extend: {
+      colors: {
+        bg: {
+          primary: 'var(--color-bg-primary)',
+          secondary: 'var(--color-bg-secondary)',
+          inverse: 'var(--color-bg-inverse)',
+        },
+        text: {
+          primary: 'var(--color-text-primary)',
+          secondary: 'var(--color-text-secondary)',
+          link: 'var(--color-text-link)',
+        },
+        interactive: {
+          primary: 'var(--color-interactive-primary)',
+          'primary-hover': 'var(--color-interactive-primaryHover)',
+        },
+        border: {
+          DEFAULT: 'var(--color-border-default)',
+          focus: 'var(--color-border-focus)',
+        },
+        status: {
+          error: 'var(--color-status-error)',
+          success: 'var(--color-status-success)',
+        },
+      },
+      boxShadow: {
+        card: 'var(--shadow-card)',
+        dropdown: 'var(--shadow-dropdown)',
+        modal: 'var(--shadow-modal)',
+        toast: 'var(--shadow-toast)',
+      },
+      zIndex: {
+        dropdown: 'var(--z-dropdown)',
+        sticky: 'var(--z-sticky)',
+        overlay: 'var(--z-overlay)',
+        modal: 'var(--z-modal)',
+        toast: 'var(--z-toast)',
+      },
+    },
+  },
+};
+```
+
+Usage: `bg-bg-primary`, `text-text-secondary`, `shadow-card`, `z-modal`.
+
+The key idea: Tailwind utilities become the consumption layer, CSS custom properties remain the source of truth. Dark mode works automatically because the CSS variables swap values.
+
+## Units: rem vs px
+
+For better accessibility, consider defining spacing and typography tokens in `rem` instead of `px`. Users who set a larger browser font size will benefit from layouts that scale proportionally.
+
+```css
+:root {
+  /* rem-based spacing (1rem = 16px at default browser settings) */
+  --spacing-component-xs: 0.25rem;  /* 4px */
+  --spacing-component-sm: 0.5rem;   /* 8px */
+  --spacing-component-md: 0.75rem;  /* 12px */
+  --spacing-component-lg: 1rem;     /* 16px */
+  --spacing-component-xl: 1.5rem;   /* 24px */
+}
+```
+
+The px values in this skill's token definitions are the canonical reference. When outputting for web, the pipeline can convert px to rem automatically (divide by 16). For React Native, px values are correct since RN uses device-independent points.

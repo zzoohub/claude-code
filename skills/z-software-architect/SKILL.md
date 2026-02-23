@@ -111,18 +111,17 @@ Example: "Multi-region active-active replication (planned for v2)"
 ## 3. High-Level Architecture
 
 ### 3.1 Architecture Style
-Architecture decisions happen on two independent axes — specify both:
+Architecture decisions:
 
 **System Architecture** (how services/components communicate):
 - Monolith / Modular Monolith / Microservices / Serverless
 - Request-Response / Event-Driven / CQRS / Event Sourcing / Hybrid
 
-**Code Structure** (how each service is organized internally):
-- Hexagonal (Ports & Adapters) / Clean Architecture / Layered
+**Code Structure**: Always Hexagonal (Ports & Adapters). AI-assisted development eliminates the boilerplate cost — the benefits (testability, swappable adapters, clean domain) apply universally.
 
-These compose freely. For example: "Modular monolith with event-driven inter-module communication + hexagonal internal structure" or "Single service, request-response, layered architecture."
+**Language**: Rust (Axum) by default. Python (FastAPI) only when Python-only libraries are required (LangGraph, PyTorch, transformers, etc.).
 
-**Rationale**: Explain the trade-offs for each axis. Reference team size, expected scale, operational complexity budget, and data consistency needs.
+**Rationale**: Explain trade-offs for the system architecture choice. Reference team size, expected scale, operational complexity budget, and data consistency needs.
 
 ### 3.2 Container Diagram
 Describe (C4 Level 2) the major runtime containers:
@@ -279,13 +278,12 @@ For each significant decision, write a brief ADR:
 - **Consequences**: What are the positive and negative outcomes?
 
 Include ADRs for at minimum:
-1. Backend language & framework choice
+1. Backend language & framework choice (Rust/Axum default; Python/FastAPI only when Python-only libraries required)
 2. System architecture pattern (monolith/microservices, sync/async/event-driven)
-3. Code structure pattern (hexagonal/clean/layered)
-4. Database platform choice
-5. Compute platform choice
-6. Frontend platform choice (if applicable)
-7. Authentication approach
+3. Database platform choice
+4. Compute platform choice
+5. Frontend platform choice (if applicable)
+6. Authentication approach
 
 ```
 
@@ -301,7 +299,7 @@ Consult `references/infra-preferences.md` for the full decision matrix.
 
 ## Architecture Pattern Preferences
 
-Architecture decisions happen on two independent axes: **system architecture** (how services communicate) and **code structure** (how each service is organized internally). These compose freely.
+Code structure is always **Hexagonal (Ports & Adapters)**. The only architectural decision is **system architecture** (how services communicate) and **language** (Rust default, Python when Python-only libraries required).
 
 Consult `references/architecture-patterns.md` for the full decision framework with flowcharts, real-world examples, and anti-patterns.
 

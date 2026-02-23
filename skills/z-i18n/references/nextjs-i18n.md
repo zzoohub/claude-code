@@ -1,8 +1,8 @@
-# Next.js i18n with next-intl
+# Next.js i18n with next-intl v4
 
 **Docs: [next-intl.dev](https://next-intl.dev/docs/getting-started/app-router)**
 
-next-intl is the de facto standard for Next.js App Router i18n. It uses ICU MessageFormat, has first-class Server Component support, and provides built-in type safety.
+next-intl v4 is ESM-only, requires React 17+ and TypeScript 5+. Uses ICU MessageFormat with first-class Server Component support and built-in type safety via `AppConfig`.
 
 ---
 
@@ -41,8 +41,14 @@ import { defineRouting } from 'next-intl/routing';
 export const routing = defineRouting({
   locales: ['en', 'ko'],
   defaultLocale: 'en',
+  // v4: localeCookie controls persistence (false to disable, or customize)
+  localeCookie: {
+    maxAge: 60 * 60 * 24 * 365,
+  },
 });
 ```
+
+**v4 change:** `localeCookie` replaces the old `localeDetection: false`. Use `localeCookie: false` to disable cookie-based locale persistence.
 
 ### 4. Middleware
 
@@ -63,13 +69,14 @@ export const config = {
 ```typescript
 // src/i18n/request.ts
 import { getRequestConfig } from 'next-intl/server';
+import { hasLocale } from 'next-intl';
 import { routing } from './routing';
 
 export default getRequestConfig(async ({ requestLocale }) => {
-  let locale = await requestLocale;
-  if (!locale || !routing.locales.includes(locale as any)) {
-    locale = routing.defaultLocale;
-  }
+  const requested = await requestLocale;
+  const locale = hasLocale(routing.locales, requested)
+    ? requested
+    : routing.defaultLocale;
 
   return {
     locale,
@@ -78,11 +85,13 @@ export default getRequestConfig(async ({ requestLocale }) => {
 });
 ```
 
+**v4 change:** The old `locale` argument was removed. Use `requestLocale` (async) and explicitly return `locale`. Use `hasLocale()` for type-safe locale validation instead of `.includes()`.
+
 ### 6. Next Config Plugin
 
 ```typescript
 // next.config.ts
-import createNextIntlPlugin from 'next-intl/plugin';
+import { createNextIntlPlugin } from 'next-intl/plugin';
 
 const withNextIntl = createNextIntlPlugin();
 
@@ -96,6 +105,7 @@ export default withNextIntl(nextConfig);
 // src/app/[locale]/layout.tsx
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
+import { hasLocale } from 'next-intl';
 import { routing } from '@/i18n/routing';
 import { notFound } from 'next/navigation';
 
@@ -112,7 +122,7 @@ export default async function LocaleLayout({
 }) {
   const { locale } = await params;
 
-  if (!routing.locales.includes(locale as any)) {
+  if (!hasLocale(routing.locales, locale)) {
     notFound();
   }
 
@@ -130,6 +140,8 @@ export default async function LocaleLayout({
   );
 }
 ```
+
+**v4 note:** `NextIntlClientProvider` auto-inherits `messages` and `formats` from server config. You can omit the `messages` prop if preferred — but passing it explicitly still works and is clearer.
 
 ---
 
@@ -172,7 +184,7 @@ export default function LoginForm() {
 import { createNavigation } from 'next-intl/navigation';
 import { routing } from './routing';
 
-export const { Link, redirect, usePathname, useRouter } =
+export const { Link, redirect, usePathname, useRouter, getPathname } =
   createNavigation(routing);
 ```
 
@@ -187,33 +199,18 @@ import { Link } from '@/i18n/navigation';
 
 ## Type Safety
 
-### Option A: Auto-generated declarations (recommended)
+### Option A: `AppConfig` interface (recommended)
 
-```typescript
-// next.config.ts
-import createNextIntlPlugin from 'next-intl/plugin';
-
-const withNextIntl = createNextIntlPlugin({
-  experimental: {
-    createMessagesDeclaration: './messages/en.json',
-  },
-});
-```
-
-Add to `.gitignore`:
-```
-*.d.json.ts
-```
-
-### Option B: Manual augmentation
+v4 uses a unified `AppConfig` interface with strictly-typed locale, messages, and ICU arguments:
 
 ```typescript
 // global.d.ts
 import messages from './messages/en.json';
+import { routing } from './src/i18n/routing';
 
 declare module 'next-intl' {
   interface AppConfig {
-    Locale: 'en' | 'ko';
+    Locale: (typeof routing.locales)[number];
     Messages: typeof messages;
   }
 }
@@ -222,7 +219,35 @@ declare module 'next-intl' {
 This gives you:
 - Autocompletion for `t('...')`
 - Compile-time error if key doesn't exist
-- Type-safe arguments for ICU variables
+- **Strictly-typed ICU arguments** — `t('followers', {})` errors if `count` is missing
+- Rich text arguments are typed too: `t.rich('terms', {})` checks for required tag handlers
+- `useLocale()`, `Link`, `redirect` all respect the typed `Locale`
+
+The `Locale` type can be imported for custom functions:
+```typescript
+import { Locale } from 'next-intl';
+function getPosts(locale: Locale) { /* ... */ }
+```
+
+### Option B: Auto-generated declarations (experimental)
+
+```typescript
+// next.config.ts
+import { createNextIntlPlugin } from 'next-intl/plugin';
+
+const withNextIntl = createNextIntlPlugin({
+  experimental: {
+    createMessagesDeclaration: './messages/en.json',
+  },
+});
+```
+
+Requires `"allowArbitraryExtensions": true` in `tsconfig.json`. Generates `.d.json.ts` declaration files on `next dev` / `next build`.
+
+Add to `.gitignore`:
+```
+*.d.json.ts
+```
 
 ---
 
@@ -273,6 +298,8 @@ t.rich('terms', {
 })
 ```
 
+**v4 note:** `null`, `undefined`, and `boolean` are no longer accepted as ICU arguments.
+
 ---
 
 ## Formatting
@@ -314,6 +341,8 @@ By default, `useTranslations` in Server Components opts into dynamic rendering. 
 
 ```tsx
 import { setRequestLocale } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
+import { hasLocale } from 'next-intl';
 import { routing } from '@/i18n/routing';
 
 export function generateStaticParams() {
@@ -322,6 +351,7 @@ export function generateStaticParams() {
 
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
+  if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
 
   const t = await getTranslations('Page');
@@ -355,7 +385,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 ### Alternate Links
 
 ```tsx
-// In root layout or via next-intl's routing
 // next-intl automatically generates hreflang alternate links when using locale-based routing
 ```
 
@@ -399,3 +428,7 @@ export function LocaleSwitcher() {
 | Using `t()` outside React components | Use `getTranslations` from `next-intl/server` in Server Actions, Route Handlers, metadata |
 | String concatenation for translated text | Use ICU interpolation: `{name}`, rich text: `<bold>text</bold>` |
 | Forgetting `await` on `getTranslations` | It's async in Server Components — always `await` |
+| Using old `localeDetection: false` | v4 uses `localeCookie: false` instead |
+| Using `.includes()` for locale checks | Use `hasLocale()` for type-safe narrowing |
+| Old `declare global` type augmentation | v4 uses `declare module 'next-intl'` with `AppConfig` interface |
+| Passing `null`/`undefined` as ICU args | v4 disallows — use empty string or omit |

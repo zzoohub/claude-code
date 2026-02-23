@@ -5,7 +5,7 @@
 - [react-i18next](https://react.i18next.com/)
 - [i18next](https://www.i18next.com/)
 
-Stack: `expo-localization` (device locale detection) + `i18next` (core engine) + `react-i18next` (React bindings)
+Stack: `expo-localization` v17 (device locale detection) + `i18next` v25 (core engine) + `react-i18next` v16 (React bindings). Requires TypeScript 5+.
 
 ---
 
@@ -113,6 +113,8 @@ export async function changeLanguage(locale: SupportedLocale) {
 }
 ```
 
+**Note:** `react: { useSuspense: false }` is still required for React Native. Even with bundled translations, keep it as a safety net since React Native's Suspense for data fetching is not stable on native.
+
 ### 4. Import in Root Layout
 
 ```tsx
@@ -134,7 +136,7 @@ export default function RootLayout() {
 // src/lib/i18n/types.ts
 import { resources, defaultNS } from './resources';
 
-// Augment react-i18next types
+// Augment i18next types
 declare module 'i18next' {
   interface CustomTypeOptions {
     defaultNS: typeof defaultNS;
@@ -187,10 +189,10 @@ function LoginScreen() {
 t('greeting', { name: 'Alice' })
 ```
 
-### Pluralization (JSON v4 — i18next >= 21)
+### Pluralization (JSON v4 — i18next >= 21, only format since v24)
 
 Uses `Intl.PluralRules` suffixes: `_zero`, `_one`, `_two`, `_few`, `_many`, `_other`.
-**Variable must be `count`.**
+**Variable must be `count`.** JSON v3 format (`compatibilityJSON: 'v3'`) was removed in i18next v24.
 
 ```json
 {
@@ -261,6 +263,45 @@ t('createdAt', {
 ```
 
 **Rule:** Never use `interpolation.format` — it's legacy since i18next 21.3.0 and triggers deprecation warnings.
+
+---
+
+## Lazy Loading Namespaces
+
+For larger apps, use `i18next-resources-to-backend` instead of bundling all translations upfront:
+
+```bash
+bun add i18next-resources-to-backend
+```
+
+```typescript
+// src/lib/i18n/index.ts
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import resourcesToBackend from 'i18next-resources-to-backend';
+
+i18n
+  .use(initReactI18next)
+  .use(
+    resourcesToBackend(
+      (language: string, namespace: string) =>
+        import(`@/locales/${language}/${namespace}.json`)
+    )
+  )
+  .init({
+    lng: initialLocale,
+    fallbackLng: 'en',
+    ns: ['common'],          // only load common initially
+    defaultNS: 'common',
+    interpolation: { escapeValue: false },
+    react: { useSuspense: false },
+  });
+```
+
+Requesting a namespace in a component triggers the dynamic import:
+```tsx
+const { t } = useTranslation('settings'); // lazy-loads settings namespace
+```
 
 ---
 
@@ -336,10 +377,10 @@ const styles = StyleSheet.create({
 
 **Tip:** Use `start`/`end` instead of `left`/`right` in styles — React Native auto-flips these in RTL:
 ```tsx
-// ✅ RTL-safe
+// RTL-safe
 { paddingStart: 16, textAlign: 'left' }  // 'left' is logical in RN
 
-// ❌ Not RTL-safe with manual row-reverse
+// Not RTL-safe with manual row-reverse
 { paddingLeft: 16 }
 ```
 
@@ -377,6 +418,8 @@ Locale file format:
   }
 }
 ```
+
+**expo-localization v17:** New `supportedLocales` option enables the OS-level "preferred language" picker for your app, allowing users to set the app language from device settings.
 
 ---
 
@@ -430,10 +473,12 @@ function LoginScreen() {
 
 | Pitfall | Solution |
 |---|---|
-| `compatibilityJSON: 'v3'` in config | Remove it — use JSON v4 (default in i18next >= 21) for proper Intl plurals |
+| `compatibilityJSON: 'v3'` in config | Removed in i18next v24 — only JSON v4 is supported. Use [i18next-v4-format-converter](https://github.com/i18next/i18next-v4-format-converter) to migrate |
 | Using AsyncStorage for language (slow) | Use `react-native-mmkv` — synchronous, no startup flash |
-| Forgetting `react: { useSuspense: false }` | Required for React Native — no Suspense boundaries for i18next |
+| Forgetting `react: { useSuspense: false }` | Required for React Native — no stable Suspense for data fetching on native |
 | RTL change without app reload | `I18nManager.forceRTL()` only takes effect after reload via `Updates.reloadAsync()` |
 | Embedding format logic in translation strings | Prefer formatting in code with `Intl` APIs; keep translations clean |
 | Not setting `escapeValue: false` | React Native already escapes — double-escaping breaks output |
-| Loading all namespaces at startup | Bundle only needed namespaces; lazy-load others for large apps |
+| Loading all namespaces at startup | Use `i18next-resources-to-backend` for lazy loading in large apps |
+| Using `initImmediate` in config | Renamed to `initAsync` in i18next v24 |
+| `Intl.PluralRules` not available | Required since i18next v24 — polyfill if targeting Hermes < 0.70 |

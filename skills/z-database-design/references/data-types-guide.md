@@ -206,3 +206,76 @@ SELECT * FROM article WHERE tags @> ARRAY['postgresql', 'design'];
 **ARRAY rules**:
 - Simple value lists only (tags, categories)
 - If you need joins or FK on array elements, split into a separate table
+
+## Domain Types
+
+Reusable constrained types for consistency across tables. Define once, enforce everywhere.
+
+```sql
+-- Email domain: enforced via CHECK on every column that uses it
+CREATE DOMAIN email AS TEXT
+    CHECK (VALUE ~ '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+
+-- Positive money amount
+CREATE DOMAIN positive_amount AS NUMERIC(15, 2)
+    CHECK (VALUE > 0);
+
+-- URL
+CREATE DOMAIN url AS TEXT
+    CHECK (VALUE ~ '^https?://');
+
+-- Use in tables
+CREATE TABLE user_account (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    email email NOT NULL,
+    website url,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE invoice (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    amount positive_amount NOT NULL,
+    recipient_email email NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+```
+
+**When to use domains**: When the same constrained type appears in 3+ columns across different tables. It avoids duplicating CHECK constraints and ensures consistent validation.
+
+**When NOT to use**: For one-off constraints on a single column — just use inline CHECK.
+
+## Generated Columns (PostgreSQL 12+)
+
+Computed columns stored on disk, automatically maintained by PostgreSQL.
+
+```sql
+CREATE TABLE product (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name TEXT NOT NULL,
+    price NUMERIC(12, 2) NOT NULL,
+    tax_rate NUMERIC(5, 4) NOT NULL DEFAULT 0.10,
+    -- Automatically computed and stored
+    price_with_tax NUMERIC(12, 2) GENERATED ALWAYS AS (price * (1 + tax_rate)) STORED,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Full-text search vector (avoids recomputing on every query)
+CREATE TABLE article (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    title TEXT NOT NULL,
+    body TEXT NOT NULL,
+    search_vector TSVECTOR GENERATED ALWAYS AS (
+        to_tsvector('english', title || ' ' || body)
+    ) STORED,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_article_search ON article USING GIN (search_vector);
+
+-- Query using the stored vector (no runtime computation)
+SELECT * FROM article WHERE search_vector @@ to_tsquery('english', 'postgresql & design');
+```
+
+**When to use**: Computed values queried frequently (full-text vectors, derived amounts, normalized strings). Trades write-time computation for read-time performance.
+
+**Limitation**: Only `STORED` is supported (not virtual). The expression cannot reference other tables or use subqueries.

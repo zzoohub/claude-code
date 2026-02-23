@@ -12,7 +12,7 @@ description: >
   or non-database application logic.
 metadata:
   author: custom
-  version: 1.2.0
+  version: 1.3.0
   database: postgresql
 ---
 
@@ -85,7 +85,6 @@ If a DB-domain decision differs from what the SADD implies, **state the deviatio
 3. Evaluate denormalization needs → consult `references/normalization-guide.md`
 4. Choose appropriate data types → consult `references/data-types-guide.md`
 5. Define constraints (PK, FK, UNIQUE, CHECK, NOT NULL)
-6. Order columns from largest to smallest data type to minimize alignment padding → consult `references/performance-patterns.md`
 
 ### Step 3: Transaction & Concurrency Design
 → consult `references/acid-transactions.md`
@@ -104,7 +103,6 @@ For each, decide:
 ### Step 4: Write DDL
 ```sql
 -- Always follow this structure
--- Order columns largest-to-smallest for optimal storage alignment
 CREATE TABLE schema_name.table_name (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -133,8 +131,7 @@ COMMENT ON COLUMN schema_name.table_name.column IS 'Column description';
 - Consider connection pooling (PgBouncer)
 - Evaluate partitioning needs (hundreds of millions of rows+)
 - Suggest PostgreSQL configuration tuning
-- Optimize column ordering for storage efficiency
-- Design around query patterns: filter early, limit resultsets, cache computed data
+- Design around query patterns: ensure indexes support WHERE/JOIN, limit resultsets, cache computed data
 
 ### Step 7: Migration Plan
 → consult `references/migration-patterns.md`
@@ -148,14 +145,14 @@ Use this checklist:
 
 1. **Naming**: Convention consistency
 2. **Data types**: Appropriate type and size for each column
-3. **Column ordering**: Largest to smallest for alignment padding optimization
-4. **Constraints**: PK, FK, NOT NULL, CHECK, UNIQUE
-5. **Indexes**: Missing indexes (especially on FK columns), unused indexes
-6. **Normalization**: Unnecessary data duplication
-7. **Transactions**: Appropriate isolation levels and locking for critical operations
-8. **Security**: Sensitive data encryption, access control
-9. **Scalability**: Partitioning, read replicas
-10. **Ingestion pattern**: Append-only vs backfill vs update-heavy implications
+3. **Constraints**: PK, FK, NOT NULL, CHECK, UNIQUE
+4. **Indexes**: Missing indexes (especially on FK columns), unused indexes
+5. **Normalization**: Unnecessary data duplication
+6. **Transactions**: Appropriate isolation levels and locking for critical operations
+7. **Security**: Sensitive data encryption, access control
+8. **Scalability**: Partitioning, read replicas
+9. **Ingestion pattern**: Append-only vs backfill vs update-heavy implications
+10. **Storage**: Column ordering for alignment (large tables only) → `references/performance-patterns.md`
 
 ## Key Design Patterns Summary
 
@@ -168,6 +165,8 @@ Use this checklist:
 | Audit Trail | Change tracking required | `references/design-patterns.md` |
 | Partitioning | Large table management | `references/performance-patterns.md` |
 | JSONB Hybrid | Flexible schema + relational mix | `references/data-types-guide.md` |
+| Domain Types | Reusable constrained types (email, URL, amounts) | `references/data-types-guide.md` |
+| Generated Columns | Stored computed values (FTS vectors, derived amounts) | `references/data-types-guide.md` |
 | Temporal Data | Time-validity ranges, price history | `references/design-patterns.md` |
 | Pessimistic Locking | High contention, short transactions | `references/acid-transactions.md` |
 | Optimistic Locking | Low contention, user-facing workflows | `references/acid-transactions.md` |
@@ -181,7 +180,26 @@ Produce **3 files**:
 |---|---|
 | `docs/database-design.md` | Requirements summary → ERD (Mermaid) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. SADD deviations noted inline. |
 | `db/migrations/001_initial_schema.sql` | Executable DDL (tables, indexes, constraints, comments) + matching `_rollback.sql` |
-| `docs/erd.mermaid` | Standalone Mermaid ERD (also embedded in the design doc) |
+| `docs/erd.mermaid` | Standalone Mermaid ERD (also embedded in the design doc) → consult `references/mermaid-erd.md` for syntax |
+
+## Recommended Extensions
+
+Enable these when the design requires their capabilities:
+
+| Extension | Purpose | Enable When |
+|-----------|---------|-------------|
+| `btree_gist` | GiST operator support for B-tree types | Exclusion constraints (temporal data, reservations) |
+| `pg_trgm` | Trigram-based similarity | Fuzzy text search, `LIKE '%keyword%'` optimization |
+| `pgcrypto` | Cryptographic functions | Hashing passwords, generating UUIDs (pre-PG13) |
+| `pg_stat_statements` | Query performance tracking | Production monitoring (enable always) |
+| `pg_partman` | Automated partition management | Time-series partitioning in production |
+| `uuid-ossp` | UUID generation functions | UUID v1/v3/v5 (use `gen_random_uuid()` for v4, built-in since PG13) |
+
+```sql
+CREATE EXTENSION IF NOT EXISTS btree_gist;   -- needed for EXCLUDE constraints
+CREATE EXTENSION IF NOT EXISTS pg_trgm;       -- needed for fuzzy search indexes
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;  -- query performance tracking
+```
 
 ## Critical Rules
 
@@ -192,6 +210,5 @@ Produce **3 files**:
 - **Include created_at and updated_at on every table**
 - **Default to surrogate keys** (BIGINT GENERATED ALWAYS AS IDENTITY); use natural keys only when clearly appropriate
 - **Always create indexes on FK columns** — PostgreSQL does not do this automatically
-- **Order columns largest-to-smallest** in CREATE TABLE to minimize alignment padding waste
-- **Design around your query patterns** — filter early, keep resultsets reasonable, cache computed data
+- **Design around your query patterns** — ensure indexes support WHERE/JOIN, keep resultsets reasonable, cache computed data
 - **Choose isolation levels deliberately** — default Read Committed is fine for most OLTP; use Repeatable Read or Serializable only where correctness demands it, with retry logic

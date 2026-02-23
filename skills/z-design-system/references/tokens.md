@@ -79,6 +79,25 @@ Bounded palette of raw values. These exist so semantic tokens have something to 
     "xl":   { "$value": "16px",   "$type": "dimension" },
     "2xl":  { "$value": "24px",   "$type": "dimension" },
     "full": { "$value": "9999px", "$type": "dimension" }
+  },
+  "shadow": {
+    "sm":  { "$value": "0 1px 2px 0 rgba(0, 0, 0, 0.05)", "$type": "shadow" },
+    "md":  { "$value": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)", "$type": "shadow" },
+    "lg":  { "$value": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1)", "$type": "shadow" },
+    "xl":  { "$value": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)", "$type": "shadow" }
+  },
+  "opacity": {
+    "disabled": { "$value": "0.5",  "$type": "number" },
+    "overlay":  { "$value": "0.5",  "$type": "number" },
+    "hover":    { "$value": "0.8",  "$type": "number" }
+  },
+  "zIndex": {
+    "base":     { "$value": "0",   "$type": "number" },
+    "dropdown": { "$value": "100", "$type": "number" },
+    "sticky":   { "$value": "200", "$type": "number" },
+    "overlay":  { "$value": "300", "$type": "number" },
+    "modal":    { "$value": "400", "$type": "number" },
+    "toast":    { "$value": "500", "$type": "number" }
   }
 }
 ```
@@ -123,6 +142,12 @@ Every value a component uses comes from here. The naming tells you what it's for
       "success":    { "$value": "{color.green.600}", "$type": "color" },
       "successBg":  { "$value": "{color.green.50}",  "$type": "color" }
     }
+  },
+  "shadow": {
+    "card":     { "$value": "{shadow.sm}",  "$type": "shadow" },
+    "dropdown": { "$value": "{shadow.md}",  "$type": "shadow" },
+    "modal":    { "$value": "{shadow.lg}",  "$type": "shadow" },
+    "toast":    { "$value": "{shadow.xl}",  "$type": "shadow" }
   },
   "spacing": {
     "component": {
@@ -175,9 +200,17 @@ Remaps semantic tokens only. Components and primitives stay unchanged.
       "strong":  { "$value": "{color.gray.600}", "$type": "color" },
       "focus":   { "$value": "{color.blue.400}", "$type": "color" }
     }
+  },
+  "shadow": {
+    "card":     { "$value": "0 1px 2px 0 rgba(0, 0, 0, 0.2)", "$type": "shadow" },
+    "dropdown": { "$value": "0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.2)", "$type": "shadow" },
+    "modal":    { "$value": "0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.3)", "$type": "shadow" },
+    "toast":    { "$value": "0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3)", "$type": "shadow" }
   }
 }
 ```
+
+Dark mode shadows use higher opacity values because on dark surfaces, subtle shadows are invisible. The shadow color shifts darker to remain visible against dark backgrounds.
 
 ## Component Tokens (Tier 3 — Use Sparingly)
 

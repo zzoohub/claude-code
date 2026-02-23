@@ -181,12 +181,11 @@ CREATE INDEX idx_product_pagination ON product (created_at DESC, id DESC);
 1. **Return reasonable resultsets** — aim for under 10,000 rows per query.
    Use LIMIT, pagination, or encourage filtering from the application layer.
 
-2. **Filter early, reduce intermediate data** — every SQL query goes through
-   multiple processing phases. If intermediate stages handle excessive data,
-   it increases I/O, memory, and processing time. Design queries so
-   intermediate data volume is close to the final resultset size.
+2. **Help the planner filter early** — PostgreSQL's query planner is good at
+   pushing predicates into joins, but it needs the right indexes to act on them.
+   Ensure every column in WHERE and JOIN ON has appropriate indexes.
    ```sql
-   -- BAD: joins everything, filters late
+   -- The planner will push these filters down automatically if indexed:
    SELECT o.id, o.total
    FROM "order" o
    JOIN order_item oi ON oi.order_id = o.id
@@ -194,19 +193,29 @@ CREATE INDEX idx_product_pagination ON product (created_at DESC, id DESC);
    WHERE p.category = 'electronics'
    AND o.created_at > '2025-01-01';
 
-   -- BETTER: CTE to filter early
-   WITH recent_orders AS (
-       SELECT id, total FROM "order"
-       WHERE created_at > '2025-01-01'
-   ),
-   electronics AS (
-       SELECT id FROM product WHERE category = 'electronics'
-   )
-   SELECT ro.id, ro.total
-   FROM recent_orders ro
-   JOIN order_item oi ON oi.order_id = ro.id
-   JOIN electronics e ON e.id = oi.product_id;
+   -- Required indexes for the planner to filter efficiently:
+   CREATE INDEX idx_order_created_at ON "order" (created_at);
+   CREATE INDEX idx_order_item_order_id ON order_item (order_id);
+   CREATE INDEX idx_order_item_product_id ON order_item (product_id);
+   CREATE INDEX idx_product_category ON product (category);
    ```
+
+   Use EXISTS instead of JOIN when you only need to check existence (not retrieve columns):
+   ```sql
+   -- BETTER than JOIN when you don't need product columns:
+   SELECT o.id, o.total
+   FROM "order" o
+   WHERE o.created_at > '2025-01-01'
+   AND EXISTS (
+       SELECT 1 FROM order_item oi
+       JOIN product p ON p.id = oi.product_id
+       WHERE oi.order_id = o.id AND p.category = 'electronics'
+   );
+   ```
+
+   Note: since PostgreSQL 12, CTEs are inlined by default and the planner
+   optimizes them like subqueries. Wrapping filters in CTEs does not help
+   the planner — proper indexes do.
 
 3. **Cache computed data** — avoid recomputing expensive aggregations repeatedly.
    Use Materialized Views or dedicated summary tables refreshed on a schedule.
