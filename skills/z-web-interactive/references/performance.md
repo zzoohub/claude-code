@@ -106,15 +106,13 @@ If a page only needs a scroll progress bar or simple reveals (no stagger, no pin
 
 ### GSAP Cleanup
 
-```tsx
-useEffect(() => {
-  const ctx = gsap.context(() => {
-    gsap.to(".box", { x: 100 });
-    ScrollTrigger.create({ trigger: ".section", ... });
-  }, containerRef);
+Use `useGSAP` from `@gsap/react` — it handles context creation and cleanup automatically:
 
-  return () => ctx.revert(); // Kills EVERYTHING inside
-}, []);
+```tsx
+useGSAP(() => {
+  gsap.to(".box", { x: 100 });
+  ScrollTrigger.create({ trigger: ".section", ... });
+}, { scope: containerRef }); // Auto-cleanup on unmount
 ```
 
 ### Three.js Cleanup

@@ -78,10 +78,7 @@ For full setup guide, read `references/ga4-gtm-setup.md` in z-product-analytics.
 
 ### 5. Dashboard Design (`biz/analytics/dashboards.md`)
 
-- **CC Monitor**: 7d/30d trailing CC, daily inflow breakdown, churn rate
-- **Retention**: Cohort tables, plateau detection, segment comparison
-- **Growth Engine**: Funnel conversion, inflow by type (organic/resurrection/referral/paid), Viral K
-- **Revenue**: MRR, conversion, churn events
+For dashboard specs (CC Monitor, Retention, Growth Engine, Revenue), see `references/carrying-capacity.md` in z-product-analytics — "Dashboard Design for CC Monitoring" section.
 
 ### 6. Weekly Reports (`biz/analytics/reports/`)
 
@@ -94,6 +91,30 @@ Produce `biz/analytics/reports/week-YYYY-WW.md` using the template in z-product-
 - **Retention drivers**: What behaviors predict D30 retention?
 - **Channel quality**: Cohort retention segmented by acquisition channel
 - **Viral metrics**: Viral K, Amplification Factor, loop cycle time
+
+---
+
+## Working with Small Data
+
+Solopreneur products often have small user bases — dozens or low hundreds of users. Standard analytics frameworks assume thousands. Adapt your approach:
+
+### When Data Is Too Sparse
+
+| Situation | Standard Approach | Small-Data Adaptation |
+|-----------|------------------|----------------------|
+| Cohort < 100 users | Retention curves, plateau detection | Treat as directional only. Report confidence: "With 47 users, this is a signal, not a conclusion." |
+| CC calculation | 30d trailing average | Use longer windows (60-90d) to smooth noise. Acknowledge wide error bars. |
+| A/B test can't reach sample size | Wait for statistical significance | Use qualitative signals instead — session replays, user interviews, Sean Ellis survey. Report: "Insufficient data for statistical test. Qualitative signals suggest..." |
+| Aha Moment discovery | Correlation analysis across events | With <200 users, correlation analysis is unreliable. Interview your 10 most active users directly. Look for patterns manually. |
+| Funnel analysis | Drop-off rates by step | Individual user-level inspection via session replays. With 30 signups/month, you can watch every session. |
+
+### Principles for Small Data
+
+1. **Qualitative over quantitative.** With <500 users, talking to 10 users gives more signal than any dashboard. Cross-reference `biz/ops/feedback-log.md` heavily.
+2. **Absolute numbers over percentages.** "3 out of 12 users churned" is more honest than "25% churn rate." Report both.
+3. **Longer time windows.** Weekly metrics are noise at small scale. Use monthly or even quarterly trends.
+4. **Every user matters.** At small scale, investigate individual churns and activations. Why did this specific user leave? Why did that one stay?
+5. **Sean Ellis survey early.** With <100 users, the survey is more reliable than retention curves for PMF assessment. See `references/carrying-capacity.md` in z-product-analytics.
 
 ---
 

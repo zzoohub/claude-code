@@ -22,22 +22,18 @@ export function CustomCursor() {
     const dot = dotRef.current!;
     const ring = ringRef.current!;
 
+    // quickTo creates reusable tweens — far more efficient than gsap.to() per mousemove
+    const dotX = gsap.quickTo(dot, "x", { duration: 0.1, ease: "power2.out" });
+    const dotY = gsap.quickTo(dot, "y", { duration: 0.1, ease: "power2.out" });
+    const ringX = gsap.quickTo(ring, "x", { duration: 0.3, ease: "power2.out" });
+    const ringY = gsap.quickTo(ring, "y", { duration: 0.3, ease: "power2.out" });
+
     const moveCursor = (e: MouseEvent) => {
       if (!visible) setVisible(true);
-
-      gsap.to(dot, {
-        x: e.clientX,
-        y: e.clientY,
-        duration: 0.1,
-        ease: "power2.out",
-      });
-
-      gsap.to(ring, {
-        x: e.clientX,
-        y: e.clientY,
-        duration: 0.3,
-        ease: "power2.out",
-      });
+      dotX(e.clientX);
+      dotY(e.clientY);
+      ringX(e.clientX);
+      ringY(e.clientY);
     };
 
     const handleEnterInteractive = () => {
@@ -128,8 +124,8 @@ Elements that pull toward the cursor when nearby.
 ```tsx
 // components/magnetic.tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function Magnetic({
   children,
@@ -142,24 +138,19 @@ export function Magnetic({
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useGSAP(() => {
     if ("ontouchstart" in window) return; // Skip on mobile
 
     const el = ref.current!;
+    const xTo = gsap.quickTo(el, "x", { duration: 0.4, ease: "power2.out" });
+    const yTo = gsap.quickTo(el, "y", { duration: 0.4, ease: "power2.out" });
 
     const handleMove = (e: MouseEvent) => {
       const { left, top, width, height } = el.getBoundingClientRect();
       const centerX = left + width / 2;
       const centerY = top + height / 2;
-      const distX = e.clientX - centerX;
-      const distY = e.clientY - centerY;
-
-      gsap.to(el, {
-        x: distX * strength,
-        y: distY * strength,
-        duration: 0.4,
-        ease: "power2.out",
-      });
+      xTo((e.clientX - centerX) * strength);
+      yTo((e.clientY - centerY) * strength);
     };
 
     const handleLeave = () => {
@@ -178,7 +169,7 @@ export function Magnetic({
       el.removeEventListener("mousemove", handleMove);
       el.removeEventListener("mouseleave", handleLeave);
     };
-  }, [strength]);
+  }, { scope: ref, dependencies: [strength] });
 
   return (
     <div ref={ref} className="inline-block">
@@ -197,8 +188,8 @@ Card that tilts toward the cursor on hover.
 ```tsx
 // components/tilt-card.tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function TiltCard({
   children,
@@ -214,7 +205,7 @@ export function TiltCard({
   const cardRef = useRef<HTMLDivElement>(null);
   const glareRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useGSAP(() => {
     if ("ontouchstart" in window) return;
 
     const card = cardRef.current!;
@@ -264,7 +255,7 @@ export function TiltCard({
       card.removeEventListener("mousemove", handleMove);
       card.removeEventListener("mouseleave", handleLeave);
     };
-  }, [maxTilt, scale, glare]);
+  }, { scope: cardRef, dependencies: [maxTilt, scale, glare] });
 
   return (
     <div ref={cardRef} className="relative" style={{ transformStyle: "preserve-3d" }}>
@@ -293,8 +284,8 @@ Move background layers subtly based on mouse position.
 ```tsx
 // components/mouse-parallax.tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function MouseParallax({
   children,
@@ -305,7 +296,7 @@ export function MouseParallax({
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useGSAP(() => {
     if ("ontouchstart" in window) return;
 
     const handleMove = (e: MouseEvent) => {
@@ -327,7 +318,7 @@ export function MouseParallax({
 
     window.addEventListener("mousemove", handleMove);
     return () => window.removeEventListener("mousemove", handleMove);
-  }, [depth]);
+  }, { dependencies: [depth] });
 
   return <div ref={ref}>{children}</div>;
 }

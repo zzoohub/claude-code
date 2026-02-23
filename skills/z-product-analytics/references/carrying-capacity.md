@@ -159,6 +159,63 @@ Scale only when:
 
 ---
 
+## Sean Ellis Survey (PMF Test)
+
+The Sean Ellis survey is a qualitative PMF signal that complements the quantitative Kill/Keep/Scale metrics above. It asks one question: **"How would you feel if you could no longer use [product]?"**
+
+### Setting Up in PostHog
+
+Use PostHog's survey feature to create and distribute the survey:
+
+**Survey configuration:**
+- **Type**: Popover (in-app) or Link (email)
+- **Question**: "How would you feel if you could no longer use [product name]?"
+- **Answer type**: Single choice
+- **Options**:
+  1. Very disappointed
+  2. Somewhat disappointed
+  3. Not disappointed
+
+**Targeting** — survey users who have enough experience to give a meaningful answer:
+- Completed at least 2 core sessions (not first-time visitors who haven't formed an opinion)
+- Signed up at least 7 days ago (enough time to experience the product)
+- Haven't already responded to this survey (use PostHog's response limits)
+
+**Timing:**
+- Show after completing a core action (not during onboarding — too early)
+- Limit to once per user
+- Run continuously or in quarterly waves
+
+### Interpreting Results
+
+| "Very disappointed" % | Assessment | Action |
+|----------------------|------------|--------|
+| < 25% | No PMF signal | Product doesn't solve a real problem. Reconsider value prop. |
+| 25-40% | Approaching PMF | Some users love it. Segment and understand who they are. |
+| > 40% | PMF signal | Product solves a real problem. Focus on getting more users to this state. |
+
+The 40% threshold comes from Sean Ellis's observation across hundreds of startups: products that cross 40% "very disappointed" almost always find a way to scale.
+
+### Making the Survey Actionable
+
+The raw percentage matters less than understanding **who** is very disappointed and **why**:
+
+1. **Segment by "very disappointed"**: What do these users have in common? (company size, use case, acquisition channel, features used) — this reveals your ideal customer profile.
+2. **Follow-up question** (optional): Add "What would you use as an alternative?" and "What is the main benefit you receive?" to understand competitive positioning and core value.
+3. **Cross-reference with Aha Moment**: Do "very disappointed" users overwhelmingly complete the Aha Moment action? If yes, the Aha Moment is validated. If not, the Aha Moment hypothesis may be wrong.
+4. **Track over time**: Run the survey quarterly. A rising "very disappointed" percentage after product changes confirms you're moving in the right direction.
+
+### PostHog MCP Implementation
+
+| Step | MCP Tool | How |
+|------|----------|-----|
+| Create survey | `survey-create` | Set question, options, targeting rules |
+| Check responses | `survey-get` / `survey-stats` | Read response counts and distribution |
+| Analyze segments | `query-run` (HogQL) | Join survey responses with user properties to find patterns |
+| Track over time | `surveys-global-stats` | Compare response distributions across survey runs |
+
+---
+
 ## Advanced CC Concepts
 
 ### CC Components Breakdown

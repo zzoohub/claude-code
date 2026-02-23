@@ -229,6 +229,92 @@ All retention analysis is executed via PostHog MCP server:
 
 ---
 
+## Revenue Retention (GRR/NRR) via HogQL
+
+PostHog has no built-in revenue analytics. Use HogQL to build revenue retention cohorts from subscription/payment events.
+
+### Gross Revenue Retention (GRR)
+
+GRR measures revenue kept from existing customers, excluding expansion. It answers: "How much of last period's revenue did we lose?"
+
+```sql
+-- GRR: Monthly revenue retention excluding expansion
+WITH monthly_revenue AS (
+  SELECT
+    person_id,
+    DATE_TRUNC('month', timestamp) AS month,
+    SUM(toFloat64(properties.amount)) AS revenue
+  FROM events
+  WHERE event = 'subscription_renewed' OR event = 'subscription_cancelled'
+    AND timestamp >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+  GROUP BY person_id, month
+),
+cohort_revenue AS (
+  SELECT
+    curr.month AS month,
+    SUM(prev.revenue) AS beginning_revenue,
+    SUM(LEAST(curr.revenue, prev.revenue)) AS retained_revenue
+  FROM monthly_revenue curr
+  JOIN monthly_revenue prev
+    ON curr.person_id = prev.person_id
+    AND curr.month = DATE_ADD(prev.month, INTERVAL 1 MONTH)
+  GROUP BY curr.month
+)
+SELECT
+  month,
+  ROUND(retained_revenue * 100.0 / beginning_revenue, 1) AS grr_pct
+FROM cohort_revenue
+ORDER BY month
+```
+
+### Net Revenue Retention (NRR)
+
+NRR includes expansion (upgrades) and contraction (downgrades). It answers: "Is each cohort paying us more or less over time?"
+
+```sql
+-- NRR: Monthly revenue retention including expansion/contraction
+WITH monthly_revenue AS (
+  SELECT
+    person_id,
+    DATE_TRUNC('month', timestamp) AS month,
+    SUM(toFloat64(properties.amount)) AS revenue
+  FROM events
+  WHERE event IN ('purchase_completed', 'subscription_renewed',
+                   'subscription_upgraded', 'subscription_downgraded')
+    AND timestamp >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
+  GROUP BY person_id, month
+),
+nrr AS (
+  SELECT
+    curr.month AS month,
+    SUM(prev.revenue) AS beginning_revenue,
+    SUM(curr.revenue) AS ending_revenue
+  FROM monthly_revenue curr
+  JOIN monthly_revenue prev
+    ON curr.person_id = prev.person_id
+    AND curr.month = DATE_ADD(prev.month, INTERVAL 1 MONTH)
+  GROUP BY curr.month
+)
+SELECT
+  month,
+  ROUND(ending_revenue * 100.0 / beginning_revenue, 1) AS nrr_pct
+FROM nrr
+ORDER BY month
+```
+
+### Reading GRR vs NRR Together
+
+| GRR | NRR | Diagnosis |
+|-----|-----|-----------|
+| >95% | >110% | Healthy — low churn, good expansion |
+| >95% | ~100% | Retention is solid but no expansion — pricing/packaging opportunity |
+| <90% | >110% | Masking churn with upsells — fragile, fix retention |
+| <90% | <100% | Revenue shrinking — urgent, fix product or pricing |
+
+Adapt these queries to your event schema. The key events are `purchase_completed`, `subscription_renewed`, `subscription_upgraded`, `subscription_downgraded`, and `subscription_cancelled` — each should include an `amount` property.
+
+---
+
 ## LTV Estimation from Cohorts
 
 If cohort retention stabilizes, estimate LTV:

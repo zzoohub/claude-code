@@ -160,6 +160,125 @@ rotation.value = withRepeat(
 );
 ```
 
+### withDecay (momentum-based)
+
+Simulates friction — starts with a velocity and decelerates to a stop. Essential for fling gestures, carousels, and throw-to-dismiss.
+
+```tsx
+import { withDecay } from 'react-native-reanimated';
+
+// Basic: coast to a stop from gesture velocity
+translateX.value = withDecay({ velocity: event.velocityX });
+
+// With clamping and rubber band bounce at edges
+translateX.value = withDecay({
+  velocity: event.velocityX,
+  deceleration: 0.998,          // 0.998 = slow stop, 0.9 = fast stop
+  clamp: [-200, 200],           // stop at boundaries
+  rubberBandEffect: true,       // bounce over the clamp limits
+  rubberBandFactor: 0.6,        // bounce strength (0-1)
+  reduceMotion: ReduceMotion.System,
+});
+```
+
+**When to use**: After a `Pan` gesture's `onEnd`, when the user "throws" an element. Pair with `Gesture.Pan().onFinalize()` to get `velocityX`/`velocityY`.
+
+```tsx
+const pan = Gesture.Pan()
+  .onChange((e) => {
+    translateX.value += e.changeX;
+  })
+  .onFinalize((e) => {
+    translateX.value = withDecay({
+      velocity: e.velocityX,
+      clamp: [-(SCREEN_WIDTH / 2), SCREEN_WIDTH / 2],
+    });
+  });
+```
+
+### withClamp (constrain range)
+
+Wraps any animation to limit its output range. The animation still runs, but the value never exceeds the bounds. Useful when springs overshoot and you need strict limits.
+
+```tsx
+import { withClamp, withSpring } from 'react-native-reanimated';
+
+// Spring that never goes below 0 or above 100
+width.value = withClamp({ min: 0, max: 100 }, withSpring(targetWidth));
+
+// Clamp a decay so it can't go negative
+translateX.value = withClamp(
+  { min: 0 },
+  withDecay({ velocity: event.velocityX })
+);
+```
+
+**When to use**: When `withSpring` overshoot would break the UI (e.g., negative widths, scale below 0, progress bar exceeding 100%). More ergonomic than manually computing clamps in `useDerivedValue`.
+
+---
+
+## Device Hooks
+
+### useAnimatedKeyboard
+
+Tracks the virtual keyboard height as a shared value — animate views out of the keyboard's way without `KeyboardAvoidingView` hacks.
+
+```tsx
+import Animated, {
+  useAnimatedKeyboard,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
+
+function ChatInput() {
+  const keyboard = useAnimatedKeyboard();
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: -keyboard.height.value }],
+  }));
+
+  return (
+    <Animated.View style={[styles.inputContainer, animatedStyle]}>
+      <TextInput placeholder="Type a message..." />
+    </Animated.View>
+  );
+}
+```
+
+`keyboard.height` is a shared value that animates smoothly as the keyboard opens/closes — runs on the UI thread, so it stays in sync with the keyboard animation frame-by-frame. Much smoother than `Keyboard.addListener` + `useState`.
+
+**Note**: Requires `android:windowSoftInputMode="adjustNothing"` in AndroidManifest.xml so the keyboard doesn't auto-resize the window (otherwise Reanimated and the system fight over layout).
+
+### useScrollOffset (simple scroll tracking)
+
+A simpler alternative to `useAnimatedScrollHandler` when you only need the scroll Y offset. Returns a shared value directly.
+
+```tsx
+import Animated, { useAnimatedRef, useScrollOffset } from 'react-native-reanimated';
+import { ScrollView } from 'react-native';
+
+function SimpleParallax() {
+  const animatedRef = useAnimatedRef<ScrollView>();
+  const scrollOffset = useScrollOffset(animatedRef);
+
+  const headerStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(scrollOffset.value, [0, 200], [1, 0]),
+  }));
+
+  return (
+    <>
+      <Animated.View style={headerStyle}><Text>Header</Text></Animated.View>
+      <Animated.ScrollView ref={animatedRef}>
+        {/* content */}
+      </Animated.ScrollView>
+    </>
+  );
+}
+```
+
+Use `useScrollOffset` when you only need the scroll position value. Use `useAnimatedScrollHandler` when you need begin/end drag callbacks, momentum events, or horizontal + vertical simultaneously.
+
+**Note**: In Reanimated 3.x this was called `useScrollViewOffset`. It was renamed to `useScrollOffset` in Reanimated 4. Both work in 3.x but prefer `useScrollOffset` for new code.
+
 ---
 
 ## Scroll Animations
@@ -629,19 +748,17 @@ function TabBar({ tabs, activeIndex }) {
 
 ## Reduced Motion
 
+Two approaches — both from Reanimated, no custom hooks needed.
+
+**Per-animation flag** (simplest — add to any animation):
+
 ```tsx
-import { ReduceMotion, withTiming, withSpring } from 'react-native-reanimated';
+import { ReduceMotion, withTiming, withSpring, withDecay } from 'react-native-reanimated';
 
-// Per-animation: respects system setting
-opacity.value = withTiming(1, {
-  duration: 600,
-  reduceMotion: ReduceMotion.System,  // instant when reduce motion is on
-});
-
-translateY.value = withSpring(0, {
-  damping: 15,
-  reduceMotion: ReduceMotion.System,
-});
+// Animations resolve instantly when the OS reduce-motion setting is on
+opacity.value = withTiming(1, { duration: 600, reduceMotion: ReduceMotion.System });
+translateY.value = withSpring(0, { damping: 15, reduceMotion: ReduceMotion.System });
+translateX.value = withDecay({ velocity: 500, reduceMotion: ReduceMotion.System });
 
 // Options:
 // ReduceMotion.System  — follows OS setting (recommended)
@@ -649,4 +766,23 @@ translateY.value = withSpring(0, {
 // ReduceMotion.Never   — never skip (use sparingly, only for essential feedback)
 ```
 
-Always use `ReduceMotion.System` unless the animation provides essential functional feedback (like a toggle state indicator).
+**`useReducedMotion` hook** (for conditional logic):
+
+```tsx
+import { useReducedMotion, FadeIn, BounceIn } from 'react-native-reanimated';
+
+function AnimatedList() {
+  const reduceMotion = useReducedMotion(); // returns boolean
+
+  // Pick simpler animation when reduce motion is on
+  const entering = reduceMotion ? FadeIn.duration(200) : BounceIn;
+
+  return items.map((item) => (
+    <Animated.View key={item.id} entering={entering}>
+      {/* content */}
+    </Animated.View>
+  ));
+}
+```
+
+Use `ReduceMotion.System` per-animation for most cases. Use the hook when you need to conditionally render entirely different UI or pick alternative animation strategies.

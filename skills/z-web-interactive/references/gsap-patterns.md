@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-npm install gsap
+npm install gsap @gsap/react
 # ScrollTrigger, Flip, Observer are free plugins included in gsap package
 # SplitText requires GSAP Club — use custom splitter below as free alternative
 ```
@@ -14,20 +14,21 @@ npm install gsap
 // lib/gsap.ts — centralized registration
 "use client";
 import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Flip } from "gsap/Flip";
 import { Observer } from "gsap/Observer";
 
 if (typeof window !== "undefined") {
-  gsap.registerPlugin(ScrollTrigger, Flip, Observer);
+  gsap.registerPlugin(useGSAP, ScrollTrigger, Flip, Observer);
 }
 
-export { gsap, ScrollTrigger, Flip, Observer };
+export { gsap, useGSAP, ScrollTrigger, Flip, Observer };
 ```
 
 Always import from this file, not directly from `gsap`:
 ```tsx
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 ```
 
 ## Custom Text Splitter (Free Alternative to SplitText)
@@ -82,19 +83,21 @@ export function splitText(
 
 ```tsx
 "use client";
-import { useRef, useEffect, useState } from "react";
-import { gsap } from "@/lib/gsap";
+import { useRef, useState } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function IntroSequence({ onComplete }: { onComplete?: () => void }) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const logoRef = useRef<HTMLDivElement>(null);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
   const [done, setDone] = useState(false);
 
-  useEffect(() => {
+  useGSAP(() => {
     const tl = gsap.timeline({
       onComplete: () => {
         setDone(true);
-        onComplete?.();
+        onCompleteRef.current?.();
       },
     });
 
@@ -117,9 +120,7 @@ export function IntroSequence({ onComplete }: { onComplete?: () => void }) {
         ease: "power4.inOut",
         delay: 0.3,
       });
-
-    return () => tl.kill();
-  }, [onComplete]);
+  });
 
   if (done) return null;
 
@@ -140,35 +141,31 @@ export function IntroSequence({ onComplete }: { onComplete?: () => void }) {
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 
 export function StaggerSection({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const items = ref.current!.querySelectorAll("[data-stagger]");
+  useGSAP(() => {
+    const items = ref.current!.querySelectorAll("[data-stagger]");
 
-      gsap.from(items, {
-        y: 40,
-        opacity: 0,
-        stagger: {
-          each: 0.08,
-          from: "start",
-        },
-        duration: 0.6,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: ref.current,
-          start: "top 75%",
-          toggleActions: "play none none none",
-        },
-      });
-    }, ref);
-
-    return () => ctx.revert();
-  }, []);
+    gsap.from(items, {
+      y: 40,
+      opacity: 0,
+      stagger: {
+        each: 0.08,
+        from: "start",
+      },
+      duration: 0.6,
+      ease: "power3.out",
+      scrollTrigger: {
+        trigger: ref.current,
+        start: "top 75%",
+        toggleActions: "play none none none",
+      },
+    });
+  }, { scope: ref });
 
   return <div ref={ref}>{children}</div>;
 }
@@ -185,8 +182,8 @@ export function StaggerSection({ children }: { children: React.ReactNode }) {
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function Counter({
   end,
@@ -201,7 +198,7 @@ export function Counter({
 }) {
   const ref = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
+  useGSAP(() => {
     const obj = { value: 0 };
 
     gsap.to(obj, {
@@ -219,7 +216,7 @@ export function Counter({
         }
       },
     });
-  }, [end, duration, suffix, prefix]);
+  }, { dependencies: [end, duration, suffix, prefix] });
 
   return <span ref={ref}>0</span>;
 }
@@ -229,17 +226,30 @@ export function Counter({
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function ImageReveal({ children }: { children: React.ReactNode }) {
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from(wrapperRef.current, {
-        clipPath: "inset(100% 0 0 0)",
-        duration: 1,
+  useGSAP(() => {
+    gsap.from(wrapperRef.current, {
+      clipPath: "inset(100% 0 0 0)",
+      duration: 1,
+      ease: "power4.inOut",
+      scrollTrigger: {
+        trigger: wrapperRef.current,
+        start: "top 80%",
+        toggleActions: "play none none none",
+      },
+    });
+
+    // Optional: inner image scale for parallax feel
+    const img = wrapperRef.current!.querySelector("img, video");
+    if (img) {
+      gsap.from(img, {
+        scale: 1.3,
+        duration: 1.2,
         ease: "power4.inOut",
         scrollTrigger: {
           trigger: wrapperRef.current,
@@ -247,25 +257,8 @@ export function ImageReveal({ children }: { children: React.ReactNode }) {
           toggleActions: "play none none none",
         },
       });
-
-      // Optional: inner image scale for parallax feel
-      const img = wrapperRef.current!.querySelector("img, video");
-      if (img) {
-        gsap.from(img, {
-          scale: 1.3,
-          duration: 1.2,
-          ease: "power4.inOut",
-          scrollTrigger: {
-            trigger: wrapperRef.current,
-            start: "top 80%",
-            toggleActions: "play none none none",
-          },
-        });
-      }
-    }, wrapperRef);
-
-    return () => ctx.revert();
-  }, []);
+    }
+  }, { scope: wrapperRef });
 
   return (
     <div ref={wrapperRef} style={{ overflow: "hidden" }}>
@@ -279,8 +272,8 @@ export function ImageReveal({ children }: { children: React.ReactNode }) {
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function Marquee({
   children,
@@ -293,16 +286,15 @@ export function Marquee({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useGSAP(() => {
     const track = trackRef.current!;
     const firstChild = track.children[0] as HTMLElement;
     const width = firstChild.offsetWidth;
-    const dirMultiplier = direction === "left" ? -1 : 1;
 
-    gsap.set(track, { x: direction === "right" ? -width : 0 });
+    gsap.set(track, { x: 0 });
 
-    const tl = gsap.to(track, {
-      x: dirMultiplier * width * -1 + (direction === "right" ? -width : 0),
+    gsap.to(track, {
+      x: direction === "left" ? -width : width,
       duration: width / speed,
       ease: "none",
       repeat: -1,
@@ -310,9 +302,7 @@ export function Marquee({
         x: gsap.utils.unitize((x) => parseFloat(x) % width),
       },
     });
-
-    return () => tl.kill();
-  }, [speed, direction]);
+  }, { dependencies: [speed, direction] });
 
   return (
     <div className="overflow-hidden">
@@ -325,26 +315,25 @@ export function Marquee({
 }
 ```
 
-## GSAP Context Pattern (Cleanup)
+## useGSAP Hook (Recommended Cleanup Pattern)
 
-Always use `gsap.context()` in React for proper cleanup:
+Use `useGSAP` from `@gsap/react` instead of manual `useEffect` + `gsap.context`:
 
 ```tsx
-useEffect(() => {
-  const ctx = gsap.context(() => {
-    // All GSAP animations here
-    gsap.to(".box", { x: 100 });
-    ScrollTrigger.create({ ... });
-  }, containerRef); // Scope to container
+import { useGSAP } from "@gsap/react";
 
-  return () => ctx.revert(); // Kills ALL animations + ScrollTriggers in scope
-}, []);
+useGSAP(() => {
+  // All GSAP animations here — automatically scoped and cleaned up
+  gsap.to(".box", { x: 100 });
+  ScrollTrigger.create({ ... });
+}, { scope: containerRef }); // Scope to container
 ```
 
-Why context matters:
+Why `useGSAP` over manual context:
+- Handles `gsap.context()` creation and `ctx.revert()` cleanup automatically
 - Scopes all selector-based animations to the container ref
-- `ctx.revert()` kills everything created inside, including ScrollTriggers
 - Prevents memory leaks in React strict mode (double mount)
+- Accepts `dependencies` array for re-running: `{ scope: ref, dependencies: [prop] }`
 
 ## GSAP as the Single Animation Engine
 

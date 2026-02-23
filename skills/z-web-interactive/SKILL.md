@@ -21,7 +21,7 @@ references:
 
 Motion is a design material, not decoration. Every animation must serve one of three purposes: **guide attention**, **communicate relationships**, or **create emotional response**. If it doesn't do one of these, remove it.
 
-The agent's Cognitive Foundations section explains *why* these work at the neuroscience level. Key constraints to internalize:
+These principles are grounded in neuroscience. Key constraints to internalize:
 - **Stagger 50–100ms**: Creates distinct perceptual events within working memory (~4 chunk limit)
 - **ease-out on entrance**: Matches real-world deceleration → brain predicts landing position
 - **Parallax depth**: Triggers motion parallax depth cue — faster foreground = perceptually closer
@@ -107,29 +107,29 @@ Need animation?
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
-export function RevealOnScroll({ children, stagger = 0.08 }) {
-  const ref = useRef(null);
+export function RevealOnScroll({ children, stagger = 0.08 }: {
+  children: React.ReactNode;
+  stagger?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.from("[data-reveal]", {
-        y: 40,
-        opacity: 0,
-        stagger,
-        duration: 0.6,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: ref.current,
-          start: "top 75%",
-          toggleActions: "play none none none",
-        },
-      });
-    }, ref);
-    return () => ctx.revert();
-  }, [stagger]);
+  useGSAP(() => {
+    gsap.from("[data-reveal]", {
+      y: 40,
+      opacity: 0,
+      stagger,
+      duration: 0.6,
+      ease: "power3.out",
+      scrollTrigger: {
+        trigger: ref.current,
+        start: "top 75%",
+        toggleActions: "play none none none",
+      },
+    });
+  }, { scope: ref, dependencies: [stagger] });
 
   return <div ref={ref}>{children}</div>;
 }
@@ -152,21 +152,24 @@ Tailwind handles layout, GSAP handles motion:
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 import { splitText } from "@/lib/split-text";
 
-export function AnimatedHeading({ text, as: Tag = "h1" }) {
-  const ref = useRef(null);
+export function AnimatedHeading({ text, as: Tag = "h1" }: {
+  text: string;
+  as?: React.ElementType;
+}) {
+  const ref = useRef<HTMLElement>(null);
 
-  useEffect(() => {
+  useGSAP(() => {
     const { chars, revert } = splitText(ref.current!, "chars");
     gsap.from(chars, {
       y: 80, opacity: 0, rotateX: -40,
       stagger: 0.03, duration: 0.7, ease: "power4.out",
     });
     return () => revert();
-  }, []);
+  }, { scope: ref });
 
   return <Tag ref={ref}>{text}</Tag>;
 }
@@ -178,30 +181,34 @@ export function AnimatedHeading({ text, as: Tag = "h1" }) {
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
-export function MagneticButton({ children, strength = 0.3 }) {
-  const ref = useRef(null);
+export function MagneticButton({ children, strength = 0.3 }: {
+  children: React.ReactNode;
+  strength?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useGSAP(() => {
     if ("ontouchstart" in window) return;
     const el = ref.current!;
 
-    const move = (e) => {
+    // quickTo creates a reusable tween — much more efficient than gsap.to() per mousemove
+    const xTo = gsap.quickTo(el, "x", { duration: 0.3, ease: "power2.out" });
+    const yTo = gsap.quickTo(el, "y", { duration: 0.3, ease: "power2.out" });
+
+    const move = (e: MouseEvent) => {
       const { left, top, width, height } = el.getBoundingClientRect();
-      gsap.to(el, {
-        x: (e.clientX - left - width / 2) * strength,
-        y: (e.clientY - top - height / 2) * strength,
-        duration: 0.3, ease: "power2.out",
-      });
+      xTo((e.clientX - left - width / 2) * strength);
+      yTo((e.clientY - top - height / 2) * strength);
     };
     const leave = () => gsap.to(el, { x: 0, y: 0, duration: 0.5, ease: "elastic.out(1, 0.3)" });
 
     el.addEventListener("mousemove", move);
     el.addEventListener("mouseleave", leave);
     return () => { el.removeEventListener("mousemove", move); el.removeEventListener("mouseleave", leave); };
-  }, [strength]);
+  }, { scope: ref, dependencies: [strength] });
 
   return <div ref={ref} className="inline-block">{children}</div>;
 }
@@ -247,7 +254,7 @@ export function HeroScene() {
 
 ### 5. Page Transitions (View Transitions API)
 
-**Choose the transition pattern based on the relationship between views** (from the agent's Transition Semantics):
+**Choose the transition pattern based on the relationship between views:**
 
 | Pattern | Implementation | When |
 |---------|---------------|------|
@@ -262,9 +269,13 @@ export function HeroScene() {
 "use client";
 import { useRouter } from "next/navigation";
 
-export function TransitionLink({ href, children, className }) {
+export function TransitionLink({ href, children, className }: {
+  href: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   const router = useRouter();
-  const handleClick = (e) => {
+  const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!document.startViewTransition) { router.push(href); return; }
     document.startViewTransition(() => router.push(href));
@@ -302,13 +313,14 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 
-export function SmoothScroll({ children }) {
+export function SmoothScroll({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const lenis = new Lenis({ duration: 1.2, smoothWheel: true });
     lenis.on("scroll", ScrollTrigger.update);
-    gsap.ticker.add((time) => lenis.raf(time * 1000));
+    const raf = (time: number) => lenis.raf(time * 1000);
+    gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
-    return () => lenis.destroy();
+    return () => { gsap.ticker.remove(raf); lenis.destroy(); };
   }, []);
   return <>{children}</>;
 }
@@ -342,7 +354,7 @@ GSAP targets elements via `data-*` attributes or refs — never conflicts with T
 
 ### With z-design-system
 - Motion tokens (`duration.normal`, `easing.enter`) as CSS custom properties
-- GSAP can read them: `gsap.to(el, { duration: parseFloat(getComputedStyle(el).getPropertyValue('--duration-normal')) })`
+- GSAP can read them: `gsap.to(el, { duration: parseFloat(getComputedStyle(el).getPropertyValue("--duration-normal")) })`
 - Or just use GSAP's own easing — it's more expressive
 
 ### With z-ui-engineer
@@ -354,7 +366,7 @@ GSAP targets elements via `data-*` attributes or refs — never conflicts with T
 ### With z-nextjs
 - GSAP/Three.js components: always `"use client"`
 - Lazy-load Three.js: `dynamic(() => import('./scene'), { ssr: false })`
-- Clean up: `gsap.context().revert()`, `lenis.destroy()`, `cancelAnimationFrame()`
+- Clean up: `useGSAP` handles cleanup automatically, `lenis.destroy()`, `cancelAnimationFrame()`
 - CSS native features (View Transitions, scroll-driven animations) work with SSR
 
 ## Accessibility — Non-Negotiable
@@ -386,7 +398,7 @@ export function AnimatedComponent({ children }) {
 ## Performance Rules
 
 1. **Animate `transform` and `opacity` only** — GPU-composited, no layout/paint
-2. **GSAP context cleanup** — every `useEffect` returns `ctx.revert()`
+2. **useGSAP for cleanup** — handles `gsap.context` automatically, no manual `ctx.revert()`
 3. **Lazy-load Three.js** — always `dynamic(() => import(), { ssr: false })`
 4. **60fps** — profile with Chrome DevTools Performance tab
 5. **Mobile**: disable parallax, reduce particles 75%, no hover effects
@@ -416,7 +428,7 @@ hooks/
 ├── use-reduced-motion.ts
 └── use-device-tier.ts
 lib/
-├── gsap.ts              # Centralized GSAP plugin registration
+├── gsap.ts              # Centralized GSAP + useGSAP registration
 ├── gpu-renderer.ts      # WebGPU detection + fallback
 └── split-text.ts        # Custom text splitter (free SplitText alternative)
 ```
@@ -451,7 +463,7 @@ lib/
 
 ## Measuring Impact
 
-Refer to the agent's **Measuring Impact** section for full framework. Key web-specific metrics:
+Key web-specific metrics to track:
 
 - **Scroll depth**: Target 70%+ (industry avg ~45%). Track via GA `scroll_depth` events.
 - **Time on page**: Expect +30–50% with scroll storytelling vs static layout.

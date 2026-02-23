@@ -177,6 +177,50 @@ Before shipping tracking:
 
 ---
 
+## Server-Side vs Client-Side Events
+
+Not all events should fire from the browser. Events tied to money or critical business logic should fire server-side for reliability.
+
+### When to Use Server-Side Events
+
+| Event Type | Side | Why |
+|-----------|------|-----|
+| `purchase_completed` | Server | Payment confirmation comes from the payment provider (Stripe webhook, etc.), not the browser. Client-side purchase events can be lost to ad blockers, page closes, or network issues. |
+| `subscription_renewed` | Server | Recurring billing happens without user interaction — there's no browser session to fire from. |
+| `subscription_upgraded` / `downgraded` | Server | The plan change should be confirmed by the billing system before recording. |
+| `subscription_cancelled` | Server | Cancellation should reflect the actual billing state, not just a button click. |
+| `referral_completed` | Server | The referred user's signup should be validated server-side to prevent fraud. |
+| `signup_completed` | Both | Fire server-side as the source of truth (account actually created in DB), client-side for immediate PostHog person identification. |
+| `feature_used` | Client | In-app interactions happen in the browser — client-side is natural. |
+| `cta_clicked` | Client | UI interactions are inherently client-side. |
+| `page_viewed` | Client | Navigation is a browser event. |
+
+### PostHog Server-Side Implementation
+
+Use PostHog's server-side SDKs or API to send events from your backend:
+
+```python
+# Python (e.g., in a Stripe webhook handler)
+from posthog import Posthog
+posthog = Posthog('YOUR_API_KEY', host='https://us.i.posthog.com')
+
+posthog.capture(
+    distinct_id=user_id,
+    event='purchase_completed',
+    properties={
+        'plan_type': 'pro',
+        'amount': 29.99,
+        'currency': 'USD',
+        'interval': 'monthly',
+        'payment_provider': 'stripe',
+    }
+)
+```
+
+The key principle: **if losing the event would mean losing revenue data, fire it server-side.** Client-side events are fine for UX analytics (clicks, views, navigation) where occasional loss is tolerable.
+
+---
+
 ## Common Mistakes
 
 ### Tracking Too Much

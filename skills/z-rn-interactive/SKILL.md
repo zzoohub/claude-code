@@ -28,11 +28,11 @@ The agent's emotional register matrix applies identically — a banking app stil
 
 ## Technology Stack
 
-Three libraries. No overlap.
+Three libraries. No overlap. Requires **Reanimated 3.x+** (3.6+ recommended for `useReducedMotion`, `useAnimatedKeyboard`; Reanimated 4.x renames `useScrollViewOffset` → `useScrollOffset`), **react-native-gesture-handler 2.x+**, and **@shopify/react-native-skia 0.1.x+**. Always verify APIs against your installed versions — these libraries evolve quickly.
 
 | Library | Role | Thread |
 |---------|------|--------|
-| **Reanimated 3** | All view animation: timing, spring, scroll, layout | UI thread (worklet) |
+| **Reanimated 3** | All view animation: timing, spring, decay, scroll, layout | UI thread (worklet) |
 | **react-native-skia** | GPU-rendered graphics: shaders, particles, custom drawing | GPU via Skia |
 | **Gesture Handler** | Touch input: tap, pan, pinch, rotation, fling | UI thread (native) |
 
@@ -45,7 +45,7 @@ Three libraries. No overlap.
 | `Animated` (built-in) | Legacy. JS thread or limited native driver. Reanimated supersedes it completely. |
 | `LayoutAnimation` (built-in) | No fine control. Can't target specific elements. Unpredictable. |
 | Moti | Wrapper around Reanimated. Adds abstraction without adding capability. |
-| Lottie | Designer-dependent. No runtime interactivity. Good for pre-made animations only. |
+| Lottie | No runtime interactivity. Good for pre-made designer animations — splash screens, empty states, success confirmations, onboarding illustrations. Use it when a designer provides a Lottie file; don't rebuild those with Reanimated/Skia. |
 
 ## Installation
 
@@ -84,8 +84,17 @@ Need animation?
 ├─ Scroll-linked?
 │  └─ → Reanimated: useAnimatedScrollHandler + interpolate
 │
+├─ Momentum / fling (throw, coast, carousel)?
+│  └─ → Reanimated: withDecay (velocity-based deceleration)
+│
+├─ Need to constrain animation range?
+│  └─ → Reanimated: withClamp({ min, max }, animation)
+│
 ├─ Gesture-driven (drag, pinch, swipe)?
 │  └─ → Gesture Handler + Reanimated (compose)
+│
+├─ Keyboard-aware animation?
+│  └─ → Reanimated: useAnimatedKeyboard
 │
 ├─ Layout animation (list reorder, enter/exit)?
 │  └─ → Reanimated: entering/exiting props or LayoutAnimation
@@ -354,33 +363,34 @@ function TodoItem({ item, onRemove }) {
 
 ## Accessibility — Non-Negotiable
 
+Every animation must handle reduced motion. Reanimated provides two built-in approaches — use these instead of rolling your own with `AccessibilityInfo`.
+
+**Approach 1: Per-animation flag (simplest)**
+
 ```tsx
-import { AccessibilityInfo } from 'react-native';
+import { ReduceMotion, withTiming, withSpring } from 'react-native-reanimated';
 
-function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
+// Animations resolve instantly when the OS reduce-motion setting is on
+opacity.value = withTiming(1, { duration: 600, reduceMotion: ReduceMotion.System });
+translateY.value = withSpring(0, { damping: 15, reduceMotion: ReduceMotion.System });
+```
 
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduced);
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduced);
-    return () => sub.remove();
-  }, []);
+**Approach 2: `useReducedMotion` hook (for conditional logic)**
 
-  return reduced;
+```tsx
+import { useReducedMotion } from 'react-native-reanimated';
+
+function AnimatedCard() {
+  const reduceMotion = useReducedMotion(); // returns boolean
+
+  // Use it to pick different entering animations or skip effects entirely
+  const entering = reduceMotion ? FadeIn : BounceIn;
+
+  return <Animated.View entering={entering}>{/* content */}</Animated.View>;
 }
 ```
 
-```tsx
-// Reanimated 3.5+ has built-in support
-import { ReduceMotion } from 'react-native-reanimated';
-
-// Per-animation
-opacity.value = withTiming(1, { duration: 600, reduceMotion: ReduceMotion.System });
-
-// Or globally — animations resolve instantly when reduce motion is on
-```
-
-Every animation component must handle reduced motion. Reanimated's built-in `ReduceMotion.System` is the easiest path.
+`useReducedMotion` reads the OS setting synchronously at startup. Prefer `ReduceMotion.System` per-animation when you just want animations to skip; use the hook when you need to conditionally render entirely different UI or pick alternative animation strategies.
 
 ## Performance Rules
 
@@ -441,6 +451,10 @@ hooks/
 | Want | Use | Reference |
 |------|-----|-----------|
 | Fade/slide in | Reanimated withTiming/withSpring | `reanimated-patterns.md` |
+| Momentum / fling coast | Reanimated withDecay | `reanimated-patterns.md` |
+| Clamp animation range | Reanimated withClamp | `reanimated-patterns.md` |
+| Keyboard-aware layout | Reanimated useAnimatedKeyboard | `reanimated-patterns.md` |
+| Simple scroll offset | Reanimated useScrollOffset | `reanimated-patterns.md` |
 | Scroll parallax | Reanimated useAnimatedScrollHandler | `reanimated-patterns.md` |
 | Sticky/shrinking header | Reanimated interpolate on scrollY | `reanimated-patterns.md` |
 | List enter/exit | Reanimated entering/exiting | `reanimated-patterns.md` |
@@ -453,8 +467,10 @@ hooks/
 | GPU shader (noise, wave) | Skia RuntimeEffect | `skia-patterns.md` |
 | Animated path drawing | Skia Path + Reanimated | `skia-patterns.md` |
 | Particle system | Skia + Reanimated shared values | `skia-patterns.md` |
+| Many sprites efficiently | Skia Atlas + useRSXformBuffer | `skia-patterns.md` |
 | Chart / data viz | Skia Path + Reanimated | `skia-patterns.md` |
 | Haptic feedback with animation | Reanimated runOnJS + Haptics | `reanimated-patterns.md` |
+| Reduced motion | Reanimated ReduceMotion.System / useReducedMotion | Accessibility above |
 | Container Transform (screen) | Reanimated SharedTransition | Transition Semantics above |
 | Shared Axis (tab/step) | Stack `slideFromRight` / tab animation | Transition Semantics above |
 | Fade Through (unrelated screens) | Reanimated FadeIn/FadeOut | Transition Semantics above |

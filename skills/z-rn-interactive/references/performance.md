@@ -179,33 +179,30 @@ function Chart({ data }) {
 
 ## Rule 7: Reduce Motion
 
+**Per-animation** (simplest — animations resolve instantly when reduce motion is on):
+
 ```tsx
 import { ReduceMotion } from 'react-native-reanimated';
 
-// System-aware — resolves instantly when reduce motion is on
 opacity.value = withTiming(1, {
   duration: 600,
   reduceMotion: ReduceMotion.System,
 });
 ```
 
-For custom hooks:
+**`useReducedMotion` hook** (for conditional logic — returns boolean):
 
 ```tsx
-import { AccessibilityInfo } from 'react-native';
+import { useReducedMotion } from 'react-native-reanimated';
 
-function useReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    AccessibilityInfo.isReduceMotionEnabled().then(setReduced);
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduced);
-    return () => sub.remove();
-  }, []);
-
-  return reduced;
+function App() {
+  const reduceMotion = useReducedMotion();
+  // Use to pick alternative animations or skip effects entirely
+  const entering = reduceMotion ? FadeIn : BounceIn;
 }
 ```
+
+Prefer `ReduceMotion.System` per-animation for most cases. Use the hook when you need to conditionally render different UI paths.
 
 ---
 
@@ -228,19 +225,21 @@ Always test animations on:
 
 ## Device Tier Detection
 
-Adjust animation complexity based on device capability.
+Adjust animation complexity based on device capability. The example below is a **rough heuristic** — `navigator.hardwareConcurrency` is not reliably available in React Native, and iOS devices vary (iPhone SE vs iPad Pro). For production apps, use `react-native-device-info` for model/memory detection, or define tiers based on your own performance profiling.
 
 ```tsx
 import { Platform } from 'react-native';
 
 function useDeviceTier(): 'high' | 'mid' | 'low' {
-  // Simple heuristic — refine based on your user base
+  // Rough heuristic — replace with react-native-device-info for production
   if (Platform.OS === 'ios') {
-    // iOS devices are generally capable
+    // Most modern iOS devices handle complex animations well,
+    // but older devices (iPhone SE, iPad mini) may need 'mid'
     return 'high';
   }
 
-  // Android: check available memory or processor count
+  // Android: vary widely. Prefer react-native-device-info's
+  // getMaxMemory() or getTotalMemory() for better classification
   const cores = typeof navigator !== 'undefined' ? navigator.hardwareConcurrency : 4;
   if (cores >= 8) return 'high';
   if (cores >= 4) return 'mid';

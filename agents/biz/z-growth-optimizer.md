@@ -39,10 +39,13 @@ Growth is a system, not a collection of tactics. Every optimization must be meas
 | Paywall/upgrade flow | z-cro | `references/paywall-upgrade-cro.md` |
 | Pricing strategy for paywall/upgrade | z-pricing | `references/tier-structure.md` |
 | A/B test / experiment design | z-cro | `references/experiments.md` |
+| Aha Moment definition & activation metrics | z-product-analytics | (skill body) |
+| Activation path / onboarding optimization | z-cro | `references/onboarding-cro.md` |
 | Persuasion principles for growth | z-marketing-psychology | `references/mental-models-reference.md` |
 | Conversion copy quality | z-copywriting | (skill body) |
 | Cancel flow / dunning / churn | z-churn-prevention | `references/cancel-flow-patterns.md` |
 | Payment recovery | z-churn-prevention | `references/dunning-playbook.md` |
+| Experiment design & A/B testing | z-cro | `references/experiments.md` |
 
 ---
 
@@ -90,14 +93,6 @@ Design referral programs that create compounding growth loops.
 6. Launch to power users first (highest advocacy)
 7. Measure K factor and cycle time
 8. Optimize based on data
-
-**Tool Integrations:**
-
-| Tool | Best For |
-|------|----------|
-| Rewardful | Affiliate + referral for SaaS |
-| Tolt | Simple referral programs |
-| Dub.co | Referral links with analytics |
 
 ### 2. Growth Strategy & Prioritization
 

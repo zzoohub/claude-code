@@ -33,15 +33,13 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     // Sync Lenis with GSAP ScrollTrigger
     lenis.on("scroll", ScrollTrigger.update);
 
-    gsap.ticker.add((time) => {
-      lenis.raf(time * 1000);
-    });
-
+    const raf = (time: number) => lenis.raf(time * 1000);
+    gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
 
     return () => {
+      gsap.ticker.remove(raf);
       lenis.destroy();
-      gsap.ticker.remove(lenis.raf);
     };
   }, []);
 
@@ -92,8 +90,8 @@ Content stays pinned while sub-elements animate through scroll progress.
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 
 export function PinnedSection({
   children,
@@ -105,33 +103,29 @@ export function PinnedSection({
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<HTMLDivElement[]>([]);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      panels.forEach((_, i) => {
-        if (i === 0) return; // First panel is visible by default
+  useGSAP(() => {
+    panels.forEach((_, i) => {
+      if (i === 0) return; // First panel is visible by default
 
-        ScrollTrigger.create({
-          trigger: panelRefs.current[i],
-          start: "top top",
-          pin: true,
-          pinSpacing: false,
-        });
-
-        gsap.from(panelRefs.current[i], {
-          opacity: 0,
-          y: 100,
-          scrollTrigger: {
-            trigger: panelRefs.current[i],
-            start: "top bottom",
-            end: "top top",
-            scrub: 1,
-          },
-        });
+      ScrollTrigger.create({
+        trigger: panelRefs.current[i],
+        start: "top top",
+        pin: true,
+        pinSpacing: false,
       });
-    }, containerRef);
 
-    return () => ctx.revert();
-  }, [panels.length]);
+      gsap.from(panelRefs.current[i], {
+        opacity: 0,
+        y: 100,
+        scrollTrigger: {
+          trigger: panelRefs.current[i],
+          start: "top bottom",
+          end: "top top",
+          scrub: 1,
+        },
+      });
+    });
+  }, { scope: containerRef, dependencies: [panels.length] });
 
   return (
     <div ref={containerRef}>
@@ -155,34 +149,30 @@ Transform vertical scroll into horizontal movement.
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function HorizontalScroll({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const track = trackRef.current!;
-      const scrollWidth = track.scrollWidth - window.innerWidth;
+  useGSAP(() => {
+    const track = trackRef.current!;
+    const scrollWidth = track.scrollWidth - window.innerWidth;
 
-      gsap.to(track, {
-        x: -scrollWidth,
-        ease: "none",
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: () => `+=${scrollWidth}`,
-          pin: true,
-          scrub: 1,
-          invalidateOnRefresh: true,
-        },
-      });
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, []);
+    gsap.to(track, {
+      x: -scrollWidth,
+      ease: "none",
+      scrollTrigger: {
+        trigger: containerRef.current,
+        start: "top top",
+        end: () => `+=${scrollWidth}`,
+        pin: true,
+        scrub: 1,
+        invalidateOnRefresh: true,
+      },
+    });
+  }, { scope: containerRef });
 
   return (
     <div ref={containerRef} className="overflow-hidden">
@@ -205,13 +195,13 @@ export function HorizontalScroll({ children }: { children: React.ReactNode }) {
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function ScrollProgress() {
   const barRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useGSAP(() => {
     gsap.to(barRef.current, {
       scaleX: 1,
       ease: "none",
@@ -222,7 +212,7 @@ export function ScrollProgress() {
         scrub: 0.3,
       },
     });
-  }, []);
+  });
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent">
@@ -240,8 +230,8 @@ export function ScrollProgress() {
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function ParallaxLayer({
   children,
@@ -252,22 +242,18 @@ export function ParallaxLayer({
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.to(ref.current, {
-        yPercent: speed * -50,
-        ease: "none",
-        scrollTrigger: {
-          trigger: ref.current,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: true,
-        },
-      });
-    }, ref);
-
-    return () => ctx.revert();
-  }, [speed]);
+  useGSAP(() => {
+    gsap.to(ref.current, {
+      yPercent: speed * -50,
+      ease: "none",
+      scrollTrigger: {
+        trigger: ref.current,
+        start: "top bottom",
+        end: "bottom top",
+        scrub: true,
+      },
+    });
+  }, { scope: ref, dependencies: [speed] });
 
   return <div ref={ref}>{children}</div>;
 }
@@ -289,13 +275,13 @@ Animate a property directly tied to scroll position (0-1 progress).
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
+import { useRef } from "react";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function ScrubPath() {
   const pathRef = useRef<SVGPathElement>(null);
 
-  useEffect(() => {
+  useGSAP(() => {
     const path = pathRef.current!;
     const length = path.getTotalLength();
 
@@ -314,7 +300,7 @@ export function ScrubPath() {
         scrub: 1,
       },
     });
-  }, []);
+  });
 
   return (
     <svg viewBox="0 0 500 500" className="w-full">

@@ -47,7 +47,7 @@ export async function createRenderer(
 
 ### React Three Fiber with WebGPU
 
-R3F doesn't natively support WebGPURenderer yet (as of early 2025). Two approaches:
+R3F doesn't natively support WebGPURenderer yet. Two approaches:
 
 **Approach A: Use R3F with WebGL (safe default)**
 ```tsx
@@ -199,7 +199,6 @@ export default function GPUScene() {
 
   return <canvas ref={canvasRef} className="h-full w-full" />;
 }
-```
 ```
 
 ---

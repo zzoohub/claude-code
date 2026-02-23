@@ -9,8 +9,8 @@ description: |
   designing event tracking plans, setting up GA4/GTM, analyzing A/B test results,
   or when user mentions "Aha Moment", "retention curve", "cohort analysis", "Carrying Capacity",
   "PMF", "product-market fit", "kill criteria", "activation rate", "retention plateau",
-  "churn analysis", "user segmentation", "D7 retention", "D30 retention",
-  "tracking plan", "GA4", "GTM", "UTM", "A/B test results".
+  "churn analysis", "user segmentation", "tracking plan", "GA4", "UTM", "A/B test results",
+  "Sean Ellis survey", "GRR", "NRR", "revenue retention".
   Do NOT use for: tracking code implementation (developer task),
   CRO experiment design (use z-cro skill), marketing content (use z-copywriting skill).
 metadata:
@@ -97,6 +97,7 @@ Usage frequency matters: products used <3x/month rarely develop a retention plat
 
 ## Cross-References
 
+- **z-data-analyst** (agent) — Executes these frameworks against live data via PostHog MCP
 - **z-cro** (skill) — For experiment design to improve activation flows
 - **z-growth-optimizer** (skill) — For referral loops and growth experiments
 - **z-churn-prevention** (skill) — For post-retention churn interventions

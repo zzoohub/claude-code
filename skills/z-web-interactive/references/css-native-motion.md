@@ -142,10 +142,18 @@ Native page transitions. The primary tool for route changes.
 "use client";
 import { useRouter } from "next/navigation";
 
-export function TransitionLink({ href, children, className }) {
+export function TransitionLink({
+  href,
+  children,
+  className,
+}: {
+  href: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
   const router = useRouter();
 
-  const handleClick = (e) => {
+  const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!document.startViewTransition) {
       router.push(href);
@@ -188,7 +196,7 @@ export function useDirectionalTransition() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const navigate = (href) => {
+  const navigate = (href: string) => {
     const direction = href.length > pathname.length ? "forward" : "back";
     document.documentElement.dataset.transitionDir = direction;
 

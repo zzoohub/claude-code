@@ -22,9 +22,9 @@ Use when View Transitions API is insufficient: overlay wipes, staggered exits wi
 ```tsx
 // components/gsap-page-transition.tsx
 "use client";
-import { useRef, useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { gsap } from "@/lib/gsap";
+import { useRef } from "react";
+import { usePathname } from "next/navigation";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function GSAPPageTransition({ children }: { children: React.ReactNode }) {
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -32,29 +32,25 @@ export function GSAPPageTransition({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
 
   // Enter animation — overlay retracts, content fades in
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline();
+  useGSAP(() => {
+    const tl = gsap.timeline();
 
-      tl.to(overlayRef.current, {
-        scaleY: 0,
-        transformOrigin: "top",
-        duration: 0.6,
-        ease: "power4.inOut",
-      }).from(
-        contentRef.current,
-        {
-          opacity: 0,
-          y: 30,
-          duration: 0.5,
-          ease: "power3.out",
-        },
-        "-=0.2"
-      );
-    });
-
-    return () => ctx.revert();
-  }, [pathname]);
+    tl.to(overlayRef.current, {
+      scaleY: 0,
+      transformOrigin: "top",
+      duration: 0.6,
+      ease: "power4.inOut",
+    }).from(
+      contentRef.current,
+      {
+        opacity: 0,
+        y: 30,
+        duration: 0.5,
+        ease: "power3.out",
+      },
+      "-=0.2"
+    );
+  }, { dependencies: [pathname] });
 
   return (
     <>
@@ -109,30 +105,26 @@ export function usePageTransition() {
 
 ```tsx
 "use client";
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { usePathname } from "next/navigation";
-import { gsap } from "@/lib/gsap";
+import { gsap, useGSAP } from "@/lib/gsap";
 
 export function StaggerPageTransition({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
-  useEffect(() => {
-    const ctx = gsap.context(() => {
-      const items = ref.current!.querySelectorAll("[data-stagger-enter]");
+  useGSAP(() => {
+    const items = ref.current!.querySelectorAll("[data-stagger-enter]");
 
-      gsap.from(items, {
-        y: 40,
-        opacity: 0,
-        stagger: 0.06,
-        duration: 0.5,
-        ease: "power3.out",
-        delay: 0.2, // Wait for any exit animation
-      });
-    }, ref);
-
-    return () => ctx.revert();
-  }, [pathname]);
+    gsap.from(items, {
+      y: 40,
+      opacity: 0,
+      stagger: 0.06,
+      duration: 0.5,
+      ease: "power3.out",
+      delay: 0.2, // Wait for any exit animation
+    });
+  }, { scope: ref, dependencies: [pathname] });
 
   return <div ref={ref}>{children}</div>;
 }
