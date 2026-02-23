@@ -9,11 +9,8 @@ description: |
   headlines/descriptions for ads, creating display/social/search ads, or when user mentions
   "ad copy", "ad creative", "Facebook ads", "Google ads", "ad campaign", "ad variations",
   "ad headline", "display ad", "social ad", "PPC", "paid media creative".
-  Do NOT use for: organic social content (use z-social-content), landing page copy (use z-copywriting),
-  ad targeting/budget strategy (use z-marketer), or ad performance analysis (use z-data-analyst).
-metadata:
-  version: 1.0.0
-  category: marketing
+  Do NOT use for: organic social content (use z-social-content skill), landing page copy (use z-copywriting skill),
+  ad targeting/budget strategy (use z-marketer agent), or ad performance analysis (use z-product-analytics skill).
 ---
 
 # Ad Creative
@@ -108,7 +105,7 @@ For every ad, create:
 
 ## Cross-References
 
-- **z-copywriting** — For ad copy quality and persuasion
-- **z-marketing-psychology** — For psychological triggers in ads
-- **z-social-content** — For organic content that can be boosted
-- **z-cro** — For landing page alignment with ad messaging
+- **z-copywriting** (skill) — For ad copy quality and persuasion
+- **z-marketing-psychology** (skill) — For psychological triggers in ads
+- **z-social-content** (skill) — For organic content that can be boosted
+- **z-cro** (skill) — For landing page alignment with ad messaging

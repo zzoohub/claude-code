@@ -9,11 +9,8 @@ description: |
   designing drip campaigns, writing cold outreach, planning email strategy, optimizing email copy,
   or when user mentions "email sequence", "drip campaign", "welcome email", "onboarding email",
   "cold email", "outreach", "email marketing", "newsletter", "email copy", "subject line".
-  Do NOT use for: in-app copy (use z-copywriting), popup/modal design (use z-cro),
-  churn-specific emails like dunning (use z-churn-prevention), or analytics (use z-data-analyst).
-metadata:
-  version: 1.0.0
-  category: marketing
+  Do NOT use for: in-app copy (use z-copywriting skill), popup/modal design (use z-cro skill),
+  churn-specific emails like dunning (use z-churn-prevention skill), or analytics (use z-product-analytics skill).
 ---
 
 # Email Marketing
@@ -114,7 +111,7 @@ Flow: Personal hook → Value offer → Social proof → Final ask
 
 ## Cross-References
 
-- **z-copywriting** — For email copy quality and persuasion
-- **z-churn-prevention** — For dunning and cancel-related emails
-- **z-cro** — For onboarding flow optimization (email + in-app)
-- **z-marketing-psychology** — For persuasion principles in email
+- **z-copywriting** (skill) — For email copy quality and persuasion
+- **z-churn-prevention** (skill) — For dunning and cancel-related emails
+- **z-cro** (skill) — For onboarding flow optimization (email + in-app)
+- **z-marketing-psychology** (skill) — For persuasion principles in email

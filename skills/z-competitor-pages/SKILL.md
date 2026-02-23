@@ -8,11 +8,8 @@ description: |
   Use when: creating "[Competitor] alternative" pages, "vs" comparison pages, competitor
   comparison tables, migration guides, or when user mentions "competitor page", "alternative page",
   "vs page", "comparison page", "switching from", "migrate from", "competitor alternative".
-  Do NOT use for: general competitive analysis strategy (use z-marketer), pricing comparison only (use z-pricing),
-  SEO optimization (use z-search-visibility), or page conversion optimization (use z-cro).
-metadata:
-  version: 1.0.0
-  category: marketing
+  Do NOT use for: general competitive analysis strategy (use z-marketer agent), pricing comparison only (use z-pricing skill),
+  SEO optimization (use z-search-visibility skill), or page conversion optimization (use z-cro skill).
 ---
 
 # Competitor Comparison Pages
@@ -89,7 +86,7 @@ Every competitor page should include:
 
 ## Cross-References
 
-- **z-search-visibility** — For SEO optimization of competitor pages
-- **z-copywriting** — For persuasive comparison copy
-- **z-cro** — For conversion optimization of these pages
-- **z-marketing-psychology** — For comparison framing (anchoring, contrast effect)
+- **z-search-visibility** (skill) — For SEO optimization of competitor pages
+- **z-copywriting** (skill) — For persuasive comparison copy
+- **z-cro** (skill) — For conversion optimization of these pages
+- **z-marketing-psychology** (skill) — For comparison framing (anchoring, contrast effect)

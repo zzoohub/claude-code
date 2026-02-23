@@ -1,18 +1,15 @@
 ---
 name: z-churn-prevention
-metadata:
-  version: 1.0.0
-  category: growth
 description: |
   Churn prevention strategies, cancel flow optimization, payment recovery, and customer health scoring.
   Use when: designing cancel flows, creating save offers, implementing dunning sequences,
   building health scores, reducing involuntary churn, analyzing churn patterns,
   or when user mentions "churn", "cancel", "retention", "dunning", "payment failed",
   "win-back", "save offer", "cancel flow", "downgrade", "customer health".
-  Do NOT use for: onboarding optimization (use z-cro), email sequences (use z-email-marketing),
-  analytics/data analysis (use z-data-analyst), or pricing changes (use z-pricing).
+  Do NOT use for: onboarding optimization (use z-cro skill), email sequences (use z-email-marketing skill),
+  or pricing changes (use z-pricing skill).
 metadata:
-  version: 1.0.0
+  version: 1.0.1
   category: growth
 ---
 
@@ -127,7 +124,6 @@ Based on cancellation reason:
 
 ## Cross-References
 
-- **z-cro** — For optimizing specific flows (signup, onboarding, paywall)
-- **z-email-marketing** — For win-back and re-engagement email sequences
-- **z-data-analyst** — For churn cohort analysis and health score modeling
-- **z-marketing-psychology** — For psychological principles in save offers (loss aversion, endowment effect)
+- **z-cro** (skill) — For optimizing specific flows (signup, onboarding, paywall)
+- **z-email-marketing** (skill) — For win-back and re-engagement email sequences
+- **z-marketing-psychology** (skill) — For psychological principles in save offers (loss aversion, endowment effect)

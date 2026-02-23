@@ -9,11 +9,8 @@ description: |
   analyzing competitor pricing, running pricing research, or when user mentions "pricing",
   "price", "tier", "plan", "freemium", "trial", "subscription", "packaging", "value metric",
   "pricing page", "upgrade", "annual vs monthly".
-  Do NOT use for: paywall UI optimization (use z-cro), copy on pricing page (use z-copywriting),
-  psychological pricing principles only (use z-marketing-psychology), or revenue analytics (use z-data-analyst).
-metadata:
-  version: 1.0.0
-  category: marketing
+  Do NOT use for: paywall UI optimization (use z-cro skill), copy on pricing page (use z-copywriting skill),
+  psychological pricing principles only (use z-marketing-psychology skill), or revenue analytics (use z-product-analytics skill).
 ---
 
 # Pricing Strategy
@@ -97,8 +94,7 @@ Common value metrics: seats/users, usage volume, features, storage, API calls, p
 
 ## Cross-References
 
-- **z-cro** — For paywall/upgrade flow optimization
-- **z-marketing-psychology** — For pricing psychology (anchoring, decoy, charm pricing)
-- **z-copywriting** — For pricing page copy
-- **z-competitor-pages** — For competitor pricing comparison pages
-- **z-data-analyst** — For revenue and conversion analytics
+- **z-cro** (skill) — For paywall/upgrade flow optimization
+- **z-marketing-psychology** (skill) — For pricing psychology (anchoring, decoy, charm pricing)
+- **z-copywriting** (skill) — For pricing page copy
+- **z-competitor-pages** (skill) — For competitor pricing comparison pages

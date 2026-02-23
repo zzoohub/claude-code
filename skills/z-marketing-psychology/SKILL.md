@@ -1,19 +1,16 @@
 ---
 name: z-marketing-psychology
-metadata:
-  version: 1.0.0
-  category: marketing
 description: |
   70+ mental models and psychological principles for marketing, pricing, and growth decisions.
   Use when: applying persuasion principles, understanding buyer psychology, choosing pricing tactics,
   designing nudges, optimizing conversion with psychology, or when user mentions "psychology",
   "mental model", "persuasion", "cognitive bias", "behavioral economics", "nudge", "anchoring",
   "scarcity", "social proof", "loss aversion", "framing effect".
-  Do NOT use for: writing copy (use z-copywriting), page-level CRO (use z-cro),
-  data analysis (use z-data-analyst), or pricing strategy (use z-pricing).
+  Do NOT use for: writing copy (use z-copywriting skill), page-level CRO (use z-cro skill),
+  or pricing strategy (use z-pricing skill).
 metadata:
-  version: 1.0.0
-  category: growth
+  version: 1.0.1
+  category: marketing
 ---
 
 # Marketing Psychology & Mental Models
@@ -127,7 +124,7 @@ Full descriptions: `references/mental-models-reference.md`
 
 ## Cross-References
 
-- **z-cro** — Apply psychological models to specific conversion scenarios
-- **z-copywriting** — Use models to inform persuasive copy
-- **z-pricing** — Pricing psychology models applied to tier design
-- **z-churn-prevention** — Retention psychology for cancel flows
+- **z-cro** (skill) — Apply psychological models to specific conversion scenarios
+- **z-copywriting** (skill) — Use models to inform persuasive copy
+- **z-pricing** (skill) — Pricing psychology models applied to tier design
+- **z-churn-prevention** (skill) — Retention psychology for cancel flows

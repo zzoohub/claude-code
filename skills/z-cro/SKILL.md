@@ -1,18 +1,15 @@
 ---
 name: z-cro
-metadata:
-  version: 1.0.0
-  category: growth
 description: |
   Conversion Rate Optimization for pages, forms, signup flows, onboarding, popups, and paywalls.
   Use when: analyzing page conversion, optimizing signup flows, improving onboarding activation,
   reducing form abandonment, creating/optimizing popups, improving paywall conversion,
   designing A/B tests, or when user mentions "conversion", "CRO", "optimize", "drop-off",
   "abandon", "friction", "paywall", "upgrade flow", "popup", "modal", "signup optimization".
-  Do NOT use for: writing copy (use z-copywriting), psychological principles (use z-marketing-psychology),
-  analytics/data analysis (use z-data-analyst), or email optimization (use z-email-marketing).
+  Do NOT use for: writing copy (use z-copywriting skill), psychological principles (use z-marketing-psychology skill),
+  or email optimization (use z-email-marketing skill).
 metadata:
-  version: 1.0.0
+  version: 1.0.1
   category: growth
 ---
 
@@ -129,7 +126,6 @@ Every hypothesis needs validation. What works on one site may fail on another. S
 
 ## Cross-References
 
-- **z-copywriting** — For conversion copy, CTA text, value propositions
-- **z-marketing-psychology** — For persuasion principles behind CRO tactics
-- **z-data-analyst** — For experiment analysis and funnel metrics
-- **z-churn-prevention** — For post-conversion retention optimization
+- **z-copywriting** (skill) — For conversion copy, CTA text, value propositions
+- **z-marketing-psychology** (skill) — For persuasion principles behind CRO tactics
+- **z-churn-prevention** (skill) — For post-conversion retention optimization

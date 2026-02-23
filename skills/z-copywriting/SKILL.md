@@ -22,10 +22,10 @@ Guidelines for creating high-converting digital product copy, UX microcopy, bran
 
 ## Related Skills
 
-- **z-cro** — When copy changes need conversion rate validation
-- **z-marketing-psychology** — For psychological principles behind persuasive copy
-- **z-email-marketing** — For email-specific copy patterns
-- **z-search-visibility** — For SEO-optimized content writing
+- **z-cro** (skill) — When copy changes need conversion rate validation
+- **z-marketing-psychology** (skill) — For psychological principles behind persuasive copy
+- **z-email-marketing** (skill) — For email-specific copy patterns
+- **z-search-visibility** (skill) — For SEO-optimized content writing
 
 ## Task Routing
 
