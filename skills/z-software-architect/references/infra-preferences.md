@@ -108,8 +108,9 @@ Neon supports logical replication with wal2json output. This enables Change Data
 
 When choosing ancillary services (cron jobs, queues, caching, pub/sub, secrets, observability), follow the **platform cohesion principle**:
 
-- If backend is on **GCP** → prefer GCP services (Cloud Scheduler, Cloud Tasks, Memorystore, Pub/Sub, Secret Manager, Cloud Logging/Monitoring)
-- If backend is on **Cloudflare** → prefer Cloudflare services (Cron Triggers, Queues, KV/D1, Pub/Sub via Workers, Secrets, Logpush)
+- If backend is on **GCP** → prefer GCP services (Cloud Scheduler, Cloud Tasks, Memorystore, Pub/Sub, Cloud Logging/Monitoring)
+- If backend is on **Cloudflare** → prefer Cloudflare services (Cron Triggers, Queues, KV/D1, Pub/Sub via Workers, Logpush)
+- **Secrets**: `pulumi config set --secret`. Do not use platform secret managers (GCP Secret Manager, Cloudflare Secrets).
 
 **Why**: Reduced network hops, unified billing, consistent auth model, simpler operational surface. Mixing ecosystems increases cognitive load and failure surface without proportional benefit for a solopreneur.
 
