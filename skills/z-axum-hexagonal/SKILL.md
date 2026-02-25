@@ -4,8 +4,8 @@ description: |
   Axum 0.8+ with hexagonal architecture patterns in Rust.
   Use when: building any Rust API — this is the default backend implementation skill.
   Covers: domain modeling, ports & adapters, service layer, error handling, testing.
-  Do not use for: API design decisions (use z-api-design skill).
-  Workflow: z-api-design (design) → this skill (implementation).
+  Do not use for: API design decisions (use z-rest-api-design skill).
+  Workflow: z-rest-api-design (design) → this skill (implementation).
 references:
   - references/examples-domain.md
   - references/examples-adapters.md

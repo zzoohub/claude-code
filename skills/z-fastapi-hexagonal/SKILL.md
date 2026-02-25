@@ -4,8 +4,8 @@ description: |
   FastAPI with hexagonal architecture patterns in Python.
   Use when: building Python APIs — only when Python-only libraries are required (LangGraph, PyTorch, transformers, etc.).
   Covers: domain modeling, ports & adapters, service layer, error handling, async patterns, testing, Alembic migrations, pagination, healthcheck endpoints.
-  Do not use for: API design decisions (use z-api-design skill). Default to z-axum-hexagonal unless Python-only libraries are needed.
-  Workflow: z-api-design (design) → this skill (implementation).
+  Do not use for: API design decisions (use z-rest-api-design skill). Default to z-axum-hexagonal unless Python-only libraries are needed.
+  Workflow: z-rest-api-design (design) → this skill (implementation).
 references:
   - references/examples-domain.md
   - references/examples-adapters.md

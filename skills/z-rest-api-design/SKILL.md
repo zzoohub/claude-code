@@ -1,5 +1,5 @@
 ---
-name: z-api-design
+name: z-rest-api-design
 description: |
   Generate OpenAPI 3.1 specification files from user requirements.
   Use when: user wants to design an API, define endpoints, create API contracts,
@@ -12,7 +12,7 @@ description: |
   Output: openapi/openapi.yaml at project root.
 ---
 
-# z-api-design — OpenAPI Spec Generator
+# z-rest-api-design — OpenAPI Spec Generator
 
 This skill generates production-ready OpenAPI 3.1 specification files.
 The output is a YAML file at `openapi/openapi.yaml` that serves as the single source of truth for API contracts.
