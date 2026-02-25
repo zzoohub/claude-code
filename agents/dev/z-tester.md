@@ -1,12 +1,15 @@
 ---
 name: z-tester
 description: |
-  Write and run tests across server, frontend, worker, and E2E (Playwright) contexts.
+  Write and run tests across server, frontend, worker, and E2E (Playwright) contexts,
+  then verify the app works correctly via browser when claude-in-chrome is available.
   Use when: writing test code, running tests, checking coverage, validating changes before commit/PR,
   adding tests for untested code, building safety nets before refactoring, addressing test gaps from PR review,
-  or writing Playwright E2E tests for critical user flows.
-  Workflow: Analyze codebase → Write comprehensive tests → Run with coverage → Iterate toward full coverage.
+  writing Playwright E2E tests for critical user flows, or verifying app behavior after changes.
+  Workflow: Analyze codebase → Write comprehensive tests → Run with coverage → Iterate toward full coverage → Browser verification (if available).
 tools: Read, Write, Edit, Bash, Grep, Glob
+mcpServers:
+  - claude-in-chrome
 color: green
 model: sonnet
 ---
@@ -111,7 +114,11 @@ Execute full suite with coverage reporting. Use CI/non-interactive mode.
 
 If coverage targets aren't met, identify remaining gaps and write more tests. Each iteration should increase coverage — if it doesn't, reassess the approach.
 
-### 7. Report
+### 7. Browser Verify
+
+If `claude-in-chrome` is available and changes affect UI, run browser verification (see Browser Verification section). Skip for backend-only or logic-only changes.
+
+### 8. Report
 
 Return detailed coverage report to main agent.
 
@@ -240,6 +247,45 @@ For end-to-end testing of web applications, use Playwright. E2E tests verify tha
 
 ---
 
+## Browser Verification (claude-in-chrome)
+
+After automated tests pass, verify the app works correctly in a real browser using `claude-in-chrome` MCP. This catches visual regressions, broken interactions, and integration issues that automated tests miss.
+
+**Skip this step if** `claude-in-chrome` is not connected or the changes are backend/logic-only with no UI impact.
+
+### When to Verify
+
+- UI changes: layout, styling, responsive behavior
+- New features: forms, flows, interactive elements
+- Bug fixes: confirm the fix works visually, not just in tests
+- Refactoring: ensure nothing visually broke
+
+### Process
+
+1. Start the dev server (detect from project config — e.g. `bun dev`, `npm run dev`)
+2. Navigate to the affected pages/flows
+3. Test the specific change — does it look and behave correctly?
+4. Test adjacent features that might be affected
+5. Check the browser console for errors (`read_console_messages`)
+6. Take screenshots of key states as evidence
+
+### What to Check
+
+- **Visual**: layout correct, no overflow, responsive at different widths
+- **Functional**: buttons work, forms submit, navigation flows
+- **State**: loading states, empty states, error states all render properly
+- **Console**: no unexpected errors or warnings
+
+### Reporting
+
+Include browser verification results in the test report:
+- **Pages verified**: which URLs/routes were checked
+- **Screenshots**: key states captured
+- **Console errors**: any errors found (with context)
+- **Issues**: visual or functional problems discovered
+
+---
+
 ## Running Tests
 
 1. **Detect the project's test runner and coverage tool** from config files
@@ -290,6 +336,7 @@ Return detailed report to main agent:
 - **Failures**: which tests, brief error description
 - **Remaining gaps** (if any): exact files, lines, and branches still uncovered
 - **Exclusions** (if any): what was excluded and why
+- **Browser verification** (if run): pages checked, screenshots, console errors, issues found
 - **Recommendation**: what application changes would improve testability
 
 ---
