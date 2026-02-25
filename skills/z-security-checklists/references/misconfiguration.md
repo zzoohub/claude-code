@@ -153,6 +153,49 @@
 
 ---
 
+## Subdomain Takeover
+
+| Check | Why | CWE |
+|-------|-----|-----|
+| DNS CNAME records point to active services only | Dangling CNAME hijack | CWE-284 |
+| Decommissioned services have DNS records removed | Abandoned subdomain claim | CWE-284 |
+| Cloud resources (S3, Azure, Heroku) still exist for all DNS entries | External service takeover | CWE-284 |
+| Regular audit of DNS records against active infrastructure | Stale record detection | CWE-284 |
+| Wildcard DNS records avoided or carefully scoped | Broad subdomain exposure | CWE-284 |
+
+**Patterns to catch:**
+- CNAME pointing to `*.s3.amazonaws.com` where bucket no longer exists (attacker creates bucket with same name)
+- CNAME to `*.herokuapp.com`, `*.azurewebsites.net`, `*.github.io` for decommissioned apps
+- DNS records for old staging/dev environments still active after teardown
+- Wildcard DNS (`*.company.com`) with cloud services that allow subdomain registration
+- CNAME to third-party SaaS (Zendesk, Shopify, Tumblr) after account cancellation
+- NS delegation to nameservers no longer under organization's control
+
+**Impact:** Attacker claims the abandoned resource, serves content on your subdomain — enables cookie theft (parent domain cookies), phishing with trusted domain, and CSP bypass if subdomain is allowlisted.
+
+---
+
+## Cache Poisoning
+
+| Check | Why | CWE |
+|-------|-----|-----|
+| Cache keys include all request components that vary response | Response mismatch | CWE-444 |
+| Unkeyed headers don't influence response content | Cache key manipulation | CWE-444 |
+| `Host` header validated against expected values | Host header injection | CWE-644 |
+| `X-Forwarded-Host`, `X-Forwarded-Scheme` not reflected without validation | Header injection via cache | CWE-644 |
+| CDN/proxy cache configuration reviewed for split responses | Cache deception | CWE-524 |
+| Cache-Control headers explicit on sensitive endpoints | Cached authenticated responses | CWE-524 |
+
+**Patterns to catch:**
+- Response varies by unkeyed header (e.g., `X-Forwarded-Host` reflected in links but not in cache key)
+- `Host` header reflected in response body (redirects, canonical URLs, asset paths)
+- CDN caching responses that contain user-specific data (missing `Cache-Control: private`)
+- Web cache deception: `/account/settings/nonexistent.css` cached and served to other users
+- Fat GET requests: query parameters in GET body processed by app but ignored by cache
+- Path normalization differences between cache and origin (`/api/./admin` vs `/api/admin`)
+
+---
+
 ## Environment Separation
 
 | Check | Why | CWE |

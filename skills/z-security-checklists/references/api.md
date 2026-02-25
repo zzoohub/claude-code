@@ -196,6 +196,69 @@
 
 ---
 
+## HTTP Request Smuggling
+
+| Check | Why | CWE |
+|-------|-----|-----|
+| Consistent parsing between frontend proxy and backend | Request boundary confusion | CWE-444 |
+| `Transfer-Encoding` and `Content-Length` not both accepted | CL.TE / TE.CL smuggling | CWE-444 |
+| HTTP/2 downgrade to HTTP/1.1 reviewed for smuggling vectors | H2.CL / H2.TE smuggling | CWE-444 |
+| Proxy and backend agree on request boundaries | Request splitting | CWE-113 |
+| Ambiguous requests rejected (not interpreted) | Parser differential exploitation | CWE-444 |
+
+**Patterns to catch:**
+- Reverse proxy (Nginx, HAProxy) and backend (Node, Go) using different HTTP parsers
+- Backend accepting both `Transfer-Encoding: chunked` and `Content-Length` on same request
+- `Transfer-Encoding` header with obfuscation: `Transfer-Encoding: xchunked`, `Transfer-Encoding : chunked` (space before colon)
+- HTTP/2 to HTTP/1.1 translation at load balancer without smuggling protections
+- Multiple `Content-Length` headers accepted by backend
+- Request body interpreted differently by proxy vs backend (prefix attack)
+
+---
+
+## WebSocket Security
+
+| Check | Why | CWE |
+|-------|-----|-----|
+| Origin header validated on WebSocket upgrade | Cross-site WebSocket hijacking | CWE-346 |
+| Authentication on connection AND per-message if needed | Unauthenticated WS access | CWE-306 |
+| Message size limits enforced | Memory exhaustion via large frames | CWE-770 |
+| Message rate limiting per connection | WS flood DoS | CWE-770 |
+| Input validation on all incoming WS messages | Injection via WebSocket | CWE-20 |
+| Connection timeout for idle WebSockets | Resource exhaustion | CWE-400 |
+
+**Patterns to catch:**
+- WebSocket upgrade without checking `Origin` header (any site can connect)
+- Auth token checked only at handshake, not validated during session (stolen WS reused indefinitely)
+- No message schema validation — raw `JSON.parse(data)` without schema check
+- Broadcasting user input to other clients without sanitization (XSS via WebSocket)
+- No max connections per user/IP
+- WebSocket endpoint allowing cross-site WebSocket hijacking (CSWSH)
+- Missing `wss://` (TLS) in production
+
+---
+
+## Deserialization
+
+| Check | Why | CWE |
+|-------|-----|-----|
+| Untrusted data never deserialized with unsafe methods | Remote Code Execution | CWE-502 |
+| JSON preferred over binary serialization formats | Reduced attack surface | CWE-502 |
+| If binary serialization required, use allowlist of permitted classes | Class instantiation control | CWE-502 |
+| Deserialized data validated against schema before use | Data integrity | CWE-20 |
+| Serialization libraries kept updated | Known CVEs in deserializers | CWE-502 |
+
+**Patterns to catch:**
+- Python: `yaml.load(data)` without `Loader=SafeLoader`, unsafe deserialization of user data
+- Java: `ObjectInputStream.readObject()` on untrusted input, Commons Collections gadget chains
+- PHP: `unserialize($user_input)` — use `json_decode` instead
+- Ruby: `Marshal.load(user_data)`, `YAML.load(user_data)` without safe mode
+- Node.js: `node-serialize` with eval-based deserialization on untrusted input
+- .NET: `BinaryFormatter.Deserialize()`, `XmlSerializer` with type from user input
+- Signed serialized data where signature not validated before deserialization
+
+---
+
 ## Rate Limiting & DoS Prevention
 
 | Check | Why | CWE |

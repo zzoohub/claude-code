@@ -42,24 +42,18 @@ Adjust review depth based on data sensitivity:
 
 ### Phase 2: Quick Scan
 
-Automated pattern detection — run these first to catch low-hanging fruit:
+Use the **Grep tool** (not bash grep) for pattern detection. Run these searches in parallel to catch low-hanging fruit:
 
-```bash
-# Secrets in code
-grep -rn "password\s*=\|secret\s*=\|api_key\s*=\|token\s*=" --include="*.{ts,js,py,rs,go,java,rb,env}" .
-
-# Dangerous functions
-grep -rn "eval(\|exec(\|system(\|child_process\|subprocess\.\|os\.system\|shell_exec" --include="*.{ts,js,py,rs,go,java,rb,php}" .
-
-# SQL string concatenation
-grep -rn "SELECT.*+\|INSERT.*+\|UPDATE.*+\|DELETE.*+\|f\".*SELECT\|f\".*INSERT" --include="*.{ts,js,py,rs,go,java,rb}" .
-
-# Hardcoded IPs / internal URLs
-grep -rn "127\.0\.0\.1\|localhost\|0\.0\.0\.0\|169\.254\.169\.254\|10\.\|192\.168\." --include="*.{ts,js,py,rs,go,java,rb}" .
-
-# Disabled security
-grep -rn "verify=False\|rejectUnauthorized.*false\|NODE_TLS_REJECT_UNAUTHORIZED\|InsecureSkipVerify\|CORS.*\*" --include="*.{ts,js,py,rs,go,java,rb}" .
-```
+| Category | Pattern | Glob |
+|----------|---------|------|
+| Secrets in code | `password\s*=\|secret\s*=\|api_key\s*=\|token\s*=` | `*.{ts,js,py,rs,go,java,rb}` |
+| Dangerous functions | `eval\(\|exec\(\|system\(\|child_process\|subprocess\.\|os\.system` | `*.{ts,js,py,rs,go,java,rb,php}` |
+| SQL injection (concat) | `SELECT.*\+\|INSERT.*\+\|UPDATE.*\+\|DELETE.*\+` | `*.{ts,js,py,rs,go,java,rb}` |
+| SQL injection (interpolation) | `f".*SELECT\|f".*INSERT\|\$\{.*SELECT\|\$\{.*INSERT` | `*.{ts,js,py,rb}` |
+| Hardcoded internal addresses | `127\.0\.0\.1\|localhost\|0\.0\.0\.0\|169\.254\.169\.254` | `*.{ts,js,py,rs,go,java,rb}` |
+| Disabled TLS/security | `verify=False\|rejectUnauthorized.*false\|NODE_TLS_REJECT_UNAUTHORIZED\|InsecureSkipVerify` | `*.{ts,js,py,rs,go,java,rb}` |
+| Wildcard CORS | `Access-Control-Allow-Origin.*\*\|cors.*origin.*\*` | `*.{ts,js,py,rs,go,java,rb}` |
+| Unsafe deserialization | `yaml\.load\|unserialize\|ObjectInputStream\|Marshal\.load` | `*.{py,php,java,rb}` |
 
 ### Phase 3: Domain Analysis
 
@@ -68,11 +62,11 @@ Reference the **z-security-checklists** skill. Select checklists based on what t
 | Reviewing... | Checklist File |
 |--------------|---------------|
 | Login, signup, session, JWT, OAuth, MFA | `references/auth.md` |
-| REST/GraphQL endpoints, request/response, file upload | `references/api.md` |
+| REST/GraphQL endpoints, request/response, file upload, WebSocket, deserialization | `references/api.md` |
 | Payment, inventory, pricing, state machines, discounts | `references/business-logic.md` |
 | package.json, requirements.txt, Dockerfile, CI/CD | `references/supply-chain.md` |
 | Encryption, hashing, key management, TLS | `references/crypto.md` |
-| Headers, CORS, debug mode, default creds, cloud config | `references/misconfiguration.md` |
+| Headers, CORS, debug mode, default creds, cloud config, subdomain takeover, cache poisoning | `references/misconfiguration.md` |
 | URL fetching, webhooks, callbacks, image proxy | `references/ssrf.md` |
 | Error responses, logging, audit trails, alerting | `references/error-logging.md` |
 | LLM/AI integration, prompt handling, model output | `references/llm-security.md` |

@@ -28,11 +28,11 @@ Comprehensive security review checklists organized by domain. Each checklist inc
 | Reviewing... | Read |
 |--------------|------|
 | Login, signup, session, JWT, OAuth, MFA, cookies | `references/auth.md` |
-| REST/GraphQL endpoints, input validation, file upload, CORS | `references/api.md` |
+| REST/GraphQL endpoints, input validation, file upload, CORS, WebSocket, deserialization | `references/api.md` |
 | Payment, inventory, pricing, state machines, discounts, limits | `references/business-logic.md` |
 | package.json, requirements.txt, Dockerfile, CI/CD, git | `references/supply-chain.md` |
 | Encryption, hashing, key management, TLS, certificates | `references/crypto.md` |
-| Headers, debug mode, default creds, cloud config, CORS | `references/misconfiguration.md` |
+| Headers, debug mode, default creds, cloud config, CORS, subdomain takeover, cache poisoning | `references/misconfiguration.md` |
 | URL fetching, webhooks, callbacks, image/file proxy | `references/ssrf.md` |
 | Error messages, logging, audit trails, alerting, exceptions | `references/error-logging.md` |
 | LLM/AI integration, prompt handling, model output rendering | `references/llm-security.md` |
