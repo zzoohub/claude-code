@@ -3,7 +3,7 @@ name: z-ux-design
 description: |
   Senior-level UX design principles, diagnostic frameworks, and design process.
   Use when: designing user flows, information architecture, navigation patterns, screen layouts, interaction design, UX copy, diagnosing usability problems, or reviewing designs against best practices.
-  Do not use for: visual styling, color palettes, component implementation, design tokens (use z-design-system skill), or frontend code (use z-ui-engineer or z-nextjs / z-react-native skills).
+  Do not use for: visual styling, color palettes, component implementation, design tokens (use z-design-system skill), or ui code.
   Workflow: User research → this skill (IA, flows, interactions, copy) → z-design-system (tokens, components, visual patterns) → platform implementation.
 references:
   - references/design-process.md         # 5-step process: Research → Map → Design → Remove → Validate

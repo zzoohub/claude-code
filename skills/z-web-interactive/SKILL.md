@@ -3,8 +3,8 @@ name: z-web-interactive
 description: |
   Advanced interactive motion and visual effects using GSAP (primary), Three.js WebGPU, Lenis, and CSS native APIs.
   Use when: adding scroll-triggered animations, building 3D scenes or WebGPU effects, creating parallax or reveal animations, implementing smooth scrolling, building cursor/mouse-following effects, creating page transitions, adding particle systems, building interactive hero sections, implementing text split animations, creating loading/intro sequences, adding hover effects beyond CSS, building interactive backgrounds, or any task involving "make it more dynamic", "add wow factor", "interactive", "immersive", "cinematic", "3D effect", "scroll animation", "parallax", "reveal on scroll", "mouse follow", "creative landing page".
-  Do not use for: basic CSS transitions or hover states (use z-design-system motion tokens), layout/component structure (use z-ui-engineer), routing or data fetching (use z-nextjs), UX flows or user journeys (use z-ux-design).
-  Workflow: z-ux-design (journey) → z-design-system (tokens) → z-ui-engineer (scaffold) → z-interactive-engineer (agent) → **this skill** (implementation) → z-nextjs (integration).
+  Do not use for: basic CSS transitions or hover states (use z-design-system motion tokens), layout/component structure, routing or data fetching (use z-nextjs), UX flows or user journeys (use z-ux-design).
+  Workflow: z-ux-design (journey) → z-design-system (tokens) → frontend-design skill → z-interactive-engineer (agent) → **this skill** (implementation) → z-nextjs (integration).
 references:
   - references/gsap-patterns.md
   - references/scroll-patterns.md
@@ -357,7 +357,7 @@ GSAP targets elements via `data-*` attributes or refs — never conflicts with T
 - GSAP can read them: `gsap.to(el, { duration: parseFloat(getComputedStyle(el).getPropertyValue("--duration-normal")) })`
 - Or just use GSAP's own easing — it's more expressive
 
-### With z-ui-engineer
+### With building-native-ui
 - Never modify component internals
 - Wrap: `<RevealOnScroll><Card>...</Card></RevealOnScroll>`
 - Or mark targets: `<Card data-reveal>`

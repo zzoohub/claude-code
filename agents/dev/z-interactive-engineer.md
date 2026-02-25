@@ -3,8 +3,8 @@ name: z-interactive-engineer
 description: |
   Build everything interactive — motion, 3D scenes, gestures, and sensory atmosphere — for digital products.
   Use when: user says "make it interactive", "add animations", "more dynamic", "add wow factor", "add scroll effects", "3D background", "3D website", "creative landing page", "parallax", "reveal on scroll", "smooth scroll", "cursor effect", "page transition", "loading animation", "intro sequence", "make it feel alive", "more cinematic", "more immersive", "build a 3D world", "WebGL experience", "interactive portfolio", or any request to enhance the sensory experience of an existing UI.
-  Do NOT use for: building components from scratch (use z-ui-engineer), UX flow decisions (use z-ux-design), data/API work, or basic CSS hover states (use z-design-system).
-  Position in workflow: z-ux-design (flow) → z-design-system (tokens) → z-ui-engineer (scaffold) → **this agent** (interactive implementation).
+  Do NOT use for: building components from scratch, UX flow decisions (use z-ux-design), data/API work, or basic CSS hover states (use z-design-system).
+  Position in workflow: z-ux-design (flow) → z-design-system (tokens) → ui implementation → **this agent** (interactive implementation).
 model: opus
 color: purple
 skills: z-web-interactive, z-rn-interactive
