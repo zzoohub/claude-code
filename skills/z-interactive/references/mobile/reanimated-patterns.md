@@ -1,5 +1,7 @@
 # Reanimated 3 Patterns
 
+> Targets Reanimated 3.x. Where Reanimated 4 differs (e.g., `useScrollOffset` rename), this is noted inline. Always check your installed version.
+
 ## Core Concepts
 
 ### Shared Values
@@ -214,6 +216,23 @@ translateX.value = withClamp(
 ```
 
 **When to use**: When `withSpring` overshoot would break the UI (e.g., negative widths, scale below 0, progress bar exceeding 100%). More ergonomic than manually computing clamps in `useDerivedValue`.
+
+### cancelAnimation (stop a running animation)
+
+```tsx
+import { cancelAnimation } from 'react-native-reanimated';
+
+// Stop the current animation on a shared value and freeze at its current position
+cancelAnimation(translateX);
+
+// Common pattern: cancel before starting a new animation to avoid conflicts
+const tap = Gesture.Tap().onStart(() => {
+  cancelAnimation(scale);
+  scale.value = withSpring(1.2, { damping: 12 });
+});
+```
+
+**When to use**: When the user triggers a new gesture or action mid-animation and you need the previous animation to stop cleanly — particularly with springs that may still be oscillating. Without cancellation, multiple overlapping springs on the same value can produce erratic movement.
 
 ---
 

@@ -29,7 +29,7 @@ Our brains expect motion to follow real-world physics — objects decelerate whe
 Motion parallax (closer objects move faster) is a primary depth cue. Layered parallax triggers spatial perception instantly, creating hierarchy without any explicit visual indicator. But excessive parallax can trigger motion sickness in 8–12% of users — always offer reduced-motion fallback.
 
 ### Cognitive Load Reduction
-Well-designed motion reduces cognitive load by providing visual cues about spatial relationships and state changes. A 2024 study found that staging and tracing animations help users identify patterns more accurately and quickly. Skeleton loaders reduce *perceived* wait time by ~30% compared to spinners because they communicate structure before content arrives.
+Well-designed motion reduces cognitive load by providing visual cues about spatial relationships and state changes. Research on staging and tracing animations shows they help users identify patterns more accurately and quickly. Skeleton loaders reduce *perceived* wait time by ~30% compared to spinners because they communicate structure before content arrives.
 
 ### Cultural Consideration
 Reading direction affects scan patterns (F-pattern in LTR, reversed in RTL). When staggering elements, match the reading direction of your audience for fastest comprehension.

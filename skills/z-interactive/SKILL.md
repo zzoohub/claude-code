@@ -2,7 +2,7 @@
 name: z-interactive
 description: |
   Build everything interactive — motion, gestures, sensory atmosphere, and visual effects — for web and React Native.
-  Use when: user says "make it interactive", "add animations", "more dynamic", "add wow factor", "add scroll effects", "creative landing page", "parallax", "reveal on scroll", "smooth scroll", "cursor effect", "page transition", "loading animation", "intro sequence", "make it feel alive", "more cinematic", "more immersive", "interactive portfolio", "gesture", "swipe interaction", "shared element transition", "spring animation", or any request to enhance the sensory experience of an existing UI on either web or mobile.
+  Use when: user says "make it interactive", "add animations", "more dynamic", "add wow factor", "add scroll effects", "creative landing page", "parallax", "reveal on scroll", "smooth scroll", "cursor effect", "page transition", "loading animation", "intro sequence", "make it feel alive", "more cinematic", "more immersive", "interactive portfolio", "gesture", "swipe interaction", "shared element transition", "spring animation", "hero animation", "micro-interactions", "kinetic typography", "text animation", "loading screen", "splash screen", "marquee", "ticker", "reveal effect", "motion design", or any request to enhance the sensory experience of an existing UI on either web or mobile.
   Do NOT use for: basic CSS hover states (use z-design-system motion tokens), building components from scratch, UX flow decisions (use z-ux-design), data/API work, or 3D/WebGL/WebGPU scenes (consider a dedicated 3D skill).
   Workflow position: z-ux-design (flow) -> z-design-system (tokens) -> UI implementation -> **this skill** (apply interactive).
 references:
@@ -54,7 +54,7 @@ Choose the right transition pattern based on the *relationship* between elements
 
 | Pattern | When | Web Implementation | RN Implementation |
 |---------|------|-------------------|-------------------|
-| **Container Transform** | Element expands into its detail view | View Transitions `view-transition-name` | Reanimated `SharedTransition` |
+| **Container Transform** | Element expands into its detail view | View Transitions `view-transition-name` | Reanimated `SharedTransition` (experimental — test on target RN/Expo version) |
 | **Shared Axis** | Peer views at same hierarchy level | View Transitions + `translateX` | Stack `slideFromRight` / tab slide |
 | **Fade Through** | No spatial relationship between views | Default View Transitions cross-fade | Reanimated `FadeIn`/`FadeOut` |
 | **Fade** | Simple appear/disappear of one element | CSS opacity transition | `withTiming` on opacity |
@@ -97,7 +97,13 @@ What platform?
 | **Lenis** | Smooth scroll feel | ~8KB | Main (JS) |
 | **CSS native** | Simple scroll-linked, View Transitions, `@starting-style` | 0KB | Compositor |
 
+> GSAP is free for most uses under its "no charge" license. Check [gsap.com/licensing](https://gsap.com/licensing/) for commercial edge cases.
+
 GSAP is the primary engine. CSS native only when zero-JS is genuinely advantageous.
+
+### Why GSAP, Not Framer Motion
+
+GSAP outperforms Framer Motion in every dimension that matters for interactive work: ScrollTrigger (pin, scrub, snap, stagger), timeline sequencing, text splitting, cursor/mouse tracking via `gsap.quickTo`, and raw animation throughput. Framer Motion re-renders React components on every frame through state; GSAP mutates the DOM directly, bypassing React's reconciliation entirely — the performance gap is significant on complex pages with many simultaneous animations. If an existing codebase uses Framer Motion for simple component enter/exit, replace it with GSAP timelines or CSS `@starting-style` (see `references/web/css-native-motion.md`) rather than maintaining two animation engines. One engine, one mental model, no property conflicts.
 
 ### Decision Flowchart
 

@@ -37,7 +37,7 @@ import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 // lib/split-text.ts
 export function splitText(
   element: HTMLElement,
-  type: "chars" | "words" | "lines" = "chars"
+  type: "chars" | "words" = "chars"
 ) {
   const text = element.textContent || "";
   element.setAttribute("aria-label", text);
@@ -341,6 +341,13 @@ GSAP handles all DOM animation in this stack. There is no second animation libra
 - Property conflicts (two libraries fighting over the same `transform`)
 - Bundle duplication (no redundant spring/tween engines)
 - Mental overhead (one API to learn, one cleanup pattern)
+
+**If the project has Framer Motion / Motion**: replace it with GSAP. Framer Motion re-renders React components on every frame through state updates; GSAP mutates the DOM directly, bypassing React's reconciliation — the performance gap is measurable on pages with many simultaneous animations. For common Framer Motion patterns:
+- `motion.div` with `animate` prop → `gsap.to()` with ref or `data-*` selector
+- `AnimatePresence` enter/exit → CSS `@starting-style` (simple) or GSAP timeline with `onComplete` removal (complex)
+- `useScroll` / `useTransform` → GSAP ScrollTrigger
+- `layout` prop → GSAP Flip plugin
+- `whileHover` → CSS `:hover` for simple states, GSAP for magnetic/tilt effects
 
 For enter/exit animations, use either:
 - CSS `@starting-style` + `transition-behavior: allow-discrete` (zero JS, see `css-native-motion.md`)

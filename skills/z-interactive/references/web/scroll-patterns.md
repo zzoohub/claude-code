@@ -33,6 +33,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     // Sync Lenis with GSAP ScrollTrigger
     lenis.on("scroll", ScrollTrigger.update);
 
+    // GSAP ticker provides time in seconds; Lenis.raf() expects milliseconds
     const raf = (time: number) => lenis.raf(time * 1000);
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
@@ -323,7 +324,9 @@ export function ScrubPath() {
 Combine ScrollTrigger snap with full-screen sections.
 
 ```tsx
-useEffect(() => {
+const containerRef = useRef<HTMLDivElement>(null);
+
+useGSAP(() => {
   const sections = gsap.utils.toArray<HTMLElement>(".snap-section");
 
   sections.forEach((section) => {
@@ -337,7 +340,7 @@ useEffect(() => {
       },
     });
   });
-}, []);
+}, { scope: containerRef });
 ```
 
 ---

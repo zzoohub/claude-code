@@ -29,7 +29,7 @@ export function CustomCursor() {
     const ringY = gsap.quickTo(ring, "y", { duration: 0.3, ease: "power2.out" });
 
     const moveCursor = (e: MouseEvent) => {
-      if (!visible) setVisible(true);
+      setVisible(true);
       dotX(e.clientX);
       dotY(e.clientY);
       ringX(e.clientX);
@@ -64,7 +64,7 @@ export function CustomCursor() {
         el.removeEventListener("mouseleave", handleLeaveInteractive);
       });
     };
-  }, [visible]);
+  }, []); // Run once — visibility is handled via setState inside the listener
 
   if (!visible) return null;
 

@@ -157,7 +157,7 @@ ScrollTrigger.matchMedia({
 });
 ```
 
-### Mobile Checklist
+### Responsive Web on Mobile Browsers
 
 - [ ] CSS scroll-driven animations as primary (lighter than GSAP on mobile)
 - [ ] No parallax on mobile (disable or simplify)
