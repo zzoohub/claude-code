@@ -15,7 +15,7 @@ info:
     API specification for {ServiceName}.
 
 servers:
-  - url: http://localhost:8000
+  - url: http://localhost:8080
     description: Local development
   - url: https://api.example.com
     description: Production
@@ -63,7 +63,7 @@ paths: {}
   #         content:
   #           application/json:
   #             schema:
-  #               $ref: '#/components/schemas/UserResponse'
+  #               $ref: '#/components/schemas/User'
   #       '409':
   #         $ref: '#/components/responses/Conflict'
   #       '422':

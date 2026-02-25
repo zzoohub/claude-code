@@ -5,11 +5,10 @@
 ```
 GSAP (main thread JS)           →  primary engine for all DOM animation
 CSS native (compositor thread)  →  supplementary for simple scroll/transition cases
-Three.js WebGPU (GPU)           →  3D, particles, shaders only
 Lenis (main thread JS)          →  smooth scroll feel
 ```
 
-GSAP is the default. Use CSS native only when zero-JS is genuinely advantageous (progress bar, simple single-element reveal, page transitions). Use Three.js only for 3D/GPU work.
+GSAP is the default. Use CSS native only when zero-JS is genuinely advantageous (progress bar, simple single-element reveal, page transitions).
 
 ## The Golden Rule
 
@@ -38,45 +37,7 @@ CSS Scroll-driven Animations are compositor-thread by default when animating tra
 | GSAP core | ~25KB | Include only on pages with complex animation |
 | GSAP + ScrollTrigger | ~35KB | Include on scroll-heavy pages that need pin/stagger |
 | GSAP + all free plugins | ~50KB | Only import what you use |
-| Three.js (WebGL) | ~150KB | Always lazy-load |
-| Three.js (WebGPU build) | ~180KB | Always lazy-load; includes WGSL compiler |
-| React Three Fiber + Drei | ~80KB | Always lazy-load; currently WebGL only |
 | Lenis | ~8KB | Safe to include globally |
-
-### Lazy Loading Patterns
-
-```tsx
-// Three.js — only load when section enters viewport
-import dynamic from "next/dynamic";
-
-const HeroScene = dynamic(() => import("@/components/scenes/hero-scene"), {
-  ssr: false,
-  loading: () => (
-    <div className="h-screen bg-gradient-to-b from-black to-gray-900" />
-  ),
-});
-```
-
-```tsx
-// Even better: load on intersection
-"use client";
-import dynamic from "next/dynamic";
-import { useInView } from "@/hooks/use-in-view";
-
-const HeroScene = dynamic(() => import("@/components/scenes/hero-scene"), {
-  ssr: false,
-});
-
-function LazyScene() {
-  const { ref, inView } = useInView({ triggerOnce: true, rootMargin: "200px" });
-
-  return (
-    <div ref={ref} className="h-screen">
-      {inView ? <HeroScene /> : <div className="h-screen bg-black" />}
-    </div>
-  );
-}
-```
 
 ### GSAP Tree-Shaking
 
@@ -113,25 +74,6 @@ useGSAP(() => {
   gsap.to(".box", { x: 100 });
   ScrollTrigger.create({ trigger: ".section", ... });
 }, { scope: containerRef }); // Auto-cleanup on unmount
-```
-
-### Three.js Cleanup
-
-```tsx
-// React Three Fiber handles most disposal automatically.
-// For vanilla Three.js:
-useEffect(() => {
-  return () => {
-    scene.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
-        child.geometry.dispose();
-        const mat = child.material;
-        (Array.isArray(mat) ? mat : [mat]).forEach((m) => m.dispose());
-      }
-    });
-    renderer.dispose();
-  };
-}, []);
 ```
 
 ### Lenis Cleanup
@@ -200,15 +142,6 @@ export function useDeviceTier(): "low" | "mid" | "high" {
 }
 ```
 
-```tsx
-const tier = useDeviceTier();
-
-// Adapt Three.js
-<Canvas dpr={tier === "low" ? 1 : [1, 2]}>
-  {tier !== "low" && <ParticleField count={tier === "high" ? 2000 : 500} />}
-</Canvas>
-```
-
 ### GSAP matchMedia
 
 ```tsx
@@ -228,10 +161,8 @@ ScrollTrigger.matchMedia({
 
 - [ ] CSS scroll-driven animations as primary (lighter than GSAP on mobile)
 - [ ] No parallax on mobile (disable or simplify)
-- [ ] Reduce Three.js particle counts by 75%
 - [ ] Disable custom cursor (no hover on touch devices)
 - [ ] Disable magnetic/tilt effects (no hover)
-- [ ] Cap Three.js DPR to 1 on low-tier devices
 - [ ] Test on real devices (emulators miss GPU constraints)
 - [ ] Avoid scroll hijacking (no GSAP pins on mobile unless essential)
 - [ ] Remove Lenis on iOS if causing issues (Safari scroll is already smooth)
@@ -253,7 +184,7 @@ ScrollTrigger.matchMedia({
 }
 ```
 
-### JS Level (for GSAP and Three.js)
+### JS Level (for GSAP)
 
 ```ts
 // hooks/use-reduced-motion.ts
@@ -294,7 +225,6 @@ if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
 
 1. **Chrome DevTools → Performance**: record a scroll session, look for jank (frames > 16ms)
 2. **Layers panel**: check layer count — CSS animations should auto-promote, verify GSAP isn't creating excess layers
-3. **Coverage tab**: verify Three.js and GSAP aren't loading on pages that don't use them
+3. **Coverage tab**: verify GSAP and Lenis aren't loading on pages that don't use them
 4. **Lighthouse**: check Total Blocking Time — animation JS shouldn't delay interactivity
-5. **Three.js stats**: `import Stats from "three/addons/libs/stats.module.js"` for FPS counter during dev
-6. **Network tab**: confirm Three.js is lazy-loaded, not in initial bundle
+5. **Network tab**: confirm GSAP and Lenis aren't loading on pages that don't use them

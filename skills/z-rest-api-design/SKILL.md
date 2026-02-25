@@ -5,97 +5,160 @@ description: |
   Use when: user wants to design an API, define endpoints, create API contracts,
   generate openapi.yaml, plan REST resources, or says things like
   "design the API", "what endpoints do I need", "create the API spec",
-  "add a new endpoint", "define the API contract".
+  "add a new endpoint", "define the API contract", "API for this feature".
   Also use when user provides a PRD, database schema, or ERD and wants API endpoints derived from it.
-  Do NOT use for: framework-specific implementation (use z-fastapi or z-axum skills after this).
-  Workflow: requirements -> this skill (OpenAPI spec) -> z-fastapi-hexagonal | z-axum-hexagonal (implementation).
+  Use this skill even for partial API work — adding a single endpoint counts.
+  Do NOT use for: framework-specific implementation (use z-fastapi-hexagonal or z-axum-hexagonal after this).
+  Workflow: requirements → this skill (OpenAPI spec) → z-fastapi-hexagonal | z-axum-hexagonal (implementation).
   Output: openapi/openapi.yaml at project root.
 ---
 
 # z-rest-api-design — OpenAPI Spec Generator
 
-This skill generates production-ready OpenAPI 3.1 specification files.
-The output is a YAML file at `openapi/openapi.yaml` that serves as the single source of truth for API contracts.
+Generate production-ready OpenAPI 3.1 specs. Output: `openapi/openapi.yaml`.
 
-> Design principles and conventions are in `references/design-principles.md`.
-> Base template is in `references/openapi-template.yaml`.
-> Full request/response examples are in `references/examples.md`.
+> **References** (read the relevant one on demand — not all upfront):
+> - `references/design-decisions.md` — Decision frameworks for resource modeling, endpoint design, response format
+> - `references/openapi-template.yaml` — Base template to copy when starting a new spec
+> - `references/examples-core.md` — CRUD, errors, pagination, filtering examples
+> - `references/examples-advanced.md` — File upload, state transitions, search, real-time, bulk ops
 
 ---
 
 ## Workflow
 
-### Step 1: Gather Requirements
+### Step 1: Identify Resources
 
-Identify API resources from user input. Inputs can be:
+Extract API resources from user input (direct description, PRD, database schema, or existing spec).
 
-- Direct description ("I need user and order endpoints")
-- PRD / product brief
-- Database schema / ERD
-- Existing `openapi/openapi.yaml` (when adding/modifying endpoints)
+**Resource identification process:**
 
-Extract:
+1. List all nouns from the requirements (users, orders, invoices, comments)
+2. For each noun, decide: **first-class resource or property?**
+   - First-class resource: has its own lifecycle (created, read, updated, deleted independently)
+   - Property: only exists as part of another resource (e.g., `address` inside `user`)
+3. For each resource, list the operations users actually need — think beyond CRUD to real workflows
+4. Map relationships between resources
 
-- **Resources** (nouns): users, orders, products
-- **Actions** per resource: CRUD, custom actions
-- **Relationships**: nesting, references
-- **Auth requirements**: public, authenticated, admin-only
-- **Special patterns**: pagination, filtering, async jobs, webhooks, bulk ops
+**Decision: Sub-resource or flat route?**
 
-### Step 2: Apply Design Principles
+| Signal | Sub-resource `/parents/{id}/children` | Flat `/children?parentId=X` |
+|--------|--------------------------------------|-----------------------------|
+| Child cannot exist without parent | Yes | — |
+| Child belongs to exactly one parent | Either works | Either works |
+| Child can belong to multiple parents | — | Yes |
+| Need to list children across parents | — | Yes |
+| Nesting would exceed 2 levels | — | Yes (flatten) |
 
-Read `references/design-principles.md` and enforce:
+Default to flat routes with query filters. Use sub-resources only when parent-child ownership is fundamental to the domain.
 
-- Plural nouns, no verbs in paths
-- Max 2 levels of nesting, flatten with query params beyond that
-- Correct HTTP methods and status codes
-- RFC 9457 error responses with `application/problem+json`
-- Cursor-based pagination by default
-- Consistent response envelope: `{ data, meta }`
-- Security scheme matching the use case (JWT, API key, etc.)
+**Decision: PATCH vs custom action?**
+
+| Signal | PATCH | Custom action `POST /resources/{id}/{action}` |
+|--------|-------|-----------------------------------------------|
+| Changing a data field | Yes | — |
+| Triggering a side effect (send email, charge) | — | Yes |
+| State machine transition (draft → published) | — | Yes |
+| Partial field update | Yes | — |
+
+**Extracting from different source types:**
+
+| Source | What to extract |
+|--------|-----------------|
+| PRD / brief | User stories → resources + operations |
+| DB schema / ERD | Tables → resources, FKs → relationships, NOT NULL → required, enums → schema enums, unique → 409 conflicts |
+| Existing spec | Read first, add/modify, preserve existing content |
+
+### Step 2: Design Endpoints
+
+Read `references/design-decisions.md` for conventions, then design each endpoint.
+
+**Naming rules:**
+- Plural nouns, lowercase, kebab-case (`line-items`, not `lineItems`)
+- No verbs in paths — HTTP methods express actions, custom actions for non-CRUD
+- `/v1/` prefix on all paths
+
+**Schema naming:**
+
+| Purpose | Pattern | Example |
+|---------|---------|---------|
+| Create request body | `Create{Resource}` | `CreateUser` |
+| Update request body | `Update{Resource}` | `UpdateUser` |
+| Full resource object | `{Resource}` | `User` |
+| List wrapper | `{Resource}List` | `UserList` |
+| Error | `ProblemDetail` | (shared) |
+
+**OperationId naming:**
+
+| Method | Pattern | Example |
+|--------|---------|---------|
+| GET collection | `list{Resources}` | `listUsers` |
+| GET single | `get{Resource}` | `getUser` |
+| POST create | `create{Resource}` | `createUser` |
+| PATCH update | `update{Resource}` | `updateUser` |
+| DELETE | `delete{Resource}` | `deleteUser` |
+| Custom action | `{verb}{Resource}` | `cancelOrder`, `publishPost` |
 
 ### Step 3: Generate OpenAPI Spec
 
-Read `references/openapi-template.yaml` as the base structure, then:
+Read `references/openapi-template.yaml` as base, then:
 
-1. Define `tags` — one per resource, with description
-2. Define `paths` — each endpoint with:
-   - `operationId` in camelCase (e.g., `listUsers`, `createUser`, `getUserById`)
-   - `summary` — short one-line description
-   - `description` — detailed behavior, side effects, notes (only if needed)
+1. **Tags** — one per resource, with description
+2. **Paths** — each endpoint:
+   - `operationId` (unique, camelCase)
+   - `summary` — one line
+   - `description` — only when behavior isn't obvious from summary
    - `parameters` — path params, query filters, pagination
-   - `requestBody` — with `$ref` to schemas
-   - `responses` — all applicable status codes with `$ref` to schemas
+   - `requestBody` — `$ref` to schema
+   - `responses` — all applicable status codes
    - `security` — per-operation if different from global
-3. Define `components/schemas` — reusable data models:
-   - Use `Create*` / `Update*` / `*Response` naming convention
-   - Mark `required` fields explicitly
-   - Use `format` for dates (`date-time`), emails (`email`), UUIDs (`uuid`)
-   - Add `readOnly: true` for server-generated fields (`id`, `createdAt`, `updatedAt`)
-4. Define `components/responses` — reusable error responses (400, 401, 403, 404, 409, 422, 429, 500)
-5. Define `components/parameters` — reusable pagination params (`cursor`, `limit`)
+3. **Schemas** — reusable data models:
+   - `required` fields explicit
+   - `format` for dates (`date-time`), emails (`email`), UUIDs (`uuid`)
+   - `readOnly: true` for server-generated fields (`id`, `createdAt`, `updatedAt`)
+   - Create/Update schemas must NOT include readOnly fields
+4. **Reusable components** — error responses (400, 401, 403, 404, 409, 422, 429), pagination params
 
-### Step 4: Validate & Output
+**For advanced patterns**, read the relevant section of `references/examples-advanced.md`:
+- File uploads → § File Upload
+- State transitions → § State Transitions
+- Search → § Search
+- Relationship expansion → § Relationship Expansion
+- Real-time streaming → § Server-Sent Events
+- Async jobs → § Async Operations
+- Batch operations → § Bulk Operations
 
-Before writing the file, check:
+### Step 4: Validate
 
-- [ ] Every path uses plural nouns, no verbs
-- [ ] POST returns 201, DELETE returns 204
-- [ ] All collections have pagination parameters
-- [ ] Error responses use RFC 9457 `ProblemDetail` schema
-- [ ] `operationId` is unique across all endpoints
-- [ ] Request body schemas do not include `readOnly` fields
+Before writing the file:
+
+- [ ] Plural nouns, no verbs in paths
+- [ ] POST → 201, DELETE → 204, async → 202
+- [ ] All collections have pagination params (`CursorParam`, `LimitParam`)
+- [ ] Errors use RFC 9457 `ProblemDetail` schema with `application/problem+json`
+- [ ] `operationId` unique across all endpoints
+- [ ] Create/Update schemas exclude `readOnly` fields
 - [ ] All `$ref` pointers resolve to defined components
-- [ ] Security scheme is defined and applied
+- [ ] Security scheme defined and applied
+- [ ] Custom actions use `POST /resources/{id}/{verb}` (not PATCH with magic values)
+- [ ] No endpoint nesting beyond 2 levels
 
-Write the output to `openapi/openapi.yaml` at the project root.
-Create the `openapi/` directory if it does not exist.
+Write output to `openapi/openapi.yaml`. Create `openapi/` directory if needed.
 
 ---
 
-## Output Conventions
+## Modifying an Existing Spec
 
-### File location
+When `openapi/openapi.yaml` already exists:
+
+1. Read the existing spec first
+2. Add new paths, schemas, parameters
+3. Preserve existing content — do not remove or reorder unless explicitly asked
+4. Match the style of existing definitions
+
+---
+
+## File Layout
 
 ```
 project-root/
@@ -105,91 +168,12 @@ project-root/
     └── api/             # Implementation consumes the spec
 ```
 
-### Schema naming
-
-| Purpose | Pattern | Example |
-|---------|---------|---------|
-| Create request | `Create{Resource}` | `CreateUser` |
-| Update request | `Update{Resource}` | `UpdateUser` |
-| Full response | `{Resource}` | `User` |
-| List response | `{Resource}List` | `UserList` |
-| Error | `ProblemDetail` | (shared) |
-
-### OperationId naming
-
-| Method | Pattern | Example |
-|--------|---------|---------|
-| GET collection | `list{Resources}` | `listUsers` |
-| GET single | `get{Resource}ById` | `getUserById` |
-| POST | `create{Resource}` | `createUser` |
-| PUT | `replace{Resource}` | `replaceUser` |
-| PATCH | `update{Resource}` | `updateUser` |
-| DELETE | `delete{Resource}` | `deleteUser` |
-
-### Pagination parameters
-
-All collection endpoints must include:
-
-```yaml
-parameters:
-  - $ref: '#/components/parameters/CursorParam'
-  - $ref: '#/components/parameters/LimitParam'
-```
-
-### Error responses
-
-All endpoints must include applicable error responses referencing shared components:
-
-```yaml
-responses:
-  '400':
-    $ref: '#/components/responses/BadRequest'
-  '401':
-    $ref: '#/components/responses/Unauthorized'
-```
-
----
-
-## Examples
-
-### Minimal — single resource
-
-User says: "I need a users API with CRUD"
-
-Generate spec with:
-
-- `GET /v1/users` — list with pagination
-- `POST /v1/users` — create
-- `GET /v1/users/{userId}` — get by ID
-- `PATCH /v1/users/{userId}` — partial update
-- `DELETE /v1/users/{userId}` — delete
-- Schemas: `User`, `CreateUser`, `UpdateUser`, `UserList`
-
-### From ERD / DB schema
-
-User provides a database schema or ERD. Derive:
-
-1. Each table → API resource (unless it's a pure join table)
-2. Foreign keys → decide: nested route or query filter (prefer query filter for flexibility)
-3. Unique constraints → 409 Conflict responses
-4. NOT NULL columns → `required` in create schemas
-5. Enum columns → `enum` in schema properties
-
-### Adding to existing spec
-
-If `openapi/openapi.yaml` already exists:
-
-1. Read the existing spec first
-2. Add new paths, schemas, parameters
-3. Preserve existing content — do not remove or reorder unless asked
-4. Maintain consistent style with existing definitions
+For specs with 50+ endpoints, split with `$ref` to external files under `openapi/`. The main `openapi.yaml` stays as entry point.
 
 ---
 
 ## Troubleshooting
 
-**Circular $ref**: OpenAPI 3.1 allows circular references but many tools don't handle them well. Break cycles with inline objects or separate the recursive part.
+**Circular `$ref`**: Break with inline objects or separate the recursive part. OpenAPI 3.1 allows them but many tools choke.
 
-**Large spec files**: For 50+ endpoints, consider splitting with `$ref` to external files under `openapi/` directory. The main `openapi.yaml` remains the entry point.
-
-**Versioning**: Use `/v1/` prefix in all paths. When a breaking change is needed, create a new version block. Additive changes (new optional fields, new endpoints) do not require a version bump.
+**Versioning**: `/v1/` prefix. Bump only for breaking changes (removing fields, changing types). Additive changes (new optional fields, new endpoints) don't need a bump. Use `Sunset` header for deprecation.

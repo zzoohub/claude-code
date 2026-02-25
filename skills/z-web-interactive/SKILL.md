@@ -1,15 +1,14 @@
 ---
 name: z-web-interactive
 description: |
-  Advanced interactive motion and visual effects using GSAP (primary), Three.js WebGPU, Lenis, and CSS native APIs.
-  Use when: adding scroll-triggered animations, building 3D scenes or WebGPU effects, creating parallax or reveal animations, implementing smooth scrolling, building cursor/mouse-following effects, creating page transitions, adding particle systems, building interactive hero sections, implementing text split animations, creating loading/intro sequences, adding hover effects beyond CSS, building interactive backgrounds, or any task involving "make it more dynamic", "add wow factor", "interactive", "immersive", "cinematic", "3D effect", "scroll animation", "parallax", "reveal on scroll", "mouse follow", "creative landing page".
-  Do not use for: basic CSS transitions or hover states (use z-design-system motion tokens), layout/component structure, routing or data fetching (use vercel-composition-patterns), UX flows or user journeys (use z-ux-design).
+  Advanced interactive motion and visual effects using GSAP (primary), Lenis, and CSS native APIs.
+  Use when: adding scroll-triggered animations, creating parallax or reveal animations, implementing smooth scrolling, building cursor/mouse-following effects, creating page transitions, building interactive hero sections, implementing text split animations, creating loading/intro sequences, adding hover effects beyond CSS, or any task involving "make it more dynamic", "add wow factor", "interactive", "cinematic", "scroll animation", "parallax", "reveal on scroll", "mouse follow", "creative landing page".
+  Do not use for: basic CSS transitions or hover states (use z-design-system motion tokens), layout/component structure, routing or data fetching (use vercel-composition-patterns), UX flows or user journeys (use z-ux-design), 3D scenes or WebGPU/WebGL effects (consider a dedicated 3D skill).
   Workflow: z-ux-design (journey) → z-design-system (tokens) → vercel-composition-patterns (implementation) -> z-interactive-engineer agent → **this skill** (apply interactive)
 references:
   - references/gsap-patterns.md
   - references/scroll-patterns.md
   - references/cursor-and-hover.md
-  - references/threejs-patterns.md
   - references/css-native-motion.md
   - references/page-transitions.md
   - references/performance.md
@@ -29,12 +28,11 @@ These principles are grounded in neuroscience. Key constraints to internalize:
 
 ## Technology Stack
 
-Three libraries. No overlap. No redundancy.
+Two libraries + CSS native. No overlap. No redundancy.
 
 | Library | Role | Size | Thread |
 |---------|------|------|--------|
 | **GSAP** + ScrollTrigger | All DOM animation: timelines, scroll choreography, stagger, text split, cursor interactions | ~35KB | Main thread (JS) |
-| **Three.js** WebGPU / R3F | 3D scenes, particles, shaders, GPU compute | ~150-180KB | GPU |
 | **Lenis** | Smooth scroll feel | ~8KB | Main thread (JS) |
 
 **GSAP is the primary animation engine.** It handles everything from simple reveals to complex multi-step scroll choreography. It works perfectly with Tailwind — GSAP operates in JS on `transform`/`opacity` while Tailwind handles layout and styling. Zero conflict.
@@ -55,18 +53,6 @@ For anything involving **stagger, pin, snap, scrub, callbacks, dynamic values, t
 
 → CSS native patterns: `references/css-native-motion.md`
 
-### When to Use Three.js
-
-| Three.js | Not Three.js |
-|----------|-------------|
-| 3D hero backgrounds | 2D parallax (GSAP) |
-| Particle systems (1K+) | Fade-ins (GSAP) |
-| Custom shaders / materials | Color transitions (CSS) |
-| Scroll-linked 3D rotation | Text animation (GSAP) |
-| Image hover distortion | Element enter/exit (GSAP or CSS) |
-
-**WebGPU-first, WebGL fallback.** See `references/threejs-patterns.md`.
-
 ## Decision Flowchart
 
 ```
@@ -86,9 +72,6 @@ Need animation?
 ├─ Route/page transition?
 │  ├─ Cross-fade, shared element morph → View Transitions API (CSS)
 │  └─ Complex overlay wipe with callbacks → GSAP timeline
-│
-├─ 3D / GPU-computed?
-│  └─ → Three.js WebGPU
 │
 ├─ Cursor/mouse interaction?
 │  ├─ Simple hover color/scale → CSS/Tailwind :hover
@@ -216,43 +199,7 @@ export function MagneticButton({ children, strength = 0.3 }: {
 
 → Custom cursor, tilt card, spotlight, parallax mouse: `references/cursor-and-hover.md`
 
-### 4. 3D Scenes (Three.js WebGPU)
-
-```tsx
-"use client";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { useRef } from "react";
-
-function FloatingShape() {
-  const meshRef = useRef();
-  useFrame(({ clock }) => {
-    meshRef.current.rotation.y = clock.elapsedTime * 0.3;
-    meshRef.current.position.y = Math.sin(clock.elapsedTime * 0.5) * 0.3;
-  });
-  return (
-    <mesh ref={meshRef}>
-      <torusKnotGeometry args={[1, 0.3, 128, 32]} />
-      <meshStandardMaterial color="#6366f1" roughness={0.2} metalness={0.8} />
-    </mesh>
-  );
-}
-
-export function HeroScene() {
-  return (
-    <div className="absolute inset-0 -z-10">
-      <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-        <ambientLight intensity={0.5} />
-        <directionalLight position={[5, 5, 5]} intensity={1} />
-        <FloatingShape />
-      </Canvas>
-    </div>
-  );
-}
-```
-
-→ WebGPU renderer, particles, shaders, scroll-linked 3D: `references/threejs-patterns.md`
-
-### 5. Page Transitions (View Transitions API)
+### 4. Page Transitions (View Transitions API)
 
 **Choose the transition pattern based on the relationship between views:**
 
@@ -305,7 +252,7 @@ export function TransitionLink({ href, children, className }: {
 
 → Shared elements, GSAP overlay wipes: `references/page-transitions.md`
 
-### 6. Smooth Scroll (Lenis)
+### 5. Smooth Scroll (Lenis)
 
 ```tsx
 "use client";
@@ -340,11 +287,6 @@ Tailwind owns **layout and styling**. GSAP owns **motion**. They never overlap.
   <h1 data-reveal className="text-5xl font-bold text-white md:text-7xl">
     Heading
   </h1>
-
-  {/* Three.js: 3D background, completely separate layer */}
-  <div className="absolute inset-0 -z-10">
-    <HeroScene />
-  </div>
 </section>
 ```
 
@@ -364,8 +306,7 @@ GSAP targets elements via `data-*` attributes or refs — never conflicts with T
 - Motion logic lives in `components/motion/`, not inside component files
 
 ### With vercel-composition-patterns
-- GSAP/Three.js components: always `"use client"`
-- Lazy-load Three.js: `dynamic(() => import('./scene'), { ssr: false })`
+- GSAP components: always `"use client"`
 - Clean up: `useGSAP` handles cleanup automatically, `lenis.destroy()`, `cancelAnimationFrame()`
 - CSS native features (View Transitions, scroll-driven animations) work with SSR
 
@@ -384,7 +325,7 @@ GSAP targets elements via `data-*` attributes or refs — never conflicts with T
 ```
 
 ```tsx
-// JS-level: for GSAP and Three.js components
+// JS-level: for GSAP components
 import { useReducedMotion } from "@/hooks/use-reduced-motion";
 
 export function AnimatedComponent({ children }) {
@@ -399,10 +340,9 @@ export function AnimatedComponent({ children }) {
 
 1. **Animate `transform` and `opacity` only** — GPU-composited, no layout/paint
 2. **useGSAP for cleanup** — handles `gsap.context` automatically, no manual `ctx.revert()`
-3. **Lazy-load Three.js** — always `dynamic(() => import(), { ssr: false })`
-4. **60fps** — profile with Chrome DevTools Performance tab
-5. **Mobile**: disable parallax, reduce particles 75%, no hover effects
-6. **`will-change` sparingly** — GSAP's `force3D` handles layer promotion
+3. **60fps** — profile with Chrome DevTools Performance tab
+4. **Mobile**: disable parallax, no hover effects
+5. **`will-change` sparingly** — GSAP's `force3D` handles layer promotion
 
 → Full guide: `references/performance.md`
 
@@ -418,10 +358,6 @@ components/
 │   ├── tilt-card.tsx
 │   ├── custom-cursor.tsx
 │   └── smooth-scroll.tsx
-├── scenes/              # Three.js 3D scenes
-│   ├── hero-scene.tsx
-│   ├── particle-field.tsx
-│   └── gradient-background.tsx
 ├── transitions/         # Page transition components
 │   └── transition-link.tsx
 hooks/
@@ -429,7 +365,6 @@ hooks/
 └── use-device-tier.ts
 lib/
 ├── gsap.ts              # Centralized GSAP + useGSAP registration
-├── gpu-renderer.ts      # WebGPU detection + fallback
 └── split-text.ts        # Custom text splitter (free SplitText alternative)
 ```
 
@@ -448,15 +383,10 @@ lib/
 | Custom cursor | GSAP + pointer events | `cursor-and-hover.md` |
 | Magnetic buttons | GSAP | `cursor-and-hover.md` |
 | 3D tilt card | GSAP | `cursor-and-hover.md` |
-| 3D hero background | Three.js WebGPU / R3F | `threejs-patterns.md` |
-| Particle effects | Three.js instanced mesh | `threejs-patterns.md` |
-| Gradient mesh background | WebGPU shader | `threejs-patterns.md` |
 | Page route transition | View Transitions API | `css-native-motion.md` |
 | Complex page transition | GSAP timeline overlay | `page-transitions.md` |
 | Loading / intro sequence | GSAP timeline | `gsap-patterns.md` |
-| Scroll-linked 3D rotation | Three.js + GSAP scrub | `threejs-patterns.md` |
 | Image reveal / clip-path | GSAP | `gsap-patterns.md` |
-| Hover distortion | WebGPU shader | `threejs-patterns.md` |
 | Marquee / infinite scroll | GSAP | `gsap-patterns.md` |
 | Container Transform (page) | View Transitions `view-transition-name` | `page-transitions.md` |
 | Shared Axis (tab/step) | View Transitions `translateX` | `page-transitions.md` |
@@ -468,5 +398,5 @@ Key web-specific metrics to track:
 - **Scroll depth**: Target 70%+ (industry avg ~45%). Track via GA `scroll_depth` events.
 - **Time on page**: Expect +30–50% with scroll storytelling vs static layout.
 - **Bounce rate**: Hero must load <1.5s or progressive reveal. 3+ second intros = bounce.
-- **Core Web Vitals**: Three.js must be lazy-loaded — LCP unaffected. No CLS from late-appearing animations. Use `will-change` sparingly.
+- **Core Web Vitals**: No CLS from late-appearing animations. Use `will-change` sparingly.
 - **Session recordings**: Watch Hotjar/FullStory for where users pause (engaged) vs rage-click (frustrated).
