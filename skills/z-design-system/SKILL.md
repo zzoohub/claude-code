@@ -2,7 +2,7 @@
 name: z-design-system
 description: |
   Design token architecture, component patterns, and cross-platform UI for web and React Native.
-  Use when: building UI components, defining design tokens, creating themed interfaces, setting up dark mode or theming, configuring Tailwind with design tokens, setting up typography or motion systems, choosing component API patterns (flat vs compound), adding shadows or elevation, or any task involving consistent styling across components. Use this skill whenever the user mentions design tokens, theming, dark mode toggle, component variants, or cross-platform styling — even if they don't explicitly say "design system".
+  Use when: building UI components, defining design tokens, creating themed interfaces, setting up dark mode or theming, configuring Tailwind with design tokens, setting up typography or motion systems, choosing component API patterns (flat vs compound vs explicit variants), adding shadows or elevation, or any task involving consistent styling across components. Use this skill whenever the user mentions design tokens, theming, dark mode toggle, component variants, or cross-platform styling — even if they don't explicitly say "design system".
   Do not use for: UX research or user journey decisions (use z-ux-design), business logic, data fetching, API design.
   Workflow: z-ux-design (what/why) → this skill (tokens, components, patterns) → z-nextjs | z-react-native (platform integration).
 references:
@@ -107,19 +107,34 @@ If you need a z-index not on this list, add a new token — don't use a magic nu
 
 ## Component Patterns
 
+### Core Principle: Composition Over Boolean Props
+
+Never add boolean props to customize component behavior or appearance. Instead, use composition: children, compound sub-components, or explicit variant components. Boolean props create combinatorial explosions and ambiguous states.
+
+```tsx
+// ❌ Boolean prop proliferation
+<Button primary large outline disabled loading />
+
+// ✅ Composition — children for content, explicit variant for behavior
+<OutlineButton size="lg" disabled>
+  <Spinner /> Saving…
+</OutlineButton>
+```
+
+Always prefer `children` over render props (`renderX`). Render props should only be used when the parent must pass computed data down.
+
 ### Choosing the Right API
 
-Not every component needs the same level of flexibility. Pick based on complexity:
+Pick the pattern based on how much the component's behavior and layout vary:
 
 | Complexity | Pattern | Example |
 |------------|---------|---------|
-| Simple, few variations | **Flat** — props only | `<Button variant="primary" size="md">` |
-| Moderate, customizable layout | **Compound** — sub-components | `<Card><Card.Header>...<Card.Content>...` |
-| Complex, headless needed | **Headless + Styled** | `useDialog()` hook + styled wrapper |
+| Simple, few visual variations | **Flat** — constrained props | `<Button size="md">` |
+| Distinct behavioral modes | **Explicit variants** — separate components | `<IconButton>`, `<LinkButton>` |
+| Flexible internal layout | **Compound** — sub-components + structured context | `<Card><Card.Header>…` |
+| Complex, reusable behavior | **Headless + Styled** | `useDialog()` hook + styled wrapper |
 
-Why both flat and compound: Flat is fast for simple things — a Button doesn't need sub-components. Compound shines when internal layout varies (Card, Dialog, Dropdown). Forcing compound everywhere adds ceremony without value. Forcing flat everywhere blocks flexibility.
-
-When a component grows past ~5 configuration props, that's the signal to consider compound.
+When a component adds a prop that changes **behavior** (not just appearance), split into an explicit variant component. When a component grows past ~5 configuration props for **layout**, go compound.
 
 ### Architecture
 
@@ -134,7 +149,15 @@ src/shared/ui/
 
 Headless hooks own behavior: ARIA, keyboard, focus, state. Styled components own appearance: tokens, variants, sizing. This separation means a Button's click/keyboard/focus logic is written once and reused whether it looks like a primary button, ghost button, or icon button.
 
-→ Full patterns with Flat, Compound, Headless examples: `references/components.md`
+→ Full patterns with Flat, Compound, Headless, and React 19 examples: `references/components.md`
+
+## React 19
+
+If the project uses React 19+, follow these API changes:
+
+- **No `forwardRef`** — `ref` is a regular prop. Just accept `ref` in the props interface.
+- **`use(Context)` replaces `useContext(Context)`** — use the `use()` API to read context values.
+- Update all headless hooks and compound components accordingly.
 
 ## Icons
 
@@ -165,9 +188,12 @@ Color is never the sole indicator of state. Error states use color + icon + text
 - **Adding depth/elevation?** → Use shadow tokens (`shadow.sm` through `shadow.xl`). Never inline box-shadow values.
 - **Layering elements?** → Use z-index tokens. Never use magic numbers.
 - **Animating?** → Use motion tokens. Respect reduced motion.
-- **Building a simple component?** → Flat API. Props for variants.
-- **Building a complex component?** → Compound API. Sub-components for layout flexibility.
+- **Building a simple component?** → Flat API with constrained props (size, colorScheme). No boolean modes.
+- **Component has behavioral modes?** → Split into explicit variant components (`<IconButton>`, `<SubmitButton>`).
+- **Building a complex layout component?** → Compound API with structured `{ state, actions, meta }` context.
 - **Need custom behavior?** → Headless hook first, styled wrapper on top.
+- **Passing content to a component?** → Use `children`. Avoid render props unless parent must pass computed data.
+- **Using React 19?** → No `forwardRef`. Use `use(Context)` instead of `useContext()`.
 - **Using Tailwind?** → Map tokens to `tailwind.config`. See `references/platform-web.md`.
 - **Cross-platform?** → Tokens defined once, transformed per platform. See `references/pipeline.md`.
 

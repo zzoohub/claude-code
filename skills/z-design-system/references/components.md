@@ -2,74 +2,160 @@
 
 ## Pattern 1: Flat API (Simple Components)
 
-Best for components with few, well-defined variations. Fast to write, easy to use.
+Best for components with few visual variations and no behavioral differences between variants. Use constrained props for appearance (size, colorScheme), but never boolean props for modes.
 
 ```tsx
-// Button — flat is enough. No sub-components needed.
+// Button — flat with constrained visual props.
 interface ButtonProps {
-  variant?: 'solid' | 'outline' | 'ghost';
-  colorScheme?: 'primary' | 'secondary' | 'danger';
   size?: 'sm' | 'md' | 'lg';
+  colorScheme?: 'primary' | 'secondary' | 'danger';
   disabled?: boolean;
-  loading?: boolean;
   children: React.ReactNode;
-  onPress?: () => void;
+  ref?: React.Ref<HTMLButtonElement>;   // React 19: ref is a regular prop
 }
 
 export function Button({
-  variant = 'solid',
-  colorScheme = 'primary',
   size = 'md',
+  colorScheme = 'primary',
+  disabled,
   children,
+  ref,
   ...props
 }: ButtonProps) {
-  const { buttonProps, state } = useButton(props);
-  // variant + colorScheme + size → resolve to tokens
-  return <Pressable {...buttonProps}>...</Pressable>;
+  // size + colorScheme → resolve to tokens
+  return <button ref={ref} disabled={disabled} {...props}>{children}</button>;
 }
 
 // Usage: simple, no ceremony
-<Button variant="outline" size="lg">Save</Button>
+<Button size="lg" colorScheme="primary">Save</Button>
 ```
-
-Why variant props over booleans: `<Button primary large>` allows `<Button primary secondary>` — conflicting states. Variant unions are mutually exclusive by type system.
 
 Good candidates for flat: Button, Badge, Avatar, Input, Chip, Tag, Switch, Spinner.
 
-## Pattern 2: Compound API (Flexible Layout)
+## Pattern 2: Explicit Variant Components
 
-Best when internal structure varies between uses. Sub-components share state via context.
+When a prop changes **behavior** — not just appearance — split into a separate component. Don't add a boolean or mode prop to an existing component.
 
 ```tsx
-// Card — layout varies. Sometimes has footer, sometimes not.
-const CardContext = createContext<{ variant: 'elevated' | 'outlined' } | null>(null);
+// ❌ Boolean mode prop — changes behavior inside one component
+<Button icon={<Trash />} iconOnly />
+<Button href="/about" />
+<Button type="submit" loading />
+
+// ✅ Explicit variant components — each owns its behavior
+<IconButton icon={<Trash />} label="Delete" />
+<LinkButton href="/about">About</LinkButton>
+<SubmitButton loading>Save</SubmitButton>
+```
+
+Why separate components: Each variant has different ARIA needs, event handling, and rendered elements. `<LinkButton>` renders `<a>`, `<SubmitButton>` renders `<button type="submit">`, `<IconButton>` needs `aria-label`. Cramming these into one component with booleans creates untestable branching logic.
+
+### Implementation: Share a base, diverge on behavior
+
+```tsx
+// Shared base — visual only
+function ButtonBase({
+  size = 'md',
+  colorScheme = 'primary',
+  className,
+  children,
+  ref,
+  ...props
+}: ButtonBaseProps) {
+  const styles = resolveButtonTokens(size, colorScheme);
+  return <Slot ref={ref} className={cn(styles, className)} {...props}>{children}</Slot>;
+}
+
+// Variant: standard button
+export function Button({ children, ref, ...props }: ButtonProps) {
+  return <ButtonBase ref={ref} {...props}><button>{children}</button></ButtonBase>;
+}
+
+// Variant: link that looks like a button
+export function LinkButton({ href, children, ref, ...props }: LinkButtonProps) {
+  return <ButtonBase ref={ref} {...props}><a href={href}>{children}</a></ButtonBase>;
+}
+
+// Variant: icon-only button
+export function IconButton({ icon, label, ref, ...props }: IconButtonProps) {
+  return (
+    <ButtonBase ref={ref} {...props}>
+      <button aria-label={label}>{icon}</button>
+    </ButtonBase>
+  );
+}
+```
+
+When to split: A prop changes the rendered element, ARIA role, event handling, or required children. If the difference is purely visual (color, size), keep it as a prop on the same component.
+
+## Pattern 3: Compound API (Flexible Layout)
+
+Best when internal structure varies between uses. Sub-components share state via a **structured context interface** with `{ state, actions, meta }`.
+
+```tsx
+// Structured context — state, actions, and meta are always separate.
+// The provider is the ONLY place that knows how state is managed.
+interface CardContextValue {
+  state: {
+    variant: 'elevated' | 'outlined';
+    expanded: boolean;
+  };
+  actions: {
+    toggleExpand: () => void;
+  };
+  meta: {
+    id: string;
+  };
+}
+
+const CardContext = createContext<CardContextValue | null>(null);
 
 function CardRoot({
   variant = 'elevated',
+  defaultExpanded = false,
   children,
 }: {
   variant?: 'elevated' | 'outlined';
+  defaultExpanded?: boolean;
   children: React.ReactNode;
 }) {
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const id = useId();
+
+  const ctx: CardContextValue = {
+    state: { variant, expanded },
+    actions: { toggleExpand: () => setExpanded(prev => !prev) },
+    meta: { id },
+  };
+
   return (
-    <CardContext.Provider value={{ variant }}>
-      <View style={[styles.card, variant === 'elevated' && styles.elevated]}>
+    <CardContext value={ctx}>
+      <div className={cn(styles.card, variant === 'elevated' && styles.elevated)}>
         {children}
-      </View>
-    </CardContext.Provider>
+      </div>
+    </CardContext>
   );
 }
 
+// Sub-components read context via use() (React 19)
 function CardHeader({ children }: { children: React.ReactNode }) {
-  return <View style={styles.header}>{children}</View>;
+  const { state, actions } = use(CardContext)!;
+  return (
+    <div className={styles.header} onClick={actions.toggleExpand}>
+      {children}
+      {state.expanded ? <ChevronUp /> : <ChevronDown />}
+    </div>
+  );
 }
 
 function CardContent({ children }: { children: React.ReactNode }) {
-  return <View style={styles.content}>{children}</View>;
+  const { state } = use(CardContext)!;
+  if (!state.expanded) return null;
+  return <div className={styles.content}>{children}</div>;
 }
 
 function CardFooter({ children }: { children: React.ReactNode }) {
-  return <View style={styles.footer}>{children}</View>;
+  return <div className={styles.footer}>{children}</div>;
 }
 
 export const Card = Object.assign(CardRoot, {
@@ -78,7 +164,7 @@ export const Card = Object.assign(CardRoot, {
   Footer: CardFooter,
 });
 
-// Usage: flexible composition
+// Usage: flexible composition via children
 <Card variant="elevated">
   <Card.Header>Title</Card.Header>
   <Card.Content>Body text</Card.Content>
@@ -91,11 +177,33 @@ export const Card = Object.assign(CardRoot, {
 </Card>
 ```
 
-Why `Object.assign`: Keeps the compound API ergonomic (`Card.Header` not `CardHeader`), and auto-complete works in editors.
+### Why structured context `{ state, actions, meta }`
+
+The provider is the **only** place that knows how state is managed. Sub-components and consumers interact through the context interface — they never know if state comes from `useState`, Zustand, or a URL param. This makes the state implementation swappable without changing any consumers.
+
+- `state` — read-only current values
+- `actions` — functions to mutate state (the "how" is hidden)
+- `meta` — derived/stable values like IDs, computed labels
+
+### Children over render props
+
+Always compose via `children`. Avoid `renderX` props.
+
+```tsx
+// ❌ Render prop — pushes control to parent unnecessarily
+<Card renderHeader={(ctx) => <h2>{ctx.title}</h2>} />
+
+// ✅ Children — consumer composes freely
+<Card>
+  <Card.Header><h2>Title</h2></Card.Header>
+</Card>
+```
+
+Render props are only acceptable when the parent must pass **computed data** to the child (e.g., `<Virtualizer renderItem={(item, index) => ...} />`).
 
 Good candidates for compound: Card, Dialog, Dropdown, Accordion, Tabs, Form, NavigationMenu.
 
-## Pattern 3: Headless Hook (Reusable Behavior)
+## Pattern 4: Headless Hook (Reusable Behavior)
 
 Separates behavior from appearance entirely. The hook handles a11y, keyboard, and state. The styled component applies tokens.
 
@@ -147,14 +255,50 @@ Every headless hook must support:
 
 Good candidates for headless: Toggle, Dialog, Dropdown, Accordion, Tooltip, Combobox — anything with complex keyboard/focus patterns.
 
+## React 19 API Changes
+
+If the project uses React 19+, apply these changes to all component patterns:
+
+### ref is a regular prop — no forwardRef
+
+```tsx
+// ❌ React 18 — forwardRef wrapper
+const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
+  return <button ref={ref} {...props} />;
+});
+
+// ✅ React 19 — ref in props directly
+function Button({ ref, ...props }: ButtonProps & { ref?: React.Ref<HTMLButtonElement> }) {
+  return <button ref={ref} {...props} />;
+}
+```
+
+### use(Context) replaces useContext(Context)
+
+```tsx
+// ❌ React 18
+const ctx = useContext(CardContext);
+
+// ✅ React 19
+const ctx = use(CardContext);
+```
+
+`use()` can be called conditionally and in loops, unlike `useContext()`.
+
 ## When to Upgrade
 
-A flat component should become compound when:
+A flat component should split into **explicit variant components** when:
+- A prop changes the rendered element (`<a>` vs `<button>`)
+- A prop changes ARIA roles or required attributes
+- A prop changes event handling or interaction model
+- You're adding boolean modes like `iconOnly`, `asLink`, `isSubmit`
+
+A flat component should become **compound** when:
 - It has 5+ configuration props for layout control
 - Consumers need different internal arrangements
 - You're adding `showHeader`, `headerTitle`, `showFooter` type props
 
-A standalone component should get a headless hook when:
+A standalone component should get a **headless hook** when:
 - The same behavior appears in multiple visual forms
 - Keyboard/focus logic is complex enough to be buggy if duplicated
 - You need the behavior without any specific UI (e.g., form validation state)
