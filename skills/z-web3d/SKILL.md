@@ -33,6 +33,9 @@ Read the relevant reference file when working on a specific domain:
 | `references/physics.md` | Rigid bodies, colliders, joints, character controllers, sensors |
 | `references/wasm.md` | Rust WASM setup, wasm-bindgen, memory patterns |
 | `references/threading.md` | Multi-thread architecture, Worker separation, SharedArrayBuffer, data transfer |
+| `references/drei.md` | Environment, controls, text, HTML overlay helpers |
+| `references/performance.md` | Instancing, merged meshes, adaptive DPR, LOD |
+| `references/assets.md` | glTF optimization pipeline, texture best practices |
 
 ## Staying Current
 
@@ -189,43 +192,7 @@ R3F supports pointer events via raycasting. Same events work on desktop, mobile,
 
 ## Drei Essentials
 
-### Environment & Lighting
-
-```tsx
-import { Environment, ContactShadows, Float, Sky } from '@react-three/drei'
-
-<Environment preset="sunset" background backgroundBlurriness={0.05} />
-<ContactShadows position={[0, -0.5, 0]} opacity={0.5} blur={1} frames={1} />
-```
-
-Presets: `apartment`, `city`, `dawn`, `forest`, `lobby`, `night`, `park`, `studio`, `sunset`, `warehouse`.
-
-### Controls
-
-```tsx
-import { OrbitControls } from '@react-three/drei'
-<OrbitControls makeDefault maxPolarAngle={Math.PI / 2} />
-```
-
-### Text
-
-```tsx
-import { Text } from '@react-three/drei'
-<Text fontSize={1} color="white" anchorX="center" anchorY="middle">
-  Hello World
-</Text>
-```
-
-### HTML Overlay in 3D
-
-```tsx
-import { Html } from '@react-three/drei'
-<mesh>
-  <Html center transform distanceFactor={10}>
-    <div className="label">Info Panel</div>
-  </Html>
-</mesh>
-```
+Drei provides Environment/lighting presets, OrbitControls, 3D Text, Html overlays, and more. See `references/drei.md` for usage examples.
 
 ---
 
@@ -240,67 +207,7 @@ import { Html } from '@react-three/drei'
 5. **Set `frameloop="demand"`** for non-animated scenes (renders only on invalidate)
 6. **Dispose resources** -- WebGL/WebGPU resources aren't garbage-collected
 
-### Instancing with Drei
-
-```tsx
-import { Instances, Instance } from '@react-three/drei'
-
-<Instances limit={1000}>
-  <boxGeometry />
-  <meshStandardNodeMaterial />
-  {items.map((item, i) => (
-    <Instance key={i} position={item.pos} color={item.color} />
-  ))}
-</Instances>
-```
-
-### Merged Meshes (Multi-Geometry Instancing)
-
-```tsx
-import { Merged, useGLTF } from '@react-three/drei'
-
-function Scene() {
-  const { nodes } = useGLTF('/furniture.glb')
-  return (
-    <Merged meshes={{ Chair: nodes.Chair, Table: nodes.Table }}>
-      {({ Chair, Table }) => (
-        <>
-          <Chair position={[0, 0, 0]} />
-          <Chair position={[2, 0, 0]} />
-          <Table position={[1, 0, 1]} />
-        </>
-      )}
-    </Merged>
-  )
-}
-```
-
-Each unique mesh type = **one draw call** regardless of instance count.
-
-### Adaptive Performance
-
-```tsx
-import { PerformanceMonitor, AdaptiveDpr } from '@react-three/drei'
-
-<Canvas dpr={[1, 2]}>
-  <PerformanceMonitor onDecline={() => setDegraded(true)} onIncline={() => setDegraded(false)}>
-    <AdaptiveDpr pixelated />
-    <Scene degraded={degraded} />
-  </PerformanceMonitor>
-</Canvas>
-```
-
-### LOD (Level of Detail)
-
-```tsx
-import { Detailed } from '@react-three/drei'
-
-<Detailed distances={[0, 50, 100]}>
-  <HighDetail />
-  <MediumDetail />
-  <LowDetail />
-</Detailed>
-```
+See `references/performance.md` for instancing patterns, merged meshes, adaptive DPR, and LOD.
 
 ---
 
@@ -375,29 +282,9 @@ function GameSystems() {
 
 ## glTF 2.0 Asset Pipeline
 
-glTF is the only asset format. All 3D models, animations, and scenes use `.glb` (binary glTF).
+glTF (`.glb`) is the only asset format. Use `gltfjsx --transform` for Draco compression + texture optimization (70-90% size reduction), `useGLTF` to load, and `useGLTF.preload()` in module scope.
 
-### Optimization Pipeline
-
-1. **Author** in Blender/Maya/etc, export as `.glb`
-2. **Optimize** with `gltfjsx --transform` (Draco compression, texture optimization, deduplication)
-3. **Load** with Drei's `useGLTF` (auto Draco decompression)
-4. **Preload** with `useGLTF.preload('/model.glb')` in module scope
-
-### Texture Best Practices
-
-- Use KTX2/Basis Universal for GPU-compressed textures (significantly smaller, faster upload)
-- Keep power-of-2 dimensions where possible
-- Use `useTexture` with object syntax for PBR material maps:
-
-```tsx
-const textures = useTexture({
-  map: '/albedo.jpg',
-  normalMap: '/normal.jpg',
-  roughnessMap: '/roughness.jpg',
-})
-<meshStandardNodeMaterial {...textures} />
-```
+See `references/assets.md` for the full optimization pipeline and texture best practices.
 
 ---
 
