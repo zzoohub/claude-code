@@ -4,7 +4,7 @@ description: |
   Advanced motion and visual effects for React Native using Reanimated 3 (primary), react-native-skia, and Gesture Handler.
   Use when: adding animations to RN screens, building gesture-driven interactions, creating scroll-linked animations, implementing shared element transitions, building custom GPU-rendered graphics, creating loading/intro sequences, adding haptic feedback with animation, building interactive charts or visualizations, or any task involving "make the app feel alive", "smooth animation", "gesture", "swipe interaction", "parallax", "shared element transition", "custom shader", "drawing", "canvas graphics" in a React Native context.
   Do not use for: web animations (use z-web-interactive), component structure, navigation flow decisions (use z-ux-design).
-  Workflow: z-ux-design (flow) → z-design-system (tokens) → expo-app-design:building-native-ui → z-interactive-engineer agent → **this skill**.
+  Workflow: z-ux-design (flow) → z-design-system (tokens) → expo-app-design:building-native-ui (implementation) → z-interactive-engineer agent → **this skill** (apply interactive).
 references:
   - references/reanimated-patterns.md
   - references/skia-patterns.md
