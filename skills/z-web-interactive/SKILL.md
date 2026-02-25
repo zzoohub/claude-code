@@ -357,7 +357,7 @@ GSAP targets elements via `data-*` attributes or refs — never conflicts with T
 - GSAP can read them: `gsap.to(el, { duration: parseFloat(getComputedStyle(el).getPropertyValue("--duration-normal")) })`
 - Or just use GSAP's own easing — it's more expressive
 
-### With building-native-ui
+### With expo-app-design:building-native-ui
 - Never modify component internals
 - Wrap: `<RevealOnScroll><Card>...</Card></RevealOnScroll>`
 - Or mark targets: `<Card data-reveal>`

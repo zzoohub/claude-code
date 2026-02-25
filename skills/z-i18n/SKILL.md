@@ -3,8 +3,8 @@ name: z-i18n
 description: |
   Internationalization (i18n) architecture and patterns for web and mobile apps.
   Use when: adding multi-language support, setting up translation structure, configuring locale routing, language switching, pluralization, date/number/currency formatting, RTL support, translation key design.
-  Do not use for: general React/Next.js patterns (use z-nextjs), general mobile patterns (use z-react-native), UX copy decisions (use z-copywriting).
-  Workflow: Use alongside z-nextjs (web) or z-react-native (mobile) skill.
+  Do not use for: general React/Next.js patterns (use z-nextjs), general mobile patterns (use expo-app-design:building-native-ui), UX copy decisions (use z-copywriting).
+  Workflow: Use alongside z-nextjs (web) or expo-app-design:building-native-ui (mobile) skill.
 ---
 
 # i18n Architecture

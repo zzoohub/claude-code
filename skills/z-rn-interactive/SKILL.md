@@ -4,7 +4,7 @@ description: |
   Advanced motion and visual effects for React Native using Reanimated 3 (primary), react-native-skia, and Gesture Handler.
   Use when: adding animations to RN screens, building gesture-driven interactions, creating scroll-linked animations, implementing shared element transitions, building custom GPU-rendered graphics, creating loading/intro sequences, adding haptic feedback with animation, building interactive charts or visualizations, or any task involving "make the app feel alive", "smooth animation", "gesture", "swipe interaction", "parallax", "shared element transition", "custom shader", "drawing", "canvas graphics" in a React Native context.
   Do not use for: web animations (use z-web-interactive), component structure, navigation flow decisions (use z-ux-design).
-  Workflow: z-ux-design (flow) → z-design-system (tokens) → building-native-ui skill → z-interactive-engineer agent → **this skill**.
+  Workflow: z-ux-design (flow) → z-design-system (tokens) → expo-app-design:building-native-ui → z-interactive-engineer agent → **this skill**.
 references:
   - references/reanimated-patterns.md
   - references/skia-patterns.md
@@ -351,7 +351,7 @@ function TodoItem({ item, onRemove }) {
 - Use motion tokens (durations, easing curves) as defaults
 - Map CSS easing to Reanimated: `Easing.bezier(0.22, 1, 0.36, 1)` for power4.out equivalent
 
-### With building-native-ui
+### With expo-app-design:building-native-ui
 - Never modify component internals
 - Wrap with `Animated.View` or compose gesture handlers on top
 - Keep animation logic in dedicated hooks (`useCardAnimation`, `useScrollParallax`)
