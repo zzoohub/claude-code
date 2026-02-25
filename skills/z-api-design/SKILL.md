@@ -1,320 +1,195 @@
 ---
 name: z-api-design
 description: |
-  REST API design principles, conventions, and patterns.
-  Use when: designing APIs, choosing status codes, error handling, caching, auth patterns,
-  structuring endpoints, naming resources, deciding pagination strategy, or any time the user
-  is building a new API — even if they don't explicitly say "design". If someone asks
-  "what status code should I return", "how should I structure my endpoints", "REST best practices",
-  or is planning any HTTP API, use this skill.
-  Do not use for: framework-specific implementation (use z-fastapi, z-axum skills).
-  Workflow: This skill (design) -> z-fastapi-hexagonal | z-axum-hexagonal (implementation).
-references:
-  - references/examples.md    # Full request/response examples
+  Generate OpenAPI 3.1 specification files from user requirements.
+  Use when: user wants to design an API, define endpoints, create API contracts,
+  generate openapi.yaml, plan REST resources, or says things like
+  "design the API", "what endpoints do I need", "create the API spec",
+  "add a new endpoint", "define the API contract".
+  Also use when user provides a PRD, database schema, or ERD and wants API endpoints derived from it.
+  Do NOT use for: framework-specific implementation (use z-fastapi or z-axum skills after this).
+  Workflow: requirements -> this skill (OpenAPI spec) -> z-fastapi-hexagonal | z-axum-hexagonal (implementation).
+  Output: openapi/openapi.yaml at project root.
 ---
 
-# API Design
+# z-api-design — OpenAPI Spec Generator
 
-## Resource Naming
+This skill generates production-ready OpenAPI 3.1 specification files.
+The output is a YAML file at `openapi/openapi.yaml` that serves as the single source of truth for API contracts.
 
-**Rule: Model nouns, not verbs. HTTP methods express actions.**
-
-URLs identify resources (things), not operations. The HTTP method already tells you what action to perform — putting verbs in URLs creates redundancy and inconsistency.
-
-```
-# Bad: Verbs in URL
-POST /createUser
-GET /getUsers
-
-# Good: RESTful
-POST /users
-GET /users
-DELETE /users/123
-```
-
-| Pattern | Example |
-|---------|---------|
-| Collection | `/users` |
-| Single resource | `/users/{id}` |
-| Nested (shallow) | `/users/{id}/orders` |
-| Filter via query | `/orders?userId=123` |
-
-**Rule: Plural nouns, lowercase, max 2 levels deep.**
-
-Deep nesting couples resources tightly together and makes URLs fragile — if any intermediate resource changes, all child URLs break. Flatten with query parameters instead.
-
-```
-# Bad: Too deep — tightly coupled, hard to cache independently
-/companies/{id}/departments/{id}/users/{id}/orders
-
-# Good: Flatten — each resource is independently addressable
-/orders?userId=123
-```
+> Design principles and conventions are in `references/design-principles.md`.
+> Base template is in `references/openapi-template.yaml`.
+> Full request/response examples are in `references/examples.md`.
 
 ---
 
-## HTTP Methods
+## Workflow
 
-| Method | Action | Idempotent | Success Code |
-|--------|--------|------------|--------------|
-| GET | Read | Yes | 200 |
-| POST | Create | No | 201 |
-| PUT | Replace | Yes | 200 |
-| PATCH | Partial update | No | 200 |
-| DELETE | Remove | Yes | 204 |
+### Step 1: Gather Requirements
 
-**Idempotent** means calling the same request multiple times produces the same result as calling it once — safe to retry on network failure. POST is not idempotent because each call creates a new resource. PATCH is not guaranteed idempotent per RFC 5789 — it depends on the operation (e.g., "set name to X" is idempotent, but "append to list" is not).
+Identify API resources from user input. Inputs can be:
 
-**Rule: Use `Idempotency-Key` header for safe POST retries.** When a client needs to retry a POST without creating duplicates (e.g., payment processing), the client sends a unique key and the server deduplicates.
+- Direct description ("I need user and order endpoints")
+- PRD / product brief
+- Database schema / ERD
+- Existing `openapi/openapi.yaml` (when adding/modifying endpoints)
 
-```http
-POST /payments HTTP/2
-Idempotency-Key: txn_8a3b2c1d
-Content-Type: application/json
+Extract:
 
-{ "amount": 5000, "currency": "USD" }
-```
+- **Resources** (nouns): users, orders, products
+- **Actions** per resource: CRUD, custom actions
+- **Relationships**: nesting, references
+- **Auth requirements**: public, authenticated, admin-only
+- **Special patterns**: pagination, filtering, async jobs, webhooks, bulk ops
 
----
+### Step 2: Apply Design Principles
 
-## Status Codes
+Read `references/design-principles.md` and enforce:
 
-### Success (2xx)
+- Plural nouns, no verbs in paths
+- Max 2 levels of nesting, flatten with query params beyond that
+- Correct HTTP methods and status codes
+- RFC 9457 error responses with `application/problem+json`
+- Cursor-based pagination by default
+- Consistent response envelope: `{ data, meta }`
+- Security scheme matching the use case (JWT, API key, etc.)
 
-| Code | When |
-|------|------|
-| 200 OK | Generic success |
-| 201 Created | Resource created + `Location` header |
-| 202 Accepted | Async processing started |
-| 204 No Content | Success, no body (DELETE) |
+### Step 3: Generate OpenAPI Spec
 
-### Client Error (4xx)
+Read `references/openapi-template.yaml` as the base structure, then:
 
-| Code | When |
-|------|------|
-| 400 Bad Request | Malformed syntax |
-| 401 Unauthorized | No/invalid auth |
-| 403 Forbidden | No permission |
-| 404 Not Found | Resource doesn't exist |
-| 409 Conflict | Duplicate, state conflict |
-| 410 Gone | Permanently deleted |
-| 422 Unprocessable | Validation failed |
-| 429 Too Many Requests | Rate limited |
+1. Define `tags` — one per resource, with description
+2. Define `paths` — each endpoint with:
+   - `operationId` in camelCase (e.g., `listUsers`, `createUser`, `getUserById`)
+   - `summary` — short one-line description
+   - `description` — detailed behavior, side effects, notes (only if needed)
+   - `parameters` — path params, query filters, pagination
+   - `requestBody` — with `$ref` to schemas
+   - `responses` — all applicable status codes with `$ref` to schemas
+   - `security` — per-operation if different from global
+3. Define `components/schemas` — reusable data models:
+   - Use `Create*` / `Update*` / `*Response` naming convention
+   - Mark `required` fields explicitly
+   - Use `format` for dates (`date-time`), emails (`email`), UUIDs (`uuid`)
+   - Add `readOnly: true` for server-generated fields (`id`, `createdAt`, `updatedAt`)
+4. Define `components/responses` — reusable error responses (400, 401, 403, 404, 409, 422, 429, 500)
+5. Define `components/parameters` — reusable pagination params (`cursor`, `limit`)
 
-### Server Error (5xx)
+### Step 4: Validate & Output
 
-| Code | When |
-|------|------|
-| 500 Internal Server Error | Unexpected failure |
-| 502 Bad Gateway | Upstream down |
-| 503 Service Unavailable | Temporarily unavailable |
+Before writing the file, check:
 
-**Rule: 4xx = client's fault (fix the request). 5xx = server's fault (retry later).**
+- [ ] Every path uses plural nouns, no verbs
+- [ ] POST returns 201, DELETE returns 204
+- [ ] All collections have pagination parameters
+- [ ] Error responses use RFC 9457 `ProblemDetail` schema
+- [ ] `operationId` is unique across all endpoints
+- [ ] Request body schemas do not include `readOnly` fields
+- [ ] All `$ref` pointers resolve to defined components
+- [ ] Security scheme is defined and applied
 
----
-
-## Response Format
-
-### Success
-
-```json
-{
-  "data": { "id": 123, "name": "Ada" },
-  "meta": { "requestId": "abc123" }
-}
-```
-
-### Error (RFC 9457 Problem Details)
-
-```json
-{
-  "type": "https://api.example.com/errors/validation-failed",
-  "title": "Validation Failed",
-  "status": 422,
-  "detail": "Email is required",
-  "errors": [{ "field": "email", "code": "required" }]
-}
-```
-
-**Rule: Use `Content-Type: application/problem+json` for errors.** RFC 9457 gives clients a machine-readable, consistent structure to parse errors across all endpoints.
+Write the output to `openapi/openapi.yaml` at the project root.
+Create the `openapi/` directory if it does not exist.
 
 ---
 
-## Content Negotiation
+## Output Conventions
 
-Use `Accept` header to let clients request specific response formats. Server responds with `Content-Type` matching the chosen format.
-
-```http
-GET /users/123 HTTP/2
-Accept: application/json
-```
-
-If the server cannot produce the requested format, respond with `406 Not Acceptable`. For most APIs, JSON is the only format — but always set `Content-Type` explicitly.
-
----
-
-## Request/Response Consistency
-
-**Rule: Request shape should match response shape.**
-
-Response may have read-only fields (`id`, `createdAt`), but structure must be identical. Never change field types or nesting between request/response.
-
----
-
-## Pagination
-
-| Type | Use for | Example |
-|------|---------|---------|
-| Cursor-based | Feeds, timelines, large data | `?cursor=xyz&limit=20` |
-| Offset-based | Admin panels, small data | `?page=2&limit=20` |
-
-**Rule: Prefer cursor-based.** Offset pagination uses SQL `OFFSET N` which forces the database to scan and discard N rows before returning results — this gets progressively slower as pages increase. Cursor-based pagination uses a `WHERE id > cursor` approach which leverages indexes and has consistent performance regardless of how deep you paginate.
-
----
-
-## Filtering & Sorting
+### File location
 
 ```
-GET /users?role=admin&status=active
-GET /users?sort=-createdAt
-GET /users?fields=id,name,email
+project-root/
+├── openapi/
+│   └── openapi.yaml    # Generated by this skill (source of truth)
+└── services/
+    └── api/             # Implementation consumes the spec
 ```
 
-**Rule: Filters in query string, not URL path.** Path segments identify resources; query parameters modify the representation or filter collections.
+### Schema naming
 
----
+| Purpose | Pattern | Example |
+|---------|---------|---------|
+| Create request | `Create{Resource}` | `CreateUser` |
+| Update request | `Update{Resource}` | `UpdateUser` |
+| Full response | `{Resource}` | `User` |
+| List response | `{Resource}List` | `UserList` |
+| Error | `ProblemDetail` | (shared) |
 
-## Caching
+### OperationId naming
 
-| Header | Purpose |
-|--------|---------|
-| `ETag` | Version fingerprint for conditional requests (`If-None-Match`) |
-| `Cache-Control` | `public`, `private`, `no-store` |
-| `Last-Modified` | Timestamp for `If-Modified-Since` checks |
+| Method | Pattern | Example |
+|--------|---------|---------|
+| GET collection | `list{Resources}` | `listUsers` |
+| GET single | `get{Resource}ById` | `getUserById` |
+| POST | `create{Resource}` | `createUser` |
+| PUT | `replace{Resource}` | `replaceUser` |
+| PATCH | `update{Resource}` | `updateUser` |
+| DELETE | `delete{Resource}` | `deleteUser` |
 
-**Rule: Cache public data. `private, no-store` for user-specific.** Caching reduces server load and improves latency. `ETag` enables conditional requests — the server returns `304 Not Modified` when the resource hasn't changed, saving bandwidth.
+### Pagination parameters
 
----
+All collection endpoints must include:
 
-## Security
-
-| Item | Recommended | Why |
-|------|-------------|-----|
-| Password hashing | argon2id (64MB, 3 iter, 4 parallel) | Memory-hard, resistant to GPU/ASIC attacks |
-| JWT algorithm | ES256 or EdDSA | Asymmetric — verifiers don't need the signing key |
-| JWT access token | 15-30 minutes | Short-lived limits damage from token theft |
-| JWT refresh token (web) | 90 days | Balances security with user convenience |
-| JWT refresh token (mobile) | 1 year | Mobile users expect persistent sessions |
-| TLS | 1.3+ only | Removes insecure cipher suites, faster handshake |
-| CORS | Explicit origins only | Wildcard `*` allows any site to make requests |
-| Rate limit (auth) | 5/min | Prevents brute-force credential stuffing |
-| Rate limit (API) | 100/min baseline | Protects against abuse while allowing normal usage |
-
-| API Type | Auth Pattern |
-|----------|--------------|
-| User-facing | JWT |
-| Public API | API keys, OAuth 2.0 |
-| Service-to-service | mTLS |
-| Webhooks | HMAC signature |
-
-**Rate limit headers:**
-```http
-X-RateLimit-Limit: 100
-X-RateLimit-Remaining: 75
-Retry-After: 30
+```yaml
+parameters:
+  - $ref: '#/components/parameters/CursorParam'
+  - $ref: '#/components/parameters/LimitParam'
 ```
 
-**Rule: Stateless auth enables horizontal scaling. Return `Retry-After` with 429.**
+### Error responses
 
----
+All endpoints must include applicable error responses referencing shared components:
 
-## Versioning
-
-```
-/v1/users
-/v2/users
-```
-
-**Rule: Version in URL path. Only for breaking changes.**
-
-URL versioning is the most practical approach — it's visible in logs, easy to route at the load balancer, and obvious to developers. Header-based versioning (`Accept: application/vnd.api+json;version=2`) is harder to test, debug, and cache.
-
-Only bump the version for breaking changes (removing fields, changing types, restructuring). Additive changes (new optional fields, new endpoints) don't need a new version.
-
-Use `Sunset` header to signal deprecation:
-```http
-Sunset: Sat, 01 Mar 2026 00:00:00 GMT
-Link: </v2/users>; rel="successor-version"
+```yaml
+responses:
+  '400':
+    $ref: '#/components/responses/BadRequest'
+  '401':
+    $ref: '#/components/responses/Unauthorized'
 ```
 
 ---
 
-## API Documentation
+## Examples
 
-**Rule: Design API-first with OpenAPI spec before writing code.**
+### Minimal — single resource
 
-Writing the OpenAPI spec first forces you to think through the contract before implementation. It enables parallel frontend/backend development, auto-generated client SDKs, and request validation.
+User says: "I need a users API with CRUD"
 
-Keep the spec as the source of truth — generate docs from it, not the other way around.
+Generate spec with:
+
+- `GET /v1/users` — list with pagination
+- `POST /v1/users` — create
+- `GET /v1/users/{userId}` — get by ID
+- `PATCH /v1/users/{userId}` — partial update
+- `DELETE /v1/users/{userId}` — delete
+- Schemas: `User`, `CreateUser`, `UpdateUser`, `UserList`
+
+### From ERD / DB schema
+
+User provides a database schema or ERD. Derive:
+
+1. Each table → API resource (unless it's a pure join table)
+2. Foreign keys → decide: nested route or query filter (prefer query filter for flexibility)
+3. Unique constraints → 409 Conflict responses
+4. NOT NULL columns → `required` in create schemas
+5. Enum columns → `enum` in schema properties
+
+### Adding to existing spec
+
+If `openapi/openapi.yaml` already exists:
+
+1. Read the existing spec first
+2. Add new paths, schemas, parameters
+3. Preserve existing content — do not remove or reorder unless asked
+4. Maintain consistent style with existing definitions
 
 ---
 
-## Health Checks
+## Troubleshooting
 
-Expose health endpoints for load balancers and monitoring:
+**Circular $ref**: OpenAPI 3.1 allows circular references but many tools don't handle them well. Break cycles with inline objects or separate the recursive part.
 
-| Endpoint | Purpose |
-|----------|---------|
-| `GET /health` | Basic liveness — returns 200 if the process is running |
-| `GET /health/ready` | Readiness — returns 200 only if dependencies (DB, cache) are reachable |
+**Large spec files**: For 50+ endpoints, consider splitting with `$ref` to external files under `openapi/` directory. The main `openapi.yaml` remains the entry point.
 
-Health endpoints should not require authentication and should respond fast (no heavy queries).
-
----
-
-## Webhooks
-
-When your API notifies external systems about events:
-
-- Sign payloads with HMAC-SHA256 so receivers can verify authenticity
-- Include a `timestamp` to prevent replay attacks
-- Retry with exponential backoff (1s, 2s, 4s, 8s... up to a cap)
-- Provide a way for consumers to list/replay failed deliveries
-
-> Full examples for all patterns above: `references/examples.md`
-
----
-
-## Quick Checklist
-
-### URL Design
-- [ ] Plural nouns, no verbs
-- [ ] Max 2 levels nesting
-- [ ] Filters in query string
-
-### HTTP
-- [ ] Correct methods and status codes
-- [ ] 201 + Location for create
-- [ ] 204 for delete
-- [ ] Idempotency-Key for non-idempotent retries
-
-### Response
-- [ ] Consistent envelope (`data`, `meta`)
-- [ ] RFC 9457 for errors
-- [ ] Request/response shapes match
-
-### Performance
-- [ ] Pagination on collections
-- [ ] Cache headers (ETag, Cache-Control)
-- [ ] Field selection
-
-### Security
-- [ ] HTTPS only
-- [ ] Stateless auth
-- [ ] Rate limiting with Retry-After
-- [ ] CORS explicit origins
-
-### Operations
-- [ ] OpenAPI spec maintained
-- [ ] Health check endpoints
-- [ ] Webhook signatures (if applicable)
+**Versioning**: Use `/v1/` prefix in all paths. When a breaking change is needed, create a new version block. Additive changes (new optional fields, new endpoints) do not require a version bump.

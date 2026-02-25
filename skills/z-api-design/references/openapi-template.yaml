@@ -1,0 +1,223 @@
+# OpenAPI 3.1 Base Template
+#
+# Usage: Copy this template and fill in the sections.
+# - Replace {ServiceName} with your service name
+# - Replace {version} with your API version
+# - Add paths, schemas, and parameters as needed
+# - Remove unused components
+
+openapi: '3.1.0'
+
+info:
+  title: '{ServiceName} API'
+  version: '{version}'
+  description: |
+    API specification for {ServiceName}.
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: https://api.example.com
+    description: Production
+
+tags: []
+  # - name: users
+  #   description: User management
+
+paths: {}
+  # /v1/users:
+  #   get:
+  #     operationId: listUsers
+  #     tags: [users]
+  #     summary: List users
+  #     parameters:
+  #       - $ref: '#/components/parameters/CursorParam'
+  #       - $ref: '#/components/parameters/LimitParam'
+  #     responses:
+  #       '200':
+  #         description: OK
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/UserList'
+  #       '401':
+  #         $ref: '#/components/responses/Unauthorized'
+  #   post:
+  #     operationId: createUser
+  #     tags: [users]
+  #     summary: Create a user
+  #     requestBody:
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             $ref: '#/components/schemas/CreateUser'
+  #     responses:
+  #       '201':
+  #         description: Created
+  #         headers:
+  #           Location:
+  #             schema:
+  #               type: string
+  #             description: URL of the created resource
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/UserResponse'
+  #       '409':
+  #         $ref: '#/components/responses/Conflict'
+  #       '422':
+  #         $ref: '#/components/responses/UnprocessableEntity'
+
+components:
+
+  # --- Security Schemes ---
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # --- Reusable Parameters ---
+  parameters:
+    CursorParam:
+      name: cursor
+      in: query
+      required: false
+      description: Pagination cursor from previous response
+      schema:
+        type: string
+    LimitParam:
+      name: limit
+      in: query
+      required: false
+      description: Number of items to return (1-100)
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+  # --- Reusable Error Responses ---
+  responses:
+    BadRequest:
+      description: Malformed request syntax
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    NotFound:
+      description: Resource not found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    Conflict:
+      description: Resource already exists or state conflict
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    UnprocessableEntity:
+      description: Validation failed
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds until rate limit resets
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetail'
+
+  # --- Reusable Schemas ---
+  schemas:
+
+    # RFC 9457 Problem Details
+    ProblemDetail:
+      type: object
+      required: [type, title, status]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI reference identifying the problem type
+          example: 'https://api.example.com/errors/validation-failed'
+        title:
+          type: string
+          description: Short human-readable summary
+          example: 'Validation Failed'
+        status:
+          type: integer
+          description: HTTP status code
+          example: 422
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence
+          example: 'Email is required'
+        instance:
+          type: string
+          description: URI reference identifying the specific occurrence
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/FieldError'
+        requestId:
+          type: string
+          description: Request identifier for support/debugging
+
+    FieldError:
+      type: object
+      required: [field, code]
+      properties:
+        field:
+          type: string
+          example: 'email'
+        code:
+          type: string
+          example: 'required'
+        message:
+          type: string
+          example: 'Email is required'
+
+    # Pagination metadata
+    PaginationMeta:
+      type: object
+      properties:
+        limit:
+          type: integer
+        nextCursor:
+          type: string
+          nullable: true
+        prevCursor:
+          type: string
+          nullable: true
+        hasMore:
+          type: boolean
+
+security:
+  - bearerAuth: []
