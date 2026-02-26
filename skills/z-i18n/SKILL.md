@@ -2,7 +2,7 @@
 name: z-i18n
 description: |
   Internationalization (i18n) architecture and patterns for web and mobile apps.
-  Use when: adding multi-language support, setting up translation structure, configuring locale routing, language switching, pluralization, date/number/currency formatting, RTL support, translation key design. Also use when user says "translate my app", "make it multilingual", "add Korean/Japanese/Arabic support", "localize my app", or mentions hreflang, locale detection, or language picker.
+  Use when: adding multi-language support, setting up translation structure, configuring locale routing, language switching, pluralization, date/number/currency formatting, translation key design. Also use when user says "translate my app", "make it multilingual", "add Korean/Japanese support", "localize my app", or mentions hreflang, locale detection, or language picker.
   Do not use for: general React/Next.js patterns (use vercel-composition-patterns), general mobile patterns (use expo-app-design:building-native-ui), UX copy decisions (use z-copywriting).
   Workflow: Use alongside vercel-composition-patterns skill (web) or expo-app-design:building-native-ui skill (mobile).
 ---
@@ -58,26 +58,14 @@ For mobile (i18next), same principle with namespace files: `locales/en/auth.json
 Prefer `Intl` formatters in code or Paraglide's built-in message formatters. Keep translation strings clean.
 Exception: Pluralization belongs in the translation string.
 
-### 4. RTL Support from Day One
-
-```typescript
-const RTL_LOCALES = ['ar', 'he', 'fa', 'ur'] as const;
-const isRTL = (locale: string) =>
-  (RTL_LOCALES as readonly string[]).includes(locale);
-```
-
-- Web: `<html dir="rtl">` + CSS logical properties (`margin-inline-start`, not `margin-left`)
-- Mobile: `I18nManager.forceRTL()` + app reload. See `references/expo-i18n.md`.
-
-### 5. Plural Categories by Language
+### 4. Plural Categories by Language
 
 | Language | Plural categories |
 |---|---|
 | en, es, pt-BR, id | `one`, `other` |
 | ja, ko | `other` only |
-| ar | `zero`, `one`, `two`, `few`, `many`, `other` |
 
-### 6. Formatting Utilities (Cross-Platform)
+### 5. Formatting Utilities (Cross-Platform)
 
 Platform-agnostic `Intl` wrappers. Each platform wraps this with its own locale source (Paraglide: `getLocale()`, i18next: `i18n.language`).
 
@@ -123,7 +111,6 @@ export function createFormatters(locale: string) {
 - [ ] Type-safe keys (Paraglide: automatic, i18next: `CustomTypeOptions`)
 - [ ] Pluralization uses platform-native syntax (Paraglide variants / i18next JSON v4)
 - [ ] Formatting done in code, not in translation strings
-- [ ] RTL: `dir` attribute + CSS logical properties (web) or `I18nManager` (mobile)
 - [ ] Language persistence: cookie (web), localStorage (mobile)
 - [ ] SEO: `<html lang>`, `hreflang` alternates (web only)
 - [ ] No string concatenation — full sentences always

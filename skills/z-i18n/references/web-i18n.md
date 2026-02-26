@@ -23,7 +23,6 @@ project-root/
 │   ├── id.json
 │   ├── ja.json
 │   ├── ko.json
-│   ├── ar.json
 │   └── pt-BR.json
 └── src/
     └── paraglide/          # Generated (do NOT edit, add to .gitignore)
@@ -38,7 +37,7 @@ project-root/
 // project.inlang/settings.json
 {
   "baseLocale": "en",
-  "locales": ["en", "es", "id", "ja", "ko", "ar", "pt-BR"],
+  "locales": ["en", "es", "id", "ja", "ko", "pt-BR"],
   "modules": [
     "https://cdn.jsdelivr.net/npm/@inlang/plugin-message-format@latest/dist/index.js"
   ],
@@ -135,29 +134,10 @@ Uses `Intl.PluralRules`. Each language needs only its relevant plural categories
 }
 ```
 
-```json
-// messages/ar.json — zero/one/two/few/many/other (Arabic has 6 plural categories)
-{
-  "follower_count": [{
-    "declarations": ["input count", "local countPlural = count: plural"],
-    "selectors": ["countPlural"],
-    "match": {
-      "countPlural=zero": "لا متابعين",
-      "countPlural=one": "متابع واحد",
-      "countPlural=two": "متابعان",
-      "countPlural=few": "{count} متابعين",
-      "countPlural=many": "{count} متابعًا",
-      "countPlural=other": "{count} متابع"
-    }
-  }]
-}
-```
-
 | Language | Plural categories |
 |---|---|
 | en, es, pt-BR, id | `one`, `other` |
 | ja, ko | `other` only |
-| ar | `zero`, `one`, `two`, `few`, `many`, `other` |
 
 ### Number & Date Formatting
 
@@ -315,7 +295,6 @@ const LOCALE_NAMES: Record<string, string> = {
   id: "Bahasa Indonesia",
   ja: "日本語",
   ko: "한국어",
-  ar: "العربية",
   "pt-BR": "Português (Brasil)",
 };
 
@@ -332,49 +311,21 @@ function LocaleSwitcher() {
 
 ---
 
-## SEO & RTL
+## SEO
 
 ```tsx
 import { getLocale, locales, localizeHref } from "./paraglide/runtime.js";
 
-const RTL_LOCALES = ["ar", "he", "fa", "ur"];
 const locale = getLocale();
 
 // Root layout
-<html lang={locale} dir={RTL_LOCALES.includes(locale) ? "rtl" : "ltr"}>
+<html lang={locale}>
 
 // Alternate links (hreflang)
 {locales.map((loc) => (
   <link key={loc} rel="alternate" hrefLang={loc}
     href={`https://example.com${localizeHref(path, { locale: loc })}`} />
 ))}
-```
-
-### RTL with CSS Logical Properties (Tailwind)
-
-`dir="rtl"` flips the entire layout. Use logical properties so styles adapt automatically:
-
-| Physical (avoid) | Logical (use) | CSS property |
-|---|---|---|
-| `ml-4` | `ms-4` | `margin-inline-start` |
-| `mr-4` | `me-4` | `margin-inline-end` |
-| `pl-4` | `ps-4` | `padding-inline-start` |
-| `pr-4` | `pe-4` | `padding-inline-end` |
-| `left-0` | `start-0` | `inset-inline-start` |
-| `right-0` | `end-0` | `inset-inline-end` |
-| `text-left` | `text-start` | `text-align: start` |
-| `text-right` | `text-end` | `text-align: end` |
-| `rounded-l-lg` | `rounded-s-lg` | `border-start-start-radius` |
-| `border-r` | `border-e` | `border-inline-end` |
-
-`s` = start, `e` = end. Supported since Tailwind CSS v3.
-
-```html
-<!-- ❌ Breaks in RTL -->
-<div class="ml-4 pr-2 text-left">
-
-<!-- ✅ Works in both LTR and RTL -->
-<div class="ms-4 pe-2 text-start">
 ```
 
 ---

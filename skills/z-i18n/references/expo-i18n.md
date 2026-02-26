@@ -27,7 +27,6 @@ src/
 │   ├── id/
 │   ├── ja/
 │   ├── ko/
-│   ├── ar/
 │   └── pt-BR/
 └── app/
     └── _layout.tsx       # Import i18n here
@@ -48,7 +47,6 @@ export const resources = {
   id: { common: idCommon, auth: idAuth, errors: idErrors },
   ja: { common: jaCommon, auth: jaAuth, errors: jaErrors },
   ko: { common: koCommon, auth: koAuth, errors: koErrors },
-  ar: { common: arCommon, auth: arAuth, errors: arErrors },
   'pt-BR': { common: ptBRCommon, auth: ptBRAuth, errors: ptBRErrors },
 } as const;
 
@@ -165,22 +163,10 @@ Uses `Intl.PluralRules` suffixes. Variable must be `count`.
 { "items_other": "{{count}}개 항목" }
 ```
 
-```json
-// locales/ar/common.json — zero/one/two/few/many/other
-{
-  "items_zero": "لا عناصر",
-  "items_one": "عنصر واحد",
-  "items_two": "عنصران",
-  "items_few": "{{count}} عناصر",
-  "items_many": "{{count}} عنصرًا",
-  "items_other": "{{count}} عنصر"
-}
-```
-
 ```tsx
-t('items', { count: 0 })   // "لا عناصر" (ar) / "0개 항목" (ko)
-t('items', { count: 1 })   // "1 item" (en) / "عنصر واحد" (ar)
-t('items', { count: 5 })   // "5 items" (en) / "5 عناصر" (ar)
+t('items', { count: 0 })   // "0개 항목" (ko) / "0 items" (en)
+t('items', { count: 1 })   // "1 item" (en) / "1個のアイテム" (ja)
+t('items', { count: 5 })   // "5 items" (en) / "5개 항목" (ko)
 ```
 
 ### Rich Text (Trans Component)
@@ -229,41 +215,24 @@ i18n
 
 ---
 
-## Language Switching & RTL
+## Language Switching
 
 ```tsx
 import { changeLanguage, type SupportedLocale } from '@/lib/i18n';
-import { I18nManager, Platform } from 'react-native';
-import * as Updates from 'expo-updates';
 
 const LANGUAGES = [
-  { code: 'en', name: 'English', dir: 'ltr' },
-  { code: 'es', name: 'Español', dir: 'ltr' },
-  { code: 'id', name: 'Bahasa Indonesia', dir: 'ltr' },
-  { code: 'ja', name: '日本語', dir: 'ltr' },
-  { code: 'ko', name: '한국어', dir: 'ltr' },
-  { code: 'ar', name: 'العربية', dir: 'rtl' },
-  { code: 'pt-BR', name: 'Português (Brasil)', dir: 'ltr' },
+  { code: 'en', name: 'English' },
+  { code: 'es', name: 'Español' },
+  { code: 'id', name: 'Bahasa Indonesia' },
+  { code: 'ja', name: '日本語' },
+  { code: 'ko', name: '한국어' },
+  { code: 'pt-BR', name: 'Português (Brasil)' },
 ] as const;
 
 async function handleChange(locale: SupportedLocale) {
-  const isRTL = LANGUAGES.find(l => l.code === locale)?.dir === 'rtl';
-  const needsRTLChange = I18nManager.isRTL !== isRTL;
-
   await changeLanguage(locale);
-
-  if (needsRTLChange && Platform.OS !== 'web') {
-    I18nManager.allowRTL(isRTL);
-    I18nManager.forceRTL(isRTL);
-    await Updates.reloadAsync();  // RTL requires app reload
-  }
 }
 ```
-
-**RTL styling tips:**
-- Use `start`/`end` instead of `left`/`right` — React Native auto-flips in RTL
-- `paddingStart: 16` is RTL-safe, `paddingLeft: 16` is not
-- `flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row'` for manual control
 
 ---
 
@@ -280,7 +249,6 @@ async function handleChange(locale: SupportedLocale) {
       "id": "./languages/id.json",
       "ja": "./languages/ja.json",
       "ko": "./languages/ko.json",
-      "ar": "./languages/ar.json",
       "pt-BR": "./languages/pt-BR.json"
     }
   }
