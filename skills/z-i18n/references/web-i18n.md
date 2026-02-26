@@ -1,4 +1,4 @@
-# Web i18n with Paraglide JS v2
+# Web i18n with Paraglide JS
 
 Compiler-based i18n — translations compile into tree-shakable JS functions. Unused messages are eliminated from the bundle. Full TypeScript type safety is automatic. Framework-agnostic: Next.js, SvelteKit, TanStack Start, Astro, React Router, or any Vite-based setup.
 

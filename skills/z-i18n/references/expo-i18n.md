@@ -1,6 +1,6 @@
 # Expo / React Native i18n with react-i18next
 
-Stack: `expo-localization` v17 + `i18next` v25 + `react-i18next` v16. TypeScript 5+.
+Stack: `expo-localization` + `i18next` + `react-i18next`. TypeScript 5+.
 
 ---
 
@@ -59,6 +59,7 @@ export const supportedLocales = Object.keys(resources) as SupportedLocale[];
 
 ```typescript
 // src/lib/i18n/index.ts
+import 'expo-sqlite/localStorage/install'; // localStorage polyfill — must be before any localStorage usage
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { getLocales } from 'expo-localization';
@@ -320,11 +321,11 @@ AppState.addEventListener('change', (nextState) => {
 
 | Pitfall | Solution |
 |---|---|
-| `compatibilityJSON: 'v3'` | Removed in i18next v24 — only JSON v4 supported |
-| AsyncStorage for language | Use `localStorage` polyfill — synchronous, no startup flash |
+| `compatibilityJSON: 'v3'` | Removed — only JSON v4 supported |
+| AsyncStorage for language | Use `expo-sqlite/localStorage/install` polyfill — synchronous, no startup flash |
 | Missing `react: { useSuspense: false }` | Required for React Native |
 | RTL change without reload | `I18nManager.forceRTL()` requires `Updates.reloadAsync()` |
 | Format logic in translations | Prefer `Intl` APIs in code |
 | Missing `escapeValue: false` | React Native already escapes — double-escaping breaks output |
 | Loading all namespaces at startup | Use `i18next-resources-to-backend` for lazy loading |
-| `Intl.PluralRules` unavailable | Required since i18next v24 — polyfill if Hermes < 0.70 |
+| `Intl.PluralRules` unavailable | Required by modern i18next — polyfill if Hermes < 0.70 |

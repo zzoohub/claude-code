@@ -2,7 +2,7 @@
 name: z-i18n
 description: |
   Internationalization (i18n) architecture and patterns for web and mobile apps.
-  Use when: adding multi-language support, setting up translation structure, configuring locale routing, language switching, pluralization, date/number/currency formatting, RTL support, translation key design.
+  Use when: adding multi-language support, setting up translation structure, configuring locale routing, language switching, pluralization, date/number/currency formatting, RTL support, translation key design. Also use when user says "translate my app", "make it multilingual", "add Korean/Japanese/Arabic support", "localize my app", or mentions hreflang, locale detection, or language picker.
   Do not use for: general React/Next.js patterns (use vercel-composition-patterns), general mobile patterns (use expo-app-design:building-native-ui), UX copy decisions (use z-copywriting).
   Workflow: Use alongside vercel-composition-patterns skill (web) or expo-app-design:building-native-ui skill (mobile).
 ---
@@ -15,12 +15,12 @@ description: |
 
 | Platform | Library | Architecture |
 |---|---|---|
-| Web (any framework) | `@inlang/paraglide-js` v2 | Compiler — translations become tree-shakable functions |
+| Web (any framework) | `@inlang/paraglide-js` | Compiler — translations become tree-shakable functions |
 | Expo / React Native | `expo-localization` + `react-i18next` + `i18next` | Runtime — i18next JSON v4 |
 
 Web: Paraglide JS compiles translation files into individual JS functions. Unused messages are eliminated from the bundle. Full TypeScript type safety is automatic. Works with Next.js, SvelteKit, TanStack Start, Astro, React Router, or any Vite-based framework.
 
-Mobile: react-i18next provides runtime i18n optimized for React Native's constraints (no Suspense for data fetching, localStorage persistence, RTL via I18nManager).
+Mobile: react-i18next provides runtime i18n with React Native constraints (no Suspense, localStorage persistence, RTL via I18nManager).
 
 ---
 
@@ -77,40 +77,41 @@ const isRTL = (locale: string) =>
 | ja, ko | `other` only |
 | ar | `zero`, `one`, `two`, `few`, `many`, `other` |
 
-### 6. Formatting Hook (Cross-Platform)
+### 6. Formatting Utilities (Cross-Platform)
+
+Platform-agnostic `Intl` wrappers. Each platform wraps this with its own locale source (Paraglide: `getLocale()`, i18next: `i18n.language`).
 
 ```typescript
-export const useFormat = () => {
-  const lang = useCurrentLocale();
-  return useMemo(() => ({
+export function createFormatters(locale: string) {
+  return {
     number: (v: number, opts?: Intl.NumberFormatOptions) =>
-      new Intl.NumberFormat(lang, opts).format(v),
+      new Intl.NumberFormat(locale, opts).format(v),
     currency: (v: number, cur = 'USD') =>
-      new Intl.NumberFormat(lang, { style: 'currency', currency: cur }).format(v),
+      new Intl.NumberFormat(locale, { style: 'currency', currency: cur }).format(v),
     date: (d: Date, opts?: Intl.DateTimeFormatOptions) =>
-      new Intl.DateTimeFormat(lang, { dateStyle: 'medium', ...opts }).format(d),
+      new Intl.DateTimeFormat(locale, { dateStyle: 'medium', ...opts }).format(d),
     relativeTime: (d: Date) => {
       const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
-      const rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });
+      const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
       if (Math.abs(diffSec) < 60) return rtf.format(-diffSec, 'second');
       if (Math.abs(diffSec) < 3600) return rtf.format(-Math.floor(diffSec / 60), 'minute');
       if (Math.abs(diffSec) < 86400) return rtf.format(-Math.floor(diffSec / 3600), 'hour');
       return rtf.format(-Math.floor(diffSec / 86400), 'day');
     },
-  }), [lang]);
-};
+  };
+}
 ```
 
 ---
 
 ## Platform-Specific Guides
 
-- **Web (Paraglide JS v2):** `references/web-i18n.md`
+- **Web (Paraglide JS):** `references/web-i18n.md`
   - Setup (Vite plugin / CLI), message format, SSR middleware
   - URL localization, language switcher, rich text, SEO
   - Framework notes: Next.js, SvelteKit, TanStack Start, Astro
 
-- **Expo (react-i18next + i18next v25):** `references/expo-i18n.md`
+- **Expo (react-i18next + i18next):** `references/expo-i18n.md`
   - Device detection, i18next init, JSON v4 pluralization
   - Lazy loading, RTL, language switching, native locale config
 
