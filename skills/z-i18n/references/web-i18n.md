@@ -2,7 +2,7 @@
 
 > **Version:** Paraglide JS v2.x (`@inlang/paraglide-js@^2.0.0`). v1 framework-specific adapters (`@inlang/paraglide-sveltekit`, `@inlang/paraglide-next`, `@inlang/paraglide-astro`) are deprecated — all functionality is consolidated into the core package.
 
-Compiler-based i18n — translations compile into tree-shakable JS functions. Unused messages are eliminated from the bundle. Full TypeScript type safety is automatic. Framework-agnostic: Next.js, SvelteKit, TanStack Start, Astro, React Router, or any Vite-based setup.
+Compiler-based i18n — translations compile into tree-shakable JS functions. Unused messages are eliminated from the bundle. Full TypeScript type safety is automatic. Framework-agnostic: SvelteKit, TanStack Start, Astro, React Router, or any Vite-based setup.
 
 ---
 
@@ -61,45 +61,6 @@ export default defineConfig({
     // ... other plugins (sveltekit(), react(), etc.)
   ],
 });
-```
-
-### Next.js (Webpack Plugin)
-
-For Next.js and other Webpack-based frameworks, use `@inlang/paraglide-webpack`:
-
-```bash
-bun add -D @inlang/paraglide-js @inlang/paraglide-webpack
-```
-
-```typescript
-// next.config.ts
-import { paraglideWebpackPlugin } from "@inlang/paraglide-webpack";
-
-const nextConfig = {
-  webpack: (config) => {
-    config.plugins.push(
-      paraglideWebpackPlugin({
-        project: "./project.inlang",
-        outdir: "./src/paraglide",
-        strategy: ["url", "cookie", "baseLocale"],
-      })
-    );
-    return config;
-  },
-};
-export default nextConfig;
-```
-
-**Fallback (no bundler plugin):** Use CLI compile directly:
-
-```json
-// package.json
-{
-  "scripts": {
-    "build": "paraglide compile --project ./project.inlang --outdir ./src/paraglide && next build",
-    "dev": "paraglide compile --project ./project.inlang --outdir ./src/paraglide --watch & next dev"
-  }
-}
 ```
 
 ---
@@ -277,12 +238,6 @@ richText(m.terms(), {
 // SvelteKit — src/hooks.server.ts
 export const handle: Handle = ({ event, resolve }) =>
   paraglideMiddleware(event.request, ({ request }) => resolve({ ...event, request }));
-
-// Next.js — middleware.ts
-export function middleware(request: Request) {
-  return paraglideMiddleware(request, () => NextResponse.next());
-}
-export const config = { matcher: ["/((?!api|_next|_vercel|.*\\..*).*)"] };
 
 // TanStack Start — server.ts (pass original req to handler, NOT the modified one)
 export default {

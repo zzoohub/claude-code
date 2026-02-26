@@ -4,7 +4,7 @@ description: |
   Internationalization (i18n) architecture and patterns for web and mobile apps.
   Use when: adding multi-language support, setting up translation structure, configuring locale routing, language switching, pluralization, date/number/currency formatting, translation key design. Also use when user says "translate my app", "make it multilingual", "add Korean/Japanese support", "localize my app", or mentions hreflang, locale detection, or language picker.
   Do not use for: general React/Next.js patterns (use vercel-composition-patterns), general mobile patterns (use expo-app-design:building-native-ui), UX copy decisions (use z-copywriting).
-  Workflow: Use alongside vercel-composition-patterns skill (web) or expo-app-design:building-native-ui skill (mobile).
+  Workflow: Use alongside vercel-composition-patterns skill (Next.js/web) or expo-app-design:building-native-ui skill (mobile).
 ---
 
 # i18n Architecture
@@ -15,10 +15,13 @@ description: |
 
 | Platform | Library | Architecture |
 |---|---|---|
-| Web (any framework) | `@inlang/paraglide-js` v2 | Compiler — translations become tree-shakable functions |
+| Next.js | `next-intl` v4 | ICU MessageFormat — first-class Server Component support, built-in type safety |
+| Web (Vite-based) | `@inlang/paraglide-js` v2 | Compiler — translations become tree-shakable functions |
 | Expo / React Native | `expo-localization` + `react-i18next` + `i18next` | Runtime — i18next JSON v4 |
 
-Web: Paraglide JS v2 compiles translation files into tree-shakable functions with automatic TypeScript type safety. Works with Next.js, SvelteKit, TanStack Start, Astro, React Router, or any Vite-based framework. v2 merged all framework adapters into the core package.
+Next.js: next-intl v4 provides ICU MessageFormat with first-class Server Component support, built-in type safety via `AppConfig`, and automatic locale routing.
+
+Web (Vite-based): Paraglide JS v2 compiles translation files into tree-shakable functions with automatic TypeScript type safety. Works with SvelteKit, TanStack Start, Astro, React Router, or any Vite-based framework. v2 merged all framework adapters into the core package.
 
 Mobile: react-i18next provides runtime i18n with React Native constraints (no Suspense, localStorage persistence, RTL via I18nManager).
 
@@ -94,10 +97,15 @@ export function createFormatters(locale: string) {
 
 ## Platform-Specific Guides
 
-- **Web (Paraglide JS):** `references/web-i18n.md`
+- **Next.js (next-intl v4):** `references/next-i18n.md`
+  - Setup, middleware, Server/Client Component usage
+  - ICU MessageFormat, type safety via `AppConfig`, static rendering
+  - Localized navigation, SEO, language switcher
+
+- **Web / Vite-based (Paraglide JS):** `references/web-i18n.md`
   - Setup (Vite plugin / CLI), message format, SSR middleware
   - URL localization, language switcher, rich text, SEO
-  - Framework notes: Next.js, SvelteKit, TanStack Start, Astro
+  - Framework notes: SvelteKit, TanStack Start, Astro, React Router
 
 - **Expo (react-i18next + i18next):** `references/expo-i18n.md`
   - Device detection, i18next init, JSON v4 pluralization
