@@ -13,109 +13,75 @@ description: |
 
 ## Platform → Library Matrix
 
-| Platform | Library | Version | Message Format |
-|---|---|---|---|
-| Next.js App Router | `next-intl` | 4.x | ICU MessageFormat |
-| Expo / React Native | `expo-localization` + `react-i18next` + `i18next` | expo-localization 17.x, i18next 25.x | i18next JSON v4 |
+| Platform | Library | Architecture |
+|---|---|---|
+| Web (any framework) | `@inlang/paraglide-js` v2 | Compiler — translations become tree-shakable functions |
+| Expo / React Native | `expo-localization` + `react-i18next` + `i18next` | Runtime — i18next JSON v4 |
 
-Both platforms share the same JSON translation files. The difference is how they load and render them.
+Web: Paraglide JS compiles translation files into individual JS functions. Unused messages are eliminated from the bundle. Full TypeScript type safety is automatic. Works with Next.js, SvelteKit, TanStack Start, Astro, React Router, or any Vite-based framework.
+
+Mobile: react-i18next provides runtime i18n optimized for React Native's constraints (no Suspense for data fetching, localStorage persistence, RTL via I18nManager).
 
 ---
 
 ## Core Principles
 
-These apply regardless of platform. Drawn from Airbnb, Shopify, and Lokalise engineering practices.
+### 1. Organize Keys by Feature
 
-### 1. Namespace by Feature, Not by Page
-
-Split translation files by domain/feature. Pages change; features are stable.
-
-```
-messages/          # next-intl (flat by locale)
-├── en.json
-└── ko.json
-
-locales/           # i18next (nested by locale + namespace)
-├── en/
-│   ├── common.json
-│   ├── auth.json
-│   └── errors.json
-└── ko/
-    ├── common.json
-    ├── auth.json
-    └── errors.json
-```
-
-### 2. Key Naming Convention
-
-Use **camelCase**, **2-3 levels max**, namespace by feature. The key is a contract between developer, translator, and TMS.
+Use dot-prefixed keys grouped by domain/feature. Features are stable; pages change.
 
 ```json
 {
-  "auth": {
-    "login": {
-      "title": "Sign In",
-      "submit": "Sign In",
-      "forgotPassword": "Forgot password?"
-    },
-    "register": {
-      "title": "Create Account",
-      "submit": "Sign Up"
-    }
-  }
+  "auth.login.title": "Sign In",
+  "auth.login.submit": "Sign In",
+  "common.save": "Save",
+  "common.cancel": "Cancel"
 }
 ```
+
+For mobile (i18next), same principle with namespace files: `locales/en/auth.json`, `locales/en/common.json`.
 
 **Rules:**
 - Key describes purpose, not the text: `auth.login.submit` not `auth.login.signInButton`
 - Never concatenate translated strings — full sentences only
 - One key per unique UI instance (even if English text is identical — translations may differ)
-- `common` namespace for truly shared strings only: `common.save`, `common.cancel`, `common.loading`
-- Never nest deeper than 3 levels
+- `common.*` prefix for truly shared strings only
+- 2-3 levels max: `feature.context.purpose`
 
-### 3. Type Safety Is Mandatory
+### 2. Type Safety Is Mandatory
 
-Both platforms support type-safe keys via module augmentation. See platform references for setup:
-- Next.js: `references/nextjs-i18n.md` → `AppConfig` interface in `next-intl` (v4+: typed locale, messages, and ICU arguments)
-- Expo: `references/expo-i18n.md` → `CustomTypeOptions` in `i18next` (typed resources and namespaces)
+- Web (Paraglide): Automatic — compiler generates typed functions. No configuration needed.
+- Mobile (react-i18next): Module augmentation with `CustomTypeOptions`. See `references/expo-i18n.md`.
 
-### 4. Never Use Intl Formatters in Translation Strings When Avoidable
+### 3. Formatting in Code, Not in Strings
 
-For dates, numbers, and currencies, prefer the framework's built-in formatting hooks over embedding format logic in translation strings. This keeps translations clean for translators.
+Prefer `Intl` formatters in code or Paraglide's built-in message formatters. Keep translation strings clean.
+Exception: Pluralization belongs in the translation string.
 
-```tsx
-// ✅ Formatting in code, translation string stays simple
-t('order.total', { price: format.currency(amount, 'USD') })
-
-// ❌ Format logic embedded in translation string
-// "order.total": "Total: {{val, currency(USD)}}"
-```
-
-Exception: Pluralization belongs in the translation string (ICU `{count, plural, ...}` or i18next `_one`/`_other` suffixes).
-
-### 5. RTL Support from Day One
+### 4. RTL Support from Day One
 
 ```typescript
-export const LANGUAGES = [
-  { code: 'en', name: 'English', dir: 'ltr' },
-  { code: 'ko', name: '한국어', dir: 'ltr' },
-  { code: 'ar', name: 'العربية', dir: 'rtl' },
-] as const;
-
-export type LanguageCode = (typeof LANGUAGES)[number]['code'];
-export const isRTL = (code: string) =>
-  LANGUAGES.find(l => l.code === code)?.dir === 'rtl';
+const RTL_LOCALES = ['ar', 'he', 'fa', 'ur'] as const;
+const isRTL = (locale: string) =>
+  (RTL_LOCALES as readonly string[]).includes(locale);
 ```
 
-For React Native, RTL requires `I18nManager.forceRTL()` + app reload. See `references/expo-i18n.md`.
+- Web: `<html dir="rtl">` + CSS logical properties (`margin-inline-start`, not `margin-left`)
+- Mobile: `I18nManager.forceRTL()` + app reload. See `references/expo-i18n.md`.
+
+### 5. Plural Categories by Language
+
+| Language | Plural categories |
+|---|---|
+| en, es, pt-BR, id | `one`, `other` |
+| ko | `other` only |
+| ar | `zero`, `one`, `two`, `few`, `many`, `other` |
 
 ### 6. Formatting Hook (Cross-Platform)
 
-For formatting outside of translation strings. Both platforms can share this pattern:
-
 ```typescript
 export const useFormat = () => {
-  const lang = useCurrentLocale(); // abstracted per platform
+  const lang = useCurrentLocale();
   return useMemo(() => ({
     number: (v: number, opts?: Intl.NumberFormatOptions) =>
       new Intl.NumberFormat(lang, opts).format(v),
@@ -139,34 +105,25 @@ export const useFormat = () => {
 
 ## Platform-Specific Guides
 
-Detailed setup, patterns, and code for each platform:
-
-- **Next.js (next-intl v4):** `references/nextjs-i18n.md`
-  - Routing setup, middleware, Server/Client Component patterns
-  - `AppConfig` type augmentation with strictly-typed locale and ICU arguments
-  - `hasLocale()` utility for type-safe locale validation
-  - ICU pluralization, rich text, static rendering
-  - `NextIntlClientProvider` auto-inherits messages from server
-  - SEO: `<html lang>`, `alternateLinks`, metadata localization
+- **Web (Paraglide JS v2):** `references/web-i18n.md`
+  - Setup (Vite plugin / CLI), message format, SSR middleware
+  - URL localization, language switcher, rich text, SEO
+  - Framework notes: Next.js, SvelteKit, TanStack Start, Astro
 
 - **Expo (react-i18next + i18next v25):** `references/expo-i18n.md`
-  - `expo-localization` v17 device detection, `supportedLocales` for OS language picker
-  - i18next init, namespace loading, JSON v4 pluralization (only format since i18next v24)
-  - Lazy loading namespaces with `i18next-resources-to-backend`
-  - RTL with `I18nManager`, app reload pattern
-  - iOS/Android native locale config in `app.json`
+  - Device detection, i18next init, JSON v4 pluralization
+  - Lazy loading, RTL, language switching, native locale config
 
 ---
 
 ## Checklist
 
-- [ ] Translations split by feature namespace (auth, common, errors, etc.)
-- [ ] Key naming: camelCase, 2-3 levels max, descriptive purpose
-- [ ] Type-safe keys configured (`AppConfig` for next-intl v4, `CustomTypeOptions` for i18next)
-- [ ] `common` namespace for shared strings only, with strict governance
-- [ ] Pluralization uses platform-native syntax (ICU for next-intl, JSON v4 suffixes for i18next)
-- [ ] Formatting (dates, numbers, currency) done in code, not in translation strings
-- [ ] RTL support planned if targeting Arabic/Hebrew/Persian
-- [ ] Language persistence configured (`localeCookie` for web, MMKV for mobile)
-- [ ] SEO: `<html lang>`, `hreflang` alternates, localized metadata (web only)
-- [ ] No string concatenation in translations — full sentences always
+- [ ] Keys organized by feature (`auth.login.title`)
+- [ ] Type-safe keys (Paraglide: automatic, i18next: `CustomTypeOptions`)
+- [ ] Pluralization uses platform-native syntax (Paraglide variants / i18next JSON v4)
+- [ ] Formatting done in code, not in translation strings
+- [ ] RTL: `dir` attribute + CSS logical properties (web) or `I18nManager` (mobile)
+- [ ] Language persistence: cookie (web), localStorage (mobile)
+- [ ] SEO: `<html lang>`, `hreflang` alternates (web only)
+- [ ] No string concatenation — full sentences always
+- [ ] Generated `src/paraglide/` not manually edited (web)

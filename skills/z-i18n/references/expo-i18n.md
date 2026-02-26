@@ -1,67 +1,53 @@
 # Expo / React Native i18n with react-i18next
 
-**Docs:**
-- [Expo Localization](https://docs.expo.dev/guides/localization/)
-- [react-i18next](https://react.i18next.com/)
-- [i18next](https://www.i18next.com/)
-
-Stack: `expo-localization` v17 (device locale detection) + `i18next` v25 (core engine) + `react-i18next` v16 (React bindings). Requires TypeScript 5+.
+Stack: `expo-localization` v17 + `i18next` v25 + `react-i18next` v16. TypeScript 5+.
 
 ---
 
 ## Setup
 
-### 1. Install
-
 ```bash
 bun add expo-localization i18next react-i18next
-bun add react-native-mmkv   # for language persistence (faster than AsyncStorage)
 ```
 
-### 2. File Structure
+### File Structure
 
 ```
 src/
-├── lib/
-│   └── i18n/
-│       ├── index.ts              # i18next init + export
-│       ├── resources.ts          # Resource map
-│       └── types.ts              # Type definitions
+├── lib/i18n/
+│   ├── index.ts          # i18next init + export
+│   ├── resources.ts      # Resource map
+│   └── types.ts          # Type definitions
 ├── locales/
 │   ├── en/
 │   │   ├── common.json
 │   │   ├── auth.json
 │   │   └── errors.json
-│   └── ko/
-│       ├── common.json
-│       ├── auth.json
-│       └── errors.json
+│   ├── es/
+│   ├── id/
+│   ├── ko/
+│   ├── ar/
+│   └── pt-BR/
 └── app/
-    └── _layout.tsx               # Import i18n here
+    └── _layout.tsx       # Import i18n here
 ```
 
-### 3. i18next Config
+### Resources & Config
 
 ```typescript
 // src/lib/i18n/resources.ts
 import enCommon from '@/locales/en/common.json';
 import enAuth from '@/locales/en/auth.json';
 import enErrors from '@/locales/en/errors.json';
-import koCommon from '@/locales/ko/common.json';
-import koAuth from '@/locales/ko/auth.json';
-import koErrors from '@/locales/ko/errors.json';
+// ... import other locales similarly
 
 export const resources = {
-  en: {
-    common: enCommon,
-    auth: enAuth,
-    errors: enErrors,
-  },
-  ko: {
-    common: koCommon,
-    auth: koAuth,
-    errors: koErrors,
-  },
+  en: { common: enCommon, auth: enAuth, errors: enErrors },
+  es: { common: esCommon, auth: esAuth, errors: esErrors },
+  id: { common: idCommon, auth: idAuth, errors: idErrors },
+  ko: { common: koCommon, auth: koAuth, errors: koErrors },
+  ar: { common: arCommon, auth: arAuth, errors: arErrors },
+  'pt-BR': { common: ptBRCommon, auth: ptBRAuth, errors: ptBRErrors },
 } as const;
 
 export const defaultNS = 'common';
@@ -75,95 +61,64 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { getLocales } from 'expo-localization';
 import { resources, defaultNS, supportedLocales, type SupportedLocale } from './resources';
-import { storage } from '@/lib/storage'; // your MMKV instance
 
 const LANGUAGE_KEY = 'app.language';
 
 function getDeviceLocale(): SupportedLocale {
   const deviceLang = getLocales()[0]?.languageCode ?? 'en';
   return supportedLocales.includes(deviceLang as SupportedLocale)
-    ? (deviceLang as SupportedLocale)
-    : 'en';
+    ? (deviceLang as SupportedLocale) : 'en';
 }
 
 function getSavedLocale(): SupportedLocale | null {
-  const saved = storage.getString(LANGUAGE_KEY);
-  if (saved && supportedLocales.includes(saved as SupportedLocale)) {
-    return saved as SupportedLocale;
-  }
-  return null;
+  const saved = localStorage.getItem(LANGUAGE_KEY);
+  return saved && supportedLocales.includes(saved as SupportedLocale)
+    ? (saved as SupportedLocale) : null;
 }
-
-const initialLocale = getSavedLocale() ?? getDeviceLocale();
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: initialLocale,
+  lng: getSavedLocale() ?? getDeviceLocale(),
   defaultNS,
   fallbackLng: 'en',
   interpolation: { escapeValue: false },
-  react: { useSuspense: false },
+  react: { useSuspense: false },  // required for React Native
 });
 
 export default i18n;
 
 export async function changeLanguage(locale: SupportedLocale) {
   await i18n.changeLanguage(locale);
-  storage.set(LANGUAGE_KEY, locale);
+  localStorage.setItem(LANGUAGE_KEY, locale);
 }
 ```
-
-**Note:** `react: { useSuspense: false }` is still required for React Native. Even with bundled translations, keep it as a safety net since React Native's Suspense for data fetching is not stable on native.
-
-### 4. Import in Root Layout
 
 ```tsx
 // src/app/_layout.tsx
 import '@/lib/i18n'; // Side-effect import — must be first
-
-export default function RootLayout() {
-  // ... your layout
-}
 ```
 
 ---
 
 ## Type Safety
 
-### Define types from resources
-
 ```typescript
 // src/lib/i18n/types.ts
 import { resources, defaultNS } from './resources';
 
-// Augment i18next types
 declare module 'i18next' {
   interface CustomTypeOptions {
     defaultNS: typeof defaultNS;
-    resources: (typeof resources)['en'];  // Use default locale as type source
+    resources: (typeof resources)['en'];
   }
 }
 ```
 
-This gives:
-- Autocompletion for `t('auth:login.title')`
-- Error if key doesn't exist
-- Namespace-aware: `t('login.title')` uses `common` (default), `t('auth:login.title')` uses `auth`
-
-### Import the types file
-
-Make sure the types file is included in your `tsconfig.json`:
-```json
-{
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/lib/i18n/types.ts"]
-}
-```
+Gives autocomplete for `t('auth:login.title')`, errors on missing keys, namespace-aware resolution. Ensure this file is in `tsconfig.json` includes.
 
 ---
 
 ## Usage
-
-### Basic Translation
 
 ```tsx
 import { useTranslation } from 'react-i18next';
@@ -182,47 +137,45 @@ function LoginScreen() {
 ### Interpolation
 
 ```json
-// locales/en/common.json
 { "greeting": "Hello, {{name}}!" }
 ```
 ```tsx
 t('greeting', { name: 'Alice' })
 ```
 
-### Pluralization (JSON v4 — i18next >= 21, only format since v24)
+### Pluralization (JSON v4)
 
-Uses `Intl.PluralRules` suffixes: `_zero`, `_one`, `_two`, `_few`, `_many`, `_other`.
-**Variable must be `count`.** JSON v3 format (`compatibilityJSON: 'v3'`) was removed in i18next v24.
-
-```json
-{
-  "items_zero": "No items",
-  "items_one": "{{count}} item",
-  "items_other": "{{count}} items"
-}
-```
-```tsx
-t('items', { count: 0 })   // "No items"
-t('items', { count: 1 })   // "1 item"
-t('items', { count: 5 })   // "5 items"
-```
-
-### Ordinal Plurals
+Uses `Intl.PluralRules` suffixes. Variable must be `count`.
 
 ```json
-{
-  "place_ordinal_one": "{{count}}st",
-  "place_ordinal_two": "{{count}}nd",
-  "place_ordinal_few": "{{count}}rd",
-  "place_ordinal_other": "{{count}}th"
-}
-```
-```tsx
-t('place', { count: 1, ordinal: true })  // "1st"
-t('place', { count: 3, ordinal: true })  // "3rd"
+// locales/en/common.json — one/other
+{ "items_one": "{{count}} item", "items_other": "{{count}} items" }
 ```
 
-### Trans Component (Rich Text)
+```json
+// locales/ar/common.json — zero/one/two/few/many/other
+{
+  "items_zero": "لا عناصر",
+  "items_one": "عنصر واحد",
+  "items_two": "عنصران",
+  "items_few": "{{count}} عناصر",
+  "items_many": "{{count}} عنصرًا",
+  "items_other": "{{count}} عنصر"
+}
+```
+
+```json
+// locales/ko/common.json — other only
+{ "items_other": "{{count}}개 항목" }
+```
+
+```tsx
+t('items', { count: 0 })   // "لا عناصر" (ar) / "0개 항목" (ko)
+t('items', { count: 1 })   // "1 item" (en) / "عنصر واحد" (ar)
+t('items', { count: 5 })   // "5 items" (en) / "5 عناصر" (ar)
+```
+
+### Rich Text (Trans Component)
 
 ```tsx
 import { Trans } from 'react-i18next';
@@ -239,168 +192,86 @@ import { Trans } from 'react-i18next';
 
 ---
 
-## Built-in Intl Formatters (i18next >= 21.3.0)
-
-Use directly in translation strings without custom code:
-
-```json
-{
-  "visitors": "Total: {{val, number}}",
-  "price": "Price: {{val, currency(USD)}}",
-  "createdAt": "Created: {{val, datetime}}",
-  "lastSeen": "Active {{val, relativetime}}"
-}
-```
-
-For more control, pass `formatParams`:
-```tsx
-t('createdAt', {
-  val: new Date(),
-  formatParams: {
-    val: { weekday: 'long', month: 'long', day: 'numeric' },
-  },
-});
-```
-
-**Rule:** Never use `interpolation.format` — it's legacy since i18next 21.3.0 and triggers deprecation warnings.
-
----
-
 ## Lazy Loading Namespaces
 
-For larger apps, use `i18next-resources-to-backend` instead of bundling all translations upfront:
+For larger apps, use `i18next-resources-to-backend` instead of bundling all translations:
 
 ```bash
 bun add i18next-resources-to-backend
 ```
 
 ```typescript
-// src/lib/i18n/index.ts
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
 import resourcesToBackend from 'i18next-resources-to-backend';
 
 i18n
   .use(initReactI18next)
-  .use(
-    resourcesToBackend(
-      (language: string, namespace: string) =>
-        import(`@/locales/${language}/${namespace}.json`)
-    )
-  )
+  .use(resourcesToBackend(
+    (language: string, namespace: string) =>
+      import(`@/locales/${language}/${namespace}.json`)
+  ))
   .init({
     lng: initialLocale,
     fallbackLng: 'en',
-    ns: ['common'],          // only load common initially
+    ns: ['common'],
     defaultNS: 'common',
     interpolation: { escapeValue: false },
     react: { useSuspense: false },
   });
 ```
 
-Requesting a namespace in a component triggers the dynamic import:
-```tsx
-const { t } = useTranslation('settings'); // lazy-loads settings namespace
-```
-
 ---
 
-## Language Switching
+## Language Switching & RTL
 
 ```tsx
-import { useTranslation } from 'react-i18next';
 import { changeLanguage, type SupportedLocale } from '@/lib/i18n';
 import { I18nManager, Platform } from 'react-native';
 import * as Updates from 'expo-updates';
-import { LANGUAGES } from '@/lib/i18n/config';
 
-function LanguagePicker() {
-  const { i18n } = useTranslation();
+const LANGUAGES = [
+  { code: 'en', name: 'English', dir: 'ltr' },
+  { code: 'es', name: 'Español', dir: 'ltr' },
+  { code: 'id', name: 'Bahasa Indonesia', dir: 'ltr' },
+  { code: 'ko', name: '한국어', dir: 'ltr' },
+  { code: 'ar', name: 'العربية', dir: 'rtl' },
+  { code: 'pt-BR', name: 'Português (Brasil)', dir: 'ltr' },
+] as const;
 
-  async function handleChange(locale: SupportedLocale) {
-    const isRTL = LANGUAGES.find(l => l.code === locale)?.dir === 'rtl';
-    const needsRTLChange = I18nManager.isRTL !== isRTL;
+async function handleChange(locale: SupportedLocale) {
+  const isRTL = LANGUAGES.find(l => l.code === locale)?.dir === 'rtl';
+  const needsRTLChange = I18nManager.isRTL !== isRTL;
 
-    await changeLanguage(locale);
+  await changeLanguage(locale);
 
-    if (needsRTLChange && Platform.OS !== 'web') {
-      I18nManager.allowRTL(isRTL);
-      I18nManager.forceRTL(isRTL);
-      await Updates.reloadAsync();  // RTL requires app reload
-    }
+  if (needsRTLChange && Platform.OS !== 'web') {
+    I18nManager.allowRTL(isRTL);
+    I18nManager.forceRTL(isRTL);
+    await Updates.reloadAsync();  // RTL requires app reload
   }
-
-  return (
-    <View>
-      {LANGUAGES.map((lang) => (
-        <Pressable key={lang.code} onPress={() => handleChange(lang.code)}>
-          <Text style={i18n.language === lang.code ? styles.active : undefined}>
-            {lang.name}
-          </Text>
-        </Pressable>
-      ))}
-    </View>
-  );
 }
 ```
 
----
-
-## RTL Support
-
-RTL in React Native requires `I18nManager` + app reload:
-
-```typescript
-import { I18nManager, Platform } from 'react-native';
-import * as Updates from 'expo-updates';
-
-export function applyRTL(isRTL: boolean) {
-  if (Platform.OS === 'web') return;
-  if (I18nManager.isRTL === isRTL) return;
-
-  I18nManager.allowRTL(isRTL);
-  I18nManager.forceRTL(isRTL);
-  Updates.reloadAsync();
-}
-```
-
-For conditional styling:
-```tsx
-import { I18nManager } from 'react-native';
-
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row',
-  },
-});
-```
-
-**Tip:** Use `start`/`end` instead of `left`/`right` in styles — React Native auto-flips these in RTL:
-```tsx
-// RTL-safe
-{ paddingStart: 16, textAlign: 'left' }  // 'left' is logical in RN
-
-// Not RTL-safe with manual row-reverse
-{ paddingLeft: 16 }
-```
+**RTL styling tips:**
+- Use `start`/`end` instead of `left`/`right` — React Native auto-flips in RTL
+- `paddingStart: 16` is RTL-safe, `paddingLeft: 16` is not
+- `flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row'` for manual control
 
 ---
 
 ## Native Locale Config (app.json)
 
-For iOS App Store language support and system-level locale strings:
-
 ```json
 {
   "expo": {
     "ios": {
-      "infoPlist": {
-        "CFBundleAllowMixedLocalizations": true
-      }
+      "infoPlist": { "CFBundleAllowMixedLocalizations": true }
     },
     "locales": {
-      "ko": "./languages/korean.json",
-      "ja": "./languages/japanese.json"
+      "es": "./languages/es.json",
+      "id": "./languages/id.json",
+      "ko": "./languages/ko.json",
+      "ar": "./languages/ar.json",
+      "pt-BR": "./languages/pt-BR.json"
     }
   }
 }
@@ -409,21 +280,16 @@ For iOS App Store language support and system-level locale strings:
 Locale file format:
 ```json
 {
-  "ios": {
-    "CFBundleDisplayName": "앱 이름",
-    "NSCameraUsageDescription": "카메라 사용 설명"
-  },
-  "android": {
-    "app_name": "앱 이름"
-  }
+  "ios": { "CFBundleDisplayName": "앱 이름", "NSCameraUsageDescription": "카메라 사용 설명" },
+  "android": { "app_name": "앱 이름" }
 }
 ```
 
-**expo-localization v17:** New `supportedLocales` option enables the OS-level "preferred language" picker for your app, allowing users to set the app language from device settings.
+**expo-localization v17:** `supportedLocales` enables the OS-level "preferred language" picker for your app.
 
 ---
 
-## Language Detection on Android
+## Android Language Detection
 
 Android doesn't reset the app when device language changes. Listen for `AppState`:
 
@@ -441,44 +307,15 @@ AppState.addEventListener('change', (nextState) => {
 
 ---
 
-## Domain-Specific Hooks
-
-Create typed convenience hooks per feature to avoid scattering namespace strings:
-
-```typescript
-import { useTranslation } from 'react-i18next';
-
-export function useAuthI18n() {
-  const { t } = useTranslation('auth');
-  return { t };
-}
-
-export function useCommonI18n() {
-  const { t } = useTranslation('common');
-  return { t };
-}
-```
-
-Usage:
-```tsx
-function LoginScreen() {
-  const { t } = useAuthI18n();
-  return <Text>{t('login.title')}</Text>;
-}
-```
-
----
-
 ## Common Pitfalls
 
 | Pitfall | Solution |
 |---|---|
-| `compatibilityJSON: 'v3'` in config | Removed in i18next v24 — only JSON v4 is supported. Use [i18next-v4-format-converter](https://github.com/i18next/i18next-v4-format-converter) to migrate |
-| Using AsyncStorage for language (slow) | Use `react-native-mmkv` — synchronous, no startup flash |
-| Forgetting `react: { useSuspense: false }` | Required for React Native — no stable Suspense for data fetching on native |
-| RTL change without app reload | `I18nManager.forceRTL()` only takes effect after reload via `Updates.reloadAsync()` |
-| Embedding format logic in translation strings | Prefer formatting in code with `Intl` APIs; keep translations clean |
-| Not setting `escapeValue: false` | React Native already escapes — double-escaping breaks output |
-| Loading all namespaces at startup | Use `i18next-resources-to-backend` for lazy loading in large apps |
-| Using `initImmediate` in config | Renamed to `initAsync` in i18next v24 |
-| `Intl.PluralRules` not available | Required since i18next v24 — polyfill if targeting Hermes < 0.70 |
+| `compatibilityJSON: 'v3'` | Removed in i18next v24 — only JSON v4 supported |
+| AsyncStorage for language | Use `localStorage` polyfill — synchronous, no startup flash |
+| Missing `react: { useSuspense: false }` | Required for React Native |
+| RTL change without reload | `I18nManager.forceRTL()` requires `Updates.reloadAsync()` |
+| Format logic in translations | Prefer `Intl` APIs in code |
+| Missing `escapeValue: false` | React Native already escapes — double-escaping breaks output |
+| Loading all namespaces at startup | Use `i18next-resources-to-backend` for lazy loading |
+| `Intl.PluralRules` unavailable | Required since i18next v24 — polyfill if Hermes < 0.70 |
