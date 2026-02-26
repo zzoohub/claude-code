@@ -138,14 +138,27 @@ When a component adds a prop that changes **behavior** (not just appearance), sp
 
 ### Architecture
 
+Mount point varies by project architecture:
+
 ```
-src/shared/ui/
+FSD          → src/shared/ui/
+General      → src/components/ui/
+3D / WebXR   → src/ui/design-system/
+Monorepo     → packages/ui/src/
+```
+
+Internal structure is always the same:
+
+```
+<mount>/
 ├── tokens/          # primitive, semantic, themes
 ├── headless/        # useButton, useToggle, useDialog (behavior + a11y)
 ├── styled/          # Button, Toggle, Dialog (headless + tokens = UI)
 ├── primitives/      # Box, Text, Stack (layout atoms)
 └── patterns/        # FormField, ConfirmDialog (compositions)
 ```
+
+When using shadcn, `styled/` is replaced by `ui/` (shadcn CLI target) and `headless/` is unnecessary (Radix is bundled).
 
 Headless hooks own behavior: ARIA, keyboard, focus, state. Styled components own appearance: tokens, variants, sizing. This separation means a Button's click/keyboard/focus logic is written once and reused whether it looks like a primary button, ghost button, or icon button.
 

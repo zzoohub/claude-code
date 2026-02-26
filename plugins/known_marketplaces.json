@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-02-25T09:15:09.588Z",
+    "lastUpdated": "2026-02-26T04:38:37.239Z",
     "autoUpdate": true
   },
   "expo-plugins": {
@@ -14,7 +14,7 @@
       "repo": "expo/skills"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/expo-plugins",
-    "lastUpdated": "2026-02-23T23:20:25.829Z",
+    "lastUpdated": "2026-02-26T06:51:51.360Z",
     "autoUpdate": true
   },
   "claude-d2-diagrams": {
@@ -32,7 +32,7 @@
       "repo": "anthropics/knowledge-work-plugins"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/knowledge-work-plugins",
-    "lastUpdated": "2026-02-25T10:37:40.254Z",
+    "lastUpdated": "2026-02-26T06:43:48.266Z",
     "autoUpdate": true
   },
   "pulumi-agent-skills": {
@@ -41,7 +41,7 @@
       "repo": "pulumi/agent-skills"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/pulumi-agent-skills",
-    "lastUpdated": "2026-02-25T09:31:31.615Z",
+    "lastUpdated": "2026-02-25T13:20:48.549Z",
     "autoUpdate": true
   },
   "neon": {
@@ -50,7 +50,7 @@
       "repo": "neondatabase-labs/ai-rules"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/neon",
-    "lastUpdated": "2026-02-25T08:43:37.324Z",
+    "lastUpdated": "2026-02-26T02:05:22.171Z",
     "autoUpdate": true
   }
 }
