@@ -21,6 +21,7 @@ project-root/
 │   ├── en.json
 │   ├── es.json
 │   ├── id.json
+│   ├── ja.json
 │   ├── ko.json
 │   ├── ar.json
 │   └── pt-BR.json
@@ -37,7 +38,7 @@ project-root/
 // project.inlang/settings.json
 {
   "baseLocale": "en",
-  "locales": ["en", "es", "id", "ko", "ar", "pt-BR"],
+  "locales": ["en", "es", "id", "ja", "ko", "ar", "pt-BR"],
   "modules": [
     "https://cdn.jsdelivr.net/npm/@inlang/plugin-message-format@latest/dist/index.js"
   ],
@@ -113,6 +114,28 @@ Uses `Intl.PluralRules`. Each language needs only its relevant plural categories
 ```
 
 ```json
+// messages/ja.json — other only (East Asian languages have no grammatical plural)
+{
+  "follower_count": [{
+    "declarations": ["input count", "local countPlural = count: plural"],
+    "selectors": ["countPlural"],
+    "match": { "countPlural=other": "フォロワー {count}人" }
+  }]
+}
+```
+
+```json
+// messages/ko.json — other only (East Asian languages have no grammatical plural)
+{
+  "follower_count": [{
+    "declarations": ["input count", "local countPlural = count: plural"],
+    "selectors": ["countPlural"],
+    "match": { "countPlural=other": "팔로워 {count}명" }
+  }]
+}
+```
+
+```json
 // messages/ar.json — zero/one/two/few/many/other (Arabic has 6 plural categories)
 {
   "follower_count": [{
@@ -130,21 +153,10 @@ Uses `Intl.PluralRules`. Each language needs only its relevant plural categories
 }
 ```
 
-```json
-// messages/ko.json — other only (East Asian languages have no grammatical plural)
-{
-  "follower_count": [{
-    "declarations": ["input count", "local countPlural = count: plural"],
-    "selectors": ["countPlural"],
-    "match": { "countPlural=other": "팔로워 {count}명" }
-  }]
-}
-```
-
 | Language | Plural categories |
 |---|---|
 | en, es, pt-BR, id | `one`, `other` |
-| ko | `other` only |
+| ja, ko | `other` only |
 | ar | `zero`, `one`, `two`, `few`, `many`, `other` |
 
 ### Number & Date Formatting
@@ -301,6 +313,7 @@ const LOCALE_NAMES: Record<string, string> = {
   en: "English",
   es: "Español",
   id: "Bahasa Indonesia",
+  ja: "日本語",
   ko: "한국어",
   ar: "العربية",
   "pt-BR": "Português (Brasil)",

@@ -25,6 +25,7 @@ src/
 │   │   └── errors.json
 │   ├── es/
 │   ├── id/
+│   ├── ja/
 │   ├── ko/
 │   ├── ar/
 │   └── pt-BR/
@@ -45,6 +46,7 @@ export const resources = {
   en: { common: enCommon, auth: enAuth, errors: enErrors },
   es: { common: esCommon, auth: esAuth, errors: esErrors },
   id: { common: idCommon, auth: idAuth, errors: idErrors },
+  ja: { common: jaCommon, auth: jaAuth, errors: jaErrors },
   ko: { common: koCommon, auth: koAuth, errors: koErrors },
   ar: { common: arCommon, auth: arAuth, errors: arErrors },
   'pt-BR': { common: ptBRCommon, auth: ptBRAuth, errors: ptBRErrors },
@@ -153,6 +155,16 @@ Uses `Intl.PluralRules` suffixes. Variable must be `count`.
 ```
 
 ```json
+// locales/ja/common.json — other only
+{ "items_other": "{{count}}個のアイテム" }
+```
+
+```json
+// locales/ko/common.json — other only
+{ "items_other": "{{count}}개 항목" }
+```
+
+```json
 // locales/ar/common.json — zero/one/two/few/many/other
 {
   "items_zero": "لا عناصر",
@@ -162,11 +174,6 @@ Uses `Intl.PluralRules` suffixes. Variable must be `count`.
   "items_many": "{{count}} عنصرًا",
   "items_other": "{{count}} عنصر"
 }
-```
-
-```json
-// locales/ko/common.json — other only
-{ "items_other": "{{count}}개 항목" }
 ```
 
 ```tsx
@@ -232,6 +239,7 @@ const LANGUAGES = [
   { code: 'en', name: 'English', dir: 'ltr' },
   { code: 'es', name: 'Español', dir: 'ltr' },
   { code: 'id', name: 'Bahasa Indonesia', dir: 'ltr' },
+  { code: 'ja', name: '日本語', dir: 'ltr' },
   { code: 'ko', name: '한국어', dir: 'ltr' },
   { code: 'ar', name: 'العربية', dir: 'rtl' },
   { code: 'pt-BR', name: 'Português (Brasil)', dir: 'ltr' },
@@ -269,6 +277,7 @@ async function handleChange(locale: SupportedLocale) {
     "locales": {
       "es": "./languages/es.json",
       "id": "./languages/id.json",
+      "ja": "./languages/ja.json",
       "ko": "./languages/ko.json",
       "ar": "./languages/ar.json",
       "pt-BR": "./languages/pt-BR.json"

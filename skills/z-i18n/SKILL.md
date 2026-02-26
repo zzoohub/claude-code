@@ -74,7 +74,7 @@ const isRTL = (locale: string) =>
 | Language | Plural categories |
 |---|---|
 | en, es, pt-BR, id | `one`, `other` |
-| ko | `other` only |
+| ja, ko | `other` only |
 | ar | `zero`, `one`, `two`, `few`, `many`, `other` |
 
 ### 6. Formatting Hook (Cross-Platform)
