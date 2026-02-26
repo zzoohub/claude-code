@@ -21,15 +21,18 @@ Use when View Transitions API is insufficient: overlay wipes, staggered exits wi
 
 ```tsx
 // components/gsap-page-transition.tsx
-"use client";
 import { useRef } from "react";
-import { usePathname } from "next/navigation";
 import { gsap, useGSAP } from "@/lib/gsap";
 
-export function GSAPPageTransition({ children }: { children: React.ReactNode }) {
+export function GSAPPageTransition({
+  children,
+  pathname,
+}: {
+  children: React.ReactNode;
+  pathname: string;
+}) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
 
   // Enter animation — overlay retracts, content fades in
   useGSAP(() => {
@@ -70,19 +73,15 @@ export function GSAPPageTransition({ children }: { children: React.ReactNode }) 
 
 ```tsx
 // hooks/use-page-transition.ts
-"use client";
-import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 import { gsap } from "@/lib/gsap";
 
-export function usePageTransition() {
-  const router = useRouter();
-
+export function usePageTransition(routerPush: (href: string) => void) {
   const navigate = useCallback(
     (href: string) => {
       const overlay = document.querySelector("[data-page-overlay]") as HTMLElement;
       if (!overlay) {
-        router.push(href);
+        routerPush(href);
         return;
       }
 
@@ -91,10 +90,10 @@ export function usePageTransition() {
         transformOrigin: "bottom",
         duration: 0.6,
         ease: "power4.inOut",
-        onComplete: () => router.push(href),
+        onComplete: () => routerPush(href),
       });
     },
-    [router]
+    [routerPush]
   );
 
   return { navigate };
@@ -104,14 +103,17 @@ export function usePageTransition() {
 ### Staggered Exit + Enter
 
 ```tsx
-"use client";
 import { useRef } from "react";
-import { usePathname } from "next/navigation";
 import { gsap, useGSAP } from "@/lib/gsap";
 
-export function StaggerPageTransition({ children }: { children: React.ReactNode }) {
+export function StaggerPageTransition({
+  children,
+  pathname,
+}: {
+  children: React.ReactNode;
+  pathname: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
 
   useGSAP(() => {
     const items = ref.current!.querySelectorAll("[data-stagger-enter]");

@@ -139,27 +139,24 @@ Native page transitions. The primary tool for route changes.
 
 ```tsx
 // components/transition-link.tsx
-"use client";
-import { useRouter } from "next/navigation";
-
 export function TransitionLink({
   href,
   children,
+  navigate,
   className,
 }: {
   href: string;
   children: React.ReactNode;
+  navigate: (href: string) => void;
   className?: string;
 }) {
-  const router = useRouter();
-
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!document.startViewTransition) {
-      router.push(href);
+      navigate(href);
       return;
     }
-    document.startViewTransition(() => router.push(href));
+    document.startViewTransition(() => navigate(href));
   };
 
   return <a href={href} onClick={handleClick} className={className}>{children}</a>;
@@ -189,19 +186,16 @@ The killer feature — an image morphs smoothly between pages.
 ### Directional Transitions
 
 ```tsx
-"use client";
-import { useRouter, usePathname } from "next/navigation";
-
-export function useDirectionalTransition() {
-  const router = useRouter();
-  const pathname = usePathname();
-
+export function useDirectionalTransition(
+  routerPush: (href: string) => void,
+  pathname: string,
+) {
   const navigate = (href: string) => {
     const direction = href.length > pathname.length ? "forward" : "back";
     document.documentElement.dataset.transitionDir = direction;
 
-    if (!document.startViewTransition) { router.push(href); return; }
-    document.startViewTransition(() => router.push(href));
+    if (!document.startViewTransition) { routerPush(href); return; }
+    document.startViewTransition(() => routerPush(href));
   };
 
   return { navigate };

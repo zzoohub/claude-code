@@ -6,7 +6,7 @@ Replace the default cursor with a custom animated element.
 
 ```tsx
 // components/custom-cursor.tsx
-"use client";
+
 import { useRef, useEffect, useState } from "react";
 import { gsap } from "@/lib/gsap";
 
@@ -123,7 +123,7 @@ Elements that pull toward the cursor when nearby.
 
 ```tsx
 // components/magnetic.tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -187,7 +187,7 @@ Card that tilts toward the cursor on hover.
 
 ```tsx
 // components/tilt-card.tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -283,7 +283,7 @@ Move background layers subtly based on mouse position.
 
 ```tsx
 // components/mouse-parallax.tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -338,7 +338,7 @@ export function MouseParallax({
 Radial gradient that follows the cursor.
 
 ```tsx
-"use client";
+
 import { useRef, useEffect } from "react";
 
 export function SpotlightCard({ children }: { children: React.ReactNode }) {

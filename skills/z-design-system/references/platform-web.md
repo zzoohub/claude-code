@@ -1,4 +1,4 @@
-# Platform: Web / Next.js
+# Platform: Web
 
 ## Token Output — CSS Custom Properties
 
@@ -173,14 +173,14 @@ Visible for keyboard users, hidden for mouse.
 
 ## Tailwind CSS Integration
 
-If the project uses Tailwind, map design tokens to the Tailwind config so you get utility classes that use your tokens. This is the recommended approach for Next.js + Tailwind projects.
+If the project uses Tailwind, map design tokens to the Tailwind config so you get utility classes that use your tokens. This is the recommended approach for Tailwind projects.
 
 ### Tailwind v4 (CSS-based config)
 
 Tailwind v4 uses CSS `@theme` to define tokens, which works directly with CSS custom properties:
 
 ```css
-/* app/globals.css */
+/* globals.css */
 @import "tailwindcss";
 
 @theme {

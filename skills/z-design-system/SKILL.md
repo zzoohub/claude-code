@@ -212,6 +212,6 @@ Color is never the sole indicator of state. Error states use color + icon + text
 
 ## Platform References
 
-→ Web/Next.js (CSS custom properties, dark mode, responsive): `references/platform-web.md`
+→ Web (CSS custom properties, dark mode, responsive): `references/platform-web.md`
 → React Native (TS tokens, color scheme, a11y): `references/platform-rn.md`
 → Token pipeline (Style Dictionary, single-source workflow): `references/pipeline.md`

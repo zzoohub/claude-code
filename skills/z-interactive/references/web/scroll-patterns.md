@@ -8,11 +8,10 @@
 npm install lenis
 ```
 
-### Global Setup (Next.js App Router)
+### Global Setup
 
 ```tsx
-// components/smooth-scroll.tsx
-"use client";
+// components/smooth-scroll.tsx (client-side — Lenis requires browser scroll APIs)
 import { useEffect, useRef } from "react";
 import Lenis from "lenis";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
@@ -49,17 +48,11 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
 ```
 
 ```tsx
-// app/layout.tsx
+// Root layout — wrap your app content with SmoothScroll
 import { SmoothScroll } from "@/components/smooth-scroll";
 
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        <SmoothScroll>{children}</SmoothScroll>
-      </body>
-    </html>
-  );
+function RootLayout({ children }: { children: React.ReactNode }) {
+  return <SmoothScroll>{children}</SmoothScroll>;
 }
 ```
 
@@ -90,7 +83,7 @@ function scrollToSection(id: string) {
 Content stays pinned while sub-elements animate through scroll progress.
 
 ```tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 
@@ -149,7 +142,7 @@ export function PinnedSection({
 Transform vertical scroll into horizontal movement.
 
 ```tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -195,7 +188,7 @@ export function HorizontalScroll({ children }: { children: React.ReactNode }) {
 ### Scroll Progress Indicator
 
 ```tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -230,7 +223,7 @@ export function ScrollProgress() {
 ### Parallax Layers
 
 ```tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -275,7 +268,7 @@ export function ParallaxLayer({
 Animate a property directly tied to scroll position (0-1 progress).
 
 ```tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 

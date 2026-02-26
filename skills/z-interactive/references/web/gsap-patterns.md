@@ -8,23 +8,25 @@ npm install gsap @gsap/react
 # SplitText requires GSAP Club — use custom splitter below as free alternative
 ```
 
-## Next.js Setup
+## Setup
 
 ```tsx
-// lib/gsap.ts — centralized registration
-"use client";
+// lib/gsap.ts — centralized registration (client-side module)
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Flip } from "gsap/Flip";
 import { Observer } from "gsap/Observer";
 
+// SSR guard — plugin registration requires browser globals
 if (typeof window !== "undefined") {
   gsap.registerPlugin(useGSAP, ScrollTrigger, Flip, Observer);
 }
 
 export { gsap, useGSAP, ScrollTrigger, Flip, Observer };
 ```
+
+All GSAP animation components are **client-side only** — they require browser DOM APIs (`document`, `window`, `requestAnimationFrame`). In SSR frameworks, ensure these components render exclusively on the client.
 
 Always import from this file, not directly from `gsap`:
 ```tsx
@@ -82,7 +84,7 @@ export function splitText(
 ### Intro / Loading Sequence
 
 ```tsx
-"use client";
+
 import { useRef, useState } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -140,7 +142,7 @@ export function IntroSequence({ onComplete }: { onComplete?: () => void }) {
 ### Staggered Section Reveal
 
 ```tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
 
@@ -181,7 +183,7 @@ export function StaggerSection({ children }: { children: React.ReactNode }) {
 ## Number Counter / Roll-Up
 
 ```tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -225,7 +227,7 @@ export function Counter({
 ## Image / Clip-Path Reveal
 
 ```tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 
@@ -271,7 +273,7 @@ export function ImageReveal({ children }: { children: React.ReactNode }) {
 ## Infinite Marquee
 
 ```tsx
-"use client";
+
 import { useRef } from "react";
 import { gsap, useGSAP } from "@/lib/gsap";
 

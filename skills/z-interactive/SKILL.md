@@ -66,7 +66,7 @@ Choose the right transition pattern based on the *relationship* between elements
 ```
 What platform?
 │
-├─ Web (React/Next.js)
+├─ Web (React)
 │  ├─ Stack: GSAP + Lenis + CSS native APIs
 │  ├─ Philosophy: Exploration & Discovery
 │  │  Users have hover — use it to reveal possibilities
