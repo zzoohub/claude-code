@@ -29,6 +29,10 @@ src/
 ├── middleware.ts
 └── messages/
     ├── en.json
+    ├── es.json
+    ├── id.json
+    ├── ja.json
+    ├── pt-BR.json
     └── ko.json
 ```
 
@@ -39,7 +43,7 @@ src/
 import { defineRouting } from 'next-intl/routing';
 
 export const routing = defineRouting({
-  locales: ['en', 'ko'],
+  locales: ['en', 'ko', 'es', 'id', 'ja', 'pt-BR'],
   defaultLocale: 'en',
   // v4: localeCookie controls persistence (false to disable, or customize)
   localeCookie: {
