@@ -9,7 +9,7 @@ Compiler-based i18n — translations compile into tree-shakable JS functions. Un
 ## Setup
 
 ```bash
-npx @inlang/paraglide-js@latest init
+bunx @inlang/paraglide-js@latest init
 bun add -D @inlang/paraglide-js
 ```
 

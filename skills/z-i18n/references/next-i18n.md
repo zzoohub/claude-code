@@ -388,9 +388,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 ### Alternate Links
 
-```tsx
-// next-intl automatically generates hreflang alternate links when using locale-based routing
-```
+next-intl automatically generates `<link rel="alternate" hreflang="...">` tags when using locale-based routing with the middleware. No manual configuration needed — verify by inspecting the `<head>` of your rendered pages.
 
 ---
 
@@ -428,7 +426,7 @@ export function LocaleSwitcher() {
 | Pitfall | Solution |
 |---|---|
 | Dynamic rendering when you want static | Call `setRequestLocale()` + `generateStaticParams()` |
-| Client bundle bloated with all translations | Pass only needed namespaces via `pick()` to `NextIntlClientProvider` |
+| Client bundle bloated with all translations | Pass only needed namespaces via `pick()` to `NextIntlClientProvider` (see below) |
 | Using `t()` outside React components | Use `getTranslations` from `next-intl/server` in Server Actions, Route Handlers, metadata |
 | String concatenation for translated text | Use ICU interpolation: `{name}`, rich text: `<bold>text</bold>` |
 | Forgetting `await` on `getTranslations` | It's async in Server Components — always `await` |
@@ -436,3 +434,19 @@ export function LocaleSwitcher() {
 | Using `.includes()` for locale checks | Use `hasLocale()` for type-safe narrowing |
 | Old `declare global` type augmentation | v4 uses `declare module 'next-intl'` with `AppConfig` interface |
 | Passing `null`/`undefined` as ICU args | v4 disallows — use empty string or omit |
+
+### Reducing Client Bundle with `pick()`
+
+By default, passing all messages to `NextIntlClientProvider` sends every translation to the client. Use `pick()` to send only the namespaces Client Components need:
+
+```tsx
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages } from 'next-intl/server';
+import pick from 'lodash/pick';
+
+const messages = await getMessages();
+
+<NextIntlClientProvider messages={pick(messages, ['Auth', 'common'])}>
+  {children}
+</NextIntlClientProvider>
+```
