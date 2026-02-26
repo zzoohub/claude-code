@@ -15,10 +15,10 @@ description: |
 
 | Platform | Library | Architecture |
 |---|---|---|
-| Web (any framework) | `@inlang/paraglide-js` | Compiler — translations become tree-shakable functions |
+| Web (any framework) | `@inlang/paraglide-js` v2 | Compiler — translations become tree-shakable functions |
 | Expo / React Native | `expo-localization` + `react-i18next` + `i18next` | Runtime — i18next JSON v4 |
 
-Web: Paraglide JS compiles translation files into individual JS functions. Unused messages are eliminated from the bundle. Full TypeScript type safety is automatic. Works with Next.js, SvelteKit, TanStack Start, Astro, React Router, or any Vite-based framework.
+Web: Paraglide JS v2 compiles translation files into tree-shakable functions with automatic TypeScript type safety. Works with Next.js, SvelteKit, TanStack Start, Astro, React Router, or any Vite-based framework. v2 merged all framework adapters into the core package.
 
 Mobile: react-i18next provides runtime i18n with React Native constraints (no Suspense, localStorage persistence, RTL via I18nManager).
 

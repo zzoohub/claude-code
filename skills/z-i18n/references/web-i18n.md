@@ -1,4 +1,6 @@
-# Web i18n with Paraglide JS
+# Web i18n with Paraglide JS v2
+
+> **Version:** Paraglide JS v2.x (`@inlang/paraglide-js@^2.0.0`). v1 framework-specific adapters (`@inlang/paraglide-sveltekit`, `@inlang/paraglide-next`, `@inlang/paraglide-astro`) are deprecated — all functionality is consolidated into the core package.
 
 Compiler-based i18n — translations compile into tree-shakable JS functions. Unused messages are eliminated from the bundle. Full TypeScript type safety is automatic. Framework-agnostic: Next.js, SvelteKit, TanStack Start, Astro, React Router, or any Vite-based setup.
 
@@ -34,18 +36,14 @@ project-root/
 ### Configuration
 
 ```json
-// project.inlang/settings.json
+// project.inlang/settings.json (v2 — no modules array needed)
 {
   "baseLocale": "en",
-  "locales": ["en", "es", "id", "ja", "ko", "pt-BR"],
-  "modules": [
-    "https://cdn.jsdelivr.net/npm/@inlang/plugin-message-format@latest/dist/index.js"
-  ],
-  "plugin.inlang.messageFormat": {
-    "pathPattern": "./messages/{locale}.json"
-  }
+  "locales": ["en", "es", "id", "ja", "ko", "pt-BR"]
 }
 ```
+
+Message files go in `messages/` by default. Override with compiler `pathPattern` option if needed.
 
 ### Vite Plugin (Recommended)
 
@@ -65,7 +63,34 @@ export default defineConfig({
 });
 ```
 
-### Non-Vite (Next.js, etc.)
+### Next.js (Webpack Plugin)
+
+For Next.js and other Webpack-based frameworks, use `@inlang/paraglide-webpack`:
+
+```bash
+bun add -D @inlang/paraglide-js @inlang/paraglide-webpack
+```
+
+```typescript
+// next.config.ts
+import { paraglideWebpackPlugin } from "@inlang/paraglide-webpack";
+
+const nextConfig = {
+  webpack: (config) => {
+    config.plugins.push(
+      paraglideWebpackPlugin({
+        project: "./project.inlang",
+        outdir: "./src/paraglide",
+        strategy: ["url", "cookie", "baseLocale"],
+      })
+    );
+    return config;
+  },
+};
+export default nextConfig;
+```
+
+**Fallback (no bundler plugin):** Use CLI compile directly:
 
 ```json
 // package.json
@@ -176,18 +201,27 @@ Built-in formatters map to `Intl` APIs (`number` → `Intl.NumberFormat`, `datet
 
 ```typescript
 import { m } from "./paraglide/messages.js";
-import { getLocale, setLocale, locales, localizeHref } from "./paraglide/runtime.js";
+import {
+  getLocale, setLocale, locales, baseLocale, isLocale,
+  localizeHref, deLocalizeHref,
+} from "./paraglide/runtime.js";
 
 m.auth_login_title();                              // "Sign In"
 m.greeting({ name: "Alice" });                     // type-safe params
 m.greeting({ name: "Alice" }, { locale: "ko" });   // force specific locale
 
 getLocale();                        // "en"
-setLocale("ko");                    // reloads page
+setLocale("ko");                    // reloads page (v2 default behavior)
 setLocale("ko", { reload: false }); // no reload (handle re-render yourself)
 
 localizeHref("/about");                     // "/ko/about"
 localizeHref("/about", { locale: "en" });   // "/en/about"
+deLocalizeHref("/ko/about");                // "/about" (strip locale prefix)
+
+isLocale("en");    // true (type guard)
+isLocale("xyz");   // false
+baseLocale;        // "en"
+locales;           // ["en", "es", "id", "ja", "ko", "pt-BR"]
 ```
 
 ### Rich Text Pattern
@@ -235,9 +269,9 @@ richText(m.terms(), {
 
 ---
 
-## SSR Middleware
+## SSR Middleware (v2)
 
-`paraglideMiddleware()` uses `AsyncLocalStorage` to isolate locale per request. Without it, `getLocale()` on the server returns the default locale.
+`paraglideMiddleware()` uses `AsyncLocalStorage` to isolate locale per request. Without it, `getLocale()` on the server returns the default locale. Import from the generated `server.js` module.
 
 ```typescript
 // SvelteKit — src/hooks.server.ts
