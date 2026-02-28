@@ -119,7 +119,11 @@ Architecture decisions:
 
 **Code Structure**: Always Hexagonal (Ports & Adapters). AI-assisted development eliminates the boilerplate cost — the benefits (testability, swappable adapters, clean domain) apply universally.
 
-**Language**: Rust (Axum) by default. Python (FastAPI) only when Python-only libraries are required (LangGraph, PyTorch, transformers, etc.).
+**Backend**: Rust (Axum) by default. Python (FastAPI) only when Python-only libraries are required (LangGraph, PyTorch, transformers, etc.).
+
+**Frontend**: TanStack Start for client-side apps (dashboards, admin panels, SPAs, post-auth experiences). Next.js for server-side apps (SEO-critical, content-heavy, SSR/SSG).
+
+**Mobile**: React Native (Expo) — always.
 
 **Rationale**: Explain trade-offs for the system architecture choice. Reference team size, expected scale, operational complexity budget, and data consistency needs.
 
@@ -278,11 +282,11 @@ For each significant decision, write a brief ADR:
 - **Consequences**: What are the positive and negative outcomes?
 
 Include ADRs for at minimum:
-1. Backend language & framework choice (Rust/Axum default; Python/FastAPI only when Python-only libraries required)
-2. System architecture pattern (monolith/microservices, sync/async/event-driven)
-3. Database platform choice
-4. Compute platform choice
-5. Frontend platform choice (if applicable)
+1. Backend choice (Rust/Axum default; Python/FastAPI only when Python-only libraries required)
+2. Frontend choice (TanStack Start + Cloudflare Workers for client-side; Next.js + Vercel for server-side; React Native/Expo for mobile)
+3. System architecture pattern (monolith/microservices, sync/async/event-driven)
+4. Database platform choice
+5. Compute platform choice
 6. Authentication approach
 7. LLM integration approach (if AI features present)
 

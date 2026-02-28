@@ -36,14 +36,16 @@ This reference contains the preferred infrastructure choices for the solopreneur
 
 ## Frontend
 
-| Priority | Platform | Framework | When to Use |
+| App Type | Framework | Hosting | When to Use |
 |---|---|---|---|
-| 1st | **Cloudflare Workers** | Next.js (via OpenNext or similar) | Default. Edge SSR delivers best TTFB globally. Cost-efficient at scale. |
-| 2nd | **Vercel** | Next.js | When rapid prototyping speed matters more than long-term cost. Excellent DX, preview deployments, analytics built-in. Watch for cost at scale. |
+| **Client-side** | **TanStack Start** | **Cloudflare Workers** | Dashboards, admin panels, SPAs, post-auth experiences, real-time interactive apps. Client-first with optional SSR. |
+| **Server-side** | **Next.js** | **Vercel** | SEO-critical pages, content-heavy sites, marketing pages, SSR/SSG/ISR needed. |
 
 ### Decision Factors
-- **Cloudflare over Vercel**: Cloudflare's pricing model is predictable and generous. Edge SSR with Workers gives the performance of Vercel at a fraction of the cost once traffic grows.
-- **Vercel when acceptable**: For MVPs, prototypes, or when time-to-deploy trumps cost optimization. Plan for migration path to Cloudflare if the product succeeds.
+- **TanStack Start over Next.js**: When the app lives behind auth and SEO is irrelevant. Lighter runtime, no server component complexity, TanStack Router's type-safe routing and built-in data loading. Better fit for highly interactive client-driven UIs.
+- **Next.js over TanStack Start**: When SEO, SSG, or server-side rendering is a core requirement. Mature ecosystem, larger community, more deployment options.
+- **TanStack Start → Cloudflare Workers**: Edge delivery, predictable pricing, Vinxi/Nitro on Workers. Ideal for client-heavy apps that don't need Vercel's SSG/ISR pipeline.
+- **Next.js → Vercel**: Vercel builds Next.js. SSG/ISR/middleware/image optimization all work best on Vercel. Incremental build cache and edge revalidation are purpose-built for content-heavy rendering.
 
 ---
 
