@@ -1,9 +1,9 @@
 ---
 name: z-product-brief
-description: Creates high-quality product briefs that align cross-functional teams and drive product discovery. Use when the user asks to "write a product brief", "create a product spec", "draft a product one-pager", "define a product plan", or needs help organizing product goals, requirements, and direction. Also use when reviewing or improving existing product briefs. Not for detailed PRDs or technical specifications — this skill focuses on the strategic "what" and "why", not the implementation "how".
+description: Creates high-quality product briefs that align cross-functional teams and drive product discovery. Use when the user asks to "write a product brief", "create a product spec", "draft a product one-pager", "define a product plan", "product pitch", "product concept", or needs help organizing product goals, requirements, and direction. Also trigger when a user says "I have an idea for a product", "help me think through this feature", "I want to build X", or describes a product concept without naming a specific document type. Also use when reviewing or improving existing product briefs. Not for detailed PRDs or technical specifications — this skill focuses on the strategic "what" and "why", not the implementation "how".
 metadata:
   author: custom
-  version: 2.0.0
+  version: 2.1.0
   category: product-management
 ---
 
@@ -41,10 +41,14 @@ Roughly 30,000 consumer products launch each year, yet only about 40% reach the 
 ## Core Principles
 
 1. **Problem-first, always.** The brief exists to articulate a problem worth solving and define the product direction to address it. Solutions come later.
-2. **Brief means brief.** Target 1-2 pages for the core document. If it takes longer than 10 minutes to read, it will not be read. Appendices are fine for detail.
+2. **Brief means brief.** The core of the document (Problem, Direction, Success Criteria) should fit on 1-2 pages and be readable in under 10 minutes. Context sections (Audience, Timeline, Team) scale with project size — include them for medium and large initiatives, abbreviate or skip them for small features.
 3. **Acknowledge assumptions.** A brief written at the planning stage inevitably contains assumptions. Name them explicitly so the team is aware, but the brief's primary job is to define direction — not to design validation experiments.
 4. **Living document.** The brief evolves from problem definition through discovery to delivery. It is never "done" — it is the team's evolving source of truth.
 5. **Audience is everyone.** Engineers, designers, marketers, executives, and new team members should all be able to understand it. No jargon that only one function gets.
+
+## Tone
+
+Write in direct, confident, jargon-free prose. Default to active voice and short sentences. The brief should read like a smart colleague explaining the situation over coffee — not like a legal document or a marketing deck. Match the user's level of formality when possible, but when in doubt, lean conversational over corporate.
 
 ## The Four Risks Framework (Marty Cagan / SVPG)
 
@@ -72,9 +76,18 @@ Before writing, understand:
 
 Ask the user clarifying questions only for what is genuinely missing. If they have provided rich context, move to drafting.
 
+### Interaction Pattern
+
+How you work with the user matters as much as the template:
+
+- **If the user gives rich context** (a paragraph or more describing the product, audience, and goals): draft the full brief in one pass. Fill gaps with reasonable assumptions and flag them with "[Assumption — verify]" markers.
+- **If the user gives a thin prompt** (e.g., "write a product brief for a todo app"): ask 2-3 targeted questions before drafting. Focus on problem, audience, and what success looks like. Don't interrogate — three questions max, then draft.
+- **If the user dumps unstructured context** (meeting notes, Slack threads, braindumps): synthesize it into the brief structure. This is one of the highest-value things this skill does — turning chaos into clarity.
+- **Always present a complete draft**, not section-by-section. The brief is a cohesive document; the user needs to see it as a whole to judge if it holds together. After presenting, ask for feedback on the whole piece.
+
 ### Step 2: Draft the Brief
 
-Use the Staged Brief structure below. Adapt depth to the project size — small features may only need Problem + Approach. Large initiatives should use all stages.
+Use the template below. The first four sections (Problem through Success Criteria) are the core — they should always be present. Sections 5-8 scale with project size: include them for medium/large initiatives, skip or abbreviate for small features.
 
 ```markdown
 # [Product Name] — Product Brief
@@ -100,15 +113,19 @@ Use the Staged Brief structure below. Adapt depth to the project size — small 
 
 ---
 
-## 2. Key Assumptions & Risks
+## 2. Assumptions, Risks & Dependencies
 
-State the key assumptions underlying this product direction. Making assumptions explicit helps the team stay honest about what is known vs. believed.
+State the key assumptions underlying this product direction, the risks that could derail it, and the dependencies the team needs to track. Making these explicit keeps the team honest about what is known vs. believed.
 
-| Assumption | Risk Type | How We'll Gain Confidence |
-|-----------|-----------|--------------------------|
-| [e.g., "Users will switch from spreadsheets to our tool"] | Value | [e.g., "User interviews, competitive analysis"] |
-| [e.g., "We can build this with our current team and stack"] | Feasibility | [e.g., "Eng spike, architecture review"] |
-| [e.g., "This fits within our compliance framework"] | Viability | [e.g., "Legal review by [date]"] |
+| Assumption / Risk | Type | Impact | How We'll Address It |
+|-------------------|------|--------|---------------------|
+| [e.g., "Users will switch from spreadsheets"] | Value | High | [e.g., "User interviews with 10 target customers"] |
+| [e.g., "Current team and stack can handle this"] | Feasibility | Medium | [e.g., "Eng spike in week 1"] |
+| [e.g., "Fits within compliance framework"] | Viability | High | [e.g., "Legal review by [date]"] |
+| [e.g., "Key engineer available through build phase"] | Team | Medium | [e.g., "Confirm with eng manager"] |
+| [e.g., "Design system update ships before we need it"] | Dependency | High | [e.g., "Weekly sync with Platform team"] |
+
+Types: Value, Usability, Feasibility, Viability, Team, Dependency
 
 ---
 
@@ -116,6 +133,9 @@ State the key assumptions underlying this product direction. Making assumptions 
 
 ### High-level approach
 [1-2 paragraphs. Describe the direction, not the detailed solution. Think "what experience we want to create" not "what features we will build".]
+
+### Core insight
+[What is the key bet or insight behind this approach? What do we believe that others don't, or what advantage do we have? This is the "why this approach" — the strategic reasoning, not just a description of the plan.]
 
 ### What differentiates this?
 [Why our approach is different from competitors or the status quo. Be specific.]
@@ -186,16 +206,7 @@ List what you do NOT know yet. This is one of the most valuable sections — it 
 
 ---
 
-## 8. Risks & Dependencies
-
-- **Technical:** [e.g., Browser performance limits for target use case]
-- **Business:** [e.g., Competitor launching similar feature in Q2]
-- **Team:** [e.g., Key engineer on leave during build phase]
-- **Dependencies:** [e.g., Waiting on design system update from Platform team]
-
----
-
-## 9. Team & Stakeholders
+## 8. Team & Stakeholders
 
 | Role | Person | Responsibility |
 |------|--------|---------------|
@@ -220,7 +231,7 @@ Before presenting, verify:
 - [ ] **Four risks addressed.** Value, Usability, Feasibility, Viability — at least acknowledged.
 - [ ] **Full vision is clear.** The brief describes the complete product direction, not a constrained MVP.
 - [ ] **A new team member could understand this.** No tribal knowledge required.
-- [ ] **Under 2 pages** for the core brief (excluding appendix).
+- [ ] **Core brief (sections 1-4) fits in 1-2 pages.** Context sections add length as needed.
 - [ ] **Open questions are honest.** Gaps are flagged, not papered over.
 
 ### Step 4: Guide Next Steps
@@ -232,18 +243,46 @@ After presenting the brief, recommend:
 3. **Address open questions.** Assign owners and deadlines to the items in the Open Questions section.
 4. **Evolve, don't rewrite.** As discovery progresses, update the brief. It becomes the running record of what the team learned and decided.
 
+## Calibration Examples
+
+### Problem statement: weak vs. strong
+
+**Weak:**
+> We need a dashboard for our analytics data. Users want better visibility into their metrics.
+
+This is a solution masquerading as a problem. "Users want better visibility" is a vague desire, not an observed pain.
+
+**Strong:**
+> Customer success managers spend 2-3 hours per week manually pulling data from three separate tools (Mixpanel, Salesforce, Zendesk) to prepare account health reports. In exit interviews, 4 of our last 10 churned accounts cited "lack of proactive support" — which traces back to CSMs not having a unified view of account signals. The current workflow is: export CSV from each tool, paste into a spreadsheet, eyeball for anomalies. By the time a CSM spots a problem, the customer is already frustrated.
+
+This is grounded in evidence (exit interviews, observed workflow), names a specific persona (CSMs), quantifies the pain (2-3 hours/week), and explains the downstream impact (churn).
+
+### Non-Goals: weak vs. strong
+
+**Weak:**
+> Non-goals: Don't over-engineer it.
+
+This is meaningless — it doesn't help anyone make a scoping decision.
+
+**Strong:**
+> - This is not a general-purpose BI tool. We are solving the account health report problem, not replacing Looker.
+> - We will not build custom alerting in v1. If CSMs need alerts, they can set them up in Slack via existing integrations.
+> - Multi-tenant data isolation (separate databases per customer) is out of scope — we'll use row-level security on the existing schema.
+
+Each non-goal draws a clear line that prevents a specific scope creep scenario.
+
 ## Adapting to Project Size
 
 | Project Size | What to Include |
 |-------------|----------------|
 | **Small feature** (less than 1 week) | Use the lightweight template below. |
-| **Medium feature** (1-4 weeks) | Full brief, lighter on market context. |
-| **Large initiative** (1+ months) | Full brief with all sections. Add press release exercise if helpful. |
-| **New product** | Full brief + Amazon-style internal press release + detailed competitive analysis in appendix. |
+| **Medium feature** (1-4 weeks) | Core sections (1-4) plus Open Questions. Lighter on market context. |
+| **Large initiative** (1+ months) | All 8 sections. |
+| **New product** | All 8 sections + press release exercise + detailed competitive analysis in appendix. |
 
 ### Lightweight Brief (Small Features)
 
-For features under a week, use this minimal structure instead of the full 9-section template:
+For features under a week, use this minimal structure instead of the full template:
 
 ```markdown
 # [Feature Name] — Brief
@@ -261,12 +300,27 @@ For features under a week, use this minimal structure instead of the full 9-sect
 
 ## The Press Release Exercise (Optional)
 
-For larger initiatives, write a hypothetical press release from the customer's perspective as if the product already launched. This forces the team to:
-- Articulate value in plain language
-- Align on the customer experience, not the feature list
-- Identify disconnects between what the team thinks they are building and what the customer would actually experience
+For larger initiatives, write a hypothetical press release from the customer's perspective as if the product already launched. This forces the team to articulate value in plain language, align on the customer experience rather than the feature list, and spot disconnects between what the team thinks they are building and what the customer would actually experience.
 
 Keep it to one page. Write it in "Oprah-speak, not geek-speak" (Marty Cagan).
+
+```markdown
+# [Product Name]: [Headline that captures the customer benefit]
+
+**[City, Date]** — [Company name] today announced [product name], which [one sentence describing what it does for the customer].
+
+**The problem:** [1-2 sentences describing the customer pain in their words, not yours.]
+
+**The solution:** [2-3 sentences describing the experience. Focus on what the customer can now do, not how the technology works.]
+
+**Customer quote:** "[A fictional but realistic quote from your target persona describing why this matters to them.]" — [Name, Title, Company]
+
+**How it works:** [2-3 sentences. The simplest possible explanation. If a non-technical friend wouldn't understand it, rewrite it.]
+
+**Availability:** [When and how customers can get it.]
+```
+
+If the press release feels forced or hollow, the product vision likely needs more work.
 
 ## When Reviewing an Existing Brief
 
@@ -290,7 +344,7 @@ If the user asks to review or improve a product brief, evaluate against these cr
 | Brief as commitment | Team afraid to update it | Frame as living document, add "Status" field |
 | Written for one audience | Other functions ignore it | Test: can a marketer AND an engineer act on it? |
 | No open questions | False confidence, surprises later | Dedicate a section to unknowns |
-| Too long | Nobody reads it | Cut to 2 pages. Move detail to appendix |
+| Too long | Nobody reads it | Keep core to 1-2 pages. Move context to later sections or appendix |
 
 ## Output Format
 
