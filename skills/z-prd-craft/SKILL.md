@@ -254,7 +254,7 @@ Link to supporting materials (don't inline them):
 2. **`docs/prd-mvp.md`** — MVP PRD scoping the first release
 
 For multi-feature projects, use descriptive names: `docs/prd-[feature-slug].md`
-and `docs/prd-[feature-slug]-mvp.md` to avoid collisions.
+to avoid collisions (e.g., `docs/prd-auth.md`, `docs/prd-billing.md`).
 
 Write both in Markdown. Full PRD first, then derive the MVP PRD from it.
 Read `references/prd-mvp.md` for the MVP PRD template and scoping principles.
