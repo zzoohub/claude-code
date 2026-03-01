@@ -346,9 +346,11 @@ If the user asks to review or improve a product brief, evaluate against these cr
 | No open questions | False confidence, surprises later | Dedicate a section to unknowns |
 | Too long | Nobody reads it | Keep core to 1-2 pages. Move context to later sections or appendix |
 
-## Output Format
+## Output
 
-- Default: Markdown document suitable for Notion, Confluence, Google Docs, or Coda
+Save to `docs/product-brief.md`.
+
+- Default: Markdown
 - If the user requests DOCX, PDF, or slides: adapt accordingly
 - If the user has a company template: follow their structure, supplement missing sections from this framework
 - Always prioritize clarity and brevity over comprehensiveness

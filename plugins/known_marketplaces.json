@@ -14,7 +14,7 @@
       "repo": "expo/skills"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/expo-plugins",
-    "lastUpdated": "2026-03-01T11:10:44.049Z",
+    "lastUpdated": "2026-03-01T13:00:51.973Z",
     "autoUpdate": true
   },
   "claude-d2-diagrams": {
@@ -41,7 +41,7 @@
       "repo": "pulumi/agent-skills"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/pulumi-agent-skills",
-    "lastUpdated": "2026-03-01T10:42:12.481Z",
+    "lastUpdated": "2026-03-01T11:41:30.873Z",
     "autoUpdate": true
   },
   "neon": {
@@ -50,7 +50,7 @@
       "repo": "neondatabase-labs/ai-rules"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/neon",
-    "lastUpdated": "2026-03-01T11:27:29.108Z",
+    "lastUpdated": "2026-03-01T13:02:34.765Z",
     "autoUpdate": true
   }
 }

@@ -362,6 +362,35 @@ The final document should pass the **"3 AM Test"**: If an on-call engineer gets 
 
 If yes, the doc is good enough. If not, it needs more clarity.
 
+## Phase Tagging
+
+When the input PRD has companion Phase PRDs (`docs/prd-phase-*.md`):
+
+1. **Write the full document for the complete vision** — do not shrink the architecture to fit a single phase
+2. **Tag sections inline** — append `[Phase 1]`, `[Phase 2]`, `[Phase 3+]` etc. to component headings, ADR titles, and integration points to indicate when each becomes relevant
+3. **Add a Phase Implementation Summary** at the end of the document:
+
+```
+## Phase Implementation Summary
+
+### Phase 1
+- Components: ...
+- Infrastructure: ...
+- Key ADRs: ...
+
+### Phase 2
+- Components: ...
+- New integrations: ...
+
+### Phase 3+
+- Components: ...
+- New integrations: ...
+```
+
+If no Phase PRD exists, omit phase tags entirely.
+
+---
+
 ## Output
 
 Save to `docs/design-doc.md`.

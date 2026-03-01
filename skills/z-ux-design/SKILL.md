@@ -16,6 +16,12 @@ references:
 
 # UX Design
 
+## Context Check
+
+If `docs/prd.md` or `docs/prd-phase-*.md` exists, read it first. Use as input, not constraint.
+
+---
+
 ## First Principles (Every Task)
 
 Before designing anything, answer in order:
@@ -112,6 +118,34 @@ Sizing, spacing, platform-specific specs, responsive design, WCAG compliance.
 
 ---
 
+## Phase Tagging
+
+When the input PRD has companion Phase PRDs (`docs/prd-phase-*.md`):
+
+1. **Design all screens and flows for the complete vision** — do not limit the UX to a single phase
+2. **Tag screens and flows inline** — append `[Phase 1]`, `[Phase 2]`, `[Phase 3+]` etc. to screen names, user flows, and IA nodes to indicate when each becomes relevant
+3. **Add a Phase Implementation Summary** at the end of the output document:
+
+```
+## Phase Implementation Summary
+
+### Phase 1
+- Screens: ...
+- Key flows: ...
+
+### Phase 2
+- New screens: ...
+- Flow changes: ...
+
+### Phase 3+
+- New screens: ...
+- New flows: ...
+```
+
+If no Phase PRD exists, omit phase tags entirely.
+
+---
+
 ## Quick Checklist
 
 Before finalizing any UX decision:
@@ -157,3 +191,9 @@ Before finalizing any UX decision:
 ### Anti-patterns
 - [ ] Checked against Anti-patterns list above — none present
 - [ ] Cognitive principles cited for key design decisions
+
+---
+
+## Output
+
+Save to `docs/ux-design.md`.

@@ -50,16 +50,16 @@ Enums:        snake_case (order_status, NOT OrderStatus)
 
 ### Step 1: Gather Requirements
 
-**If a Software Architecture Design Document (SADD) exists**, read it first and extract:
+**If a design doc exists** (`docs/design-doc.md`), read it first and extract:
 - Domain entities and data flows (from Sections 1, 3, 4)
 - Storage strategy and database choice (from Section 4.2)
 - Performance/scalability expectations (from Section 6.5)
 - Consistency model (from Section 4.1, 4.2)
 - Ingestion patterns and data volume (from Section 4.1, 6.5)
 
-For most decisions, follow the SADD as-is — it represents system-level decisions already made. However, **independently evaluate** decisions where database domain expertise is more appropriate:
+For most decisions, follow the design doc as-is — it represents system-level decisions already made. However, **independently evaluate** decisions where database domain expertise is more appropriate:
 
-| DB-domain decisions (evaluate independently) | System-level decisions (follow SADD) |
+| DB-domain decisions (evaluate independently) | System-level decisions (follow design doc) |
 |---|---|
 | Normalization level per table | Database platform choice (e.g., Neon PostgreSQL) |
 | Partitioning strategy and partition key | System architecture pattern (e.g., event-driven) |
@@ -69,9 +69,9 @@ For most decisions, follow the SADD as-is — it represents system-level decisio
 | Materialized view refresh strategy | Read/write separation boundaries |
 | Locking strategy (optimistic vs pessimistic) | Multi-tenancy approach |
 
-If a DB-domain decision differs from what the SADD implies, **state the deviation and the reason explicitly**. Example: "SADD specifies strong consistency for order processing. For the order listing query, we use a materialized view with eventual consistency (refreshed every 30s) because the read volume makes synchronous joins impractical at the expected scale."
+If a DB-domain decision differs from what the design doc implies, **state the deviation and the reason explicitly**. Example: "Design doc specifies strong consistency for order processing. For the order listing query, we use a materialized view with eventual consistency (refreshed every 30s) because the read volume makes synchronous joins impractical at the expected scale."
 
-**If no SADD exists**, confirm the following with the user (ask if unknown):
+**If no design doc exists**, confirm the following with the user (ask if unknown):
 - Domain and core entities
 - Read/write ratio (read-heavy vs write-heavy)
 - Expected data volume (thousands? millions? billions?)
@@ -172,13 +172,42 @@ Use this checklist:
 | Optimistic Locking | Low contention, user-facing workflows | `references/acid-transactions.md` |
 | Queue (SKIP LOCKED) | Task/job queue processing | `references/acid-transactions.md` |
 
+## Phase Tagging
+
+When the input PRD has companion Phase PRDs (`docs/prd-phase-*.md`):
+
+1. **Design the full schema for the complete vision** — do not limit tables to a single phase
+2. **Tag entities inline** — append `[Phase 1]`, `[Phase 2]`, `[Phase 3+]` etc. to table names, indexes, and schema sections to indicate when each becomes relevant
+3. **Migration files cover Phase 1 only** — `001_initial_schema.sql` includes only `[Phase 1]` tables. Future phase tables are documented in the design doc but not yet in migration files
+4. **Add a Phase Implementation Summary** at the end of `docs/database-design.md`:
+
+```
+## Phase Implementation Summary
+
+### Phase 1
+- Tables: ...
+- Key indexes: ...
+
+### Phase 2
+- New tables: ...
+- Schema changes to existing tables: ...
+
+### Phase 3+
+- New tables: ...
+- External data integrations: ...
+```
+
+If no Phase PRD exists, omit phase tags entirely.
+
+---
+
 ## Output
 
 Produce **3 files**:
 
 | File | Content |
 |---|---|
-| `docs/database-design.md` | Requirements summary → ERD (Mermaid) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. SADD deviations noted inline. |
+| `docs/database-design.md` | Requirements summary → ERD (Mermaid) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. Design doc deviations noted inline. |
 | `db/migrations/001_initial_schema.sql` | Executable DDL (tables, indexes, constraints, comments) + matching `_rollback.sql` |
 | `docs/erd.mermaid` | Standalone Mermaid ERD (also embedded in the design doc) → consult `references/mermaid-erd.md` for syntax |
 

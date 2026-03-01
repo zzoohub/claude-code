@@ -30,7 +30,7 @@ while maintaining rigor.
 1. **Problem-obsessed, not solution-obsessed** — The problem drives everything. A missing feature is never the problem; the pain caused by its absence is.
 2. **Quantified** — Every problem and goal has numbers. "Many users churn" → "23% of users churn within 7 days, costing ~$140K/month."
 3. **User-centered** — Every requirement maps back to a real user need. Requirements that exist "because stakeholder X asked" get challenged.
-4. **Complete yet focused** — Covers the full vision with explicit scope boundaries. MVP scoping belongs in the separate MVP PRD.
+4. **Complete yet focused** — Covers the full vision with explicit scope boundaries. Phase scoping belongs in separate Phase PRDs.
 5. **Stands the test of time** — Focused on user problems and functional needs, not implementation. Requires minimal updates as design and engineering iterate.
 
 ## Step-by-Step PRD Creation Process
@@ -176,11 +176,11 @@ often hurts another. Common pairs:
 ### 6. Functional Requirements
 
 The core of the PRD. List ALL functional requirements for the complete vision.
-This is the "parts list." MVP prioritization belongs in the separate MVP PRD.
+This is the "parts list." Phase prioritization belongs in the separate Phase PRD.
 
 **Format:** `[REQ-ID] Requirement description`
 
-Use a simple ID scheme (REQ-001, REQ-002) so the MVP PRD can cross-reference.
+Use a simple ID scheme (REQ-001, REQ-002) so Phase PRDs can cross-reference.
 
 **Granularity guide:** Each requirement should be independently testable — a QA
 engineer could verify it passes or fails.
@@ -234,7 +234,7 @@ Name the tempting features you're deliberately not building. Generic non-goals
 ### 10. Timeline & Milestones (Optional)
 
 High-level milestones with target dates. Detailed sprint planning belongs
-elsewhere. The MVP PRD defines specific milestones for the first release.
+elsewhere. The Phase PRD defines specific milestones for each release.
 
 This section is optional for early-stage PRDs where timing is uncertain. It can
 be replaced with a phasing strategy (Phase 1, Phase 2, ...) without dates.
@@ -251,13 +251,14 @@ Link to supporting materials (don't inline them):
 **Always produce two separate documents:**
 
 1. **`docs/prd.md`** — Full PRD covering the complete product vision (Sections 1-11)
-2. **`docs/prd-mvp.md`** — MVP PRD scoping the first release
+2. **`docs/prd-phase-1.md`** — Phase 1 PRD scoping the first release
 
-For multi-feature projects, use descriptive names: `docs/prd-[feature-slug].md`
-to avoid collisions (e.g., `docs/prd-auth.md`, `docs/prd-billing.md`).
+**Naming conventions:**
+- Phase scoping: `docs/prd-phase-{n}.md` (e.g., `prd-phase-1.md`, `prd-phase-2.md`)
+- Feature PRDs: `docs/prd-{feature-slug}.md` (e.g., `prd-auth.md`, `prd-billing.md`)
 
-Write both in Markdown. Full PRD first, then derive the MVP PRD from it.
-Read `references/prd-mvp.md` for the MVP PRD template and scoping principles.
+Write both in Markdown. Full PRD first, then derive the Phase PRD from it.
+Read `references/prd-phase.md` for the Phase PRD template and scoping principles.
 
 **Formatting rules:**
 - Tables for structured data (metrics, requirements, timelines)
