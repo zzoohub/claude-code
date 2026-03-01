@@ -27,7 +27,7 @@ a formal requirements document.
 1. **Problem-obsessed, not solution-obsessed** — The problem statement drives everything. A missing feature is never the problem; the pain caused by its absence is.
 2. **Quantified** — Every problem and goal has numbers. "Many users churn" is weak. "23% of users churn within 7 days, costing ~$140K/month in lost revenue" is strong.
 3. **User-centered** — Every requirement maps back to a real user need, use case, or journey. Requirements that exist "because stakeholder X asked" get challenged.
-4. **Appropriately scoped** — Covers MVP with clear prioritization (P0/P1/P2). Does not attempt to solve everything. Phases beyond MVP+1 are directional only.
+4. **Complete yet focused** — Covers the full product vision with all functional requirements. Scope boundaries are explicit. A separate MVP PRD then identifies the first deliverable subset.
 5. **Stands the test of time** — Focused on user problems and functional needs, not implementation details. A well-written PRD requires minimal updates as design and engineering iterate.
 
 ## Step-by-Step PRD Creation Process
@@ -152,21 +152,17 @@ Define 2-4 measurable outcomes. Use this format:
 - Include a counter-metric to guard against gaming (e.g., if optimizing speed, track quality too)
 - Timeframe is realistic
 
-### 6. Functional Requirements (MVP)
+### 6. Functional Requirements
 
-This is the core of the PRD. Structure requirements by use case or user journey,
-NOT by technical component.
+This is the core of the PRD. Describe ALL functional requirements for the complete product vision. Structure by use case or user journey, NOT by technical component. MVP prioritization belongs in the separate MVP PRD document.
 
 **Format each requirement as:**
 
 ```
-[Priority] Requirement description
+[REQ-ID] Requirement description
 ```
 
-**Priority definitions:**
-- **P0 (Must-have):** Required for MVP. Product cannot launch without this. If you removed it, the target user cannot complete their primary use case.
-- **P1 (Should-have):** High-value additions for a minimum delightful product. Important but launch is possible without them.
-- **P2 (Nice-to-have):** Enhances experience but not critical. Can be deferred.
+Use a simple ID scheme (e.g., REQ-001, REQ-002) so the MVP PRD can reference specific requirements.
 
 **Writing good requirements:**
 - Focus on FUNCTIONALITY: "User can reset their password via email"
@@ -203,9 +199,8 @@ Describe key user journeys as step-by-step functional flows. These capture the l
 Explicitly state what is NOT included. This prevents scope creep and misaligned expectations.
 
 Format:
-- **In scope:** [brief list]
-- **Out of scope:** [brief list with brief reasoning]
-- **Future consideration:** [things intentionally deferred]
+- **In scope:** [brief list — the full product vision]
+- **Out of scope:** [brief list with brief reasoning — things this product will never do]
 
 ### 9. Assumptions, Constraints & Risks
 
@@ -217,9 +212,9 @@ Format:
 
 High-level only. Do NOT create a detailed project plan in the PRD.
 
-- Key milestones with target dates
-- Maximum 3 phases/milestones (by phase 3, requirements will have changed)
-- Note: Detailed sprint planning belongs elsewhere
+- Key milestones with target dates for the full product
+- Detailed sprint planning and phase breakdown belong elsewhere
+- The MVP PRD will define specific milestones for the first release
 
 ### 11. Appendix (Links)
 
@@ -253,9 +248,10 @@ these criteria and provide specific, actionable feedback:
 
 **Requirements Quality (Weight: 25%)**
 - Focused on functionality, not implementation
-- Clear prioritization (P0/P1/P2)
+- Complete — covers the full product vision, not just MVP
 - Edge cases and error states addressed
 - Telemetry and measurement included
+- Requirements have IDs for MVP PRD cross-referencing
 
 **Completeness (Weight: 15%)**
 - Success metrics are specific and measurable
@@ -276,9 +272,17 @@ that would have the highest impact on PRD quality.
 
 ## Output Format
 
-- Write PRDs in Markdown
+**Always produce two separate documents:**
+
+1. **`prd.md`** — The full PRD covering the complete product vision (Sections 1-11 above)
+2. **`mvp-prd.md`** — The MVP PRD that scopes the first release (see MVP PRD section below)
+
+Write both in Markdown. The full PRD is written first; the MVP PRD is derived from it.
+
+**Formatting rules:**
 - Use tables for structured data (metrics, requirements, timelines)
-- Keep total length between 4-10 pages depending on complexity
+- Full PRD: 4-10 pages depending on complexity
+- MVP PRD: 2-5 pages (it references the full PRD, so it can be concise)
 - Use plain English; avoid jargon unless the audience is technical
 
 ## Common PRD Anti-Patterns to Actively Avoid
@@ -295,7 +299,7 @@ that would have the highest impact on PRD quality.
 
 6. **The Metrics-Free Zone** — No numbers anywhere. No way to know if the product succeeded or failed.
 
-7. **The Everything Bagel** — Trying to solve every user problem in one release. Ruthless prioritization is a feature, not a bug.
+7. **The Everything Bagel** — No clear scope boundaries. The full PRD should describe the complete vision, but scope must be explicit. MVP prioritization belongs in the MVP PRD.
 
 8. **The One-Sided Coin** — Not acknowledging tradeoffs, risks, or downsides of the proposed approach.
 
@@ -304,3 +308,96 @@ that would have the highest impact on PRD quality.
 10. **The Missing Competitor** — No awareness of how alternatives solve the same problem. Your solution exists in a competitive context.
 
 11. **The Invisible User** — Requirements that exist because a stakeholder asked, with no evidence of actual user need.
+
+---
+
+## MVP PRD — Scoping the First Release
+
+After writing the full PRD (`prd.md`), create a separate MVP PRD (`mvp-prd.md`) that defines what to build first. The MVP PRD is a companion document that references the full PRD — it does not duplicate content.
+
+### Why a Separate Document?
+
+- The full PRD captures the complete product vision and serves as the long-term source of truth
+- The MVP PRD is a tactical scoping decision that answers: "Given the full vision, what is the smallest first release that delivers real user value?"
+- Separating them prevents the MVP from shrinking the team's ambition or distorting the product direction
+
+### MVP PRD Template
+
+```
+# [Product/Feature Name] — MVP PRD
+Status: [Draft | In Review | Approved]
+Author: [Name]
+Last Updated: [Date]
+Full PRD: [link to prd.md]
+
+## 1. MVP Goal
+
+One sentence: what is the single most important outcome this first release must achieve?
+
+## 2. Scoping Rationale
+
+Why this scope? What makes this the right first release? Consider:
+- What is the minimum set of requirements that delivers the core user value?
+- What technical dependencies force ordering?
+- What market timing pressures exist?
+- What can we learn from this release that informs Phase 2?
+
+## 3. MVP Requirements
+
+Reference requirements from the full PRD by ID. Assign priority to each.
+
+**Priority definitions:**
+- **P0 (Must-have):** Without this, the MVP cannot launch. The target user cannot complete their primary use case.
+- **P1 (Should-have):** High-value additions for a minimum delightful product. Important but launch is possible without them.
+- **P2 (Nice-to-have):** Enhances experience. Include only if time permits.
+
+| Priority | REQ-ID | Requirement | Rationale for inclusion |
+|----------|--------|-------------|----------------------|
+| P0 | REQ-001 | [from full PRD] | [why this is essential for MVP] |
+| P0 | REQ-003 | [from full PRD] | [why this is essential for MVP] |
+| P1 | REQ-005 | [from full PRD] | [why this adds meaningful value] |
+| P2 | REQ-008 | [from full PRD] | [nice to have if time permits] |
+
+## 4. What MVP Explicitly Defers
+
+List requirements from the full PRD that are NOT in MVP, with brief reasoning for each.
+
+| REQ-ID | Requirement | Why deferred |
+|--------|-------------|-------------|
+| REQ-002 | [from full PRD] | [e.g., depends on Phase 1 learnings] |
+| REQ-007 | [from full PRD] | [e.g., requires partnership not yet in place] |
+
+## 5. MVP User Journeys
+
+Simplified versions of the full PRD's user journeys, scoped to MVP capabilities only. Note where the MVP journey differs from the full vision.
+
+## 6. MVP Success Criteria
+
+Subset of the full PRD's success metrics, with MVP-specific targets (which may be lower than the full product targets).
+
+| Goal | Metric | MVP Target | Full Product Target |
+|------|--------|-----------|-------------------|
+| [e.g., Onboarding completion] | [e.g., Completion rate] | [e.g., 50%] | [e.g., 80%] |
+
+## 7. MVP Timeline & Milestones
+
+Specific milestones for the MVP release only.
+
+| Milestone | Target Date | Description |
+|-----------|------------|-------------|
+| [e.g., Dev complete] | [date] | [description] |
+| [e.g., Beta launch] | [date] | [description] |
+| [e.g., GA launch] | [date] | [description] |
+
+## 8. MVP Risks
+
+Risks specific to the MVP scope — things that could prevent the first release from shipping or succeeding.
+```
+
+### MVP Scoping Principles
+
+1. **Start from the user's primary use case.** The MVP must let the target user complete their most important job. If it can't, it's not viable.
+2. **Cut scope, not corners.** Fewer features done well beats many features done poorly. Remove entire capabilities rather than half-building them.
+3. **The MVP is not the product.** It's the first step. Don't let MVP constraints permanently reduce the team's ambition — that's what the full PRD protects against.
+4. **Every P0 must justify itself.** For each P0 requirement, ask: "If we removed this, could the user still get value?" If yes, it's P1.
+5. **Deferred ≠ rejected.** The "What MVP Explicitly Defers" section ensures nothing is silently dropped. Deferred items remain in the full PRD for future phases.

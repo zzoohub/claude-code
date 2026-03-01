@@ -32,7 +32,7 @@ The following belong in downstream documents (PRD, design spec, technical spec),
 - **Page or screen definitions**: Specific pages, navigation structures, URL paths
 - **Detailed feature specs**: Acceptance criteria, user stories with implementation detail, prioritized feature lists (P0/P1/P2 — that's PRD territory)
 
-The brief stays at the **problem and strategy level**. It can name broad capability areas ("users need to export data") but should not list specific features or define MVP scope — that belongs in the PRD.
+The brief stays at the **problem and strategy level**. It can name broad capability areas ("users need to export data") but should not list specific features, define MVP scope, or prioritize phases — all of that belongs in the PRD.
 
 ## Why This Matters
 
@@ -40,9 +40,9 @@ Roughly 30,000 consumer products launch each year, yet only about 40% reach the 
 
 ## Core Principles
 
-1. **Problem-first, always.** The brief exists to articulate and validate a problem worth solving. Solutions come later.
+1. **Problem-first, always.** The brief exists to articulate a problem worth solving and define the product direction to address it. Solutions come later.
 2. **Brief means brief.** Target 1-2 pages for the core document. If it takes longer than 10 minutes to read, it will not be read. Appendices are fine for detail.
-3. **Hypotheses over answers.** A brief written at the planning stage is mostly assumptions. Name them explicitly and plan how to validate them.
+3. **Acknowledge assumptions.** A brief written at the planning stage inevitably contains assumptions. Name them explicitly so the team is aware, but the brief's primary job is to define direction — not to design validation experiments.
 4. **Living document.** The brief evolves from problem definition through discovery to delivery. It is never "done" — it is the team's evolving source of truth.
 5. **Audience is everyone.** Engineers, designers, marketers, executives, and new team members should all be able to understand it. No jargon that only one function gets.
 
@@ -57,7 +57,7 @@ Every product brief should address, at minimum implicitly, these four risks:
 | **Feasibility** | Can we build it with our current skills and time? | Engineering |
 | **Viability** | Does it work for the business (revenue, legal, compliance, brand)? | PM + Stakeholders |
 
-A brief that ignores any of these is incomplete. The brief does not need to answer these questions — it needs to surface them as hypotheses and outline how the team will validate each.
+A brief that ignores any of these is incomplete. The brief does not need to have all the answers — it needs to acknowledge these risks and describe how the team intends to address them.
 
 ## Process
 
@@ -100,14 +100,14 @@ Use the Staged Brief structure below. Adapt depth to the project size — small 
 
 ---
 
-## 2. Hypotheses & Risks
+## 2. Key Assumptions & Risks
 
-State your key assumptions explicitly. For each, note how you plan to validate it.
+State the key assumptions underlying this product direction. Making assumptions explicit helps the team stay honest about what is known vs. believed.
 
-| Hypothesis | Risk Type | Validation Plan |
-|-----------|-----------|-----------------|
-| [e.g., "Users will switch from spreadsheets to our tool"] | Value | [e.g., "5 user interviews with prototype"] |
-| [e.g., "We can build this in one sprint"] | Feasibility | [e.g., "Eng spike in week 1"] |
+| Assumption | Risk Type | How We'll Gain Confidence |
+|-----------|-----------|--------------------------|
+| [e.g., "Users will switch from spreadsheets to our tool"] | Value | [e.g., "User interviews, competitive analysis"] |
+| [e.g., "We can build this with our current team and stack"] | Feasibility | [e.g., "Eng spike, architecture review"] |
 | [e.g., "This fits within our compliance framework"] | Viability | [e.g., "Legal review by [date]"] |
 
 ---
@@ -125,8 +125,8 @@ State your key assumptions explicitly. For each, note how you plan to validate i
 
 Examples:
 - This is not a replacement for [X existing tool]
-- We will not support [Y use case] in the initial version
-- Performance optimization is out of scope for this phase
+- We will not support [Y use case] — it is a separate problem space
+- Enterprise compliance (SOC2, HIPAA) is outside the scope of this product
 
 ---
 
@@ -156,23 +156,23 @@ Avoid vanity metrics. "Improve engagement" is not a success criterion. "Increase
 | | | | |
 
 ### Pricing signal (if applicable)
-[Early thinking on pricing model. Not a final decision — a starting hypothesis. Fixed rate, tier system, freemium, usage-based, etc.]
+[Early thinking on pricing model. Not a final decision — an initial direction. Fixed rate, tier system, freemium, usage-based, etc.]
 
 ---
 
 ## 6. Scope & Timeline
 
-### What needs to be true to test our hypothesis?
-[Describe the minimum scope directionally — not as a feature list, but as the capabilities or experiences needed to validate the core hypothesis. Detailed MVP feature breakdown belongs in the PRD.]
+### Product scope
+[Describe what this product aims to deliver. Think in terms of capabilities and user outcomes, not feature lists. This is the full vision — what the product looks like when fully realized.]
 
 ### Rough timeline
-[Estimates, not commitments. High-level phases only.]
+[Estimates, not commitments. High-level milestones only. Phasing and MVP scoping belong in the PRD.]
 
-| Phase | Duration | Key Activities |
-|-------|----------|---------------|
-| Discovery | [e.g., 2 weeks] | User interviews, prototype, eng spike |
-| Build + Test | [e.g., 4-5 weeks] | Development and beta |
-| Launch | [e.g., target date] | Rollout + measurement |
+| Milestone | Target | Description |
+|-----------|--------|-------------|
+| [e.g., Discovery complete] | [e.g., Week 2] | [e.g., User research and competitive analysis done] |
+| [e.g., Initial launch] | [e.g., Week 8] | [e.g., First version available to users] |
+| [e.g., Full rollout] | [e.g., Q3] | [e.g., Complete product vision delivered] |
 
 ---
 
@@ -214,10 +214,11 @@ List what you do NOT know yet. This is one of the most valuable sections — it 
 Before presenting, verify:
 
 - [ ] **Problem is grounded in evidence**, not assumption. Can you point to data, quotes, or observations?
-- [ ] **Hypotheses are explicit.** Assumptions are named, not hidden.
+- [ ] **Assumptions are explicit.** Key assumptions are named, not hidden.
 - [ ] **Non-Goals are stated.** The reader knows what this is NOT.
 - [ ] **Success metrics are specific and measurable.** No vague "improve X" language.
 - [ ] **Four risks addressed.** Value, Usability, Feasibility, Viability — at least acknowledged.
+- [ ] **Full vision is clear.** The brief describes the complete product direction, not a constrained MVP.
 - [ ] **A new team member could understand this.** No tribal knowledge required.
 - [ ] **Under 2 pages** for the core brief (excluding appendix).
 - [ ] **Open questions are honest.** Gaps are flagged, not papered over.
@@ -228,7 +229,7 @@ After presenting the brief, recommend:
 
 1. **Share early, share widely.** Circulate for async feedback before any review meeting. Use comments, not meetings, for initial input.
 2. **Identify disagreements.** The purpose of sharing is to surface disagreement early. If everyone agrees immediately, the brief may be too vague.
-3. **Plan validation.** For each hypothesis, schedule the smallest possible test.
+3. **Address open questions.** Assign owners and deadlines to the items in the Open Questions section.
 4. **Evolve, don't rewrite.** As discovery progresses, update the brief. It becomes the running record of what the team learned and decided.
 
 ## Adapting to Project Size
