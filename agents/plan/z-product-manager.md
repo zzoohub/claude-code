@@ -3,6 +3,7 @@ name: z-product-manager
 description: Drives product planning — from product brief through PRD. Invoke when the user wants to plan a new product or feature, create a product brief and PRD together, write just a brief, or write just a PRD. Do NOT use for quick one-off questions about product strategy.
 model: opus
 skills: z-product-brief, z-prd-craft
+color: blue
 metadata:
   author: product-team
   version: 1.0.0

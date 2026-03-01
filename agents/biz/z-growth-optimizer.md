@@ -9,7 +9,7 @@ description: |
   Do NOT use for: marketing strategy/launches (use z-marketer), analytics/data analysis (use z-data-analyst),
   SEO (use z-search-visibility directly), or ad creative (use z-ad-creative via z-marketer).
 model: opus
-color: green
+color: cyan
 skills: z-cro, z-marketing-psychology, z-copywriting, z-churn-prevention, z-pricing
 ---
 
