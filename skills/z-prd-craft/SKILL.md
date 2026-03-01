@@ -276,13 +276,6 @@ The most critical to catch:
 3. **The technical spec in disguise** — Names specific libraries or frameworks
 4. **The design document in disguise** — Contains wireframes or UI specs
 
-## PRD Review Mode
-
-When asked to review or improve an existing PRD, read `references/review-checklist.md`
-for the full evaluation framework with a weighted scoring rubric (1-10 scale,
-anchored with clear definitions). Score each dimension and provide actionable
-feedback prioritized by impact.
-
 ## Iteration & Feedback
 
 After presenting the initial draft:

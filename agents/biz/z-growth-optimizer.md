@@ -8,7 +8,7 @@ description: |
   "viral loop", "churn", "cancel flow", "A/B test design", "paywall optimization".
   Do NOT use for: marketing strategy/launches (use z-marketer), analytics/data analysis (use z-data-analyst),
   SEO (use z-search-visibility directly), or ad creative (use z-ad-creative via z-marketer).
-model: sonnet
+model: opus
 color: green
 skills: z-cro, z-marketing-psychology, z-copywriting, z-churn-prevention, z-pricing
 ---

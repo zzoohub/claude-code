@@ -9,7 +9,7 @@ description: |
   Do NOT use for: UX microcopy inside the product (use z-copywriting), SEO technical audits
   (use z-search-visibility directly), analytics/data analysis (use z-data-analyst),
   conversion optimization (use z-growth-optimizer), or churn prevention (use z-growth-optimizer).
-model: sonnet
+model: opus
 color: purple
 skills: z-copywriting, z-search-visibility, z-email-marketing, z-social-content, z-competitor-pages, z-pricing, z-ad-creative
 ---

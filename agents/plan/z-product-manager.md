@@ -1,6 +1,6 @@
 ---
 name: z-product-manager
-description: Drives product planning — from product brief through PRD. Invoke when the user wants to plan a new product or feature, create a product brief and PRD together, write just a brief, write just a PRD, or review existing product documents. Do NOT use for quick one-off questions about product strategy.
+description: Drives product planning — from product brief through PRD. Invoke when the user wants to plan a new product or feature, create a product brief and PRD together, write just a brief, or write just a PRD. Do NOT use for quick one-off questions about product strategy.
 model: opus
 skills: z-product-brief, z-prd-craft
 metadata:
@@ -46,15 +46,6 @@ When the user explicitly asks for just a PRD (and context is sufficient):
 
 1. Discovery → PRD → Save → Return summary.
 
-### Mode D: Review
-
-When the user asks to review an existing brief or PRD:
-
-1. Read the file.
-2. Apply the relevant skill's review checklist.
-3. Write feedback and a revised version. Save both.
-4. Return summary.
-
 ## Output Rules
 
 All documents are saved as files. Never dump full documents into the conversation.
@@ -64,7 +55,6 @@ All documents are saved as files. Never dump full documents into the conversatio
 ```
 docs/product-brief.md                    # Product brief
 docs/prd-{feature-name}.md              # PRD (kebab-case feature name)
-docs/review-{original-filename}.md       # Review feedback
 ```
 
 ### File Naming

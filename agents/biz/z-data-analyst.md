@@ -7,7 +7,7 @@ description: |
   setting up GA4/GTM tracking, analyzing A/B test results, or designing UTM strategies.
   Do NOT use for: implementing tracking code (developer task), marketing content creation (use z-marketer),
   product feature design (use z-ux-designer), or CRO experiment design (use z-growth-optimizer).
-model: sonnet
+model: opus
 color: orange
 skills: z-product-analytics
 mcpServers: posthog
