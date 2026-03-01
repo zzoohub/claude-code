@@ -54,7 +54,7 @@ Every product brief should address, at minimum implicitly, these four risks:
 |------|----------|-------|
 | **Value** | Will customers buy or choose to use this? | PM |
 | **Usability** | Can users figure out how to use it? | Design |
-| **Feasibility** | Can we build it with our current tech, skills, and time? | Engineering |
+| **Feasibility** | Can we build it with our current skills and time? | Engineering |
 | **Viability** | Does it work for the business (revenue, legal, compliance, brand)? | PM + Stakeholders |
 
 A brief that ignores any of these is incomplete. The brief does not need to answer these questions — it needs to surface them as hypotheses and outline how the team will validate each.
@@ -68,7 +68,7 @@ Before writing, understand:
 1. **The problem**: What pain, frustration, or unmet need exists? For whom? How do you know?
 2. **Strategic context**: How does this connect to business objectives, OKRs, or company mission?
 3. **What has been tried**: Is this a new problem or a known one with failed past attempts?
-4. **Constraints**: Time, budget, team size, technical debt, regulatory requirements.
+4. **Constraints**: Time, budget, team size, regulatory requirements.
 
 Ask the user clarifying questions only for what is genuinely missing. If they have provided rich context, move to drafting.
 
@@ -96,7 +96,7 @@ Use the Staged Brief structure below. Adapt depth to the project size — small 
 [Current workarounds. This reveals the real competitive landscape — which is often inaction or manual processes, not a named competitor.]
 
 ### Why now?
-[What changed that makes this worth solving today? Market shift, new technology, strategic priority, customer churn signal.]
+[What changed that makes this worth solving today? Market shift, strategic priority, customer churn signal, new capability becoming available.]
 
 ---
 
@@ -188,7 +188,7 @@ List what you do NOT know yet. This is one of the most valuable sections — it 
 
 ## 8. Risks & Dependencies
 
-- **Technical:** [e.g., Requires infrastructure we haven't built]
+- **Technical:** [e.g., Browser performance limits for target use case]
 - **Business:** [e.g., Competitor launching similar feature in Q2]
 - **Team:** [e.g., Key engineer on leave during build phase]
 - **Dependencies:** [e.g., Waiting on design system update from Platform team]
