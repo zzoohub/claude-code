@@ -57,7 +57,7 @@ existing brief) has already provided — skip questions that are already answere
 - Who are the target users? What are their primary use cases?
 - How are users solving this problem today? What's painful about it?
 - What does success look like? How will we measure it?
-- What constraints exist? (timeline, tech, regulatory, budget)
+- What constraints exist? (timeline, regulatory, budget)
 - What is explicitly OUT of scope?
 - Are there competitor products or internal prior attempts we should reference?
 
@@ -173,8 +173,9 @@ NOT by technical component.
 - Include telemetry: "Product team can monitor onboarding funnel completion rates"
 - Consider full lifecycle: creation, usage, maintenance, edge cases, deletion
 - Don't include UI/UX details, wireframes, or design specifications — these belong in separate design documents
-- Don't include implementation details: "Store in PostgreSQL with B-tree index"
+- Don't include implementation details or technology choices: "Store in PostgreSQL with B-tree index", "Built with React and Three.js" — these belong in technical specs
 - Don't include performance metrics unless users specifically need them for adoption
+- Don't name specific libraries, frameworks, APIs, or tools — describe the capability needed, not how to build it
 
 **Critical User Journeys to consider:**
 1. First-time experience (onboarding, setup)
@@ -206,11 +207,10 @@ Format:
 - **Out of scope:** [brief list with brief reasoning]
 - **Future consideration:** [things intentionally deferred]
 
-### 9. Assumptions, Constraints & Dependencies
+### 9. Assumptions, Constraints & Risks
 
 - **Assumptions:** Things believed to be true but not yet validated
-- **Constraints:** Hard limits (timeline, budget, tech, regulatory)
-- **Dependencies:** Other teams, services, or deliverables this work relies on
+- **Constraints:** Hard limits (timeline, budget, regulatory). Do NOT list technology choices — those belong in technical specs.
 - **Risks:** What could go wrong, with severity and mitigation strategy
 
 ### 10. Timeline & Milestones
@@ -291,14 +291,16 @@ that would have the highest impact on PRD quality.
 
 4. **The Design Document in Disguise** — PRD contains wireframes, UI mockups, layout specs, or UX flows. A PRD defines WHAT to build and WHY, not how it looks. Visual design belongs in separate design documents.
 
-5. **The Metrics-Free Zone** — No numbers anywhere. No way to know if the product succeeded or failed.
+5. **The Technical Spec in Disguise** — PRD names specific libraries, frameworks, APIs, or tools (e.g., "Built with React", "Uses PostgreSQL", "Three.js rendering"). Technology choices are HOW, not WHAT. They belong in technical specs or design docs. The PRD should describe capabilities ("runs in the browser", "real-time physics simulation") not implementation ("Three.js + Rapier WASM").
 
-6. **The Everything Bagel** — Trying to solve every user problem in one release. Ruthless prioritization is a feature, not a bug.
+6. **The Metrics-Free Zone** — No numbers anywhere. No way to know if the product succeeded or failed.
 
-7. **The One-Sided Coin** — Not acknowledging tradeoffs, risks, or downsides of the proposed approach.
+7. **The Everything Bagel** — Trying to solve every user problem in one release. Ruthless prioritization is a feature, not a bug.
 
-8. **The Outdated Artifact** — PRD written once and never updated. A PRD is a living document.
+8. **The One-Sided Coin** — Not acknowledging tradeoffs, risks, or downsides of the proposed approach.
 
-9. **The Missing Competitor** — No awareness of how alternatives solve the same problem. Your solution exists in a competitive context.
+9. **The Outdated Artifact** — PRD written once and never updated. A PRD is a living document.
 
-10. **The Invisible User** — Requirements that exist because a stakeholder asked, with no evidence of actual user need.
+10. **The Missing Competitor** — No awareness of how alternatives solve the same problem. Your solution exists in a competitive context.
+
+11. **The Invisible User** — Requirements that exist because a stakeholder asked, with no evidence of actual user need.
