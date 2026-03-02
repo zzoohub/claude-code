@@ -28,7 +28,6 @@ Read the relevant reference file when working on a specific domain:
 
 | File | When to read |
 |---|---|
-| `references/structure.md` | Project folder structure for 3D-only and 2D+3D projects |
 | `references/shaders.md` | TSL syntax, node materials, compute shaders, custom effects |
 | `references/ecs.md` | Koota traits, queries, systems, React integration, game loop |
 | `references/web-xr.md` | VR/AR sessions, controllers, hand tracking, hit testing, anchors |
@@ -243,17 +242,6 @@ For full details on Worker separation, data transfer patterns (postMessage vs Sh
 | Render state | R3F / Three.js | Scene graph, materials, animations |
 
 Koota manages the game/simulation world. Zustand manages everything outside the game loop (pause menu, settings, inventory UI). They coexist cleanly -- see `references/ecs.md` for the integration pattern.
-
-### Project Structure
-
-Two project types: **3D-only** (fullscreen canvas, no or minimal 2D pages) and **2D + 3D** (2D web pages coexisting with 3D experiences). See `references/structure.md` for full folder trees, extensions, dependency diagrams, and when-to-add tables.
-
-Key principles:
-
-- **3D-only**: `app/ → domains/ → scene/ ─reads→ engine/ → hud/ → shared/`
-- **2D + 3D**: Adds `site/` (FSD 2D layer) + wraps 3D in `experience/`. Core rule: `site/` and `experience/` NEVER import each other — cross-layer data flows through `shared/stores/`.
-- Each folder exposes public API via `index.ts` barrel only. No cross-import within same layer.
-- Extensions (`engine/`, `domains/`, `networking/`, `workers/`, `crates/`) are added only when triggered — omit when not needed.
 
 ### System Execution Order
 
