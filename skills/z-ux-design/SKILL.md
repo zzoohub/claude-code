@@ -2,9 +2,9 @@
 name: z-ux-design
 description: |
   Senior-level UX design principles, diagnostic frameworks, and design process.
-  Use when: designing user flows, information architecture, navigation patterns, screen layouts, interaction design, UX copy, diagnosing usability problems, or reviewing designs against best practices.
+  Use when: designing user flows, information architecture, navigation patterns, screen layouts, interaction design, UX copy, diagnosing usability problems, reviewing designs against best practices, or designing for 3D/XR/spatial computing (AR, VR, MR, visionOS, Quest, spatial UI).
   Do not use for: visual styling, color palettes, component implementation, design tokens (use z-design-system skill), or ui code.
-  Workflow: User research → this skill (IA, flows, interactions, copy) → z-design-system (tokens, components, visual patterns) → platform implementation.
+  Workflow: User research → this skill (IA, flows, interactions, copy, spatial design) → z-design-system (tokens, components, visual patterns) → platform implementation.
 references:
   - references/design-process.md         # 5-step process: Research → Map → Design → Remove → Validate
   - references/cognitive-principles.md   # 12 behavioral principles with diagnosis guide
@@ -12,6 +12,8 @@ references:
   - references/interaction-patterns.md   # State machines, feedback, gestures, loading, undo
   - references/ux-writing.md            # Button labels, error messages, empty states, microcopy
   - references/ergonomics.md            # Sizing, spacing, platform specs, accessibility, motion
+  - references/3d-design.md              # 3D viewport design: camera controls, object interaction, loading UX, performance, progressive enhancement, web 3D
+  - references/xr-design.md              # XR spatial design: comfort zones, embodied interaction, cybersickness, spatial UI, platform guidelines (visionOS, Quest, Android XR), WebXR
 ---
 
 # UX Design
@@ -50,6 +52,7 @@ When something "feels wrong" or needs improvement:
 | User doesn't know what happened | Feedback gap | Add system feedback (toast, inline, state change) | `interaction-patterns.md` |
 | User doesn't know what to do | Copy failure | Rewrite labels, add guidance, fix empty states | `ux-writing.md` |
 | System feels slow | Doherty Threshold | Optimistic UI, skeleton screens, background processing | `interaction-patterns.md` |
+| 3D/XR issue | See dedicated reference | Load the appropriate reference for diagnosis | `3d-design.md` / `xr-design.md` |
 
 ---
 
@@ -69,6 +72,7 @@ These fail the "Does this help the user complete their goal?" test:
 - Custom patterns for standard tasks (violates Jakob's Law)
 - Hover-only interactions on touch devices
 - Org-chart navigation (structure matches company, not user mental model)
+- 3D/XR anti-patterns: see `3d-design.md` and `xr-design.md` for domain-specific lists
 
 **Rule: If adding something "just in case" — don't. If unsure, mark it for user testing.**
 
@@ -90,7 +94,7 @@ These fail the "Does this help the user complete their goal?" test:
 
 ## Design Domains
 
-This skill covers six interconnected domains. Each has a dedicated reference file:
+This skill covers eight interconnected domains. Each has a dedicated reference file:
 
 ### 1. Design Process
 How to go from problem to validated solution in 5 steps.
@@ -115,6 +119,14 @@ Button labels, error messages, empty states, onboarding copy, microcopy.
 ### 6. Ergonomics & Accessibility
 Sizing, spacing, platform-specific specs, responsive design, WCAG compliance.
 → `references/ergonomics.md`
+
+### 7. 3D Interface Design
+Camera controls, 3D object interaction, loading UX, performance budgets, progressive enhancement, product configurators, web 3D (Three.js, model-viewer, WebGPU).
+→ `references/3d-design.md`
+
+### 8. XR Spatial Design
+Comfort zones, embodied interaction models (gaze, hand, voice, controller), spatial UI anchoring, depth hierarchy, cybersickness prevention, locomotion, platform guidelines (visionOS, Quest, Android XR), WebXR.
+→ `references/xr-design.md`
 
 ---
 
@@ -191,6 +203,9 @@ Before finalizing any UX decision:
 ### Anti-patterns
 - [ ] Checked against Anti-patterns list above — none present
 - [ ] Cognitive principles cited for key design decisions
+
+### 3D / XR (if applicable)
+- [ ] Run validation checklist from `3d-design.md` and/or `xr-design.md`
 
 ---
 
