@@ -1,29 +1,30 @@
 # 3D Interface Design
 
-UX principles for screen-mediated 3D experiences. The user views and manipulates 3D content through a 2D viewport — desktop browser, mobile browser, or embedded 3D viewer. The user is always *outside* the 3D scene, controlling a virtual camera.
+UX principles for screen-mediated 3D experiences. The user views and manipulates 3D content through a 2D viewport — desktop browser, mobile browser, or embedded viewer. The user is always *outside* the 3D scene, controlling a virtual camera.
+
+For technical implementation (renderers, frameworks, APIs, performance optimization), see the `z-web3d` skill.
 
 ---
 
 ## Core Interaction Paradigm
 
-> In 3D viewport design, the user operates a camera to observe and manipulate objects on the other side of a screen. The screen is a window into a 3D world, not a space the user inhabits. This is fundamentally different from XR, where the user is *inside* the space.
+> The screen is a window into a 3D world, not a space the user inhabits. This is fundamentally different from XR, where the user is *inside* the space. See `xr-design.md` for embodied spatial design.
 
 ### What Changes from 2D
 
 | 2D Screen | 3D Viewport |
 |-----------|-------------|
-| Fixed flat layout | Depth axis added — objects exist at varying distances |
+| Fixed flat layout | Depth axis — objects exist at varying distances |
 | Scroll to reveal content | Orbit, pan, zoom to explore |
-| Click/tap to interact | Raycast from camera to select 3D objects |
+| Click/tap to interact | Point through camera to select 3D objects |
 | Z-index for visual layering | Actual depth in 3D space |
 | Single viewing angle | User-controlled camera angle |
-| Pixel-based sizing | 3D units (meters, scene units) + screen projection |
-| Hover state (mouse) | Raycast intersection highlight |
+| Hover state (mouse) | Intersection highlight on 3D surfaces |
 
 ### What Stays the Same
 
-All 2D UX fundamentals still apply:
-- Cognitive load limits (Hick's Law, Miller's Law) — even more critical when adding a depth axis
+All 2D UX fundamentals still apply — and become even more critical when adding a depth axis:
+- Cognitive load limits (Hick's Law, Miller's Law)
 - One primary action per context
 - Feedback for every user action
 - Consistency with platform conventions
@@ -32,103 +33,92 @@ All 2D UX fundamentals still apply:
 
 ---
 
-## Camera Controls
+## Camera Interaction Design
 
 The camera is the user's primary tool for navigating 3D content. Poor camera controls make everything else irrelevant.
 
-### Desktop (Mouse + Keyboard)
+### Expected Controls
 
-| Action | Input | Expected Behavior |
-|--------|-------|-------------------|
-| Orbit (rotate) | Left-click + drag | Rotate camera around the object/focus point |
-| Zoom | Mouse wheel / trackpad pinch | Camera moves closer to or farther from focus point |
-| Pan | Right-click + drag / middle-click + drag | Shift the view horizontally and vertically |
-| Select object | Left-click | Raycast to select a 3D object |
-| Reset view | Double-click / keyboard R | Return to initial camera position |
-| Free navigation | WASD + mouse look | FPS-style movement (special/editor modes only) |
+**Desktop (Mouse + Keyboard):**
 
-### Mobile (Touch)
+| Action | Input | Behavior |
+|--------|-------|----------|
+| Orbit (rotate) | Left-click + drag | Rotate around the focus point |
+| Zoom | Mouse wheel / trackpad pinch | Move closer to or farther from focus point |
+| Pan | Right-click + drag / middle-click + drag | Shift the view |
+| Select | Left-click on object | Select the 3D object |
+| Reset view | Double-click / R key | Return to initial camera position |
 
-| Action | Gesture | Expected Behavior |
-|--------|---------|-------------------|
-| Orbit | One-finger drag | Rotate camera around the object |
+**Mobile (Touch):**
+
+| Action | Gesture | Behavior |
+|--------|---------|----------|
+| Orbit | One-finger drag | Rotate around the object |
 | Zoom | Two-finger pinch | Zoom in/out |
 | Pan | Two-finger drag | Shift the view |
-| Select | Tap | Raycast to select a 3D object |
+| Select | Tap on object | Select the 3D object |
 | Reset | Double-tap | Return to initial view |
 
-### Camera Control Principles
+### Camera Design Principles
 
 1. **The user controls the camera.** Automatic camera movement is only acceptable as an initial entry animation. After that, 100% user control.
-2. **Inertia makes it feel natural.** Apply damping (dampingFactor 0.05–0.1). When the user releases the mouse/finger, the camera should decelerate smoothly. Instant stops feel mechanical and jarring.
-3. **Set boundaries.** Prevent the camera from penetrating inside objects, going below the ground plane, or zooming so far out that context is lost.
-4. **Reset must always be available.** Double-click/double-tap to return to "home view" instantly.
-5. **Cursor feedback.** On desktop, change cursor to `grab` on hover over the 3D canvas, and `grabbing` while dragging. This signals interactivity.
-
-### Recommended OrbitControls Configuration
-
-```
-minDistance: 1.2× object bounding box (prevent internal penetration)
-maxDistance: 5× object size (prevent losing context)
-minPolarAngle: 10° (prevent pure top-down — disorienting)
-maxPolarAngle: 170° (prevent pure bottom-up — disorienting)
-enableDamping: true
-dampingFactor: 0.05
-autoRotate: false (default; enable only after idle timeout, if at all)
-autoRotateSpeed: 1.0 (if enabled — fast rotation causes discomfort)
-```
+2. **Movement must feel natural.** When the user releases, the camera should decelerate smoothly (damping). Instant stops feel mechanical and jarring.
+3. **Set boundaries.** Prevent the camera from going inside objects, below the ground, or zooming so far out that context is lost.
+4. **Reset must always be available.** Users need a way to return to "home view" at any time (double-click/double-tap).
+5. **Signal interactivity.** On desktop, change cursor to grab/grabbing on the 3D canvas. On mobile, use subtle affordance hints.
 
 ### Initial Camera Position
 
-Choose based on content type:
+Choose based on what helps the user understand the content fastest:
 
-| Content Type | Camera Position | Rationale |
-|-------------|-----------------|-----------|
+| Content Type | Camera Position | Why |
+|-------------|-----------------|-----|
 | Product viewer | 3/4 view (slightly above, slightly angled) | Maximizes information per angle |
 | Architecture / space | Eye-level, looking at entrance | Matches human perspective |
 | Data visualization | 45° above, showing full dataset | Overview-first, detail on demand |
 | Character / avatar | Upper body center, slightly above | Natural conversational angle |
+| Photorealistic scene (splats) | Best-captured viewpoint | Minimizes artifacts, maximizes quality |
 
 ### Camera Transitions
 
-- Transitions between view presets: 0.5–1 second with easing (cubic-bezier)
+- Between view presets: 0.5–1 second with easing
 - Focus on selected object: smooth zoom toward object center
-- **Never** teleport the camera instantly — it destroys spatial awareness
+- **Never teleport the camera instantly** — it destroys spatial awareness
 
 ---
 
 ## 3D Object Interaction
 
-### Core Interactions
+### Interaction Patterns
 
-| Interaction | Desktop Input | Mobile Input | Visual Feedback |
-|-------------|--------------|--------------|-----------------|
-| Select | Left-click | Tap | Highlight outline + subtle audio |
-| Hover/Focus | Mouse hover (raycast) | N/A (use tap) | Outline glow or material shift |
-| Grab | Click + drag | Long-press + drag | Object follows cursor + shadow update |
-| Rotate | Click + drag on rotation handle | Two-finger twist | Smooth rotation with momentum |
-| Scale | Scroll on selected object or drag handle | Two-finger pinch on object | Proportional resize + snap guides |
+| Interaction | Desktop | Mobile | Feedback |
+|-------------|---------|--------|----------|
+| Select | Click | Tap | Highlight outline + subtle audio |
+| Hover/Focus | Mouse hover | N/A (use tap) | Outline glow or material shift |
+| Grab | Click + drag | Long-press + drag | Object follows cursor + shadow updates |
+| Rotate | Drag rotation handle | Two-finger twist | Smooth rotation with momentum |
+| Scale | Scroll on object or drag handle | Two-finger pinch on object | Proportional resize + snap guides |
 | Place | Drag + release | Drag + release | Snap to surface/grid + settle animation |
 
-### Interaction Feedback Rules
+### Feedback Rules
 
-- Every interaction needs immediate visual feedback (<100ms)
-- Selection state must be clearly visible: outline, glow, or material change
-- Audio feedback reinforces spatial awareness — a click sound localized to the object's position
-- On desktop, provide hover states for all interactive objects (raycast highlight)
-- On mobile, provide tap affordances (subtle animation, visual hint)
+- Every interaction needs immediate visual response (<100ms)
+- Selection state must be unmistakable: outline, glow, or material change
+- Audio feedback reinforces spatial awareness — sound localized to the object's position
+- Desktop: hover states on all interactive objects
+- Mobile: tap affordances (subtle animation, visual hint) since hover doesn't exist
 
 ### Hit Area Sizing
 
-- 3D object hit areas should be larger than their visual representation
-- Mobile minimum: extend hit volume to cover at least 44×44px screen projection
-- Small objects should have inflated invisible hit boxes for easier targeting
+- 3D object hit areas should be **larger** than visual representation
+- Mobile: extend hit volume to cover at least 44×44px screen projection
+- Small objects need inflated invisible hit volumes for easier targeting
 
 ---
 
 ## Depth as Visual Hierarchy
 
-Unlike flat design where z-index is abstract, 3D depth is literal and affects perception.
+Unlike 2D where z-index is abstract, 3D depth is literal and affects perception.
 
 ```
 Closest to camera (foreground):
@@ -140,7 +130,7 @@ Mid-distance (primary):
   → Keep interactive content at consistent depth for predictability
 
 Far (background):
-  → Environmental context, skybox, non-interactive reference objects
+  → Environmental context, non-interactive reference objects
   → Establishes spatial grounding and atmosphere
 ```
 
@@ -148,21 +138,43 @@ Far (background):
 
 ### Shadows and Grounding
 
-- **Shadows are mandatory for spatial coherence.** Objects without shadows appear to float disconnectedly.
+- **Shadows are mandatory.** Objects without shadows appear to float disconnectedly.
 - Ground planes, contact shadows, or ambient occlusion provide spatial grounding.
-- Match virtual lighting to expected context (e.g., neutral studio lighting for product viewers).
+- Match virtual lighting to expected context (neutral studio for products, environmental for architecture).
 
 ---
 
-## 3D Product Configurator UX
+## Discoverability & First-Time Experience
+
+3D viewers present a discoverability challenge — users may not realize they can interact, or may not know what interactions are available.
+
+### Onboarding Patterns
+
+| Pattern | When to Use |
+|---------|-------------|
+| **"Drag to rotate" hint** | First visit to any 3D viewer. Show for 3–5 seconds, dismiss on first interaction. |
+| **Subtle auto-rotation** | On idle after 5+ seconds. Slow speed. Stops immediately on user interaction. |
+| **Pulsing hotspots** | Configurators with clickable parts. Shows where interaction is possible. |
+| **Guided tour** | Complex 3D scenes (architecture walkthrough). Step-by-step camera movements with annotations. |
+
+### Design Rules
+
+- Assume the user has never used a 3D viewer before
+- Place 2D controls (buttons, menus) alongside the 3D viewport — don't hide controls inside the 3D scene
+- Label what the viewer shows: "360° Product View" or "Interactive Floor Plan" sets expectations
+- Provide a text description or specs table as a non-3D alternative for the same information
+
+---
+
+## Product Configurator UX
 
 ### Core Principles
 
-1. **Real-time feedback**: Color/material changes must reflect on the 3D model instantly. >300ms delay feels sluggish.
-2. **Limit choices**: Show 4–8 options at a time. Excessive choice causes decision paralysis.
+1. **Instant feedback**: Option changes must reflect on the 3D model immediately. >300ms delay feels sluggish.
+2. **Limit choices**: 4–8 options per category. Excessive choice causes decision paralysis (Hick's Law).
 3. **Guided flow**: Step-by-step progression (shape → color → material → accessories). Allow free exploration but provide a recommended order.
-4. **Live price updates**: Price updates instantly when options change. Never surprise the user at checkout.
-5. **Mobile-first**: 55–80% of configurator users are on mobile. Design for mobile first.
+4. **Live price updates**: Price changes instantly when options change. Never surprise the user at checkout.
+5. **Mobile-first**: 55–80% of configurator users are on mobile.
 
 ### Layout Patterns
 
@@ -189,222 +201,122 @@ Far (background):
 └───────────────────────┘
 ```
 
-### Configurator Interactions
+### Key Interactions
 
-- **Color swatches**: Tap instantly swaps material on 3D model. Must feel instantaneous (no loading indicator needed).
-- **Hotspots**: Clickable points on the 3D model surface. "Customize this part" guidance.
-- **Comparison mode**: "Current vs. modified" split view or toggle.
-- **Shareable state**: Encode configuration in URL parameters. Link sharing reproduces exact configuration.
-- **Snapshot**: Save screenshot of current configuration.
+- **Color swatches**: Tap swaps material instantly on the 3D model
+- **Hotspots**: Clickable points on the model surface — "Customize this part"
+- **Comparison mode**: "Current vs. modified" split view or toggle
+- **Shareable state**: Configuration encoded in URL — link sharing reproduces exact state
+- **Snapshot**: Save screenshot of current configuration
 
 ---
 
-## Loading UX for 3D Assets
+## Photorealistic Scene Content (Gaussian Splatting)
 
-### Why Loading Matters
+Gaussian Splatting renders photorealistic scenes captured from real-world photos. Unlike traditional 3D models (polygons + textures), splat scenes feel near-photographic — which changes user expectations.
 
-3D assets are heavy. A typical web page is 2–5MB; a single 3D model can be 5–50MB. Users will not wait more than 3 seconds staring at a blank screen.
+### When to Use
 
-### Loading Strategy Hierarchy
+| Use Case | Why Splats Work |
+|----------|-----------------|
+| Real estate walkthroughs | Photorealistic room capture from phone photos |
+| E-commerce product scans | True-to-life appearance without manual 3D modeling |
+| Cultural heritage / museums | Preserve real-world scenes with high fidelity |
+| Tourism / location preview | Navigable scenes from photo captures |
+
+### UX Differences from Traditional 3D
+
+- **Users expect photographic quality.** Artifacts at scene boundaries or undersampled areas feel like "broken" content — crop or mask edge regions.
+- **Navigation should be constrained.** Splat scenes work best with defined camera paths. Free-roaming exposes rendering artifacts at unobserved angles.
+- **Loading is heavier.** Splat files are large (50–200MB). Progressive loading (low-density preview first, then stream detail) is essential.
+- **Fallback is critical.** Provide a pre-rendered image gallery or 360° photo viewer for devices that can't render splats.
+
+---
+
+## Scroll-Driven 3D Storytelling
+
+Scroll input controlling 3D animation creates compelling narratives — product reveals, data stories, spatial explainers. This is a distinct paradigm from free-orbit 3D viewers.
+
+### Design Rules
+
+1. **Progress indicator is mandatory.** Users must know where they are in the sequence (dots, bar, or percentage).
+2. **Skip control is mandatory.** Users must be able to jump ahead or escape the sequence at any time.
+3. **Respect reduced motion preferences.** Provide a static fallback showing key frames without animation.
+4. **Content must work without the 3D.** Text, key information, and CTAs must be accessible independently of the animation.
+5. **Keep it short.** 3–5 "scenes" or steps. Long sequences (>10) cause fatigue and abandonment.
+6. **Don't hijack scroll.** The 3D experience must not prevent the user from scrolling past it to reach other content.
+
+---
+
+## Loading Experience
+
+3D assets are heavy. Users will not wait more than 3 seconds staring at a blank screen.
+
+### Loading Hierarchy
 
 ```
-1. Instant display (0ms)
-   └── 3D viewer container + skeleton/placeholder
+1. Instant (0ms)
+   └── Container + skeleton/placeholder visible immediately
 
-2. Quick preview (0–2 seconds)
-   └── Low-resolution poster image (poster attribute)
-   └── Or ultra-low-poly silhouette model
+2. Quick preview (0–2s)
+   └── Poster image or ultra-low-poly silhouette
 
-3. Progressive loading (2–10 seconds)
-   └── Base geometry first → textures load subsequently
-   └── Draco/meshopt compression + KTX2 textures
+3. Progressive (2–10s)
+   └── Base geometry first → textures load after
    └── User can already orbit/zoom during loading
 
-4. Full quality (10+ seconds)
-   └── High-resolution textures, environment maps
-   └── Swap in background (minimize pop-in)
+4. Full quality (10s+)
+   └── High-resolution textures swap in background
+   └── Minimize visible pop-in
 ```
 
 ### Loading UI Patterns
 
-| Pattern | Best For | Implementation |
-|---------|----------|----------------|
-| **Poster + progress bar** | Single model (product viewer) | `<model-viewer poster="img.jpg" loading="eager">` |
-| **Skeleton 3D viewer** | 3D area as part of a larger page | Gray box + rotation icon placeholder |
-| **Low-res → high-res swap** | Large scenes (virtual tours) | LOD 0 renders immediately → LOD 2 swaps in background |
-| **Progressive glTF streaming** | Complex models (architecture, medical) | Meshopt progressive decoding |
-| **Lazy load (on viewport entry)** | 3D content below the fold | IntersectionObserver triggers 3D initialization |
+| Pattern | Best For |
+|---------|----------|
+| Poster image + progress bar | Single product viewer |
+| Skeleton placeholder | 3D area within a larger page |
+| Low-res → high-res swap | Large scenes (virtual tours, splats) |
+| Lazy load on scroll | 3D content below the fold |
 
-### Loading Interaction Rule
+### Core Rule
 
-> **Rule**: Allow interaction during loading.
-
-- Once the low-poly model is loaded, immediately enable orbit/zoom
-- Texture loading happens in the background; swap in seamlessly on completion
-- Show loading progress as percentage (based on actual asset size, not arbitrary)
-- Never block interaction with a "loading" overlay
+> Allow interaction during loading. Once the low-poly model is ready, enable orbit/zoom immediately. Never block interaction with a loading overlay.
 
 ---
 
-## Performance & Core Web Vitals
+## Mobile UX
 
-### Impact of 3D on Web Performance
-
-| Web Vital | 3D Impact | Mitigation |
-|-----------|-----------|------------|
-| **LCP** (Largest Contentful Paint) | 3D canvas as LCP element increases wait | Use poster image for LCP, load 3D afterward |
-| **INP** (Interaction to Next Paint) | Heavy render loop blocks main thread | OffscreenCanvas + Web Worker for render separation |
-| **CLS** (Cumulative Layout Shift) | Canvas resize causes layout shift | Fix canvas size with CSS, use `aspect-ratio` property |
-
-### Performance Budget Guidelines
-
-```
-┌─────────────────────────────┬──────────────────────────────────┐
-│ Metric                       │ Budget                           │
-├─────────────────────────────┼──────────────────────────────────┤
-│ Initial 3D asset size        │ ≤5MB (mobile), ≤15MB (desktop)   │
-│ Triangle count (mobile)      │ ≤100K                            │
-│ Triangle count (desktop)     │ ≤500K                            │
-│ Draw calls per frame         │ ≤100                             │
-│ Texture resolution (mobile)  │ ≤1024×1024                       │
-│ Texture resolution (desktop) │ ≤2048×2048                       │
-│ Target FPS (during interact) │ ≥30fps (mobile), ≥60fps (desktop)│
-│ JS bundle (3D-related)       │ ≤200KB (gzip, tree-shaken)       │
-│ First meaningful render      │ ≤3 seconds                       │
-└─────────────────────────────┴──────────────────────────────────┘
-```
-
-### Adaptive Quality
-
-```
-Device capability detection:
-1. navigator.hardwareConcurrency (CPU core count)
-2. renderer.info.render.calls (real-time draw calls)
-3. Real-time FPS monitoring (stats-gl)
-
-When FPS < 80% of target:
-→ Reduce render resolution (lower renderer.setPixelRatio)
-→ Disable post-processing
-→ Disable shadows
-→ Drop LOD level
-→ Disable anti-aliasing
-
-When FPS > 120% of target:
-→ Progressively increase quality
-```
+- **Scroll conflict**: Touch on the 3D canvas conflicts with page scroll. Clearly separate 3D interaction zones from scrollable areas.
+- **Small touch targets**: Inflate 3D object tap hit areas to at least 44×44px screen projection.
+- **Performance**: High-poly models drop frames on mobile. The experience should automatically adapt quality to maintain smooth interaction.
+- **Battery**: Pause the render loop when the user is not interacting.
+- **Screen ratio**: In portrait, the 3D viewer should occupy ≤60% of screen height. Place 2D controls in the remaining space.
 
 ---
 
-## Web-Specific: Progressive Enhancement
+## Progressive Experience Levels
 
-### 3-Level Experience Model
+Design 3D experiences as layered capabilities, not single-platform bets:
 
 ```
 Level 0: Static Fallback
-├── High-resolution rendered images or image sets
-├── 360° image viewer (CSS/JS-based)
-└── Target: WebGL unsupported, ultra-low-end devices, accessibility fallback
+├── High-resolution rendered images or 360° image viewer
+└── For: unsupported browsers, accessibility, ultra-low-end devices
 
 Level 1: Inline 3D (Core Experience)
-├── Browser 3D viewer (Three.js, Babylon.js, model-viewer)
-├── Mouse/touch orbit, zoom, pan
-├── Responsive canvas (viewport-aware)
-└── Target: Most modern browsers
+├── Browser 3D viewer with orbit, zoom, pan
+└── For: most modern browsers (default experience)
 
-Level 2: Immersive (Bonus) — see xr-design.md
-├── immersive-ar: Mobile AR placement (ARCore/ARKit)
-├── immersive-vr: Headset VR session
-└── Target: Compatible devices + explicit user opt-in
+Level 2: Immersive (Optional) — see xr-design.md
+├── Mobile AR placement or VR headset session
+└── For: compatible devices + explicit user opt-in
 ```
 
-### Feature Detection Pattern
-
-```
-Capability detection order:
-1. navigator.gpu exists? → Use WebGPU renderer
-2. WebGL2 supported? → WebGL2 renderer
-3. WebGL1 only? → WebGL1 + reduced features
-4. None supported? → Level 0 fallback
-
-XR detection (for optional immersive layer):
-1. navigator.xr exists?
-2. navigator.xr.isSessionSupported('immersive-ar') → Show AR button
-3. navigator.xr.isSessionSupported('immersive-vr') → Show VR button
-4. Not supported → Hide button entirely (not an error)
-```
-
-> **Rule**: Never present unsupported features as errors. If a device doesn't support AR, don't show an AR button. Don't show "Your browser doesn't support AR" — that's blaming the user. Only show what works.
-
-### Web-First, Immersive-Optional Flow
-
-```
-User arrives at URL
-   │
-   ▼
-[1] Inline 3D (in-browser 3D viewer) ← Default experience for ALL users
-   │
-   ├── WebGL/WebGPU unsupported? → [Fallback] Static images + 360° gallery
-   │
-   ▼
-[2] "View in VR" / "View in AR" button (optional)
-   │
-   ├── immersive-vr → VR session if headset connected
-   ├── immersive-ar → Mobile ARCore/ARKit session
-   └── Unsupported device → Button hidden (never show an error)
-```
-
-> **Rule**: Inline 3D must be a complete experience on its own. AR/VR is a bonus layer, never a requirement.
-
-### Cross-Browser WebGL/WebGPU Support (2025–2026)
-
-| Feature | Chrome | Safari | Firefox | Edge |
-|---------|--------|--------|---------|------|
-| WebGL 2.0 | ✅ | ✅ | ✅ | ✅ |
-| WebGPU | ✅ | ✅ (partial) | ⚠️ (in dev) | ✅ |
-
-### WebGPU Transition Strategy
-
-- WebGPU enables more draw calls, compute shaders, better performance
-- Three.js r171+ `WebGPURenderer` auto-falls back to WebGL2 when unsupported
-- ~60% of users support WebGPU as of 2026 — **always include WebGL fallback**
-- Never require WebGPU for core functionality
-
-### model-viewer Component (Recommended for Simple Viewers)
-
-Google's `<model-viewer>` provides the most accessible Web 3D experience as a web component.
-
-**Key attributes for UX optimization:**
-- `poster`: Image shown before 3D loads. Essential for LCP optimization.
-- `loading="lazy"`: Start loading when viewport is entered.
-- `reveal="auto"`: Smooth transition from poster to 3D on load completion.
-- `auto-rotate-delay`: Milliseconds of idle before auto-rotation begins. Too fast is distracting.
-- `interaction-prompt`: Shows "drag to rotate" hint for first-time visitors.
-- `touch-action="pan-y"`: Allows vertical page scroll while enabling 3D interaction on mobile.
-- `ar-modes` priority: webxr → scene-viewer → quick-look (attempts in order).
-- `ios-src`: Provide .usdz file for iOS AR Quick Look path.
-
----
-
-## Mobile-Specific Constraints
-
-- **Scroll conflict**: Touch on the 3D canvas conflicts with page scroll. Apply `touch-action: none` to the canvas, but ensure normal scroll works outside it.
-- **Small touch targets**: Inflate 3D object tap hit areas to at least 44×44px screen projection.
-- **Performance degradation**: High-poly models drop frames on mobile. Automatic LOD switching is required.
-- **Battery drain**: 3D rendering is GPU-intensive. Pause the render loop when the user is not interacting with the 3D view.
-- **Screen ratio**: In portrait mode, the 3D viewer should occupy ≤60% of screen height. Place 2D controls in the remaining space.
-
----
-
-## Framework & Tool Selection Guide
-
-| Scenario | Recommended Tool | Rationale |
-|----------|-----------------|-----------|
-| Single product 3D viewer | `<model-viewer>` | Zero-code, built-in accessibility, auto AR handling |
-| Custom product configurator | Three.js + React Three Fiber | Fine-grained control, React ecosystem integration |
-| Large 3D scenes (architecture, virtual tours) | Three.js / Babylon.js | Scene graph management, LOD, Octree |
-| Rapid prototype / marketing | A-Frame | HTML-like declarative syntax, fast development |
-| Game / interactive experience | PlayCanvas / Wonderland Engine | Game loop, physics engine, editor |
-| Enterprise CAD / data | Babylon.js | CAD loaders, inspector, measurement tools |
+**Rules:**
+- Level 1 must be a complete experience. AR/VR is a bonus, never a requirement.
+- Never show error messages for unsupported features. If a device can't do AR, don't show an AR button. Blaming the user's device is poor UX.
+- Only show what works.
 
 ---
 
@@ -413,101 +325,113 @@ Google's `<model-viewer>` provides the most accessible Web 3D experience as a we
 ### Keyboard Navigation
 
 3D viewers must be keyboard-accessible:
-- `Tab` to focus the viewer
-- Arrow keys to orbit the camera
-- `+`/`-` or `PgUp`/`PgDn` to zoom
-- `Enter` to select an object
-- `Escape` to release focus
+- Tab to focus the viewer
+- Arrow keys to orbit
+- +/- or PgUp/PgDn to zoom
+- Enter to select an object
+- Escape to release focus
 
-### Screen Reader Support
+### Alternative Representations
 
-- Add `role="img"` + descriptive `aria-label` to the `<canvas>` element (e.g., "Interactive 3D product viewer")
-- Announce major state changes via `aria-live` region ("Color changed to red")
-- Provide a text alternative alongside the 3D viewer (product specs table, text description)
+- Provide a text description or specs table alongside the 3D viewer
+- Announce major state changes to screen readers ("Color changed to red", "Viewing from front")
+- The 3D viewer is an enhancement — the information it conveys must also be available in text
 
 ### Motion Sensitivity
 
-- Detect `prefers-reduced-motion: reduce` and disable auto-rotation
-- Minimize or eliminate camera transition animations (use instant transitions)
+- Respect reduced-motion preferences: disable auto-rotation, minimize camera animations
 - Disable particle effects and infinite loop animations
+- User-initiated motion is acceptable; system-initiated motion is not
 
-### Color Vision Deficiency
+### Color and Vision
 
-- In color selection UI, always pair color swatches with text labels (not just color alone)
-- Ensure visual distinctions in the 3D model are not communicated solely through color
-
-### Low Vision
-
-- Provide sufficient zoom range
+- Color swatches must include text labels (not color alone)
+- Visual distinctions in the 3D model must not rely solely on color
+- Provide sufficient zoom range for low-vision users
 - Support high-contrast mode for UI overlays
-
----
-
-## Anti-Patterns (3D Specific)
-
-| Anti-Pattern | Why It Fails | Alternative |
-|-------------|-------------|-------------|
-| Blank screen until 3D fully loads | 3+ seconds blank → 50%+ bounce rate | Poster image + progress indicator |
-| Same model for mobile and desktop | Frame drops, battery drain, overheating on mobile | Separate LOD assets for mobile |
-| 3D canvas fills entire viewport (mobile) | Can't scroll, other content inaccessible | Limit canvas to 50–60% of screen height |
-| Error message when AR unsupported | Feels like blaming the user | Simply hide the AR button |
-| Auto-playing 3D animation + sound | Unexpected motion/sound disrupts context | Start on user interaction, sound off by default |
-| Controls only inside the 3D scene (no 2D UI) | Hard to discover in inline 3D contexts | Place 2D HTML controls alongside/below the 3D viewer |
-| No `touch-action` setting | Page scroll gets hijacked by 3D interaction | Set `touch-action: pan-y` or explicitly separate interaction zones |
-| 3D viewer has no text alternative | Accessibility violation, SEO invisible | `aria-label` + text specs/description alongside |
-| WebGPU-only with no fallback | ~40% of users excluded (2026) | Always include WebGL2 automatic fallback |
-| Instant camera teleportation | Destroys spatial context and orientation | Smooth transitions with easing |
-| Using 3D when 2D suffices | Slower, more complex, no added value | Stay 2D unless 3D solves a problem 2D cannot |
 
 ---
 
 ## When NOT to Use 3D
 
-Not every interface benefits from a 3D viewport. Stay in 2D if:
+Stay in 2D if:
 
 - The task is primarily text-heavy (reading, writing, data entry)
 - Speed of execution matters more than spatial understanding
 - The data is inherently tabular, sequential, or flat
-- The spatial dimension adds no functional value ("3D for 3D's sake")
+- The spatial dimension adds no functional value
 
 **Rule**: 3D should solve a problem that 2D cannot. If the primary value is "it looks cool," stay 2D.
 
 ---
 
-## 3D UX Validation Checklist
+## Anti-Patterns
 
-### Loading & Performance
-- [ ] Poster image or skeleton displayed immediately before 3D loads
-- [ ] First meaningful render within 3 seconds (even if low-poly)
-- [ ] ≥30fps on mobile, ≥60fps on desktop during interaction
-- [ ] Assets use Draco/meshopt compression + KTX2 textures
-- [ ] Render loop pauses when 3D viewer is outside viewport
-- [ ] Core Web Vitals (LCP, INP, CLS) impact minimized
+| Anti-Pattern | Why It Fails | Alternative |
+|-------------|-------------|-------------|
+| Blank screen until 3D fully loads | 3+ seconds blank → 50%+ bounce rate | Poster image + progress indicator |
+| Same quality model for mobile and desktop | Frame drops, battery drain, overheating | Adaptive quality, separate LOD for mobile |
+| 3D canvas fills entire viewport (mobile) | Can't scroll, other content inaccessible | Limit canvas to 50–60% of screen height |
+| Error message when AR unsupported | Blames the user's device | Hide the AR button entirely |
+| Auto-playing 3D animation + sound | Unexpected motion/sound disrupts context | Start on user interaction, sound off by default |
+| Controls only inside the 3D scene | Hard to discover, not accessible | Place 2D controls alongside the 3D viewer |
+| No touch handling on mobile | Page scroll gets hijacked by 3D interaction | Separate interaction zones clearly |
+| No text alternative for 3D content | Accessibility violation, information locked in visual-only format | Text description/specs alongside viewer |
+| Instant camera teleportation | Destroys spatial context and orientation | Smooth transitions with easing |
+| Using 3D when 2D suffices | Slower, more complex, no added value | Stay 2D unless 3D solves a problem 2D cannot |
+| Unconstrained navigation in photorealistic scenes | Edge artifacts destroy the quality illusion | Constrain camera paths, mask edges |
+| Scroll-driven 3D with no skip/escape | Users feel trapped in an unskippable animation | Skip control + jump-to-section |
+| Scroll-driven 3D without reduced-motion fallback | Accessibility violation | Static key-frame fallback |
+
+---
+
+## Validation Checklist
+
+### Loading
+- [ ] Poster/skeleton displayed before 3D loads
+- [ ] First meaningful render within 3 seconds
+- [ ] Interaction possible during loading (orbit/zoom on low-poly)
+- [ ] Smooth quality improvement (no jarring pop-in)
 
 ### Camera & Interaction
-- [ ] Mouse (orbit/zoom/pan) and touch (1-finger orbit/pinch zoom) both work
-- [ ] Camera damping applied — no instant stops
-- [ ] Double-click/double-tap resets view
-- [ ] Camera boundaries prevent penetration inside objects and below ground
+- [ ] Desktop (orbit/zoom/pan) and mobile (drag/pinch) both work
+- [ ] Camera movement has smooth damping — no instant stops
+- [ ] Reset view available (double-click/double-tap)
+- [ ] Camera cannot go inside objects or below ground
 - [ ] Scroll and 3D interaction don't conflict on mobile
 
-### Cross-Platform
-- [ ] Static image fallback when WebGL unsupported
-- [ ] AR button hidden (not error-messaged) on unsupported devices
-- [ ] iOS AR Quick Look path (.usdz) provided where applicable
-- [ ] QR code option for desktop → mobile AR handoff
-- [ ] WebGPU → WebGL2 → WebGL1 sequential fallback
+### Discoverability
+- [ ] User understands they can interact (hint, label, or affordance)
+- [ ] 2D controls placed alongside the 3D viewer (not hidden inside)
+- [ ] Content type labeled ("360° View", "Interactive Floor Plan")
+
+### Progressive Experience
+- [ ] Static image fallback for unsupported browsers
+- [ ] AR/VR buttons hidden (not error-messaged) when unsupported
+- [ ] Core experience works without AR/VR
 
 ### Accessibility
-- [ ] Keyboard navigation for the 3D viewer works
-- [ ] Canvas has `aria-label` + `role` attributes
-- [ ] `prefers-reduced-motion` disables auto-rotation and animations
-- [ ] Color selection UI includes text labels
-- [ ] Text alternative for 3D content is provided
+- [ ] Keyboard navigation works
+- [ ] Text alternative provided for 3D content
+- [ ] Reduced-motion preferences respected (no auto-rotation)
+- [ ] Color selections include text labels
+- [ ] Screen reader announcements for state changes
 
 ### Configurator (if applicable)
-- [ ] Color/material changes reflect on model in <300ms
-- [ ] Options limited to 4–8 per category
-- [ ] Price updates in real-time with option changes
-- [ ] Configuration shareable via URL parameters
-- [ ] Mobile layout tested (3D viewer + controls without scroll conflict)
+- [ ] Option changes reflected on model in <300ms
+- [ ] 4–8 options per category (no choice overload)
+- [ ] Price updates in real-time
+- [ ] Configuration shareable via URL
+- [ ] Mobile layout tested (viewer + controls without scroll conflict)
+
+### Photorealistic Scenes (if applicable)
+- [ ] Progressive loading with preview
+- [ ] Camera paths constrained to captured viewpoints
+- [ ] Edge artifacts masked or cropped
+- [ ] Fallback for unsupported devices
+
+### Scroll-Driven 3D (if applicable)
+- [ ] Progress indicator visible
+- [ ] Skip / jump control available
+- [ ] Reduced-motion fallback works
+- [ ] Content functional without the 3D animation

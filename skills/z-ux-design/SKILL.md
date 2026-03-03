@@ -12,8 +12,8 @@ references:
   - references/interaction-patterns.md   # State machines, feedback, gestures, loading, undo
   - references/ux-writing.md            # Button labels, error messages, empty states, microcopy
   - references/ergonomics.md            # Sizing, spacing, platform specs, accessibility, motion
-  - references/3d-design.md              # 3D viewport design: camera controls, object interaction, loading UX, performance, progressive enhancement, web 3D
-  - references/xr-design.md              # XR spatial design: comfort zones, embodied interaction, cybersickness, spatial UI, platform guidelines (visionOS, Quest, Android XR), WebXR
+  - references/3d-design.md              # 3D viewport UX: camera interaction, object interaction, depth hierarchy, configurator UX, photorealistic scenes, scroll-driven 3D, loading, discoverability, accessibility
+  - references/xr-design.md              # XR spatial UX: comfort zones, interaction models, passthrough MR, content persistence, text input, multi-user, cybersickness, onboarding, privacy, platform guidelines (visionOS 26, Quest, Android XR)
 ---
 
 # UX Design
@@ -121,11 +121,11 @@ Sizing, spacing, platform-specific specs, responsive design, WCAG compliance.
 → `references/ergonomics.md`
 
 ### 7. 3D Interface Design
-Camera controls, 3D object interaction, loading UX, performance budgets, progressive enhancement, product configurators, web 3D (Three.js, model-viewer, WebGPU).
+Camera interaction, object interaction, depth as hierarchy, product configurator UX, photorealistic scene UX (Gaussian splatting), scroll-driven 3D storytelling, loading experience, discoverability, progressive experience levels, accessibility.
 → `references/3d-design.md`
 
 ### 8. XR Spatial Design
-Comfort zones, embodied interaction models (gaze, hand, voice, controller), spatial UI anchoring, depth hierarchy, cybersickness prevention, locomotion, platform guidelines (visionOS, Quest, Android XR), WebXR.
+Comfort zones, interaction models (gaze, hand, voice, controller), text input, passthrough MR design, content persistence, spatial UI patterns, multi-user/social XR, cybersickness prevention, onboarding, privacy, platform design languages (visionOS 26, Quest, Android XR), accessibility.
 → `references/xr-design.md`
 
 ---
