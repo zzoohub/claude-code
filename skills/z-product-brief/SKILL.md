@@ -12,9 +12,8 @@ metadata:
 A product brief answers one question: **"Should we build this, and why?"**
 
 It sits upstream of the PRD. The brief defines the problem and direction; the PRD
-(created separately with z-prd-craft) specifies requirements, user journeys, scope,
-risks, and metrics in detail. Keep the brief lean — anything the PRD covers in depth
-does not belong here.
+specifies requirements, user journeys, scope, risks, and metrics in detail.
+Keep the brief lean — anything the PRD covers in depth does not belong here.
 
 ## What a Product Brief Is (and Is Not)
 
@@ -145,9 +144,9 @@ Before presenting, verify:
 
 After presenting the brief:
 
-1. **Next step: PRD.** When the team aligns on the brief, create a PRD (with z-prd-craft) that references this brief for detailed requirements, user journeys, risk analysis, and phased scoping.
-2. **Surface disagreements.** If everyone agrees immediately, the brief may be too vague.
-3. **Address open questions.** Assign owners and deadlines.
+1. **Surface disagreements.** If everyone agrees immediately, the brief may be too vague.
+2. **Address open questions.** Assign owners and deadlines.
+3. **Evolve into downstream documents.** Once aligned, the brief serves as input for PRDs, design specs, and other detailed planning artifacts.
 
 ## Calibration: Weak vs. Strong
 
