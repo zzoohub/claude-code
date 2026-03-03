@@ -37,11 +37,13 @@ while maintaining rigor.
 
 ### Phase 0: Check for Existing Context
 
-Before discovery, check if a product brief or strategic document already exists
-(look for `docs/product-brief.md` or ask the user). If no brief exists and the
-scope warrants one, suggest creating a product brief first before proceeding
-with the PRD. If one exists, use it as primary context — skip questions the
-brief already answers and focus Phase 1 only on filling gaps.
+Before discovery, check if a product brief already exists (look for
+`docs/product-brief.md` or ask the user). The brief is a lightweight alignment
+document — it captures the problem summary, direction, and success signal, but
+the PRD is the canonical source for all detailed content. If a brief exists,
+use it as a starting point to accelerate discovery, but the PRD owns the
+detailed problem statement, metrics, scope boundaries, and non-goals.
+Do not duplicate the brief's content verbatim — expand and deepen it here.
 
 ### Phase 1: Discovery Interview
 
@@ -224,6 +226,11 @@ show how atomic requirements compose into end-to-end experiences.
 
 Name the tempting features you're deliberately not building. Generic non-goals
 ("things we're not building") add nothing.
+
+**What this document does NOT cover:**
+- UI/UX design, wireframes, interaction patterns, visual specs
+- Technical architecture, tech stack selection, API design
+- Sprint planning, task breakdown, story points
 
 ### 9. Assumptions, Constraints & Risks
 

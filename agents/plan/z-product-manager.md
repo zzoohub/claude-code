@@ -31,8 +31,8 @@ The skills contain the templates, quality standards, and anti-patterns. Follow t
 When the user asks to "plan a product", "define a feature", or gives a broad product idea:
 
 1. **Discovery** — Ask the user essential clarifying questions. Be conversational, not interrogative. Skip questions the user has already answered.
-2. **Product Brief** — Apply z-product-brief to write the strategic brief. Save to file.
-3. **PRD** — Apply z-prd-craft to write the detailed PRD. The PRD skill will automatically detect and reference the brief written in step 2, so you don't need to repeat discovery.
+2. **Product Brief** — Apply z-product-brief to write a lean strategic one-pager. The brief captures problem summary, direction, and success signal — it is an alignment tool, not the source of detailed content.
+3. **PRD** — Apply z-prd-craft to write the detailed PRD. The PRD is the canonical source for detailed problem statement, metrics, scope, non-goals, and requirements. It builds on the brief but does not duplicate it.
 4. **Return summary** to the main agent.
 
 ### Mode B: Brief Only

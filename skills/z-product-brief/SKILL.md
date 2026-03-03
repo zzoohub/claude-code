@@ -1,6 +1,6 @@
 ---
 name: z-product-brief
-description: Creates lean product briefs — strategic one-pagers that define the problem, direction, and success criteria. Use when the user asks to "write a product brief", "create a product one-pager", "product pitch", "product concept", or needs help organizing product goals and direction. Also trigger when a user says "I have an idea for a product", "help me think through this feature", "I want to build X", or describes a product concept without naming a specific document type. Also use when reviewing or improving existing product briefs. This skill produces a concise strategic document that feeds into a PRD — it focuses on the "what" and "why", not features or implementation details.
+description: Creates lean product briefs — strategic one-pagers that define the problem, direction, and success signal. Use when the user asks to "write a product brief", "create a product one-pager", "product pitch", "product concept", or needs help organizing product goals and direction. Also trigger when a user says "I have an idea for a product", "help me think through this feature", "I want to build X", or describes a product concept without naming a specific document type. Also use when reviewing or improving existing product briefs. This skill produces a concise strategic alignment document — it focuses on the "what" and "why", not features, detailed metrics, or scope boundaries (those belong in the PRD).
 metadata:
   author: custom
   version: 3.0.0
@@ -18,21 +18,22 @@ Keep the brief lean — anything the PRD covers in depth does not belong here.
 ## What a Product Brief Is (and Is Not)
 
 - **Product Brief**: Strategic. Problem, direction, success signal. One page. A discovery tool, not a commitment to build.
-- **PRD**: Tactical. Requirements, user journeys, detailed metrics, scope, risks. Created *after* the brief aligns the team.
+- **PRD**: Tactical. Requirements, user journeys, detailed metrics, scope, non-goals, risks. Created *after* the brief aligns the team.
 
 The brief should be readable in under 5 minutes. If it takes longer, it's too long.
 
 ### What Does NOT Belong in the Brief
 
-These belong in downstream documents (PRD, design spec, technical spec):
+These belong in the PRD or other downstream documents:
 
+- Detailed success metrics with counter-metrics and timeframes (PRD owns this)
+- Non-goals and scope boundaries (PRD owns this)
+- Feature lists, acceptance criteria, user stories
+- Detailed risk/assumption tables
+- Target audience deep-dives, competitive landscape tables
+- Timeline, milestones, phasing
 - UI/UX design, wireframes, interaction patterns
 - Technical implementation, architecture, tech stack
-- Feature lists, acceptance criteria, user stories
-- Detailed risk/assumption tables (PRD covers this)
-- Target audience deep-dives, competitive landscape tables (PRD covers this)
-- Timeline, milestones, phasing (PRD covers this)
-- Team & stakeholder assignments (PRD metadata)
 
 ## Core Principles
 
@@ -102,21 +103,15 @@ Use this template. All four sections are always present.
 **Core insight**
 [The key bet behind this approach. What do we believe that others don't, or what advantage do we have?]
 
-**What this is NOT (Non-Goals)**
-[Explicitly list what is out of scope. Prevents scope creep and aligns expectations.]
-
 ---
 
-## 3. Success Criteria
+## 3. Success Signal
 
-2-3 measurable outcomes. Each specific enough to later say "we hit this" or "we didn't."
+What does success look like? 2-3 sentences describing the measurable outcomes we're aiming for.
+Not a metrics table — just enough to align the team on what "winning" means.
+Detailed metrics with targets, counter-metrics, and timeframes belong in the PRD.
 
-| Metric | Current State | Target | How Measured |
-|--------|--------------|--------|-------------|
-| [e.g., Onboarding completion] | [e.g., 34%] | [e.g., 60%] | [e.g., Amplitude funnel] |
-| [e.g., Time to first value] | [e.g., 45 min] | [e.g., <10 min] | [e.g., Event tracking] |
-
-No vanity metrics. "Improve engagement" is not a success criterion.
+[e.g., "We'll know this is working when onboarding completion rises significantly from its current 34%, and new users reach their first value moment in minutes rather than the current ~45 minutes."]
 
 ---
 
@@ -134,8 +129,7 @@ What we don't know yet. Prevents false confidence and signals where input is nee
 Before presenting, verify:
 
 - [ ] Problem is grounded in evidence, not assumption
-- [ ] Non-Goals are stated — the reader knows what this is NOT
-- [ ] Success metrics are specific and measurable
+- [ ] Success signal is concrete enough to know if we're winning
 - [ ] The whole brief fits on one page
 - [ ] A new team member could understand it without tribal knowledge
 - [ ] Open questions are honest — gaps flagged, not papered over
@@ -146,7 +140,7 @@ After presenting the brief:
 
 1. **Surface disagreements.** If everyone agrees immediately, the brief may be too vague.
 2. **Address open questions.** Assign owners and deadlines.
-3. **Evolve into downstream documents.** Once aligned, the brief serves as input for PRDs, design specs, and other detailed planning artifacts.
+3. **Suggest next steps.** Once aligned, the user can proceed to write a PRD or other detailed documents as needed.
 
 ## Calibration: Weak vs. Strong
 
@@ -162,26 +156,12 @@ A solution masquerading as a problem. "Better visibility" is a vague desire, not
 
 Grounded in evidence, names a specific persona, quantifies the pain.
 
-### Non-Goals
-
-**Weak:**
-> Non-goals: Don't over-engineer it.
-
-Meaningless — doesn't help anyone make a scoping decision.
-
-**Strong:**
-> - This is not a general-purpose BI tool. We're solving account health reports, not replacing Looker.
-> - No custom alerting — CSMs can use existing Slack integrations.
-
-Each non-goal draws a clear line that prevents a specific scope creep scenario.
-
 ## When Reviewing an Existing Brief
 
 1. Is there a clear, evidence-based problem — or did they jump to features?
-2. Are Non-Goals stated? If not, scope creep is almost guaranteed.
-3. Are success metrics specific and measurable?
-4. Is it concise? If it reads like a PRD, suggest moving detail downstream.
-5. Give specific feedback: not "add more detail" but "the success metric 'improve engagement' needs a number and measurement method."
+2. Is the success signal concrete enough to know if we're winning?
+3. Is it concise? If it reads like a PRD, suggest moving detail downstream.
+4. Give specific feedback: not "add more detail" but "the success signal needs a clearer indicator of what winning looks like."
 
 ## Output
 
