@@ -26,6 +26,8 @@ import { Suspense } from 'react'
 
 Physics must be wrapped in `<Suspense>` (lazy WASM init).
 
+> **Note**: `@react-three/rapier` runs on the **main thread**. For physics-heavy apps (many bodies, complex simulation, 60fps target), use the **Raw Rapier Worker pattern** below instead.
+
 ### Physics Props
 
 | Prop | Default | Description |
@@ -375,4 +377,103 @@ For demand-based rendering:
 <Physics updateLoop="independent">
   {/* Physics runs own rAF, calls invalidate only when bodies active */}
 </Physics>
+```
+
+---
+
+## Raw Rapier Worker Pattern
+
+Use when: many rigid bodies, 60fps target, main thread must stay free for rendering.
+
+**When to use `@react-three/rapier` (main thread)**
+- Simple scenes, <20 bodies
+- Prototyping
+- Don't need custom Worker logic
+
+**When to use Raw Rapier Worker**
+- Physics-heavy simulation (PhysPlay, games)
+- Custom Rust WASM solvers alongside Rapier
+- 60fps target with complex scenes
+
+### Worker Setup
+
+```typescript
+// workers/physics.worker.ts
+import('@dimforge/rapier3d').then(async (RAPIER) => {
+  await RAPIER.init()
+
+  const gravity = { x: 0, y: -9.81, z: 0 }
+  const world = new RAPIER.World(gravity)
+  let transforms: Float32Array
+
+  self.onmessage = (e) => {
+    const { type, payload } = e.data
+
+    if (type === 'init') {
+      transforms = new Float32Array(payload.buffer)
+      // spawn bodies from payload.bodies...
+      self.postMessage({ type: 'ready' })
+      tick()
+    }
+
+    if (type === 'reset') {
+      // re-init world from new challenge config
+    }
+  }
+
+  function tick() {
+    world.step()
+
+    // Write results into SharedArrayBuffer
+    world.bodies.forEach((body, i) => {
+      const t = body.translation()
+      const r = body.rotation()
+      const offset = i * 7
+      transforms[offset + 0] = t.x
+      transforms[offset + 1] = t.y
+      transforms[offset + 2] = t.z
+      transforms[offset + 3] = r.x
+      transforms[offset + 4] = r.y
+      transforms[offset + 5] = r.z
+      transforms[offset + 6] = r.w
+    })
+
+    setTimeout(tick, 1000 / 60)
+  }
+})
+```
+
+### Main Thread — R3F Sync
+
+```tsx
+const MAX_BODIES = 64
+const sab = new SharedArrayBuffer(MAX_BODIES * 7 * 4) // 7 floats: xyz + xyzw
+const transforms = new Float32Array(sab)
+
+// Send to worker once
+worker.postMessage({ type: 'init', buffer: sab, bodies: [...] })
+
+// R3F sync system
+function PhysicsSyncSystem({ meshRefs }: { meshRefs: RefObject<THREE.Mesh>[] }) {
+  useFrame(() => {
+    meshRefs.forEach((ref, i) => {
+      if (!ref.current) return
+      const o = i * 7
+      ref.current.position.set(transforms[o], transforms[o+1], transforms[o+2])
+      ref.current.quaternion.set(transforms[o+3], transforms[o+4], transforms[o+5], transforms[o+6])
+    })
+  })
+  return null
+}
+```
+
+### postMessage Fallback (no COOP/COEP)
+
+If SharedArrayBuffer is unavailable (no COOP/COEP headers):
+
+```typescript
+// Worker: send results each frame
+self.postMessage({ type: 'tick', transforms: Float32Array })
+// ~14KB/s for 60 bodies @ 60fps — acceptable cost
+// Use Transferable if needed: self.postMessage(data, [data.transforms.buffer])
 ```

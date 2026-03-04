@@ -167,13 +167,13 @@ function Model() {
 useGLTF.preload('/model.glb')
 ```
 
-Drei's `useGLTF` enables Draco decompression by default. Use `gltfjsx` CLI to generate typed R3F components from glTF files:
+Drei's `useGLTF` enables meshoptimizer decompression by default. Use `gltfjsx` CLI to generate typed R3F components from glTF files:
 
 ```bash
 npx gltfjsx model.glb --transform --types --shadow
 ```
 
-`--transform` produces a draco-compressed, texture-optimized, deduplicated `.glb` (70-90% size reduction).
+`--transform` produces a meshoptimizer-compressed, texture-optimized, deduplicated `.glb` (near-instant decode, no WASM decoder overhead unlike Draco).
 
 ### Event System
 

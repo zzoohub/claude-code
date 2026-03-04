@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-03-04T10:00:22.300Z",
+    "lastUpdated": "2026-03-04T14:32:03.352Z",
     "autoUpdate": true
   },
   "expo-plugins": {
@@ -32,7 +32,7 @@
       "repo": "anthropics/knowledge-work-plugins"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/knowledge-work-plugins",
-    "lastUpdated": "2026-03-03T21:09:59.120Z",
+    "lastUpdated": "2026-03-04T10:20:21.428Z",
     "autoUpdate": true
   },
   "pulumi-agent-skills": {

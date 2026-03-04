@@ -5,8 +5,8 @@ glTF is the only asset format. All 3D models, animations, and scenes use `.glb` 
 ## Optimization Pipeline
 
 1. **Author** in Blender/Maya/etc, export as `.glb`
-2. **Optimize** with `gltfjsx --transform` (Draco compression, texture optimization, deduplication)
-3. **Load** with Drei's `useGLTF` (auto Draco decompression)
+2. **Optimize** with `gltfjsx --transform` (meshoptimizer compression, texture optimization, deduplication)
+3. **Load** with Drei's `useGLTF` (auto meshoptimizer decompression)
 4. **Preload** with `useGLTF.preload('/model.glb')` in module scope
 
 ## Texture Best Practices
