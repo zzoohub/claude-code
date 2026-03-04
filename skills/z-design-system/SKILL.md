@@ -144,7 +144,7 @@ Mount point varies by project architecture:
 2D Web/Mobile  → src/shared/ui/
 3D / WebXR     → src/shared/ui/           (DOM overlay outside Canvas)
 2D + 3D        → src/site/shared/ui/      (2D design system)
-                  + src/shared/ui/        (cross-layer UI primitives)
+                  + src/platform/ui/        (cross-layer UI primitives)
 ```
 
 Internal structure is always the same:

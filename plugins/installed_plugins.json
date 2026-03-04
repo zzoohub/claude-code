@@ -4,10 +4,10 @@
     "context7@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/context7/55b58ec6e564",
-        "version": "55b58ec6e564",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/context7/205b6e0b3036",
+        "version": "205b6e0b3036",
         "installedAt": "2026-01-21T08:55:42.497Z",
-        "lastUpdated": "2026-02-25T08:04:07.284Z",
+        "lastUpdated": "2026-03-04T08:07:34.704Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -44,30 +44,30 @@
     "security-guidance@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/security-guidance/55b58ec6e564",
-        "version": "55b58ec6e564",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/security-guidance/205b6e0b3036",
+        "version": "205b6e0b3036",
         "installedAt": "2026-01-21T10:25:11.303Z",
-        "lastUpdated": "2026-02-25T08:04:07.286Z",
+        "lastUpdated": "2026-03-04T08:07:34.707Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
     "frontend-design@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/frontend-design/55b58ec6e564",
-        "version": "55b58ec6e564",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/frontend-design/205b6e0b3036",
+        "version": "205b6e0b3036",
         "installedAt": "2026-01-21T10:25:53.719Z",
-        "lastUpdated": "2026-02-25T08:04:07.287Z",
+        "lastUpdated": "2026-03-04T08:07:34.708Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
     "ralph-loop@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/ralph-loop/55b58ec6e564",
-        "version": "55b58ec6e564",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/ralph-loop/205b6e0b3036",
+        "version": "205b6e0b3036",
         "installedAt": "2026-01-21T10:48:30.060Z",
-        "lastUpdated": "2026-02-25T08:04:07.289Z",
+        "lastUpdated": "2026-03-04T08:07:34.710Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -104,10 +104,10 @@
     "playwright@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/playwright/55b58ec6e564",
-        "version": "55b58ec6e564",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/playwright/205b6e0b3036",
+        "version": "205b6e0b3036",
         "installedAt": "2026-01-28T07:57:59.969Z",
-        "lastUpdated": "2026-02-25T08:04:07.285Z",
+        "lastUpdated": "2026-03-04T08:07:34.705Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -144,10 +144,10 @@
     "supabase@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/supabase/55b58ec6e564",
-        "version": "55b58ec6e564",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/supabase/205b6e0b3036",
+        "version": "205b6e0b3036",
         "installedAt": "2026-02-11T12:29:24.777Z",
-        "lastUpdated": "2026-02-25T08:04:07.284Z",
+        "lastUpdated": "2026-03-04T08:07:34.706Z",
         "gitCommitSha": "2cd88e7947b7382e045666abee790c7f55f669f3"
       }
     ],
@@ -204,10 +204,10 @@
     "skill-creator@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/skill-creator/55b58ec6e564",
-        "version": "55b58ec6e564",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/skill-creator/205b6e0b3036",
+        "version": "205b6e0b3036",
         "installedAt": "2026-02-23T04:08:49.808Z",
-        "lastUpdated": "2026-02-25T08:04:07.302Z",
+        "lastUpdated": "2026-03-04T08:07:34.714Z",
         "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
       }
     ]
