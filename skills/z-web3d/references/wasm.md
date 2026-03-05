@@ -2,6 +2,8 @@
 
 Use Rust WASM for compute-heavy tasks: particle systems, terrain generation, pathfinding, spatial queries, custom physics, IK solvers, audio processing.
 
+> For framework-specific integration patterns (R3F components, hooks): `react/wasm.md`
+
 ## Setup
 
 ### Prerequisites
@@ -59,7 +61,7 @@ crates/
     Cargo.toml
     src/lib.rs
 src/
-  App.tsx
+  main.ts
   workers/compute.worker.ts
 vite.config.ts
 ```
@@ -247,9 +249,9 @@ WASM linear memory can grow at any time. When it does, every existing `Float32Ar
 **Every render frame that reads from a WASM pointer view MUST include the buffer check:**
 
 ```typescript
-// In useFrame or render loop — ALWAYS do this check
+// In render loop -- ALWAYS do this check
 if (positionView.buffer !== memory.buffer) {
-  // Memory grew — old view is dead, create new one
+  // Memory grew -- old view is dead, create new one
   positionView = new Float32Array(memory.buffer, system.positions_ptr(), count * 3)
   geometry.setAttribute('position', new THREE.BufferAttribute(positionView, 3))
 }
@@ -262,75 +264,6 @@ Rules:
 3. Pre-allocate all buffers in the Rust constructor to minimize growth during the render loop
 4. For stable views: allocate everything upfront, never `push`/`resize` in `update()`
 5. If you skip the buffer check, the app will silently render stale/zero data with no error
-
-## R3F Integration
-
-### Terrain Generator
-
-```tsx
-import { useMemo } from 'react'
-import * as THREE from 'three'
-import { TerrainGenerator } from '../crates/my-wasm-3d/pkg'
-
-function WasmTerrain({ width = 128, depth = 128 }) {
-  const geometry = useMemo(() => {
-    const terrain = new TerrainGenerator(width, depth, 0.5, 10.0)
-    const geo = new THREE.BufferGeometry()
-    geo.setAttribute('position', new THREE.BufferAttribute(terrain.positions(), 3))
-    geo.setAttribute('normal', new THREE.BufferAttribute(terrain.normals(), 3))
-    geo.setAttribute('uv', new THREE.BufferAttribute(terrain.uvs(), 2))
-    geo.setIndex(new THREE.BufferAttribute(terrain.indices(), 1))
-    terrain.free()
-    return geo
-  }, [width, depth])
-
-  return (
-    <mesh geometry={geometry}>
-      <meshStandardMaterial color="#3a7d44" />
-    </mesh>
-  )
-}
-```
-
-### Particle System (Zero-Copy)
-
-```tsx
-function WasmParticles() {
-  const pointsRef = useRef<THREE.Points>(null)
-  const systemRef = useRef<ParticleSystem | null>(null)
-
-  const geometry = useMemo(() => {
-    const system = new ParticleSystem(500_000)
-    systemRef.current = system
-    const posArray = new Float32Array(memory.buffer, system.positions_ptr(), 500_000 * 3)
-    const geo = new THREE.BufferGeometry()
-    const attr = new THREE.BufferAttribute(posArray, 3)
-    attr.setUsage(THREE.DynamicDrawUsage)
-    geo.setAttribute('position', attr)
-    return geo
-  }, [])
-
-  useFrame((_, delta) => {
-    if (!systemRef.current) return
-    systemRef.current.update(delta)
-    const posAttr = geometry.attributes.position as THREE.BufferAttribute
-    if (posAttr.array.buffer !== memory.buffer) {
-      const newView = new Float32Array(
-        memory.buffer, systemRef.current.positions_ptr(), 500_000 * 3)
-      geometry.setAttribute('position', new THREE.BufferAttribute(newView, 3))
-    }
-    geometry.attributes.position.needsUpdate = true
-  })
-
-  useEffect(() => () => { systemRef.current?.free() }, [])
-
-  return (
-    <points geometry={geometry}>
-      <pointsMaterial size={0.02} color="#88ccff" />
-    </points>
-  )
-}
-```
 
 ## Web Workers + WASM
 
@@ -390,43 +323,6 @@ worker.onmessage = (e) => {
 }
 ```
 
-## SharedArrayBuffer (Real-Time Shared State)
-
-For continuous simulation in a worker that the main thread reads for rendering:
-
-**Requires COOP/COEP headers** (set in vite.config.ts server.headers).
-
-```typescript
-// Main thread
-const sharedBuffer = new SharedArrayBuffer(PARTICLE_COUNT * 3 * 4)
-const sharedPositions = new Float32Array(sharedBuffer)
-
-worker.postMessage({ type: 'init', sharedBuffer, particleCount: PARTICLE_COUNT })
-
-// Three.js reads directly from shared buffer
-const attr = new THREE.BufferAttribute(sharedPositions, 3)
-attr.setUsage(THREE.DynamicDrawUsage)
-geometry.setAttribute('position', attr)
-
-// Render loop -- just mark needsUpdate, worker writes continuously
-useFrame(() => { geometry.attributes.position.needsUpdate = true })
-```
-
-## Performance Rules
-
-**DO:**
-- Pre-allocate all buffers in Rust constructor
-- Batch: one `update(dt)` call per frame, not per-particle
-- Use `DynamicDrawUsage` hint on BufferAttribute for per-frame updates
-- Transfer ArrayBuffer ownership via postMessage (zero-copy)
-- Use pointer-based views for zero-copy main-thread access
-
-**DON'T:**
-- Don't cross WASM/JS boundary per-element (~50-100ns overhead per call)
-- Don't use `Vec<f32>` params for large arrays in hot paths (copies entire array)
-- Don't use `serde_wasm_bindgen` in per-frame hot paths (setup/config only)
-- Don't assume WASM is always faster than JS -- WASM wins on large datasets, SIMD-friendly work, and GC-free deterministic perf
-
 ## Parallel Computation (wasm-bindgen-rayon)
 
 For multi-threaded WASM via Web Workers + SharedArrayBuffer:
@@ -469,6 +365,21 @@ await init()
 await initThreadPool(navigator.hardwareConcurrency)
 const terrain = parallel_terrain(1024, 1024, 0.5) // runs across Web Workers
 ```
+
+## Performance Rules
+
+**DO:**
+- Pre-allocate all buffers in Rust constructor
+- Batch: one `update(dt)` call per frame, not per-particle
+- Use `DynamicDrawUsage` hint on BufferAttribute for per-frame updates
+- Transfer ArrayBuffer ownership via postMessage (zero-copy)
+- Use pointer-based views for zero-copy main-thread access
+
+**DON'T:**
+- Don't cross WASM/JS boundary per-element (~50-100ns overhead per call)
+- Don't use `Vec<f32>` params for large arrays in hot paths (copies entire array)
+- Don't use `serde_wasm_bindgen` in per-frame hot paths (setup/config only)
+- Don't assume WASM is always faster than JS -- WASM wins on large datasets, SIMD-friendly work, and GC-free deterministic perf
 
 ## Key Crates
 
