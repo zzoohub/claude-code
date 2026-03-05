@@ -187,33 +187,32 @@ locales;           // ["en", "es", "id", "ja", "ko", "pt-BR"]
 
 ### Rich Text Pattern
 
-Paraglide returns plain strings. For embedding components within translations:
+Paraglide returns plain strings. For embedding components within translations, parse tags into segments, then render per framework:
 
 ```typescript
-// src/lib/i18n/rich-text.tsx
-import { Fragment, type ReactNode } from "react";
+// src/lib/i18n/rich-text.ts — framework-agnostic parser
+interface RichTextSegment {
+  type: "text" | "tag";
+  content: string;
+  tag?: string; // tag name for type === "tag"
+}
 
-export function richText(
-  text: string,
-  components: Record<string, (content: string) => ReactNode>
-): ReactNode[] {
-  const result: ReactNode[] = [];
+export function parseRichText(text: string): RichTextSegment[] {
+  const segments: RichTextSegment[] = [];
   let remaining = text;
-  let key = 0;
   while (remaining.length > 0) {
     const match = remaining.match(/<(\w+)>(.*?)<\/\1>/);
     if (!match || match.index === undefined) {
-      result.push(<Fragment key={key++}>{remaining}</Fragment>);
+      segments.push({ type: "text", content: remaining });
       break;
     }
     const before = remaining.slice(0, match.index);
-    if (before) result.push(<Fragment key={key++}>{before}</Fragment>);
+    if (before) segments.push({ type: "text", content: before });
     const [full, tag, content] = match;
-    const render = components[tag];
-    result.push(<Fragment key={key++}>{render ? render(content) : content}</Fragment>);
+    segments.push({ type: "tag", content, tag });
     remaining = remaining.slice(match.index + full.length);
   }
-  return result;
+  return segments;
 }
 ```
 
@@ -221,11 +220,21 @@ export function richText(
 { "terms": "Agree to our <terms>Terms</terms> and <privacy>Privacy Policy</privacy>." }
 ```
 
-```tsx
-richText(m.terms(), {
-  terms: (text) => <a href="/terms">{text}</a>,
-  privacy: (text) => <a href="/privacy">{text}</a>,
-});
+```typescript
+// Usage — render segments per framework
+const segments = parseRichText(m.terms());
+// segments = [
+//   { type: "text", content: "Agree to our " },
+//   { type: "tag", content: "Terms", tag: "terms" },
+//   { type: "text", content: " and " },
+//   { type: "tag", content: "Privacy Policy", tag: "privacy" },
+//   { type: "text", content: "." },
+// ]
+
+// Vanilla JS / any framework: iterate segments, create DOM nodes or framework elements
+// React: map to JSX with <Fragment key={i}>
+// Solid: map to JSX
+// Svelte: use {#each} block
 ```
 
 ---
@@ -275,7 +284,7 @@ Subdomains: set `cookieDomain: "example.com"` in plugin config.
 
 ## Language Switcher
 
-```tsx
+```typescript
 import { setLocale, getLocale, locales } from "./paraglide/runtime.js";
 
 const LOCALE_NAMES: Record<string, string> = {
@@ -287,34 +296,60 @@ const LOCALE_NAMES: Record<string, string> = {
   "pt-BR": "Português (Brasil)",
 };
 
-function LocaleSwitcher() {
-  return (
-    <select value={getLocale()} onChange={(e) => setLocale(e.target.value)}>
-      {locales.map((locale) => (
-        <option key={locale} value={locale}>{LOCALE_NAMES[locale] ?? locale}</option>
-      ))}
-    </select>
-  );
+// Vanilla JS — create a <select> element
+function createLocaleSwitcher(container: HTMLElement) {
+  const select = document.createElement("select");
+  for (const locale of locales) {
+    const option = document.createElement("option");
+    option.value = locale;
+    option.textContent = LOCALE_NAMES[locale] ?? locale;
+    option.selected = locale === getLocale();
+    select.appendChild(option);
+  }
+  select.addEventListener("change", () => setLocale(select.value));
+  container.appendChild(select);
 }
+```
+
+```html
+<!-- Or declarative HTML — wire up with any framework -->
+<select id="locale-switcher">
+  <option value="en">English</option>
+  <option value="es">Español</option>
+  <option value="ko">한국어</option>
+  <!-- ... -->
+</select>
+<script>
+  document.getElementById("locale-switcher")
+    .addEventListener("change", (e) => setLocale(e.target.value));
+</script>
 ```
 
 ---
 
 ## SEO
 
-```tsx
+```html
+<!-- Set lang on <html> element -->
+<html lang="en"> <!-- dynamically set to getLocale() value -->
+
+<!-- Alternate links (hreflang) — generate for all locales -->
+<link rel="alternate" hrefLang="en" href="https://example.com/about" />
+<link rel="alternate" hrefLang="es" href="https://example.com/es/about" />
+<link rel="alternate" hrefLang="ko" href="https://example.com/ko/about" />
+<!-- ... one per locale -->
+```
+
+```typescript
+// Generate hreflang links programmatically (any framework/SSR)
 import { getLocale, locales, localizeHref } from "./paraglide/runtime.js";
 
-const locale = getLocale();
-
-// Root layout
-<html lang={locale}>
-
-// Alternate links (hreflang)
-{locales.map((loc) => (
-  <link key={loc} rel="alternate" hrefLang={loc}
-    href={`https://example.com${localizeHref(path, { locale: loc })}`} />
-))}
+const path = "/about";
+const hreflangs = locales.map((loc) => ({
+  hrefLang: loc,
+  href: `https://example.com${localizeHref(path, { locale: loc })}`,
+}));
+// Inject into <head> using your framework's head management
 ```
 
 ---

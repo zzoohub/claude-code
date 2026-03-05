@@ -13,10 +13,15 @@ references:
   - references/web/css-native-motion.md
   - references/web/page-transitions.md
   - references/web/performance.md
-  - references/mobile/reanimated-patterns.md
-  - references/mobile/skia-patterns.md
-  - references/mobile/gesture-patterns.md
-  - references/mobile/performance.md
+  - references/react/gsap-patterns.md
+  - references/react/scroll-patterns.md
+  - references/react/cursor-and-hover.md
+  - references/react/page-transitions.md
+  - references/react/performance.md
+  - references/react-native/reanimated-patterns.md
+  - references/react-native/skia-patterns.md
+  - references/react-native/gesture-patterns.md
+  - references/react-native/performance.md
 ---
 
 # Interactive Motion
@@ -66,13 +71,14 @@ Choose the right transition pattern based on the *relationship* between elements
 ```
 What platform?
 │
-├─ Web (React)
+├─ Web
 │  ├─ Stack: GSAP + Lenis + CSS native APIs
 │  ├─ Philosophy: Exploration & Discovery
 │  │  Users have hover — use it to reveal possibilities
 │  │  Larger viewport = room for cinematic scroll storytelling
 │  │  Hero moment: first viewport + first scroll
-│  └─ References: references/web/*
+│  ├─ Agnostic References: references/web/*
+│  └─ React References: references/react/*
 │
 └─ Mobile / React Native (Expo)
    ├─ Stack: Reanimated 3 + Gesture Handler + Skia
@@ -80,7 +86,7 @@ What platform?
    │  No hover — every affordance visible by default
    │  Touch requires instant feedback (springs, haptics)
    │  Hero moment: first tap response + gesture fluidity
-   └─ References: references/mobile/*
+   └─ References: references/react-native/*
 ```
 
 **Never port web hover interactions to mobile.** A magnetic hover effect on web becomes a spring-loaded tap feedback on mobile. The emotional register stays the same; the implementation vocabulary changes entirely.
@@ -103,7 +109,7 @@ GSAP is the primary engine. CSS native only when zero-JS is genuinely advantageo
 
 ### Why GSAP, Not Framer Motion
 
-GSAP outperforms Framer Motion in every dimension that matters for interactive work: ScrollTrigger (pin, scrub, snap, stagger), timeline sequencing, text splitting, cursor/mouse tracking via `gsap.quickTo`, and raw animation throughput. Framer Motion re-renders React components on every frame through state; GSAP mutates the DOM directly, bypassing React's reconciliation entirely — the performance gap is significant on complex pages with many simultaneous animations. If an existing codebase uses Framer Motion for simple component enter/exit, replace it with GSAP timelines or CSS `@starting-style` (see `references/web/css-native-motion.md`) rather than maintaining two animation engines. One engine, one mental model, no property conflicts.
+GSAP outperforms Framer Motion in every dimension that matters for interactive work: ScrollTrigger (pin, scrub, snap, stagger), timeline sequencing, text splitting, cursor/mouse tracking via `gsap.quickTo`, and raw animation throughput. GSAP operates directly on the DOM, making it framework-agnostic — the same GSAP code works in React, Solid, Svelte, Vue, or vanilla JS. Framer Motion is React-only and re-renders components on every frame through state. If an existing codebase uses Framer Motion, replace it with GSAP timelines or CSS `@starting-style` (see `references/web/css-native-motion.md`) rather than maintaining two animation engines. One engine, one mental model, no property conflicts.
 
 ### Decision Flowchart
 
@@ -134,9 +140,9 @@ Need animation?
 
 Tailwind owns **layout and styling**. GSAP owns **motion**. They never overlap. GSAP targets elements via `data-*` attributes or refs.
 
-```tsx
-<section className="relative flex min-h-screen items-center bg-black px-6">
-  <h1 data-reveal className="text-5xl font-bold text-white md:text-7xl">
+```html
+<section class="relative flex min-h-screen items-center bg-black px-6">
+  <h1 data-reveal class="text-5xl font-bold text-white md:text-7xl">
     Heading
   </h1>
 </section>
@@ -144,36 +150,33 @@ Tailwind owns **layout and styling**. GSAP owns **motion**. They never overlap. 
 
 ### Core Patterns (see references for full code)
 
-| Pattern | Reference |
-|---------|-----------|
-| Scroll reveal, stagger, timeline, intro sequence | `references/web/gsap-patterns.md` |
-| Pin, horizontal scroll, parallax, snap, Lenis setup | `references/web/scroll-patterns.md` |
-| Custom cursor, magnetic button, tilt card, spotlight | `references/web/cursor-and-hover.md` |
-| CSS scroll-driven, View Transitions, @starting-style | `references/web/css-native-motion.md` |
-| GSAP overlay wipe, staggered page transitions | `references/web/page-transitions.md` |
-| Bundle size, cleanup, will-change, device tier, reduced motion | `references/web/performance.md` |
+| Pattern | Agnostic Reference | React Reference |
+|---------|-------------------|-----------------|
+| Scroll reveal, stagger, timeline, intro sequence | `references/web/gsap-patterns.md` | `references/react/gsap-patterns.md` |
+| Pin, horizontal scroll, parallax, snap, Lenis setup | `references/web/scroll-patterns.md` | `references/react/scroll-patterns.md` |
+| Custom cursor, magnetic button, tilt card, spotlight | `references/web/cursor-and-hover.md` | `references/react/cursor-and-hover.md` |
+| CSS scroll-driven, View Transitions, @starting-style | `references/web/css-native-motion.md` | — (CSS, no framework needed) |
+| GSAP overlay wipe, staggered page transitions | `references/web/page-transitions.md` | `references/react/page-transitions.md` |
+| Bundle size, cleanup, will-change, device tier, reduced motion | `references/web/performance.md` | `references/react/performance.md` |
 
 ### Web File Organization
 
 ```
-components/
-├── motion/              # GSAP animation wrappers
-│   ├── reveal-on-scroll.tsx
-│   ├── animated-heading.tsx
-│   ├── stagger-section.tsx
-│   ├── magnetic.tsx
-│   ├── tilt-card.tsx
-│   ├── custom-cursor.tsx
-│   └── smooth-scroll.tsx
-├── transitions/         # Page transition components
-│   └── transition-link.tsx
-hooks/
-├── use-reduced-motion.ts
-└── use-device-tier.ts
 lib/
 ├── gsap.ts              # Centralized GSAP + plugin registration
-└── split-text.ts        # Custom text splitter (free SplitText alternative)
+├── split-text.ts        # Custom text splitter (free SplitText alternative)
+├── motion/              # GSAP animation factories (return cleanup functions)
+│   ├── reveal-on-scroll.ts
+│   ├── stagger-section.ts
+│   ├── magnetic.ts
+│   ├── tilt-card.ts
+│   ├── custom-cursor.ts
+│   └── smooth-scroll.ts
+└── transitions/         # Page transition utilities
+    └── page-transition.ts
 ```
+
+Framework-specific wrappers (React components, Svelte actions, Vue composables) go in the framework layer and import from `lib/`.
 
 ---
 
@@ -220,10 +223,10 @@ Need animation?
 
 | Pattern | Reference |
 |---------|-----------|
-| Shared values, animated styles, springs, sequences, decay, keyboard | `references/mobile/reanimated-patterns.md` |
-| Gradients, blur, animated paths, shaders, particles | `references/mobile/skia-patterns.md` |
-| Swipe-to-dismiss, pinch-to-zoom, bottom sheet, card flip, haptics | `references/mobile/gesture-patterns.md` |
-| Threading model, jank causes, device tier, reduced motion | `references/mobile/performance.md` |
+| Shared values, animated styles, springs, sequences, decay, keyboard | `references/react-native/reanimated-patterns.md` |
+| Gradients, blur, animated paths, shaders, particles | `references/react-native/skia-patterns.md` |
+| Swipe-to-dismiss, pinch-to-zoom, bottom sheet, card flip, haptics | `references/react-native/gesture-patterns.md` |
+| Threading model, jank causes, device tier, reduced motion | `references/react-native/performance.md` |
 
 ### Mobile File Organization
 
@@ -279,9 +282,12 @@ Every animation must handle reduced motion. No content hidden behind animation.
 ```
 
 **Web (JS level — for GSAP):**
-```tsx
-import { useReducedMotion } from "@/hooks/use-reduced-motion";
-if (useReducedMotion()) return <StaticVersion />;
+```typescript
+const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (prefersReduced) {
+  // Skip GSAP animations, show static content
+  gsap.globalTimeline.timeScale(100); // effectively instant
+}
 ```
 
 **React Native (per-animation — simplest):**

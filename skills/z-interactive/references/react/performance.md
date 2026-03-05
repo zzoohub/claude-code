@@ -1,13 +1,13 @@
-# Performance Guide
+# React: Performance Guide
 
-> React implementation: `../react/performance.md`
+> Framework-agnostic patterns: `../web/performance.md`
 
 ## The Stack
 
 ```
-GSAP (main thread JS)           →  primary engine for all DOM animation
-CSS native (compositor thread)  →  supplementary for simple scroll/transition cases
-Lenis (main thread JS)          →  smooth scroll feel
+GSAP (main thread JS)           ->  primary engine for all DOM animation
+CSS native (compositor thread)  ->  supplementary for simple scroll/transition cases
+Lenis (main thread JS)          ->  smooth scroll feel
 ```
 
 GSAP is the default. Use CSS native only when zero-JS is genuinely advantageous (progress bar, simple single-element reveal, page transitions).
@@ -43,13 +43,13 @@ CSS Scroll-driven Animations are compositor-thread by default when animating tra
 
 ### GSAP Tree-Shaking
 
-```ts
+```tsx
 // Only import what you use
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 // Don't import everything
-// import "gsap/all";  // BAD
+import "gsap/all";
 ```
 
 ### CSS Native: When It Saves Bundle
@@ -67,42 +67,49 @@ If a page only needs a scroll progress bar or simple reveals (no stagger, no pin
 
 ## Cleanup Patterns
 
-### GSAP Cleanup
+### GSAP Cleanup with useGSAP
 
-Use `gsap.context()` — it batches all animations and ScrollTriggers for easy teardown:
+Use `useGSAP` from `@gsap/react` — it handles context creation and cleanup automatically:
 
-```ts
-const ctx = gsap.context(() => {
+```tsx
+import { useRef } from "react";
+import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
+
+const containerRef = useRef<HTMLDivElement>(null);
+
+useGSAP(() => {
   gsap.to(".box", { x: 100 });
-  ScrollTrigger.create({ trigger: ".section", /* ... */ });
-}, containerElement); // Scope to container
-
-// On teardown:
-ctx.revert(); // Kills all animations and ScrollTriggers created inside
+  ScrollTrigger.create({ trigger: ".section", ... });
+}, { scope: containerRef }); // Auto-cleanup on unmount
 ```
 
 ### Lenis Cleanup
 
-```ts
-const lenis = new Lenis();
-// ... setup
+```tsx
+import { useEffect, useRef } from "react";
+import Lenis from "lenis";
 
-// On teardown:
-lenis.destroy();
+useEffect(() => {
+  const lenis = new Lenis();
+  // ... setup
+  return () => lenis.destroy();
+}, []);
 ```
 
 ### requestAnimationFrame Cleanup
 
-```ts
-let rafId: number;
-const animate = () => {
-  // ... logic
-  rafId = requestAnimationFrame(animate);
-};
-rafId = requestAnimationFrame(animate);
+```tsx
+import { useEffect } from "react";
 
-// On teardown:
-cancelAnimationFrame(rafId);
+useEffect(() => {
+  let rafId: number;
+  const animate = () => {
+    // ... logic
+    rafId = requestAnimationFrame(animate);
+  };
+  rafId = requestAnimationFrame(animate);
+  return () => cancelAnimationFrame(rafId);
+}, []);
 ```
 
 ---
@@ -111,7 +118,7 @@ cancelAnimationFrame(rafId);
 
 `will-change` creates a GPU layer. Each layer costs VRAM.
 
-```ts
+```tsx
 // Add before animation, remove after
 el.style.willChange = "transform";
 gsap.to(el, {
@@ -120,7 +127,7 @@ gsap.to(el, {
 });
 
 // Never leave permanently in CSS
-// .card { will-change: transform; }  /* BAD */
+// .card { will-change: transform; } /* BAD */
 ```
 
 CSS scroll-driven animations handle layer promotion automatically — you don't need `will-change`.
@@ -132,9 +139,9 @@ GSAP's `force3D: true` (default) adds `translateZ(0)` — you rarely need `will-
 
 ### Device Tier Detection
 
-```ts
-// lib/device-tier.ts
-function getDeviceTier(): "low" | "mid" | "high" {
+```tsx
+// hooks/use-device-tier.ts
+export function useDeviceTier(): "low" | "mid" | "high" {
   if (typeof window === "undefined") return "mid";
 
   const cores = navigator.hardwareConcurrency || 4;
@@ -149,7 +156,7 @@ function getDeviceTier(): "low" | "mid" | "high" {
 
 ### GSAP matchMedia
 
-```ts
+```tsx
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 ScrollTrigger.matchMedia({
@@ -189,36 +196,36 @@ ScrollTrigger.matchMedia({
 }
 ```
 
-### JS Level (for GSAP)
+### JS Level (useReducedMotion hook)
 
-```ts
-// lib/reduced-motion.ts
+```tsx
+// hooks/use-reduced-motion.ts
+import { useState, useEffect } from "react";
 
-function prefersReducedMotion(): boolean {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
-
-function onReducedMotionChange(callback: (reduced: boolean) => void): () => void {
-  const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-  const handler = (e: MediaQueryListEvent) => callback(e.matches);
-  mq.addEventListener("change", handler);
-  return () => mq.removeEventListener("change", handler);
+export function useReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return reduced;
 }
 ```
 
-```ts
-// Pattern: check before initializing animations
-function initAnimatedHero(element: HTMLElement) {
-  if (prefersReducedMotion()) {
-    // Skip animations or use instant transitions
-    return () => {};
-  }
-  return createFullAnimatedHero(element);
+```tsx
+// Pattern: wrap every JS animation component
+export function AnimatedHero() {
+  const reduced = useReducedMotion();
+  if (reduced) return <StaticHero />;
+  return <FullAnimatedHero />;
 }
 ```
 
 For GSAP globally:
-```ts
+```tsx
 if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
   gsap.globalTimeline.timeScale(100); // Effectively instant
 }
@@ -228,7 +235,7 @@ if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
 
 ## Profiling Checklist
 
-1. **Chrome DevTools → Performance**: record a scroll session, look for jank (frames > 16ms)
+1. **Chrome DevTools -> Performance**: record a scroll session, look for jank (frames > 16ms)
 2. **Layers panel**: check layer count — CSS animations should auto-promote, verify GSAP isn't creating excess layers
 3. **Coverage tab**: verify GSAP and Lenis aren't loading on pages that don't use them
 4. **Lighthouse**: check Total Blocking Time — animation JS shouldn't delay interactivity

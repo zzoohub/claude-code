@@ -1,5 +1,7 @@
 # Scroll Patterns
 
+> React implementation: `../react/scroll-patterns.md`
+
 ## Smooth Scroll with Lenis
 
 ### Installation
@@ -10,60 +12,59 @@ npm install lenis
 
 ### Global Setup
 
-```tsx
-// components/smooth-scroll.tsx (client-side — Lenis requires browser scroll APIs)
-import { useEffect, useRef } from "react";
+```ts
+// lib/smooth-scroll.ts — Lenis requires browser scroll APIs
 import Lenis from "lenis";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 
-export function SmoothScroll({ children }: { children: React.ReactNode }) {
-  const lenisRef = useRef<Lenis | null>(null);
+let lenisInstance: Lenis | null = null;
 
-  useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: "vertical",
-      smoothWheel: true,
-    });
+export function initSmoothScroll(): () => void {
+  const lenis = new Lenis({
+    duration: 1.2,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    orientation: "vertical",
+    smoothWheel: true,
+  });
 
-    lenisRef.current = lenis;
+  lenisInstance = lenis;
 
-    // Sync Lenis with GSAP ScrollTrigger
-    lenis.on("scroll", ScrollTrigger.update);
+  // Sync Lenis with GSAP ScrollTrigger
+  lenis.on("scroll", ScrollTrigger.update);
 
-    // GSAP ticker provides time in seconds; Lenis.raf() expects milliseconds
-    const raf = (time: number) => lenis.raf(time * 1000);
-    gsap.ticker.add(raf);
-    gsap.ticker.lagSmoothing(0);
+  // GSAP ticker provides time in seconds; Lenis.raf() expects milliseconds
+  const raf = (time: number) => lenis.raf(time * 1000);
+  gsap.ticker.add(raf);
+  gsap.ticker.lagSmoothing(0);
 
-    return () => {
-      gsap.ticker.remove(raf);
-      lenis.destroy();
-    };
-  }, []);
+  return () => {
+    gsap.ticker.remove(raf);
+    lenis.destroy();
+    lenisInstance = null;
+  };
+}
 
-  return <>{children}</>;
+export function getLenis(): Lenis | null {
+  return lenisInstance;
 }
 ```
 
-```tsx
-// Root layout — wrap your app content with SmoothScroll
-import { SmoothScroll } from "@/components/smooth-scroll";
+```ts
+// Initialize on page load
+const cleanup = initSmoothScroll();
 
-function RootLayout({ children }: { children: React.ReactNode }) {
-  return <SmoothScroll>{children}</SmoothScroll>;
-}
+// On teardown (e.g. SPA navigation):
+// cleanup();
 ```
 
 ### Lenis + Anchor Links
 
-```tsx
+```ts
 // Smooth scroll to anchor
 function scrollToSection(id: string) {
   const target = document.getElementById(id);
   if (target) {
-    lenisRef.current?.scrollTo(target, { offset: -80, duration: 1.5 });
+    getLenis()?.scrollTo(target, { offset: -80, duration: 1.5 });
   }
 }
 ```
@@ -82,58 +83,43 @@ function scrollToSection(id: string) {
 
 Content stays pinned while sub-elements animate through scroll progress.
 
-```tsx
+```ts
+// Expected HTML:
+// <div class="pinned-container">
+//   <div class="panel min-h-screen">Panel 1</div>
+//   <div class="panel min-h-screen">Panel 2</div>
+//   <div class="panel min-h-screen">Panel 3</div>
+// </div>
 
-import { useRef } from "react";
-import { gsap, useGSAP, ScrollTrigger } from "@/lib/gsap";
+// Re-call this function when the number of panels changes
+function createPinnedSection(container: HTMLElement): () => void {
+  const ctx = gsap.context(() => {
+    const panels = gsap.utils.toArray<HTMLElement>(".panel", container);
 
-export function PinnedSection({
-  children,
-  panels,
-}: {
-  children: React.ReactNode;
-  panels: React.ReactNode[];
-}) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const panelRefs = useRef<HTMLDivElement[]>([]);
-
-  useGSAP(() => {
-    panels.forEach((_, i) => {
+    panels.forEach((panel, i) => {
       if (i === 0) return; // First panel is visible by default
 
       ScrollTrigger.create({
-        trigger: panelRefs.current[i],
+        trigger: panel,
         start: "top top",
         pin: true,
         pinSpacing: false,
       });
 
-      gsap.from(panelRefs.current[i], {
+      gsap.from(panel, {
         opacity: 0,
         y: 100,
         scrollTrigger: {
-          trigger: panelRefs.current[i],
+          trigger: panel,
           start: "top bottom",
           end: "top top",
           scrub: 1,
         },
       });
     });
-  }, { scope: containerRef, dependencies: [panels.length] });
+  }, container);
 
-  return (
-    <div ref={containerRef}>
-      {panels.map((panel, i) => (
-        <div
-          key={i}
-          ref={(el) => { if (el) panelRefs.current[i] = el; }}
-          className="min-h-screen"
-        >
-          {panel}
-        </div>
-      ))}
-    </div>
-  );
+  return () => ctx.revert();
 }
 ```
 
@@ -141,24 +127,27 @@ export function PinnedSection({
 
 Transform vertical scroll into horizontal movement.
 
-```tsx
+```ts
+// Expected HTML:
+// <div class="horizontal-container overflow-hidden">
+//   <div class="horizontal-track flex w-max">
+//     <section class="h-screen w-screen">Panel 1</section>
+//     <section class="h-screen w-screen">Panel 2</section>
+//     <section class="h-screen w-screen">Panel 3</section>
+//   </div>
+// </div>
 
-import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
+function createHorizontalScroll(container: HTMLElement): () => void {
+  const track = container.querySelector(".horizontal-track") as HTMLElement;
 
-export function HorizontalScroll({ children }: { children: React.ReactNode }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-
-  useGSAP(() => {
-    const track = trackRef.current!;
+  const ctx = gsap.context(() => {
     const scrollWidth = track.scrollWidth - window.innerWidth;
 
     gsap.to(track, {
       x: -scrollWidth,
       ease: "none",
       scrollTrigger: {
-        trigger: containerRef.current,
+        trigger: container,
         start: "top top",
         end: () => `+=${scrollWidth}`,
         pin: true,
@@ -166,37 +155,23 @@ export function HorizontalScroll({ children }: { children: React.ReactNode }) {
         invalidateOnRefresh: true,
       },
     });
-  }, { scope: containerRef });
+  }, container);
 
-  return (
-    <div ref={containerRef} className="overflow-hidden">
-      <div ref={trackRef} className="flex w-max">
-        {children}
-      </div>
-    </div>
-  );
+  return () => ctx.revert();
 }
-
-// Usage:
-// <HorizontalScroll>
-//   <section className="h-screen w-screen">Panel 1</section>
-//   <section className="h-screen w-screen">Panel 2</section>
-//   <section className="h-screen w-screen">Panel 3</section>
-// </HorizontalScroll>
 ```
 
 ### Scroll Progress Indicator
 
-```tsx
+```ts
+// Expected HTML:
+// <div class="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent">
+//   <div class="progress-bar h-full origin-left bg-primary" style="transform:scaleX(0)"></div>
+// </div>
 
-import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
-
-export function ScrollProgress() {
-  const barRef = useRef<HTMLDivElement>(null);
-
-  useGSAP(() => {
-    gsap.to(barRef.current, {
+function createScrollProgress(bar: HTMLElement): () => void {
+  const ctx = gsap.context(() => {
+    gsap.to(bar, {
       scaleX: 1,
       ease: "none",
       scrollTrigger: {
@@ -208,75 +183,55 @@ export function ScrollProgress() {
     });
   });
 
-  return (
-    <div className="fixed top-0 left-0 right-0 z-50 h-1 bg-transparent">
-      <div
-        ref={barRef}
-        className="h-full origin-left bg-primary"
-        style={{ transform: "scaleX(0)" }}
-      />
-    </div>
-  );
+  return () => ctx.revert();
 }
 ```
 
 ### Parallax Layers
 
-```tsx
+```ts
+// Expected HTML:
+// <div class="relative overflow-hidden">
+//   <div class="parallax-layer" data-parallax-speed="0.3">
+//     <img src="/bg.jpg" class="scale-125" />  <!-- scale to prevent gaps -->
+//   </div>
+//   <div class="parallax-layer" data-parallax-speed="0">
+//     <h1>Static foreground</h1>
+//   </div>
+// </div>
 
-import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
-
-export function ParallaxLayer({
-  children,
-  speed = 0.5,
-}: {
-  children: React.ReactNode;
-  speed?: number; // 0 = no parallax, 1 = full speed, negative = reverse
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useGSAP(() => {
-    gsap.to(ref.current, {
+// Re-call this function when speed changes
+function createParallaxLayer(element: HTMLElement, speed: number = 0.5): () => void {
+  const ctx = gsap.context(() => {
+    gsap.to(element, {
       yPercent: speed * -50,
       ease: "none",
       scrollTrigger: {
-        trigger: ref.current,
+        trigger: element,
         start: "top bottom",
         end: "bottom top",
         scrub: true,
       },
     });
-  }, { scope: ref, dependencies: [speed] });
+  }, element);
 
-  return <div ref={ref}>{children}</div>;
+  return () => ctx.revert();
 }
-
-// Usage:
-// <div className="relative overflow-hidden">
-//   <ParallaxLayer speed={0.3}>
-//     <Image src="/bg.jpg" className="scale-125" />  {/* scale to prevent gaps */}
-//   </ParallaxLayer>
-//   <ParallaxLayer speed={0}>
-//     <h1>Static foreground</h1>
-//   </ParallaxLayer>
-// </div>
 ```
 
 ### Scrub-Linked Progress Animation
 
 Animate a property directly tied to scroll position (0-1 progress).
 
-```tsx
+```ts
+// Expected HTML:
+// <svg viewBox="0 0 500 500" class="w-full">
+//   <path class="scrub-path" d="M 10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80"
+//         fill="none" stroke="currentColor" stroke-width="3" />
+// </svg>
 
-import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
-
-export function ScrubPath() {
-  const pathRef = useRef<SVGPathElement>(null);
-
-  useGSAP(() => {
-    const path = pathRef.current!;
+function createScrubPath(path: SVGPathElement): () => void {
+  const ctx = gsap.context(() => {
     const length = path.getTotalLength();
 
     gsap.set(path, {
@@ -296,17 +251,7 @@ export function ScrubPath() {
     });
   });
 
-  return (
-    <svg viewBox="0 0 500 500" className="w-full">
-      <path
-        ref={pathRef}
-        d="M 10 80 C 40 10, 65 10, 95 80 S 150 150, 180 80"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="3"
-      />
-    </svg>
-  );
+  return () => ctx.revert();
 }
 ```
 
@@ -316,24 +261,26 @@ export function ScrubPath() {
 
 Combine ScrollTrigger snap with full-screen sections.
 
-```tsx
-const containerRef = useRef<HTMLDivElement>(null);
+```ts
+function createSnapSections(container: HTMLElement): () => void {
+  const ctx = gsap.context(() => {
+    const sections = gsap.utils.toArray<HTMLElement>(".snap-section", container);
 
-useGSAP(() => {
-  const sections = gsap.utils.toArray<HTMLElement>(".snap-section");
-
-  sections.forEach((section) => {
-    ScrollTrigger.create({
-      trigger: section,
-      start: "top top",
-      snap: {
-        snapTo: 1,
-        duration: { min: 0.2, max: 0.6 },
-        ease: "power2.inOut",
-      },
+    sections.forEach((section) => {
+      ScrollTrigger.create({
+        trigger: section,
+        start: "top top",
+        snap: {
+          snapTo: 1,
+          duration: { min: 0.2, max: 0.6 },
+          ease: "power2.inOut",
+        },
+      });
     });
-  });
-}, { scope: containerRef });
+  }, container);
+
+  return () => ctx.revert();
+}
 ```
 
 ---
@@ -345,7 +292,7 @@ useGSAP(() => {
 - Avoid pinning on iOS Safari (scroll hijacking feels broken)
 - Always test with Chrome DevTools device emulation AND real devices
 
-```tsx
+```ts
 ScrollTrigger.matchMedia({
   "(min-width: 768px)": function () {
     // Desktop animations with parallax, pins

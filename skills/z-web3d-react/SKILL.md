@@ -1,5 +1,5 @@
 ---
-name: z-web3d
+name: z-web3d-react
 description: |
   Build 3D and immersive web experiences with Three.js (WebGPU-first), React Three Fiber, Drei, TSL shaders, Koota ECS, Rapier physics, Rust WASM, and WebXR.
   Use this skill whenever the user works on: 3D scenes, WebGL/WebGPU rendering, R3F components, Three.js shaders (TSL/node materials), VR/AR/XR/mixed reality, spatial computing, immersive experiences, 3D physics simulation, ECS game architecture, particle systems, procedural geometry, glTF models, spatial audio, hand tracking, controller input, head-mounted displays, or any task involving @react-three/fiber, @react-three/drei, @react-three/xr, @react-three/rapier, three/webgpu, three/tsl, or koota.

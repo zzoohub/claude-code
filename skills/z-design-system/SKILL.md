@@ -11,8 +11,11 @@ references:
   - references/motion.md
   - references/components.md
   - references/platform-web.md
-  - references/platform-rn.md
   - references/pipeline.md
+  - references/react/components.md
+  - references/react/react-19.md
+  - references/react-native/platform.md
+  - references/react-native/typography.md
 ---
 
 # Design System
@@ -111,14 +114,12 @@ If you need a z-index not on this list, add a new token — don't use a magic nu
 
 Never add boolean props to customize component behavior or appearance. Instead, use composition: children, compound sub-components, or explicit variant components. Boolean props create combinatorial explosions and ambiguous states.
 
-```tsx
+```
 // ❌ Boolean prop proliferation
-<Button primary large outline disabled loading />
+Button(primary, large, outline, disabled, loading)
 
 // ✅ Composition — children for content, explicit variant for behavior
-<OutlineButton size="lg" disabled>
-  <Spinner /> Saving…
-</OutlineButton>
+OutlineButton(size="lg", disabled) → [Spinner, "Saving…"]
 ```
 
 Always prefer `children` over render props (`renderX`). Render props should only be used when the parent must pass computed data down.
@@ -162,21 +163,15 @@ When using shadcn, `styled/` is replaced by `ui/` (shadcn CLI target) and `headl
 
 Headless hooks own behavior: ARIA, keyboard, focus, state. Styled components own appearance: tokens, variants, sizing. This separation means a Button's click/keyboard/focus logic is written once and reused whether it looks like a primary button, ghost button, or icon button.
 
-→ Full patterns with Flat, Compound, Headless, and React 19 examples: `references/components.md`
-
-## React 19
-
-If the project uses React 19+, follow these API changes:
-
-- **No `forwardRef`** — `ref` is a regular prop. Just accept `ref` in the props interface.
-- **`use(Context)` replaces `useContext(Context)`** — use the `use()` API to read context values.
-- Update all headless hooks and compound components accordingly.
+→ Framework-agnostic patterns: `references/components.md`
+→ React implementations (JSX, hooks, Context): `references/react/components.md`
+→ React 19 API changes: `references/react/react-19.md`
 
 ## Icons
 
 Use one icon library per project and enforce it. Mixing libraries causes visual inconsistency (different stroke widths, sizing, metaphors) and bundle bloat.
 
-Recommended defaults: `lucide-react` (web), `lucide-react-native` (RN). These are lightweight and tree-shakeable. But if the project has an existing icon set, use that — the principle is consistency, not a specific library.
+Recommended: `lucide` — available for all frameworks (`lucide-react`, `lucide-vue-next`, `lucide-svelte`, `lucide-solid`, `lucide-react-native`). These are lightweight and tree-shakeable. But if the project has an existing icon set, use that — the principle is consistency, not a specific library.
 
 Decorative icons are hidden from the a11y tree. Meaningful icons get `aria-label` (web) or `accessibilityLabel` (RN).
 
@@ -206,12 +201,14 @@ Color is never the sole indicator of state. Error states use color + icon + text
 - **Building a complex layout component?** → Compound API with structured `{ state, actions, meta }` context.
 - **Need custom behavior?** → Headless hook first, styled wrapper on top.
 - **Passing content to a component?** → Use `children`. Avoid render props unless parent must pass computed data.
-- **Using React 19?** → No `forwardRef`. Use `use(Context)` instead of `useContext()`.
+- **Framework-specific patterns?** → See `references/react/` or `references/react-native/` for implementation details.
 - **Using Tailwind?** → Map tokens to `tailwind.config`. See `references/platform-web.md`.
 - **Cross-platform?** → Tokens defined once, transformed per platform. See `references/pipeline.md`.
 
 ## Platform References
 
 → Web (CSS custom properties, dark mode, responsive): `references/platform-web.md`
-→ React Native (TS tokens, color scheme, a11y): `references/platform-rn.md`
+→ React Native (TS tokens, color scheme, a11y): `references/react-native/platform.md`
 → Token pipeline (Style Dictionary, single-source workflow): `references/pipeline.md`
+→ React components & React 19: `references/react/`
+→ React Native typography: `references/react-native/typography.md`

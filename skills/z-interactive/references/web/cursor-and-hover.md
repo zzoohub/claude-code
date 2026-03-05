@@ -1,118 +1,124 @@
 # Cursor & Hover Interaction Patterns
 
+> React implementation: `../react/cursor-and-hover.md`
+
 ## Custom Cursor
 
 Replace the default cursor with a custom animated element.
 
-```tsx
-// components/custom-cursor.tsx
+```ts
+// Expected HTML (append to body):
+// <div class="cursor-dot pointer-events-none fixed left-0 top-0 z-[9999] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white mix-blend-difference"></div>
+// <div class="cursor-ring pointer-events-none fixed left-0 top-0 z-[9999] h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white mix-blend-difference"></div>
+//
+// CSS (desktop only):
+// @media (pointer: fine) { * { cursor: none; } }
 
-import { useRef, useEffect, useState } from "react";
 import { gsap } from "@/lib/gsap";
 
-export function CustomCursor() {
-  const dotRef = useRef<HTMLDivElement>(null);
-  const ringRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+function createCustomCursor(): () => void {
+  // Hide on touch devices
+  if ("ontouchstart" in window) return () => {};
 
-  useEffect(() => {
-    // Hide on touch devices
-    if ("ontouchstart" in window) return;
+  const dot = document.querySelector(".cursor-dot") as HTMLElement;
+  const ring = document.querySelector(".cursor-ring") as HTMLElement;
+  if (!dot || !ring) return () => {};
 
-    const dot = dotRef.current!;
-    const ring = ringRef.current!;
+  // quickTo creates reusable tweens — far more efficient than gsap.to() per mousemove
+  const dotX = gsap.quickTo(dot, "x", { duration: 0.1, ease: "power2.out" });
+  const dotY = gsap.quickTo(dot, "y", { duration: 0.1, ease: "power2.out" });
+  const ringX = gsap.quickTo(ring, "x", { duration: 0.3, ease: "power2.out" });
+  const ringY = gsap.quickTo(ring, "y", { duration: 0.3, ease: "power2.out" });
 
-    // quickTo creates reusable tweens — far more efficient than gsap.to() per mousemove
-    const dotX = gsap.quickTo(dot, "x", { duration: 0.1, ease: "power2.out" });
-    const dotY = gsap.quickTo(dot, "y", { duration: 0.1, ease: "power2.out" });
-    const ringX = gsap.quickTo(ring, "x", { duration: 0.3, ease: "power2.out" });
-    const ringY = gsap.quickTo(ring, "y", { duration: 0.3, ease: "power2.out" });
+  let visible = false;
 
-    const moveCursor = (e: MouseEvent) => {
-      setVisible(true);
-      dotX(e.clientX);
-      dotY(e.clientY);
-      ringX(e.clientX);
-      ringY(e.clientY);
-    };
+  const moveCursor = (e: MouseEvent) => {
+    if (!visible) {
+      dot.style.display = "";
+      ring.style.display = "";
+      visible = true;
+    }
+    dotX(e.clientX);
+    dotY(e.clientY);
+    ringX(e.clientX);
+    ringY(e.clientY);
+  };
 
-    const handleEnterInteractive = () => {
-      gsap.to(ring, { scale: 1.8, opacity: 0.5, duration: 0.3 });
-      gsap.to(dot, { scale: 0.5, duration: 0.3 });
-    };
+  const handleEnterInteractive = () => {
+    gsap.to(ring, { scale: 1.8, opacity: 0.5, duration: 0.3 });
+    gsap.to(dot, { scale: 0.5, duration: 0.3 });
+  };
 
-    const handleLeaveInteractive = () => {
-      gsap.to(ring, { scale: 1, opacity: 1, duration: 0.3 });
-      gsap.to(dot, { scale: 1, duration: 0.3 });
-    };
+  const handleLeaveInteractive = () => {
+    gsap.to(ring, { scale: 1, opacity: 1, duration: 0.3 });
+    gsap.to(dot, { scale: 1, duration: 0.3 });
+  };
 
-    window.addEventListener("mousemove", moveCursor);
+  // Initially hidden
+  dot.style.display = "none";
+  ring.style.display = "none";
 
-    // Grow cursor on interactive elements
-    const interactives = document.querySelectorAll(
-      "a, button, [data-cursor-hover]"
-    );
-    interactives.forEach((el) => {
-      el.addEventListener("mouseenter", handleEnterInteractive);
-      el.addEventListener("mouseleave", handleLeaveInteractive);
-    });
+  window.addEventListener("mousemove", moveCursor);
 
-    return () => {
-      window.removeEventListener("mousemove", moveCursor);
-      interactives.forEach((el) => {
-        el.removeEventListener("mouseenter", handleEnterInteractive);
-        el.removeEventListener("mouseleave", handleLeaveInteractive);
-      });
-    };
-  }, []); // Run once — visibility is handled via setState inside the listener
-
-  if (!visible) return null;
-
-  return (
-    <>
-      <div
-        ref={dotRef}
-        className="pointer-events-none fixed left-0 top-0 z-[9999] h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white mix-blend-difference"
-      />
-      <div
-        ref={ringRef}
-        className="pointer-events-none fixed left-0 top-0 z-[9999] h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white mix-blend-difference"
-      />
-    </>
+  // Grow cursor on interactive elements
+  const interactives = document.querySelectorAll(
+    "a, button, [data-cursor-hover]"
   );
-}
+  interactives.forEach((el) => {
+    el.addEventListener("mouseenter", handleEnterInteractive);
+    el.addEventListener("mouseleave", handleLeaveInteractive);
+  });
 
-// Add to layout.tsx:
-// <CustomCursor />
-// Add to globals.css:
-// * { cursor: none; }  /* Only on desktop via media query */
-// @media (pointer: fine) { * { cursor: none; } }
+  return () => {
+    window.removeEventListener("mousemove", moveCursor);
+    interactives.forEach((el) => {
+      el.removeEventListener("mouseenter", handleEnterInteractive);
+      el.removeEventListener("mouseleave", handleLeaveInteractive);
+    });
+    dot.remove();
+    ring.remove();
+  };
+}
 ```
 
 ### Cursor with Text Label
 
-```tsx
-// Extend CustomCursor to show text on specific elements
-// Add data-cursor-text="View" to elements
+```ts
+// Extend createCustomCursor to show text on specific elements.
+// Add data-cursor-text="View" to elements.
+// Add a label element inside the ring:
+// <span class="cursor-label" style="opacity:0;position:absolute;..."></span>
 
-useEffect(() => {
+function setupCursorTextLabels(ring: HTMLElement, label: HTMLElement): () => void {
   const textElements = document.querySelectorAll("[data-cursor-text]");
+  const listeners: Array<{ el: Element; type: string; fn: EventListener }> = [];
 
   textElements.forEach((el) => {
-    el.addEventListener("mouseenter", () => {
+    const enterFn = () => {
       const text = el.getAttribute("data-cursor-text");
       // Show text inside ring, scale ring up
       gsap.to(ring, { scale: 3, duration: 0.4 });
-      labelRef.current!.textContent = text;
-      gsap.to(labelRef.current, { opacity: 1, duration: 0.3 });
-    });
+      label.textContent = text;
+      gsap.to(label, { opacity: 1, duration: 0.3 });
+    };
 
-    el.addEventListener("mouseleave", () => {
+    const leaveFn = () => {
       gsap.to(ring, { scale: 1, duration: 0.4 });
-      gsap.to(labelRef.current, { opacity: 0, duration: 0.3 });
-    });
+      gsap.to(label, { opacity: 0, duration: 0.3 });
+    };
+
+    el.addEventListener("mouseenter", enterFn);
+    el.addEventListener("mouseleave", leaveFn);
+    listeners.push(
+      { el, type: "mouseenter", fn: enterFn },
+      { el, type: "mouseleave", fn: leaveFn }
+    );
   });
-}, []);
+
+  return () => {
+    listeners.forEach(({ el, type, fn }) => el.removeEventListener(type, fn));
+  };
+}
 ```
 
 ---
@@ -121,32 +127,31 @@ useEffect(() => {
 
 Elements that pull toward the cursor when nearby.
 
-```tsx
-// components/magnetic.tsx
+```ts
+import { gsap } from "@/lib/gsap";
 
-import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
+// Expected HTML:
+// <div class="magnetic-wrap inline-block">
+//   <button>Click me</button>
+// </div>
 
-export function Magnetic({
-  children,
-  strength = 0.35,
-  radius = 0.6,
-}: {
-  children: React.ReactNode;
+interface MagneticOptions {
   strength?: number;
   radius?: number; // How far from center the effect starts (0-1)
-}) {
-  const ref = useRef<HTMLDivElement>(null);
+}
 
-  useGSAP(() => {
-    if ("ontouchstart" in window) return; // Skip on mobile
+// Re-call this function when strength changes
+function createMagnetic(element: HTMLElement, options?: MagneticOptions): () => void {
+  if ("ontouchstart" in window) return () => {}; // Skip on mobile
 
-    const el = ref.current!;
-    const xTo = gsap.quickTo(el, "x", { duration: 0.4, ease: "power2.out" });
-    const yTo = gsap.quickTo(el, "y", { duration: 0.4, ease: "power2.out" });
+  const { strength = 0.35 } = options ?? {};
+
+  const ctx = gsap.context(() => {
+    const xTo = gsap.quickTo(element, "x", { duration: 0.4, ease: "power2.out" });
+    const yTo = gsap.quickTo(element, "y", { duration: 0.4, ease: "power2.out" });
 
     const handleMove = (e: MouseEvent) => {
-      const { left, top, width, height } = el.getBoundingClientRect();
+      const { left, top, width, height } = element.getBoundingClientRect();
       const centerX = left + width / 2;
       const centerY = top + height / 2;
       xTo((e.clientX - centerX) * strength);
@@ -154,7 +159,7 @@ export function Magnetic({
     };
 
     const handleLeave = () => {
-      gsap.to(el, {
+      gsap.to(element, {
         x: 0,
         y: 0,
         duration: 0.7,
@@ -162,20 +167,17 @@ export function Magnetic({
       });
     };
 
-    el.addEventListener("mousemove", handleMove);
-    el.addEventListener("mouseleave", handleLeave);
+    element.addEventListener("mousemove", handleMove);
+    element.addEventListener("mouseleave", handleLeave);
 
+    // gsap.context does not auto-clean DOM listeners, so return cleanup in the context callback
     return () => {
-      el.removeEventListener("mousemove", handleMove);
-      el.removeEventListener("mouseleave", handleLeave);
+      element.removeEventListener("mousemove", handleMove);
+      element.removeEventListener("mouseleave", handleLeave);
     };
-  }, { scope: ref, dependencies: [strength] });
+  }, element);
 
-  return (
-    <div ref={ref} className="inline-block">
-      {children}
-    </div>
-  );
+  return () => ctx.revert();
 }
 ```
 
@@ -185,31 +187,28 @@ export function Magnetic({
 
 Card that tilts toward the cursor on hover.
 
-```tsx
-// components/tilt-card.tsx
+```ts
+// Expected HTML:
+// <div class="tilt-card relative" style="transform-style:preserve-3d">
+//   <!-- card content -->
+//   <div class="tilt-glare pointer-events-none absolute inset-0 rounded-[inherit] opacity-0"
+//        style="background:radial-gradient(circle at center, rgba(255,255,255,0.5) 0%, transparent 60%)"></div>
+// </div>
 
-import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
-
-export function TiltCard({
-  children,
-  maxTilt = 15,
-  scale = 1.02,
-  glare = true,
-}: {
-  children: React.ReactNode;
+interface TiltOptions {
   maxTilt?: number;
   scale?: number;
   glare?: boolean;
-}) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const glareRef = useRef<HTMLDivElement>(null);
+}
 
-  useGSAP(() => {
-    if ("ontouchstart" in window) return;
+// Re-call this function when options change
+function createTiltCard(card: HTMLElement, options?: TiltOptions): () => void {
+  if ("ontouchstart" in window) return () => {};
 
-    const card = cardRef.current!;
+  const { maxTilt = 15, scale = 1.02, glare = true } = options ?? {};
+  const glareEl = card.querySelector(".tilt-glare") as HTMLElement | null;
 
+  const ctx = gsap.context(() => {
     const handleMove = (e: MouseEvent) => {
       const { left, top, width, height } = card.getBoundingClientRect();
       const x = (e.clientX - left) / width - 0.5; // -0.5 to 0.5
@@ -224,8 +223,8 @@ export function TiltCard({
         transformPerspective: 800,
       });
 
-      if (glare && glareRef.current) {
-        gsap.to(glareRef.current, {
+      if (glare && glareEl) {
+        gsap.to(glareEl, {
           opacity: 0.15,
           x: x * 100 + "%",
           y: y * 100 + "%",
@@ -243,8 +242,8 @@ export function TiltCard({
         ease: "power2.out",
       });
 
-      if (glare && glareRef.current) {
-        gsap.to(glareRef.current, { opacity: 0, duration: 0.4 });
+      if (glare && glareEl) {
+        gsap.to(glareEl, { opacity: 0, duration: 0.4 });
       }
     };
 
@@ -255,23 +254,9 @@ export function TiltCard({
       card.removeEventListener("mousemove", handleMove);
       card.removeEventListener("mouseleave", handleLeave);
     };
-  }, { scope: cardRef, dependencies: [maxTilt, scale, glare] });
+  }, card);
 
-  return (
-    <div ref={cardRef} className="relative" style={{ transformStyle: "preserve-3d" }}>
-      {children}
-      {glare && (
-        <div
-          ref={glareRef}
-          className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0"
-          style={{
-            background:
-              "radial-gradient(circle at center, rgba(255,255,255,0.5) 0%, transparent 60%)",
-          }}
-        />
-      )}
-    </div>
-  );
+  return () => ctx.revert();
 }
 ```
 
@@ -281,54 +266,41 @@ export function TiltCard({
 
 Move background layers subtly based on mouse position.
 
-```tsx
-// components/mouse-parallax.tsx
-
-import { useRef } from "react";
-import { gsap, useGSAP } from "@/lib/gsap";
-
-export function MouseParallax({
-  children,
-  depth = 0.02,
-}: {
-  children: React.ReactNode;
-  depth?: number;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useGSAP(() => {
-    if ("ontouchstart" in window) return;
-
-    const handleMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 2; // -1 to 1
-      const y = (e.clientY / window.innerHeight - 0.5) * 2;
-
-      const layers = ref.current!.querySelectorAll<HTMLElement>("[data-parallax-depth]");
-
-      layers.forEach((layer) => {
-        const d = parseFloat(layer.dataset.parallaxDepth || "1") * depth;
-        gsap.to(layer, {
-          x: x * d * 100,
-          y: y * d * 100,
-          duration: 0.8,
-          ease: "power2.out",
-        });
-      });
-    };
-
-    window.addEventListener("mousemove", handleMove);
-    return () => window.removeEventListener("mousemove", handleMove);
-  }, { dependencies: [depth] });
-
-  return <div ref={ref}>{children}</div>;
-}
-
-// Usage:
-// <MouseParallax>
+```ts
+// Expected HTML:
+// <div class="mouse-parallax-container">
 //   <div data-parallax-depth="1">Background</div>   <!-- moves most -->
 //   <div data-parallax-depth="0.5">Midground</div>
 //   <div data-parallax-depth="0.2">Foreground</div>  <!-- moves least -->
-// </MouseParallax>
+// </div>
+
+// Re-call this function when depth changes
+function createMouseParallax(container: HTMLElement, depth: number = 0.02): () => void {
+  if ("ontouchstart" in window) return () => {};
+
+  const handleMove = (e: MouseEvent) => {
+    const x = (e.clientX / window.innerWidth - 0.5) * 2; // -1 to 1
+    const y = (e.clientY / window.innerHeight - 0.5) * 2;
+
+    const layers = container.querySelectorAll<HTMLElement>("[data-parallax-depth]");
+
+    layers.forEach((layer) => {
+      const d = parseFloat(layer.dataset.parallaxDepth || "1") * depth;
+      gsap.to(layer, {
+        x: x * d * 100,
+        y: y * d * 100,
+        duration: 0.8,
+        ease: "power2.out",
+      });
+    });
+  };
+
+  window.addEventListener("mousemove", handleMove);
+
+  return () => {
+    window.removeEventListener("mousemove", handleMove);
+  };
+}
 ```
 
 ---
@@ -337,45 +309,31 @@ export function MouseParallax({
 
 Radial gradient that follows the cursor.
 
-```tsx
+```ts
+// Expected HTML:
+// <div class="spotlight-card group relative overflow-hidden rounded-xl border border-white/10 bg-black p-8">
+//   <!-- Spotlight gradient -->
+//   <div class="spotlight-gradient pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+//        style="background:radial-gradient(300px circle at var(--spotlight-x) var(--spotlight-y), rgba(99,102,241,0.15), transparent 60%)">
+//   </div>
+//   <div class="relative z-10"><!-- content --></div>
+// </div>
 
-import { useRef, useEffect } from "react";
+function createSpotlightCard(card: HTMLElement): () => void {
+  const handleMove = (e: MouseEvent) => {
+    const { left, top } = card.getBoundingClientRect();
+    const x = e.clientX - left;
+    const y = e.clientY - top;
 
-export function SpotlightCard({ children }: { children: React.ReactNode }) {
-  const cardRef = useRef<HTMLDivElement>(null);
+    card.style.setProperty("--spotlight-x", `${x}px`);
+    card.style.setProperty("--spotlight-y", `${y}px`);
+  };
 
-  useEffect(() => {
-    const card = cardRef.current!;
+  card.addEventListener("mousemove", handleMove);
 
-    const handleMove = (e: MouseEvent) => {
-      const { left, top } = card.getBoundingClientRect();
-      const x = e.clientX - left;
-      const y = e.clientY - top;
-
-      card.style.setProperty("--spotlight-x", `${x}px`);
-      card.style.setProperty("--spotlight-y", `${y}px`);
-    };
-
-    card.addEventListener("mousemove", handleMove);
-    return () => card.removeEventListener("mousemove", handleMove);
-  }, []);
-
-  return (
-    <div
-      ref={cardRef}
-      className="group relative overflow-hidden rounded-xl border border-white/10 bg-black p-8"
-    >
-      {/* Spotlight gradient */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{
-          background:
-            "radial-gradient(300px circle at var(--spotlight-x) var(--spotlight-y), rgba(99,102,241,0.15), transparent 60%)",
-        }}
-      />
-      <div className="relative z-10">{children}</div>
-    </div>
-  );
+  return () => {
+    card.removeEventListener("mousemove", handleMove);
+  };
 }
 ```
 

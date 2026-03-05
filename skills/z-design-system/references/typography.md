@@ -80,21 +80,7 @@ Larger screens get slightly bigger display/heading sizes. Body text stays the sa
 
 ### React Native
 
-```typescript
-import { useWindowDimensions } from 'react-native';
-
-function useResponsiveTypography() {
-  const { width } = useWindowDimensions();
-  const scale = width >= 768 ? 1.1 : 1; // 10% bump on tablets
-
-  return {
-    display: { fontSize: 30 * scale, lineHeight: 36 * scale },
-    headingLg: { fontSize: 24 * scale, lineHeight: 32 * scale },
-    // body stays at 1x
-    bodyMd: { fontSize: 16, lineHeight: 24 },
-  };
-}
-```
+> See `references/react-native/typography.md` for responsive typography hook and font loading.
 
 ## Usage Principle
 
