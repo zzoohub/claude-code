@@ -5,7 +5,7 @@ description: |
   Use when: validating changes before commit/PR, running test suites after implementation,
   checking if changes broke anything, verifying UI behavior via browser, or confirming bug fixes.
   Does NOT write test code — the main agent handles that during implementation.
-  Workflow: Run tests → Run E2E → Browser verify (if available) → Report results.
+  Workflow: Run tests → Run E2E → Browser verify (mandatory) → Report results.
 tools: Read, Write, Edit, Bash, Grep, Glob
 mcpServers:
   - claude-in-chrome
@@ -55,18 +55,19 @@ Skip if: no E2E setup exists, or changes are backend-only with no UI impact.
 
 ### 4. Browser Verification (claude-in-chrome)
 
-After automated tests pass, verify the app works in a real browser. This catches things automated tests miss — visual regressions, broken interactions, subtle layout issues.
+**MANDATORY.** Always attempt browser verification for any feature or code change. Most changes — UI, API, logic, state management — are best validated by checking the running app in a real browser.
 
-**Skip if** `claude-in-chrome` is not connected or changes have no UI impact.
+**How to start:** Call `tabs_context_mcp` first. If the call succeeds, chrome is connected — proceed. Only skip if the tool call itself fails (chrome extension not running).
 
 #### What to do:
 
-1. Start the dev server (detect from project config)
-2. Navigate to affected pages/flows
-3. Interact like a real user — click buttons, fill forms, navigate
-4. Check different states: loading, empty, error, success
-5. Read console for errors (`read_console_messages`)
-6. Take screenshots of key states as evidence
+1. Call `tabs_context_mcp` to verify chrome is connected
+2. Check if a dev server is already running (check common ports), or start one
+3. Navigate to affected pages/flows
+4. Interact like a real user — click buttons, fill forms, navigate
+5. Check different states: loading, empty, error, success
+6. Read console for errors (`read_console_messages`)
+7. Take screenshots of key states as evidence
 
 #### What to check:
 
