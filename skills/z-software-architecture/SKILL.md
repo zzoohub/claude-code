@@ -119,7 +119,7 @@ Architecture decisions:
 
 **Code Structure**: Always Hexagonal (Ports & Adapters). AI-assisted development eliminates the boilerplate cost — the benefits (testability, swappable adapters, clean domain) apply universally.
 
-**Backend**: Rust (Axum) by default. Python (FastAPI) only when Python-only libraries are required (LangGraph, PyTorch, transformers, etc.).
+**Backend**: Rust (Axum) — **always**. Python (FastAPI) only when the project physically cannot work without a Python-only library (e.g., PyTorch, LangGraph). If the library is an HTTP API wrapper (LLM SDKs, SaaS integrations), it is NOT a valid reason — use `reqwest`. When in doubt, the answer is Axum.
 
 **Frontend**: TanStack Start + SolidJS for client-side apps (dashboards, admin panels, SPAs, post-auth experiences) — fine-grained reactivity for superior runtime performance. Next.js for server-side apps (SEO-critical, content-heavy, SSR/SSG).
 
@@ -282,7 +282,7 @@ For each significant decision, write a brief ADR:
 - **Consequences**: What are the positive and negative outcomes?
 
 Include ADRs for at minimum:
-1. Backend choice (Rust/Axum default; Python/FastAPI only when Python-only libraries required)
+1. Backend choice (Rust/Axum always; Python/FastAPI only when a Python-only library is physically required — HTTP API wrappers are NOT a valid reason)
 2. Frontend choice (TanStack Start + SolidJS + Cloudflare Workers for client-side; Next.js + Vercel for server-side; React Native/Expo for mobile)
 3. System architecture pattern (monolith/microservices, sync/async/event-driven)
 4. Database platform choice
@@ -317,7 +317,7 @@ When making infrastructure decisions, use the following preferences as the **sta
 
 ## Architecture Pattern Preferences
 
-Code structure is always **Hexagonal (Ports & Adapters)**. The only architectural decision is **system architecture** (how services communicate) and **language** (Rust default, Python when Python-only libraries required).
+Code structure is always **Hexagonal (Ports & Adapters)**. The only architectural decision is **system architecture** (how services communicate) and **language** (Rust/Axum always — Python/FastAPI only when the core functionality physically cannot run without a Python-only library like PyTorch or LangGraph. LLM API calls, HTTP integrations, and data processing are NOT valid reasons for Python).
 
 **Read `references/architecture-patterns.md`** before choosing system architecture — it contains the full decision framework with flowcharts, real-world examples, and anti-patterns.
 

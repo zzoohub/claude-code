@@ -32,7 +32,7 @@ Service ──HTTP POST──▶ LLM Provider API (Anthropic, OpenAI)
 **When**: Single provider, single model, low request volume, no fallback needs.
 **Trade-offs**: Simplest to build, but you're coupled to one provider. No automatic fallback, no cost tracking, no caching.
 
-**Our stack**: Rust with `reqwest` for Anthropic/OpenAI HTTP APIs. Python only if you need LangGraph, transformers, or similar Python-only orchestration libraries.
+**Our stack**: Rust with `reqwest` — always. LLM providers are HTTP APIs; there is no reason to use Python for API calls. Python only if the project physically requires a Python-only library (PyTorch, LangGraph, etc.).
 
 ### Tier 2: LLM Gateway
 
