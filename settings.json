@@ -20,7 +20,8 @@
     "posthog@claude-plugins-official": true,
     "vercel@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true
+    "skill-creator@claude-plugins-official": true,
+    "stripe@claude-plugins-official": true
   },
   "effortLevel": "high"
 }

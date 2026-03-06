@@ -55,7 +55,7 @@ For solopreneur and small-team products, infrastructure cost is an architectural
 
 **Application**: Prefer scale-to-zero services (Neon, Cloud Run) over always-on infrastructure. Choose zero-egress-fee storage (R2 over S3). Use free tiers for development (Neon branching, embedding API free tiers). Estimate monthly cost at launch traffic (100-1K DAU) and at growth targets -- if a component costs more idle than active, reconsider.
 
-*Reference*: See `references/infra-preferences.md` for platform choices optimized for solopreneur cost profiles.
+*Reference*: See `references/stack-templates.md` for platform choices optimized for solopreneur cost profiles.
 
 ### 7. Developer Experience as Force Multiplier
 

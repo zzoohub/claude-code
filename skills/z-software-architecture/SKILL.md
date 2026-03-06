@@ -36,7 +36,16 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ### Step 0 — Intake & Clarification
 
-Before writing anything, read the PRD thoroughly. Then identify gaps by asking yourself (and the user if needed):
+Before writing anything, read the PRD thoroughly. Then:
+
+**1. Stack template**: Present all three options and mark your recommendation with **(Recommended)** based on the PRD. Ask the user to confirm:
+- **Rust**: Rust/Axum + TanStack Start/SolidJS + GCP Cloud Run + Neon
+- **TypeScript**: Hono on Workers + TanStack Start/SolidJS + Cloudflare + Neon
+- **Python AI**: FastAPI + TanStack Start/SolidJS + GCP Cloud Run + Neon
+
+Recommendation logic: Python AI if the PRD requires Python-only libraries (ML models, transformers). TypeScript if edge-first or fullstack JS fits best. Rust for everything else (default). See `references/stack-templates.md` for full details.
+
+**2. Clarification**: Identify gaps by asking yourself (and the user if needed):
 
 1. **Scale signals**: Expected users, requests/sec, data volume, growth trajectory?
 2. **Latency requirements**: Which user-facing paths are latency-critical?
@@ -121,9 +130,7 @@ Architecture decisions:
 
 **Code Structure**: Always Hexagonal (Ports & Adapters). See `references/architecture-patterns.md` for rationale.
 
-**Language & Framework**: Rust (Axum) by default. Python (FastAPI) only when the project physically requires a Python-only library (e.g., PyTorch, local model inference). See `references/architecture-patterns.md` for decision criteria.
-
-**Frontend**: TanStack Start + SolidJS for client-side apps. Next.js for server-side/SEO-critical apps.
+**Stack**: Per the chosen stack template from Step 0. See `references/stack-templates.md` for full details.
 
 **Mobile**: React Native (Expo).
 
@@ -317,7 +324,7 @@ The following reference files contain detailed decision frameworks. Read the rel
 
 **Read `references/architecture-patterns.md`** before choosing system architecture and language — it contains the full decision framework with flowcharts, real-world examples, and anti-patterns.
 
-**Read `references/infra-preferences.md`** before making any infrastructure decision — it contains the full decision matrix with platform choices, region strategy, and supporting services.
+**Read `references/stack-templates.md`** for the chosen stack template — it contains the full technology and infrastructure decisions per template, plus shared services, auth patterns, and region strategy.
 
 **Read `references/design-principles.md`** during the self-review phase — it contains core architecture principles, production incident patterns, security architecture, and observability patterns to verify your design against.
 
