@@ -121,7 +121,7 @@ Architecture decisions:
 
 **Backend**: Rust (Axum) by default. Python (FastAPI) only when Python-only libraries are required (LangGraph, PyTorch, transformers, etc.).
 
-**Frontend**: TanStack Start for client-side apps (dashboards, admin panels, SPAs, post-auth experiences). Next.js for server-side apps (SEO-critical, content-heavy, SSR/SSG).
+**Frontend**: TanStack Start + SolidJS for client-side apps (dashboards, admin panels, SPAs, post-auth experiences) — fine-grained reactivity for superior runtime performance. Next.js for server-side apps (SEO-critical, content-heavy, SSR/SSG).
 
 **Mobile**: React Native (Expo) — always.
 
@@ -283,7 +283,7 @@ For each significant decision, write a brief ADR:
 
 Include ADRs for at minimum:
 1. Backend choice (Rust/Axum default; Python/FastAPI only when Python-only libraries required)
-2. Frontend choice (TanStack Start + Cloudflare Workers for client-side; Next.js + Vercel for server-side; React Native/Expo for mobile)
+2. Frontend choice (TanStack Start + SolidJS + Cloudflare Workers for client-side; Next.js + Vercel for server-side; React Native/Expo for mobile)
 3. System architecture pattern (monolith/microservices, sync/async/event-driven)
 4. Database platform choice
 5. Compute platform choice

@@ -38,13 +38,13 @@ This reference contains the preferred infrastructure choices for the solopreneur
 
 | App Type | Framework | Hosting | When to Use |
 |---|---|---|---|
-| **Client-side** | **TanStack Start** | **Cloudflare Workers** | Dashboards, admin panels, SPAs, post-auth experiences, real-time interactive apps. Client-first with optional SSR. |
+| **Client-side** | **TanStack Start (SolidJS)** | **Cloudflare Workers** | Dashboards, admin panels, SPAs, post-auth experiences, real-time interactive apps. Fine-grained reactivity for superior performance. Client-first with optional SSR. |
 | **Server-side** | **Next.js** | **Vercel** | SEO-critical pages, content-heavy sites, marketing pages, SSR/SSG/ISR needed. |
 
 ### Decision Factors
-- **TanStack Start over Next.js**: When the app lives behind auth and SEO is irrelevant. Lighter runtime, no server component complexity, TanStack Router's type-safe routing and built-in data loading. Better fit for highly interactive client-driven UIs.
-- **Next.js over TanStack Start**: When SEO, SSG, or server-side rendering is a core requirement. Mature ecosystem, larger community, more deployment options.
-- **TanStack Start → Cloudflare Workers**: Edge delivery, predictable pricing, Vinxi/Nitro on Workers. Ideal for client-heavy apps that don't need Vercel's SSG/ISR pipeline.
+- **TanStack Start (SolidJS) over Next.js**: When the app lives behind auth and SEO is irrelevant. SolidJS's fine-grained reactivity delivers superior runtime performance — no virtual DOM diffing, surgical DOM updates. TanStack Router's type-safe routing and built-in data loading. Better fit for highly interactive client-driven UIs.
+- **Next.js over TanStack Start (SolidJS)**: When SEO, SSG, or server-side rendering is a core requirement. Mature ecosystem, larger community, more deployment options.
+- **TanStack Start (SolidJS) → Cloudflare Workers**: Edge delivery, predictable pricing, Vinxi/Nitro on Workers. Ideal for client-heavy apps that don't need Vercel's SSG/ISR pipeline.
 - **Next.js → Vercel**: Vercel builds Next.js. SSG/ISR/middleware/image optimization all work best on Vercel. Incremental build cache and edge revalidation are purpose-built for content-heavy rendering.
 
 ---
