@@ -42,10 +42,10 @@ This reference contains the preferred infrastructure choices for the solopreneur
 | **Server-side** | **Next.js** | **Vercel** | SEO-critical pages, content-heavy sites, marketing pages, SSR/SSG/ISR needed. |
 
 ### Decision Factors
-- **TanStack Start (SolidJS) over Next.js**: When the app lives behind auth and SEO is irrelevant. SolidJS's fine-grained reactivity delivers superior runtime performance — no virtual DOM diffing, surgical DOM updates. TanStack Router's type-safe routing and built-in data loading. Better fit for highly interactive client-driven UIs.
+- **TanStack Start (SolidJS) over Next.js**: When the app lives behind auth and SEO is irrelevant. SolidJS's fine-grained reactivity delivers superior runtime performance -- no virtual DOM diffing, surgical DOM updates. TanStack Router's type-safe routing and built-in data loading. Better fit for highly interactive client-driven UIs.
 - **Next.js over TanStack Start (SolidJS)**: When SEO, SSG, or server-side rendering is a core requirement. Mature ecosystem, larger community, more deployment options.
-- **TanStack Start (SolidJS) → Cloudflare Workers**: Edge delivery, predictable pricing, Vinxi/Nitro on Workers. Ideal for client-heavy apps that don't need Vercel's SSG/ISR pipeline.
-- **Next.js → Vercel**: Vercel builds Next.js. SSG/ISR/middleware/image optimization all work best on Vercel. Incremental build cache and edge revalidation are purpose-built for content-heavy rendering.
+- **TanStack Start (SolidJS) -> Cloudflare Workers**: Edge delivery, predictable pricing, Vinxi/Nitro on Workers. Ideal for client-heavy apps that don't need Vercel's SSG/ISR pipeline.
+- **Next.js -> Vercel**: Vercel builds Next.js. SSG/ISR/middleware/image optimization all work best on Vercel. Incremental build cache and edge revalidation are purpose-built for content-heavy rendering.
 
 ---
 
@@ -61,9 +61,9 @@ This reference contains the preferred infrastructure choices for the solopreneur
 
 | Priority | Service | When to Use |
 |---|---|---|
-| 1st | **GCP Pub/Sub** | Default for event-driven patterns. Serverless, auto-scales, native Cloud Run push integration. Fan-out (one event → many consumers), event notifications, async pipelines. |
+| 1st | **GCP Pub/Sub** | Default for event-driven patterns. Serverless, auto-scales, native Cloud Run push integration. Fan-out (one event -> many consumers), event notifications, async pipelines. |
 | 2nd | **GCP Cloud Tasks** | Simple async task queues with retries, rate limiting, and delayed execution. Better than Pub/Sub for sequential orchestration (saga orchestrator) or when you need built-in scheduling and deduplication. |
-| 3rd | **Memorystore (Redis)** | Lightweight pub/sub within a single service, caching, session storage, rate limiting. Not durable — use only for ephemeral messaging or caching. |
+| 3rd | **Memorystore (Redis)** | Lightweight pub/sub within a single service, caching, session storage, rate limiting. Not durable -- use only for ephemeral messaging or caching. |
 
 ### Decision Factors
 - **Pub/Sub over Cloud Tasks**: When multiple consumers need the same event, or when you need topic-based routing. Pub/Sub is the backbone for EDA and saga choreography.
@@ -72,7 +72,7 @@ This reference contains the preferred infrastructure choices for the solopreneur
 - **Kafka/Managed Kafka**: Not needed until you hit millions of events/sec, require complex stream processing (joins, windowing), or need long-term event log retention. Upgrade path exists via GCP Managed Service for Apache Kafka.
 
 ### Neon as Event Source (CDC)
-Neon supports logical replication with wal2json output. This enables Change Data Capture: stream database changes directly to Pub/Sub, Kafka, or other consumers. Enable via Neon Console → Project Settings → Logical Replication. Useful for event-driven patterns without introducing a separate event store.
+Neon supports logical replication with wal2json output. This enables Change Data Capture: stream database changes directly to Pub/Sub, Kafka, or other consumers. Enable via Neon Console -> Project Settings -> Logical Replication. Useful for event-driven patterns without introducing a separate event store.
 
 ---
 
@@ -86,7 +86,7 @@ Neon supports logical replication with wal2json output. This enables Change Data
 | Error Tracking | Sentry | Industry standard. Source maps, breadcrumbs, performance monitoring. |
 | Infrastructure as Code | Pulumi | TypeScript-native IaC. Avoids HCL context-switch. |
 | Payments (Global) | Stripe | Gold standard for global payments. Extensive API, webhook reliability. |
-| Payments (Korea) | Toss Payments | Required for Korean payment methods (카드, 계좌이체, etc.) |
+| Payments (Korea) | Toss Payments | Required for Korean payment methods. |
 | User Analytics | PostHog | Self-hostable, feature flags, session replay, funnels. Privacy-friendly. |
 | CI/CD | GitHub Actions | Integrated with Git workflow. Free tier generous for open source. |
 
@@ -95,10 +95,21 @@ Neon supports logical replication with wal2json output. This enables Change Data
 ## Auth Pattern
 
 ### Authentication
-- **Primary**: Social login (Google OAuth2) + self-issued JWT
-  - Access token: short-lived (15min), in memory or Authorization header
-  - Refresh token: long-lived (7-30 days), httpOnly secure cookie
-- **Future**: Passkey (WebAuthn) as password-free upgrade path
+
+Choose based on the product's audience:
+
+| Scenario | Primary Method | Notes |
+|---|---|---|
+| **Global B2C** | Google OAuth2 + self-issued JWT | Widest reach, lowest friction |
+| **Korea B2C** | Kakao OAuth2 (primary) + Naver + Google | Kakao dominates Korean market. Naver is second. Google for non-Korean users. |
+| **B2B / SaaS** | Email magic link or SSO (OIDC/SAML) | Enterprise customers expect SSO. Magic link for self-serve signups. |
+| **Internal tools** | Google Workspace OAuth2 | Single-click for team members |
+
+**Token strategy** (all scenarios):
+- Access token: short-lived (15min), in memory or Authorization header
+- Refresh token: long-lived (7-30 days), httpOnly secure cookie
+
+**Future**: Passkey (WebAuthn) as password-free upgrade path for all scenarios.
 
 ### Authorization
 - **Model**: Role-Based Access Control (RBAC)
@@ -106,13 +117,24 @@ Neon supports logical replication with wal2json output. This enables Change Data
 
 ---
 
+## CDN & DNS
+
+| Service | Choice | Rationale |
+|---|---|---|
+| **CDN** | Cloudflare | Already in stack (R2, Email Routing, Workers). Free tier includes global CDN, DDoS protection, and edge caching. |
+| **DNS** | Cloudflare DNS | Fastest authoritative DNS. Unified with CDN and edge services. Proxy mode enables WAF and caching without infrastructure changes. |
+
+**Edge caching strategy**: Cache static assets aggressively (immutable hashes, 1yr TTL). Use `stale-while-revalidate` for API responses where eventual consistency is acceptable. Never cache authenticated API responses at the edge.
+
+---
+
 ## Platform Ecosystem Strategy
 
 When choosing ancillary services (cron jobs, queues, caching, pub/sub, secrets, observability), follow the **platform cohesion principle**:
 
-- If backend is on **GCP** → prefer GCP services (Cloud Scheduler, Cloud Tasks, Memorystore, Pub/Sub, Cloud Logging/Monitoring)
-- If backend is on **Cloudflare** → prefer Cloudflare services (Cron Triggers, Queues, KV/D1, Pub/Sub via Workers, Logpush)
-- **Secrets**: `pulumi config set --secret`. Do not use platform secret managers (GCP Secret Manager, Cloudflare Secrets).
+- If backend is on **GCP** -> prefer GCP services (Cloud Scheduler, Cloud Tasks, Memorystore, Pub/Sub, Cloud Logging/Monitoring)
+- If backend is on **Cloudflare** -> prefer Cloudflare services (Cron Triggers, Queues, KV/D1, Pub/Sub via Workers, Logpush)
+- **Secrets**: `pulumi config set --secret` for solopreneur scale. Upgrade to GCP Secret Manager when you need automated rotation, audit trails, or shared team access -- document the migration as an ADR.
 
 **Why**: Reduced network hops, unified billing, consistent auth model, simpler operational surface. Mixing ecosystems increases cognitive load and failure surface without proportional benefit for a solopreneur.
 
@@ -126,4 +148,4 @@ When choosing ancillary services (cron jobs, queues, caching, pub/sub, secrets, 
 | Korea-only service | ap-northeast-2 (Seoul/Korea) | Lowest latency for Korean users |
 | Edge-first | Cloudflare global | When using Workers, deployment is inherently global |
 
-**Co-location rule**: Keep compute and database in the same region to minimize inter-service latency. This is more important than putting compute close to users — use a CDN/edge for that.
+**Co-location rule**: Keep compute and database in the same region to minimize inter-service latency. This is more important than putting compute close to users -- use Cloudflare CDN/edge for that.

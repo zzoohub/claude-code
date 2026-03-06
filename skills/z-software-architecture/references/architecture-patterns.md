@@ -172,7 +172,7 @@ Events)  │  │                               │   │   APIs)
 | Priority | Language | When to Use |
 |---|---|---|
 | **Default** | **Rust (Axum)** | All services unless Python-only libraries are required. Sub-ms response times, 10-30MB memory, near-zero cold starts. Compiler as second reviewer — if it compiles, entire error classes are eliminated. Lower cloud cost (critical for solopreneur economics). |
-| **Exception** | **Python (FastAPI)** | Only when Python-only libraries are required: LangGraph, PyTorch, transformers, pandas/numpy pipelines, or SDKs with no Rust equivalent. Simple HTTP API calls to OpenAI/Anthropic do NOT qualify — use Rust with reqwest. |
+| **Exception** | **Python (FastAPI)** | Only when Python-only libraries are physically required: PyTorch, transformers, pandas/numpy heavy pipelines, or SDKs with no Rust equivalent. LLM API calls and agent patterns do NOT require Python -- implement with `reqwest` + `serde` in Rust. LangGraph is justified only when its graph orchestration + LangSmith debugging provide clear value over a Rust implementation. |
 
 ### Rust Ecosystem (Recommended)
 - **Web**: Axum (tower-based, async)
@@ -221,8 +221,8 @@ Are Python-only libraries required? (LangGraph, PyTorch, transformers, etc.)
 ├── YES → Python (FastAPI) + Hexagonal
 └── NO  → Rust (Axum) + Hexagonal
 
-Note: Simple HTTP API calls to OpenAI/Anthropic do NOT require Python.
-Use Rust with reqwest for standard LLM API integration.
+Note: LLM API calls and agent patterns do NOT require Python.
+Use Rust with reqwest + serde for LLM integration and custom agent loops.
 ```
 
 ---

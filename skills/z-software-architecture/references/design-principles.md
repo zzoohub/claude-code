@@ -49,6 +49,20 @@ Unless you have measured evidence of a performance problem, optimize for maintai
 | Logs | Treat as event streams. Structured JSON to stdout. Platform handles aggregation. |
 | Admin Processes | Run management tasks as one-off processes in the same environment. |
 
+### 6. Cost-Aware Architecture
+
+For solopreneur and small-team products, infrastructure cost is an architectural constraint on par with performance. Every component should justify its existence against a "what does this cost at low traffic?" test.
+
+**Application**: Prefer scale-to-zero services (Neon, Cloud Run) over always-on infrastructure. Choose zero-egress-fee storage (R2 over S3). Use free tiers for development (Neon branching, embedding API free tiers). Estimate monthly cost at launch traffic (100-1K DAU) and at growth targets -- if a component costs more idle than active, reconsider.
+
+*Reference*: See `references/infra-preferences.md` for platform choices optimized for solopreneur cost profiles.
+
+### 7. Developer Experience as Force Multiplier
+
+A solo developer's productivity is the binding constraint. Architecture decisions that save 10ms of request latency but add 30 minutes of deployment friction are net negative. Optimize for fast feedback loops: local development fidelity, quick deployments, clear error messages, and minimal context-switching between tools.
+
+**Application**: Choose platforms that support local development parity (Neon branching for DB, Docker Compose for services). Prefer unified ecosystems (GCP services together) over best-of-breed when the DX improvement outweighs the capability gap. Minimize the number of dashboards, CLIs, and credentials a single developer must manage.
+
 ---
 
 ## Lessons from Production Incidents

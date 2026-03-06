@@ -26,7 +26,9 @@ This skill produces architecture-level decisions. It deliberately **excludes** t
 | Folder structure, code conventions, linting rules | Codebase concern — belongs in CLAUDE.md or project config |
 | Concrete UI component trees, page layouts | Implementation detail — derived from system context in the Design Doc |
 
-If the user asks for any of the above, explain that this skill focuses on architecture-level decisions and offer to note it as a requirement for the implementation phase.
+**Note**: API *design philosophy* (REST vs GraphQL, versioning strategy, pagination approach) is an architectural decision and IS covered in Section 3.2 of the template. What's excluded is the concrete endpoint catalog.
+
+If the user asks for any of the excluded topics, explain that this skill focuses on architecture-level decisions and offer to note it as a requirement for the implementation phase.
 
 ---
 
@@ -56,8 +58,8 @@ Before presenting the document, verify:
 
 - [ ] Every technology choice has a stated rationale with trade-offs
 - [ ] Non-goals are explicit (things you deliberately chose NOT to do)
-- [ ] The document is 10–20 pages equivalent (not a novel, not a napkin sketch)
-- [ ] Cross-cutting concerns (security, observability, error handling) are addressed
+- [ ] Document length matches complexity tier (Light: 5-8p, Standard: 10-15p, Complex: 15-25p)
+- [ ] Cross-cutting concerns (security, observability, error handling, testing) are addressed
 - [ ] At least 2 alternatives are considered for each major architectural decision
 - [ ] Data flow is traceable end-to-end for the primary user journeys
 - [ ] The document is readable by a senior engineer in 15 minutes
@@ -89,7 +91,7 @@ Generate a D2 diagram showing where this system sits in the broader landscape:
 - What existing systems does this interact with?
 - What data flows in and out?
 
-Use C4 Level 1 thinking: the system as a black box within its environment. Invoke the `d2:diagram` skill to produce the diagram.
+Use C4 Level 1 thinking: the system as a black box within its environment. Invoke the `d2:diagram` skill to produce the diagram. If unavailable, use Mermaid or ASCII diagrams as fallback.
 
 ### 1.3 Assumptions
 List assumptions that the architecture depends on. If any assumption is wrong, the architecture may need to change.
@@ -117,29 +119,24 @@ Architecture decisions:
 - Monolith / Modular Monolith / Microservices / Serverless
 - Request-Response / Event-Driven / CQRS / Event Sourcing / Hybrid
 
-**Code Structure**: Always Hexagonal (Ports & Adapters). AI-assisted development eliminates the boilerplate cost — the benefits (testability, swappable adapters, clean domain) apply universally.
+**Code Structure**: Always Hexagonal (Ports & Adapters). See `references/architecture-patterns.md` for rationale.
 
-**Backend**: Rust (Axum) — **always**. Python (FastAPI) only when the project physically cannot work without a Python-only library (e.g., PyTorch, LangGraph). If the library is an HTTP API wrapper (LLM SDKs, SaaS integrations), it is NOT a valid reason — use `reqwest`. When in doubt, the answer is Axum.
+**Language & Framework**: Rust (Axum) by default. Python (FastAPI) only when the project physically requires a Python-only library (e.g., PyTorch, local model inference). See `references/architecture-patterns.md` for decision criteria.
 
-**Frontend**: TanStack Start + SolidJS for client-side apps (dashboards, admin panels, SPAs, post-auth experiences) — fine-grained reactivity for superior runtime performance. Next.js for server-side apps (SEO-critical, content-heavy, SSR/SSG).
+**Frontend**: TanStack Start + SolidJS for client-side apps. Next.js for server-side/SEO-critical apps.
 
-**Mobile**: React Native (Expo) — always.
+**Mobile**: React Native (Expo).
 
 **Rationale**: Explain trade-offs for the system architecture choice. Reference team size, expected scale, operational complexity budget, and data consistency needs.
 
 ### 3.2 Container Diagram
-Generate a D2 diagram (C4 Level 2) showing the major runtime containers:
-- Frontend app(s)
-- Backend service(s)
-- Database(s)
-- Message broker / queue (if any)
-- Cache layer (if any)
-- External services
+Generate a D2 diagram (C4 Level 2) showing the major runtime containers. If the `d2:diagram` skill is unavailable, use Mermaid or ASCII diagrams.
 
 For each container, state:
 - **Technology**: What runtime/framework
 - **Responsibility**: What it does (1-2 sentences)
-- **Communication**: How it talks to other containers (REST, gRPC, WebSocket, pub/sub, etc.)
+- **Communication**: Protocol and style (REST, gRPC, WebSocket, pub/sub, etc.)
+- **API design philosophy** (for the primary API surface): REST vs GraphQL, versioning strategy (URL path vs header), pagination approach (cursor vs offset)
 
 ### 3.3 Component Overview
 For the primary backend service, describe (C4 Level 3 — high level only) the major internal components/modules:
@@ -225,7 +222,14 @@ State the chosen platform and rationale. Address:
 - Rate limiting / abuse prevention
 - OWASP Top 10 considerations relevant to this system
 
-### 6.5 Performance & Scalability
+### 6.5 Testing Architecture
+- **Testing strategy**: Test pyramid shape (unit-heavy vs integration-heavy) and rationale
+- **Unit testing**: What is unit-tested (domain logic in hexagonal core), mocking strategy for ports
+- **Integration testing**: Which adapter boundaries are integration-tested (DB, external APIs)
+- **E2E testing**: Critical user flows covered, test environment strategy
+- **Contract testing** (if multi-service): How service interfaces are verified
+
+### 6.6 Performance & Scalability
 - Expected load profile (peak, average, growth)
 - Identified bottlenecks and mitigation
 - Scaling triggers and limits
@@ -277,16 +281,16 @@ For each significant decision, write a brief ADR:
 - **Context**: What situation motivates this decision?
 - **Decision**: What did we decide?
 - **Alternatives Considered**:
-  - Alternative A: description → rejected because...
-  - Alternative B: description → rejected because...
+  - Alternative A: description -> rejected because...
+  - Alternative B: description -> rejected because...
 - **Consequences**: What are the positive and negative outcomes?
 
 Include ADRs for at minimum:
-1. Backend choice (Rust/Axum always; Python/FastAPI only when a Python-only library is physically required — HTTP API wrappers are NOT a valid reason)
-2. Frontend choice (TanStack Start + SolidJS + Cloudflare Workers for client-side; Next.js + Vercel for server-side; React Native/Expo for mobile)
+1. Backend language and framework
+2. Frontend framework and hosting
 3. System architecture pattern (monolith/microservices, sync/async/event-driven)
-4. Database platform choice
-5. Compute platform choice
+4. Database platform
+5. Compute platform
 6. Authentication approach
 7. LLM integration approach (if AI features present)
 
@@ -307,27 +311,17 @@ Include this section when the system uses LLM-powered features. Cover:
 
 ---
 
-## Infrastructure Preferences
+## Reference Files
 
-When making infrastructure decisions, use the following preferences as the **starting point** — but always justify deviations based on project requirements.
+The following reference files contain detailed decision frameworks. Read the relevant ones before making architecture decisions.
+
+**Read `references/architecture-patterns.md`** before choosing system architecture and language — it contains the full decision framework with flowcharts, real-world examples, and anti-patterns.
 
 **Read `references/infra-preferences.md`** before making any infrastructure decision — it contains the full decision matrix with platform choices, region strategy, and supporting services.
 
----
+**Read `references/design-principles.md`** during the self-review phase — it contains core architecture principles, production incident patterns, security architecture, and observability patterns to verify your design against.
 
-## Architecture Pattern Preferences
-
-Code structure is always **Hexagonal (Ports & Adapters)**. The only architectural decision is **system architecture** (how services communicate) and **language** (Rust/Axum always — Python/FastAPI only when the core functionality physically cannot run without a Python-only library like PyTorch or LangGraph. LLM API calls, HTTP integrations, and data processing are NOT valid reasons for Python).
-
-**Read `references/architecture-patterns.md`** before choosing system architecture — it contains the full decision framework with flowcharts, real-world examples, and anti-patterns.
-
----
-
-## AI/LLM Architecture
-
-If the PRD includes AI-powered features (LLM generation, RAG, agents, semantic search, copilot, chat), **read `references/ai-architecture.md`** before making AI-related decisions. It covers LLM integration tiers, RAG architecture, agent patterns, streaming, vector storage, cost optimization, guardrails, and observability — all aligned with our infrastructure preferences.
-
-Add an **optional Section 11: AI/LLM Architecture** to the design document when AI features are present. Cover: LLM integration pattern (direct/gateway/cascade), RAG tier if applicable, agent architecture if applicable, streaming approach, cost strategy, and guardrails.
+**Read `references/ai-architecture.md`** if the PRD includes AI-powered features (LLM generation, RAG, agents, semantic search, copilot, chat) — it covers LLM integration tiers, RAG architecture, agent patterns, streaming, vector storage, cost optimization, guardrails, and observability.
 
 ---
 
@@ -341,8 +335,6 @@ Not every project deserves the same depth. Calibrate the document to the system'
 | **Standard** | Multiple components, some async processing, a few external integrations, auth required | 10-15 pages. Full template. This is the default. |
 | **Complex** | Distributed services, event-driven, real-time features, multiple data stores, compliance requirements, AI/LLM integration | 15-25 pages. Full template with deeper treatment. Consider separate D2 diagrams for each major subsystem. Data flow diagrams for all critical paths, not just top 2-3. |
 
-The self-review checklist item "10-20 pages equivalent" is a guideline for the Standard tier. Use your judgment — a 6-page doc for a simple API is better than a padded 15-page doc that says the same thing with more words.
-
 ---
 
 ## Writing Style
@@ -350,8 +342,8 @@ The self-review checklist item "10-20 pages equivalent" is a guideline for the S
 - **Direct and opinionated**. State what you chose and why. Don't hedge excessively.
 - **Trade-offs over descriptions**. Every choice should discuss what was gained and what was sacrificed.
 - **Concrete over abstract**. "Redis with 15-minute TTL" beats "a caching layer."
-- **Diagrams with D2**. Generate architecture diagrams using D2 (invoke the `d2:diagram` skill). Produce a System Context diagram (C4 Level 1) and Container diagram (C4 Level 2) at minimum. Use D2 classes for consistent styling — `person` for actors, `cylinder` for databases, `queue` for message brokers, dashed borders for system boundaries. For inline sketches within the doc text, simple ASCII is fine.
-- **No filler**. If you catch yourself writing "it is important to note that" — delete it.
+- **Diagrams with D2**. Generate architecture diagrams using D2 (invoke the `d2:diagram` skill). If unavailable, use Mermaid or ASCII diagrams. Produce a System Context diagram (C4 Level 1) and Container diagram (C4 Level 2) at minimum. Use D2 classes for consistent styling -- `person` for actors, `cylinder` for databases, `queue` for message brokers, dashed borders for system boundaries.
+- **No filler**. If you catch yourself writing "it is important to note that" -- delete it.
 - **Reference real-world precedent** when helpful: "Netflix uses a similar circuit-breaker pattern for their API gateway" adds credibility and context.
 
 ---
@@ -366,8 +358,8 @@ If yes, the doc is good enough. If not, it needs more clarity.
 
 When the input PRD has companion Phase PRDs (`docs/prd-phase-*.md`):
 
-1. **Write the full document for the complete vision** — do not shrink the architecture to fit a single phase
-2. **Tag sections inline** — append `[Phase 1]`, `[Phase 2]`, `[Phase 3+]` etc. to component headings, ADR titles, and integration points to indicate when each becomes relevant
+1. **Write the full document for the complete vision** -- do not shrink the architecture to fit a single phase
+2. **Tag sections inline** -- append `[Phase 1]`, `[Phase 2]`, `[Phase 3+]` etc. to component headings, ADR titles, and integration points to indicate when each becomes relevant
 3. **Add a Phase Implementation Summary** at the end of the document:
 
 ```
