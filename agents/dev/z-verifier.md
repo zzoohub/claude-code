@@ -10,7 +10,7 @@ tools: Read, Write, Edit, Bash, Grep, Glob
 mcpServers:
   - claude-in-chrome
 color: green
-model: sonnet
+model: opus
 ---
 
 # Verifier
