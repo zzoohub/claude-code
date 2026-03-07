@@ -34,9 +34,9 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ### Step 0 — Intake & Clarification
 
-**You MUST complete Step 0 before writing any part of the design document.** Step 0 is a multi-turn conversation — ask one question, wait for the answer, then ask the next. Do NOT batch all questions into a single message. Do NOT proceed to Step 1 until the user has answered all required questions.
+**Complete Step 0 before writing.** Scan the user's prompt for choices already made (e.g., "solo, korea-first, rust/axum, tanstack start"). Extract them, confirm briefly, and only ask what's missing — one question at a time. If all 4 choices are given, skip to Step 0-5.
 
-**Tool note**: Each step below uses `AskUserQuestion`. If that tool is unavailable, present the choices as a numbered list in your message and ask the user to pick.
+**Tool note**: Use `AskUserQuestion` for each step. If unavailable, present choices as a numbered list.
 
 **Step 0-1. Project context**
 > Call `AskUserQuestion` with these choices:
