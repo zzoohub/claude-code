@@ -31,6 +31,8 @@ Read config files to determine the framework and test tooling:
 | `package.json` with `next` | Next.js |
 | `package.json` with `@tanstack/start` or `solid-js` | TanStack/SolidJS |
 
+For stacks not listed above, detect the test runner from config files (e.g., `jest.config`, `mocha`, `go test`) and apply the same principles.
+
 Framework defaults:
 
 | Stack | Test Runner | Key Libraries |
@@ -44,15 +46,24 @@ If test dependencies are missing, install them before writing tests (use `bun` f
 
 Also check for existing test files — match their conventions for file naming, directory structure, and style. Don't invent new patterns when the project already has established ones.
 
+If there are no existing tests, use these defaults:
+- Rust: inline `#[cfg(test)] mod tests` for unit tests, `tests/` directory for integration tests
+- Python: `tests/` directory mirroring `src/` structure
+- JS/TS: colocated `*.test.ts` / `*.test.tsx` files next to the source
+
 ### 2. Scope Changes
 
 Figure out what actually changed — only test what's been modified, not the entire codebase.
 
 ```bash
-# Both staged and unstaged changes
-git diff --name-only HEAD
+# Staged + unstaged changes
+git diff --name-only HEAD 2>/dev/null
+
 # If HEAD fails (initial commit), fall back to:
 git diff --name-only --cached; git diff --name-only
+
+# Include newly added untracked files
+git ls-files --others --exclude-standard
 ```
 
 Filter the output:
@@ -95,7 +106,7 @@ For each file that passed triage, understand the code thoroughly:
 
 #### Principles
 
-**Test behavior, not implementation.** Assert on outputs and side effects. Tests that mirror the implementation line-by-line break on every refactor and prove nothing. Ask "what should happen?" not "how does it work internally?"
+**Test behavior, not implementation.** Assert on outputs and side effects (e.g., a database record was created, an email was sent, a file was written). Tests that mirror the implementation line-by-line break on every refactor and prove nothing. Ask "what should happen?" not "how does it work internally?"
 
 **Every branch gets a test.** if/else, match arms, error paths, edge cases, boundary values. This is how branch coverage actually goes up — not by testing the happy path five different ways.
 
@@ -137,7 +148,7 @@ Run the tests. Fix failures. Repeat until **every test passes**. This is non-neg
 |-------|---------|
 | Axum | `cargo nextest run` |
 | FastAPI | `pytest <test_file>` |
-| Next.js / TanStack / Solid | `npx vitest run <test_file>` |
+| Next.js / TanStack / Solid | `bunx vitest run <test_file>` |
 
 When a test fails:
 1. Read the error output carefully — is it a bug in the test or a real issue in the code?
@@ -154,7 +165,7 @@ Run coverage to find what you missed:
 |-------|---------|
 | Axum | `cargo llvm-cov nextest --branch` |
 | FastAPI | `pytest --cov=. --cov-branch --cov-report=term-missing` |
-| Next.js / TanStack / Solid | `npx vitest run --coverage` |
+| Next.js / TanStack / Solid | `bunx vitest run --coverage` |
 
 Read the output. Focus on:
 
@@ -162,7 +173,7 @@ Read the output. Focus on:
 - **Uncovered files** — source files with 0% coverage
 - **Partial hits** — lines executed but not all branches taken (the if was true but never false)
 
-Write additional tests to close gaps. Repeat until coverage target is met.
+Write additional tests to close gaps. Repeat until all tests pass.
 
 ### 8. Exclusions
 
@@ -178,13 +189,13 @@ Mark exclusions with the appropriate comment:
 
 | Stack | Exclusion Comment |
 |-------|------------------|
-| Rust | `#[cfg(not(tarpaulin_include))]` |
+| Rust | `#[cfg(not(coverage))]` |
 | Python | `# pragma: no cover` |
 | JS/TS | `/* v8 ignore next */` |
 
 ### 9. Hand Off to z-verifier
 
-Once all tests pass and coverage target is met, tell the main agent to spawn z-verifier. Your report is the handoff artifact — it tells the main agent and z-verifier exactly what was tested at the code level, so z-verifier can focus on app-level verification (running the full suite, E2E, browser checks).
+Once all tests pass, produce the report below and return it to the main agent. The main agent is responsible for spawning z-verifier as the next step — z-tester cannot spawn it directly. The report serves as the handoff artifact, telling the main agent and z-verifier exactly what was tested at the code level so z-verifier can focus on app-level verification (running the full suite, E2E, browser checks).
 
 ```markdown
 ## Test Report
