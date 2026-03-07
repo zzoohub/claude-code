@@ -92,7 +92,7 @@ If the user doesn't specify, use **Rust/Axum + TanStack Start** as the default c
 - Smaller bundle sizes than React equivalents
 - Deploy to Cloudflare Workers (default)
 
-**SSR/SSG trade-off**: TanStack Start's SSR/SSG is less mature than Next.js. For the rare SEO-critical marketing page, consider a static site generator or dedicated landing page. Most solopreneur apps live behind auth where SEO is irrelevant.
+**SSR + Hydration**: TanStack Start is an SSR framework (Vinxi/Nitro based). For SPA-only use cases, use TanStack Router directly without Start. The ecosystem is smaller than Next.js but the core SSR/streaming pipeline is production-ready.
 
 ---
 
