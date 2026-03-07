@@ -9,6 +9,7 @@ description: |
 tools: Read, Bash, Grep, Glob
 mcpServers:
   - claude-in-chrome
+  - playwright
 color: green
 model: opus
 ---
