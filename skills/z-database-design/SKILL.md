@@ -208,7 +208,6 @@ Produce these files:
 | File | Content |
 |---|---|
 | `docs/database-design.md` | Requirements summary → ERD (Mermaid) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. Design doc deviations noted inline. |
-| `docs/database-design-ko.md` | Korean version — natural Korean, not word-for-word translation. Keep technical terms in English. Same structure, ERD, and DDL examples. |
 | `db/migrations/001_initial_schema.sql` | Executable DDL (tables, indexes, constraints, comments) + matching `_rollback.sql` |
 | `docs/erd.mermaid` | Standalone Mermaid ERD (also embedded in the design doc) → consult `references/mermaid-erd.md` for syntax |
 

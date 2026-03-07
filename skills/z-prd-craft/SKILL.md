@@ -255,13 +255,8 @@ Link to supporting materials (don't inline them):
 
 ## Output Format
 
-**Always produce English + Korean (`-ko` suffix) versions of each document:**
-
-1. `docs/prd.md` + `docs/prd-ko.md`
-2. `docs/prd-phase-1.md` + `docs/prd-phase-1-ko.md`
-
-Korean versions: natural Korean, not word-for-word translation. Keep technical terms in English. Same structure and formatting.
-Apply the same `-ko` suffix pattern to phase/feature PRDs (e.g., `prd-phase-2-ko.md`, `prd-auth-ko.md`).
+1. `docs/prd.md`
+2. `docs/prd-phase-1.md`
 
 Write all in Markdown. Full PRD first, then derive the Phase PRD from it.
 Read `references/prd-phase.md` for the Phase PRD template and scoping principles.
