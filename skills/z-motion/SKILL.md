@@ -2,7 +2,7 @@
 name: z-motion
 description: |
   Motion design for web and React Native — animation, scroll effects, gestures, page transitions, visual atmosphere, and interactive charts.
-  Use when: user says "add animations", "more dynamic", "add wow factor", "add scroll effects", "creative landing page", "parallax", "reveal on scroll", "smooth scroll", "cursor effect", "page transition", "loading animation", "intro sequence", "make it feel alive", "more cinematic", "more immersive", "interactive portfolio", "gesture", "swipe interaction", "shared element transition", "spring animation", "hero animation", "micro-interactions", "kinetic typography", "text animation", "loading screen", "splash screen", "marquee", "ticker", "reveal effect", "motion design", "interactive chart", "animated chart", "data visualization", "bar chart", "line chart", "donut chart", "area chart", "d3", "make it interactive", or any request to add motion, animation, or sensory polish to an existing UI on either web or mobile.
+  Use when: adding animation or motion polish (scroll reveals, parallax, stagger, page transitions, cursor effects, kinetic typography, marquee/ticker), gesture interactions (swipe, drag, pinch, shared element transitions, spring animations), interactive data visualization (animated charts, D3, bar/line/area/donut charts), or making a UI feel more alive/cinematic/immersive. Trigger on phrases like "add animations", "more dynamic", "add wow factor", "make it interactive", "micro-interactions", "loading animation", "splash screen", or any request to add motion to an existing UI on either web or mobile.
   Do NOT use for: basic CSS hover states (use z-design-system motion tokens), building components from scratch, UX flow decisions (use z-ux-design), data/API work, or 3D/WebGL/WebGPU scenes (consider z-web3d).
   Workflow position: z-ux-design (flow) -> z-design-system (tokens) -> UI implementation -> **this skill** (motion polish).
 references:
@@ -92,7 +92,7 @@ What platform?
 
 GSAP is the default animation engine for web. It outperforms alternatives for interactive work: ScrollTrigger (pin, scrub, snap, stagger), timeline sequencing, text splitting, cursor/mouse tracking. It operates directly on the DOM — framework-agnostic.
 
-**If the project uses Motion (formerly Framer Motion)**: evaluate before replacing. Motion's `MotionValue` avoids React re-renders and is fine for simple component animations. Replace with GSAP when you need: ScrollTrigger, complex timelines, text animation, cursor effects, or when multiple animation libraries create property conflicts. Don't refactor stable code without a clear performance or capability reason.
+**Do not use Motion (formerly Framer Motion).** Always use GSAP as the sole animation engine on web. Motion and GSAP animate the same transform properties through different systems, causing conflicts and flickering. One engine means one mental model, no property collisions, and smaller bundles. If the project already has Motion, migrate to GSAP — don't maintain two animation systems.
 
 ### Web Decision Flowchart
 
@@ -180,7 +180,7 @@ Need animation?
 | **Stagger > 10 items** | After ~6, brain predicts pattern and stops noticing | Stagger first 4-6, batch-reveal the rest. |
 | **Porting web hover to mobile** | Mobile has no hover | Rethink: magnetic hover -> spring tap, hover reveal -> always visible. |
 | **Timing-based everything (RN)** | `withTiming` can't be interrupted mid-flight | Default to `withSpring` for touch-related animations. |
-| **Multiple animation engines** | Property conflicts, bundle bloat, mental overhead | One primary engine per platform. |
+| **Multiple animation engines** | Property conflicts, bundle bloat, mental overhead | GSAP only on web, Reanimated only on mobile. No Motion (formerly Framer Motion). |
 
 ## Accessibility — Non-Negotiable
 

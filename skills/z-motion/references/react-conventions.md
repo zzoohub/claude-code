@@ -141,6 +141,6 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
 
 1. **Refs are null with conditional rendering**: if a component returns `null` early, refs on hidden elements won't be populated when `useEffect`/`useGSAP` runs. Always render animation target elements (use `opacity: 0` instead of conditional `null`).
 2. **`useGSAP` dependencies**: pass props that affect animation values. Without dependencies, animation runs once on mount only.
-3. **Motion (Framer Motion) coexistence**: if migrating gradually, ensure GSAP and Motion don't animate the same element's `transform`. GSAP sets inline styles; Motion uses its own transform system. Property conflicts cause flickering.
+3. **No Motion**: do not use Motion (formerly Framer Motion). GSAP is the sole animation engine on web. If the project has existing Motion code, migrate it to GSAP.
 4. **ScrollTrigger + layout shifts**: if React updates DOM after GSAP measures positions, call `ScrollTrigger.refresh()` after state updates that affect layout.
 5. **Strict mode double-mount**: `useGSAP` handles this. Manual `useEffect` + `gsap.context` also works if you return `ctx.revert()` from cleanup.

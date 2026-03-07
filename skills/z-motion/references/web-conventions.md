@@ -69,7 +69,7 @@ Tailwind owns **layout and styling**. GSAP owns **motion**. They never overlap. 
 
 ## Custom Text Splitter
 
-Free alternative to GSAP SplitText (which requires GSAP Club). Include this `lib/split-text.ts` utility in projects that need character/word animation. It splits an element's own `textContent` into individually animatable `<span>` elements, preserving the original text in an `aria-label` for accessibility. The source text comes from the element itself (not user input), so the DOM manipulation is safe. See `web/gsap-patterns.md` in the previous version for the full implementation, or generate it fresh -- the key API is:
+Do not import `SplitText` from GSAP — it requires a paid Club membership. Instead, create a `lib/split-text.ts` utility that splits an element's `textContent` into individually animatable `<span>` elements, preserving the original text in an `aria-label` for accessibility. API contract:
 
 ```ts
 const { chars, words, revert } = splitText(element, "chars");
@@ -250,4 +250,4 @@ For GSAP globally: `gsap.globalTimeline.timeScale(100)` makes everything effecti
 4. **ScrollTrigger + dynamic content**: call `ScrollTrigger.refresh()` after content changes that affect layout.
 5. **Multiple GSAP contexts on same element**: later context doesn't auto-clean earlier one. Each needs its own cleanup.
 6. **Custom cursor on touch devices**: always guard with `"ontouchstart" in window` or `@media (pointer: fine)`.
-7. **GSAP license**: free for most uses under "no charge" license. Check gsap.com/licensing for commercial edge cases.
+7. **GSAP paid plugins**: `SplitText`, `MorphSVG`, `DrawSVG`, `MotionPath`, `InertiaPlugin` require GSAP Club membership. Never import these — use free alternatives or build custom utilities.

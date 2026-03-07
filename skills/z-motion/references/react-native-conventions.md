@@ -1,6 +1,9 @@
 # React Native Conventions
 
-Patterns, rules, and gotchas for the React Native animation stack (Reanimated 3 + Gesture Handler + Skia).
+Patterns, rules, and gotchas for the React Native animation stack (Reanimated 3+ + Gesture Handler + Skia).
+
+> **Reanimated version**: this file targets Reanimated 3. Reanimated 4 renames some APIs (e.g., `useScrollViewOffset` → `useScrollOffset`). Check the project's installed version and adapt accordingly.
+> **Skia package**: import from `@shopify/react-native-skia`.
 
 ## Table of Contents
 
