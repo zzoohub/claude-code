@@ -100,22 +100,6 @@ A solo developer's productivity is the binding constraint. Architecture decision
 
 ---
 
-## Data Architecture Anti-Patterns
-
-### Shared Database Between Services
-**Problem**: Two services read/write the same tables. Schema changes require coordinated deployment.
-**Solution**: Each service owns its data. If another service needs data, it goes through an API or event stream.
-
-### Event Sourcing Everywhere
-**Problem**: Event sourcing adds complexity (event store, projections, eventual consistency). Using it for a simple CRUD service is over-engineering.
-**Solution**: Use event sourcing only when you need: audit trail, temporal queries, or complex event processing. For everything else, simple state-based persistence is fine.
-
-### Premature CQRS
-**Problem**: Separate read and write models before you have evidence that read and write patterns diverge.
-**Solution**: Start with a single model. Split into CQRS only when: (a) read and write loads are significantly different, or (b) read model needs denormalization that conflicts with write model normalization.
-
----
-
 ## Security Architecture Patterns
 
 ### Defense in Depth

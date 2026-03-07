@@ -4,15 +4,30 @@ When starting a design doc, ask the user to choose a stack template. Each templa
 
 ---
 
-## Template Selection
+## Stack Selection (Two Axes)
 
-| Template | Backend | Frontend | DB | Infra | Choose When |
-|---|---|---|---|---|---|
-| **Rust** (default) | Rust/Axum | TanStack Start + SolidJS | Neon | GCP Cloud Run + Cloudflare | Performance/cost critical, long-running services, type safety maximalist |
-| **TypeScript** | Hono on Workers | TanStack Start + SolidJS | Neon | Cloudflare fullstack | Fastest development velocity, edge-first, fullstack JS/TS |
-| **Python AI** | FastAPI | TanStack Start + SolidJS | Neon | GCP Cloud Run + Cloudflare | Core product requires Python-only libraries (PyTorch, transformers, etc.) |
+The user picks one backend and one frontend independently. Any combination is valid.
 
-If the user doesn't specify, use **Rust** as the default.
+### Backend Options
+
+| Backend | Infra | Choose When |
+|---|---|---|
+| **Rust/Axum** (default) | GCP Cloud Run + Cloudflare | Performance/cost critical, long-running services, type safety maximalist |
+| **Hono** | Cloudflare Workers | Edge-first, fullstack TypeScript, global distribution |
+| **FastAPI** | GCP Cloud Run + Cloudflare | Core product requires Python-only libraries (PyTorch, transformers, etc.) |
+
+### Frontend Options
+
+| Frontend | Deploy To | Choose When |
+|---|---|---|
+| **TanStack Start + SolidJS** (default) | Cloudflare Pages/Workers | Fine-grained reactivity, smaller bundles, no virtual DOM overhead |
+| **Next.js (React)** | Vercel (default) or Cloudflare via OpenNext | Rich React ecosystem needed (Radix, shadcn/ui, etc.), SEO-critical content-heavy product, team has deep React expertise |
+
+### Shared across all combinations
+- **Database**: Neon (Serverless PostgreSQL)
+- **CDN/DNS**: Cloudflare
+
+If the user doesn't specify, use **Rust/Axum + TanStack Start** as the default combination.
 
 ---
 
@@ -49,7 +64,7 @@ If the user doesn't specify, use **Rust** as the default.
 - Pages for static assets and frontend
 
 **When to deviate**:
-- GCP Cloud Run when you need longer execution times (>30s), larger payloads, or container-based workloads that don't fit the Workers model
+- GCP Cloud Run when you need longer execution times (>30s), larger payloads, or container-based workloads that don't fit the Workers model. Use Hono on Node.js for consistency with the Workers codebase (same API, different runtime), or Fastify if you need its plugin ecosystem.
 
 ---
 
@@ -68,20 +83,26 @@ If the user doesn't specify, use **Rust** as the default.
 
 ---
 
-## Shared: Frontend (All Templates)
+## Frontend: TanStack Start + SolidJS (default)
 
-**TanStack Start + SolidJS** -- used across all templates.
 - Fine-grained reactivity: no virtual DOM diffing, surgical DOM updates
 - TanStack Router: type-safe routing with built-in data loading
 - Vinxi/Nitro based: deploys to Cloudflare Workers, Vercel, Node, any platform
 - Smaller bundle sizes than React equivalents
-
-**Deployment per template**:
-- Rust template -> Cloudflare Pages/Workers
-- TypeScript template -> Cloudflare Pages (same platform as backend)
-- Python AI template -> Cloudflare Pages/Workers
+- Deploy to Cloudflare Pages/Workers (default)
 
 **SSR/SSG trade-off**: TanStack Start's SSR/SSG is less mature than Next.js. For the rare SEO-critical marketing page, consider a static site generator or dedicated landing page. Most solopreneur apps live behind auth where SEO is irrelevant.
+
+---
+
+## Frontend: Next.js (React)
+
+- Mature SSR/SSG/ISR with excellent SEO support
+- Rich React ecosystem: Radix, shadcn/ui, React Three Fiber, Framer Motion, etc.
+- App Router with Server Components and Server Actions
+- Deploy to Vercel (default) or Cloudflare via OpenNext
+
+**Choose when**: The project depends heavily on React ecosystem libraries with no SolidJS equivalents, the team has deep React expertise, or the product is SEO-critical and content-heavy.
 
 ---
 
@@ -91,8 +112,10 @@ If the user doesn't specify, use **Rust** as the default.
 
 | Aspect | Detail |
 |---|---|
-| Default region | us-east-1 (Virginia) for global; ap-northeast-2 (Seoul) for Korea-only |
+| Default region | us-east-1 (Virginia, AWS) for global; ap-northeast-2 (Seoul) for Korea-only |
 | Why Neon | Scale-to-zero pricing, branching for dev/staging, full PostgreSQL (pgvector, extensions), serverless driver works from Workers |
+
+**Cross-cloud latency note**: Neon runs on AWS (us-east-1) while Cloud Run runs on GCP (us-east4). Both are in Virginia — inter-cloud latency within the same geographic area is typically 1-3ms, comparable to cross-AZ latency. This is negligible for most workloads. Use the Neon serverless driver for lowest overhead.
 
 **Neon serverless driver** (`@neondatabase/serverless`): Works over HTTP/WebSocket, specifically designed for edge runtimes (Cloudflare Workers, Vercel Edge). No TCP connection needed.
 
@@ -122,7 +145,9 @@ Choose based on the product's audience:
 **Future**: Passkey (WebAuthn) as password-free upgrade path for all scenarios.
 
 ### Authorization
-- **Model**: Role-Based Access Control (RBAC)
+- **Default model**: RBAC (Role-Based Access Control) — sufficient for most apps
+- **Consider ABAC** (Attribute-Based Access Control) when permissions depend on resource attributes (e.g., "users can edit only their own posts")
+- **Consider ReBAC** (Relationship-Based Access Control) when permissions follow a graph of relationships (e.g., "org admin can manage all projects in their org") — Google Zanzibar pattern
 - **Enforcement**: Middleware layer in backend (not in database, not in frontend)
 
 ---
@@ -156,11 +181,11 @@ Choose based on the product's audience:
 
 ## Shared: Messaging & Async Processing
 
-| Template | Default | Notes |
+| Backend | Default | Notes |
 |---|---|---|
-| **Rust** | GCP Pub/Sub | Native Cloud Run push integration. Cloud Tasks for sequential orchestration. |
-| **TypeScript** | Cloudflare Queues | Native Workers integration. For heavier needs, consider GCP Pub/Sub. |
-| **Python AI** | GCP Pub/Sub | Same as Rust template. |
+| **Rust/Axum** (Cloud Run) | GCP Pub/Sub | Native Cloud Run push integration. Cloud Tasks for sequential orchestration. |
+| **Hono** (Workers) | Cloudflare Queues | Native Workers integration. For heavier needs, consider GCP Pub/Sub. |
+| **FastAPI** (Cloud Run) | GCP Pub/Sub | Same as Rust. |
 
 **Redis (Memorystore)**: Add when you need sub-ms caching, session storage, or rate limiting. Not a replacement for durable messaging.
 
@@ -175,11 +200,11 @@ Neon supports logical replication with wal2json output. Stream database changes 
 
 Follow the **platform cohesion principle** -- prefer services from the same platform as your compute:
 
-| Template | Primary Platform | Prefer Services From |
+| Backend | Primary Platform | Prefer Services From |
 |---|---|---|
-| **Rust** | GCP | Cloud Scheduler, Cloud Tasks, Memorystore, Pub/Sub, Cloud Logging/Monitoring |
-| **TypeScript** | Cloudflare | Cron Triggers, Queues, KV, Durable Objects, Logpush |
-| **Python AI** | GCP | Same as Rust template |
+| **Rust/Axum** | GCP | Cloud Scheduler, Cloud Tasks, Memorystore, Pub/Sub, Cloud Logging/Monitoring |
+| **Hono** | Cloudflare | Cron Triggers, Queues, KV, Durable Objects, Logpush |
+| **FastAPI** | GCP | Same as Rust/Axum |
 
 **Secrets**: `pulumi config set --secret` for solopreneur scale. Upgrade to GCP Secret Manager when you need automated rotation, audit trails, or shared team access -- document the migration as an ADR.
 

@@ -1,6 +1,6 @@
 ---
 name: z-software-architecture
-description: Produce a Software Architecture Design Document from a PRD. Use when the user says "design doc", "software architecture", "system design", "architect this", "architecture design", or provides a PRD and asks for technical architecture. Also use when the system involves AI/LLM features (RAG, agents, chat, copilot, semantic search). Generates a comprehensive design document covering system context, component architecture, data flow, infrastructure decisions, AI/LLM integration patterns, cross-cutting concerns, and ADRs — while explicitly excluding DB schemas, API endpoint lists, folder structures, and UI specifics. Produces D2 architecture diagrams and outputs a markdown design doc that serves as the source of truth for implementation.
+description: Produce a Software Architecture Design Document from a PRD. Use when the user says "design doc", "software architecture", "system design", "architect this", "architecture design", "tech spec", "how should I build this", "what's the right architecture for", "help me plan the backend", "design the system", or provides a PRD and asks for technical architecture. Also use when the system involves AI/LLM features (RAG, agents, chat, copilot, semantic search). Generates a comprehensive design document covering system context, component architecture, data flow, infrastructure decisions, AI/LLM integration patterns, cross-cutting concerns, and ADRs — while explicitly excluding DB schemas, API endpoint lists, folder structures, and UI specifics. Produces D2 architecture diagrams and outputs a markdown design doc that serves as the source of truth for implementation. Make sure to use this skill whenever the user wants to plan or structure a new project, even if they don't explicitly say "architecture."
 ---
 
 # Software Architect Skill
@@ -38,12 +38,18 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 Before writing anything, read the PRD thoroughly. Then:
 
-**1. Stack template**: Present all three options and mark your recommendation with **(Recommended)** based on the PRD. Ask the user to confirm:
-- **Rust**: Rust/Axum + TanStack Start/SolidJS + GCP Cloud Run + Neon
-- **TypeScript**: Hono on Workers + TanStack Start/SolidJS + Cloudflare + Neon
-- **Python AI**: FastAPI + TanStack Start/SolidJS + GCP Cloud Run + Neon
+**1. Stack selection**: Ask two separate questions. Mark your recommendation with **(Recommended)** based on the PRD. The user can mix and match any backend with any frontend.
 
-Recommendation logic: Python AI if the PRD requires Python-only libraries (ML models, transformers). TypeScript if edge-first or fullstack JS fits best. Rust for everything else (default). See `references/stack-templates.md` for full details.
+**Backend** (pick one):
+- **Rust/Axum + GCP Cloud Run** — Performance/cost critical, type safety maximalist (default)
+- **Hono + Cloudflare Workers** — Edge-first, fullstack TypeScript, global distribution
+- **FastAPI + GCP Cloud Run** — Only when Python-only libraries are required (PyTorch, transformers, etc.)
+
+**Frontend** (pick one):
+- **TanStack Start + SolidJS** — Fine-grained reactivity, smaller bundles, no virtual DOM (default)
+- **Next.js (React)** — Rich React ecosystem needed (Radix, shadcn/ui, etc.), SEO-critical content-heavy product, or team has deep React expertise
+
+Mark **(Recommended)** on both the backend and the frontend choices independently based on the PRD. Backend defaults to Rust unless Python-only libs are needed or edge-first is the priority. Frontend defaults to TanStack Start unless the project needs the React ecosystem. See `references/stack-templates.md` for full details.
 
 **2. Clarification**: Identify gaps by asking yourself (and the user if needed):
 
@@ -130,7 +136,7 @@ Architecture decisions:
 
 **Code Structure**: Always Hexagonal (Ports & Adapters). See `references/architecture-patterns.md` for rationale.
 
-**Stack**: Per the chosen stack template from Step 0. See `references/stack-templates.md` for full details.
+**Stack**: Per the chosen backend + frontend combination from Step 0. See `references/stack-templates.md` for full details.
 
 **Mobile**: React Native (Expo).
 
@@ -328,7 +334,7 @@ The following reference files contain detailed decision frameworks. Read the rel
 
 **Read `references/design-principles.md`** during the self-review phase — it contains core architecture principles, production incident patterns, security architecture, and observability patterns to verify your design against.
 
-**Read `references/ai-architecture.md`** if the PRD includes AI-powered features (LLM generation, RAG, agents, semantic search, copilot, chat) — it covers LLM integration tiers, RAG architecture, agent patterns, streaming, vector storage, cost optimization, guardrails, and observability.
+**Read `references/ai-architecture.md`** if the PRD includes AI-powered features (LLM generation, RAG, agents, semantic search, copilot, chat) — it covers LLM integration tiers, RAG architecture, agent patterns, streaming, vector storage, cost optimization, guardrails, and observability. **Important**: embedding model rankings and LLM pricing shift frequently. When making AI architecture decisions, verify current pricing and model capabilities against provider docs or web search before committing.
 
 ---
 
