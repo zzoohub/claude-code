@@ -34,58 +34,28 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ### Step 0 — Intake & Clarification
 
-**Complete Step 0 before writing.** Scan the user's prompt for choices already made (e.g., "solo, korea-first, rust/axum, tanstack start"). Extract them, confirm briefly, and only ask what's missing — one question at a time. If all 4 choices are given, skip to Step 0-5.
+**Complete Step 0 before writing.** Resolve all 4 choices below using this procedure:
 
-**Tool note**: Use `AskUserQuestion` for each step. If unavailable, present choices as a numbered list.
+1. Scan the user's prompt and mark each choice as RESOLVED or UNRESOLVED
+2. For RESOLVED choices, confirm them in one line (e.g., "Solo, Global로 진행합니다.")
+3. For UNRESOLVED choices, ask them **one at a time in order** — do not skip any UNRESOLVED choice
+4. After all 4 are resolved, proceed to Clarification
 
-**Step 0-1. Project context**
-> Call `AskUserQuestion` with these choices:
-- **Solo** (solopreneur, indie hacker, side project) — lightweight 3-6 page decision journal
-- **Team** (startup team, enterprise, multiple contributors) — comprehensive 10-25 page design doc
+Use `AskUserQuestion` for each UNRESOLVED choice. If unavailable, present as a numbered list.
 
-This determines which template to use in Step 1.
+**The 4 choices:**
 
-STOP. Wait for the user's answer. Then proceed to Step 0-2.
+| # | Choice | Resolved if user said | Options |
+|---|---|---|---|
+| 0-1 | Context | "solo", "team" | **Solo** — 3-6 page decision journal / **Team** — 10-25 page design doc |
+| 0-2 | Audience | "global", "korea", "korea-first" | **Global** — Neon, Google OAuth, Stripe, us-east / **Korea-first** — Supabase Seoul, Kakao/Naver OAuth, Toss Payments |
+| 0-3 | Backend | "rust", "axum", "hono", "fastapi" | **Rust/Axum + Cloud Run** (default) / **Hono + CF Workers** / **FastAPI + Cloud Run** |
+| 0-4 | Frontend | "tanstack", "solid", "nextjs", "react" | **TanStack Start + SolidJS** (default) / **Next.js (React)** |
 
-**Step 0-2. Target audience**
-> Call `AskUserQuestion` with these choices:
-- **Global** — Neon (Virginia), Google OAuth, Stripe, us-east region
-- **Korea-first** — Supabase (Seoul), Kakao/Naver OAuth, Toss Payments, Seoul region
+**0-5. Clarification** — infer from PRD. Only ask if genuinely missing.
 
-STOP. Wait for the user's answer. Then proceed to Step 0-3.
-
-**Step 0-3. Backend**
-> Call `AskUserQuestion` with these choices. Mark **(Recommended)** based on the requirements.
-- **Rust/Axum + GCP Cloud Run** — Performance/cost critical, type safety maximalist (default)
-- **Hono + Cloudflare Workers** — Edge-first, fullstack TypeScript, global distribution
-- **FastAPI + GCP Cloud Run** — Only when Python-only libraries are required (PyTorch, transformers, etc.)
-
-STOP. Wait for the user's answer. Then proceed to Step 0-4.
-
-**Step 0-4. Frontend**
-> Call `AskUserQuestion` with these choices. Mark **(Recommended)** based on the requirements.
-- **TanStack Start + SolidJS** — Fine-grained reactivity, smaller bundles, no virtual DOM (default)
-- **Next.js (React)** — Rich React ecosystem needed (Radix, shadcn/ui, etc.), SEO-critical content-heavy product, or team has deep React expertise
-
-STOP. Wait for the user's answer. Then proceed to Step 0-5.
-
-**Step 0-5. Clarification**
-> Infer from the requirements. Only ask the user if critical information is genuinely missing.
-
-**If Solo**, check for:
-1. Expected scale (rough DAU range at launch)
-2. Real-time needs (WebSocket, SSE, polling)
-3. Regulatory requirements (payments, health data, etc.)
-
-**If Team**, check for:
-1. Scale signals (expected users, requests/sec, data volume)
-2. Latency requirements (which paths are latency-critical)
-3. Consistency model (eventual vs strong, where)
-4. Real-time needs (WebSocket, SSE, polling)
-5. Multi-tenancy (single vs multi, data isolation)
-6. Regulatory (GDPR, CCPA, PCI-DSS, SOC2)
-
-If the requirements cover these, proceed to Step 1. Otherwise ask the missing items first.
+If Solo: expected scale (DAU range), real-time needs, regulatory requirements.
+If Team: scale signals, latency requirements, consistency model, real-time needs, multi-tenancy, regulatory.
 
 ### Step 1 — Write the Design Document
 
