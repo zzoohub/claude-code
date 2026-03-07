@@ -111,6 +111,7 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 - **Response types** built via `From<&Author>` — never expose domain structs.
 - **API errors** mapped manually from domain errors. Never leak domain strings to users.
   `Unknown` → log server-side, return generic message. Use RFC 9457 ProblemDetails.
+- **API docs** — serve OpenAPI spec from the `openapi.yaml` produced by z-rest-api-design. Don't use annotation-based generation (e.g. `utoipa`). The spec file is the single source of truth.
 - **Middleware (Tower layers)** — lives in inbound layer, invisible to domain.
   Layers wrap services: `TraceLayer → TimeoutLayer → CompressionLayer → CorsLayer`.
 - **Health checks** live in the inbound layer (not domain). Readiness probes check DB pool.

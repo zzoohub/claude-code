@@ -143,9 +143,9 @@ One deployable unit, but internally organized into strictly isolated modules wit
 
 ---
 
-## Code Structure: Hexagonal (Always)
+## Code Structure: Hexagonal (Default)
 
-Every service uses **Hexagonal Architecture (Ports & Adapters)** regardless of complexity.
+The default code structure is **Hexagonal Architecture (Ports & Adapters)**. Choose it unless you have a specific reason not to.
 
 ```
          ┌─────────────────────────────────────┐
@@ -161,9 +161,16 @@ Events)  │  │                               │   │   APIs)
          └─────────────────────────────────────┘
 ```
 
-**Why always hexagonal**: AI-assisted development (Claude Code) generates boilerplate instantly — the traditional cost of hexagonal (more files, more wiring) is near-zero. The benefits remain: domain isolation, swappable adapters, pure domain unit tests, and no refactoring needed when complexity grows.
+**Why hexagonal by default**: AI-assisted development generates boilerplate instantly — the traditional cost of hexagonal (more files, more wiring) is near-zero. The benefits remain: domain isolation, swappable adapters, pure domain unit tests, and no refactoring needed when complexity grows.
 
 **Dependencies always point inward.** Domain code never imports framework or infrastructure code.
+
+**When to deviate**:
+- **Simple CRUD with no business logic** (admin dashboards, internal tools): Framework conventions or layered architecture may be simpler. The overhead of ports/adapters adds indirection without meaningful domain isolation if there's no domain to isolate.
+- **Vertical Slice Architecture**: Organize by feature instead of by layer. Each feature owns its full stack (handler → logic → data access). Works well with CQRS where each command/query is a self-contained slice.
+- **Team already uses Clean Architecture**: Clean Architecture (Uncle Bob) shares the same core principle (dependency inversion, domain at center). The difference is naming and layer organization, not philosophy. Don't force a migration — the benefits are equivalent.
+
+Document your code structure choice as an ADR with rationale.
 
 ---
 
@@ -238,6 +245,65 @@ Use Rust with reqwest + serde for LLM integration and custom agent loops.
 | **Discord** | Microservices + hybrid sync/async | Rust for hot paths (Read States), Elixir for real-time | Migrated Go → Rust for 10x perf. Choose language per service based on performance profile. |
 | **Shopify** | Modular Monolith → selective extraction | Rails conventions | Start monolithic, extract only when data proves the boundary. Premature decomposition = distributed monolith. |
 | **Airbnb** | Monolith → SOA by domain boundary | Service-specific | Split only when natural domain boundaries are clear. |
+
+---
+
+## Additional Patterns
+
+### Strangler Fig (Legacy Migration)
+
+Incrementally replace a legacy system by routing traffic through a facade that delegates to either old or new code per feature. Over time, the new system takes over completely.
+
+```
+Client --> Facade/Router
+             |-- /new-feature --> New Service
+             |-- /old-feature --> Legacy System
+             (gradually migrate routes from legacy to new)
+```
+
+**Strengths**: Zero big-bang risk, ship incremental value, old system keeps running during migration.
+**Trade-offs**: Facade adds complexity and latency, two systems to maintain in parallel, data synchronization between old and new can be tricky.
+**Choose when**: Replacing an existing system that can't be rewritten from scratch. This is almost always the right approach for legacy migration — big-bang rewrites have a high failure rate.
+
+**Who uses it**: Shopify (monolith extraction), Amazon (from monolith to SOA), Airbnb (SOA migration by domain boundary).
+
+**Our stack**: Cloudflare Workers as the routing facade (path-based routing to Cloud Run services). Or within a modular monolith, use feature flags to switch between old and new module implementations.
+
+### Backend-for-Frontend (BFF)
+
+A dedicated backend service per frontend client type. Each BFF aggregates, transforms, and serves data in the shape its client needs.
+
+```
+Web App    --> Web BFF    --> Backend Services
+Mobile App --> Mobile BFF --> Backend Services
+```
+
+**Strengths**: Each client gets an API tailored to its needs (different payload sizes, different data requirements), frontend teams can iterate independently.
+**Trade-offs**: Code duplication across BFFs, more services to maintain.
+**Choose when**: Web and mobile clients have significantly different data needs, or you want to decouple frontend release cycles from backend.
+
+**Who uses it**: Netflix (per-device BFFs), SoundCloud (pioneered the pattern), Spotify.
+
+**Our stack**: For most products, a single API with response field selection (sparse fieldsets or GraphQL) is simpler than maintaining separate BFFs. Consider BFF only when the divergence between clients is substantial.
+
+### Cell-based Architecture
+
+Partition the system into independent, self-contained cells. Each cell serves a subset of users/tenants and contains a full copy of the service stack. A failure in one cell doesn't affect others.
+
+```
+┌─── Cell A (users 1-1000) ───┐  ┌─── Cell B (users 1001-2000) ──┐
+│  API → Service → DB          │  │  API → Service → DB            │
+└──────────────────────────────┘  └────────────────────────────────┘
+         Router / Cell Gateway
+```
+
+**Strengths**: Blast radius limited to one cell, scales horizontally by adding cells, each cell can be independently deployed and version-tested.
+**Trade-offs**: Data isolation means cross-cell queries are hard, cell routing adds complexity, operational overhead of managing many cells.
+**Choose when**: You need to limit blast radius (regulatory or high-availability requirements), or you're at a scale where a single deployment unit is a risk.
+
+**Who uses it**: AWS (all major services are cell-based internally), DoorDash, Slack.
+
+**Our stack**: Overkill for most single-product systems. Consider when your system grows to multi-tenant with strict isolation requirements or SLA commitments that demand blast radius containment.
 
 ---
 

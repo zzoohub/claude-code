@@ -114,6 +114,7 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 - **Response types** built via `from_domain()` classmethod — never expose domain models directly.
 - **API errors** mapped via `@app.exception_handler`. Never leak domain strings to users.
   `UnknownAuthorError` → log server-side, return generic message. Use RFC 9457 ProblemDetails.
+- **API docs** — serve OpenAPI spec from the `openapi.yaml` produced by z-rest-api-design. Don't rely on FastAPI's auto-generated docs from annotations. The spec file is the single source of truth.
 - **Middleware** — lives in inbound layer, invisible to domain.
   **CORS middleware before routers** (order matters).
 

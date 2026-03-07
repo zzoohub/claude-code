@@ -85,6 +85,10 @@ Before presenting the document, verify:
 - [ ] Document length matches complexity tier (Light: 5-8p, Standard: 10-15p, Complex: 15-25p)
 - [ ] Cross-cutting concerns (security, observability, error handling, testing) are addressed
 - [ ] At least 2 alternatives are considered for each major architectural decision
+- [ ] Each ADR classifies decision reversibility (one-way door vs two-way door)
+- [ ] SLA/SLO targets are defined for critical paths
+- [ ] Cost estimation is included with projections at launch and growth scales
+- [ ] DR/BCP strategy addresses RTO/RPO for critical services
 - [ ] Data flow is traceable end-to-end for the primary user journeys
 - [ ] The document is readable by a senior engineer in 15 minutes
 
@@ -143,7 +147,7 @@ Architecture decisions:
 - Monolith / Modular Monolith / Microservices / Serverless
 - Request-Response / Event-Driven / CQRS / Event Sourcing / Hybrid
 
-**Code Structure**: Always Hexagonal (Ports & Adapters). See `references/architecture-patterns.md` for rationale.
+**Code Structure**: Default Hexagonal (Ports & Adapters). See `references/architecture-patterns.md` for rationale and alternatives.
 
 **Stack**: Per the chosen backend + frontend combination from Step 0. See `references/stack-templates.md` for full details.
 
@@ -214,9 +218,32 @@ State the chosen platform and rationale. Address:
 - How many environments (dev, staging, production)?
 - What differs between them?
 
+### 5.4 Disaster Recovery & Business Continuity
+- **RTO** (Recovery Time Objective) and **RPO** (Recovery Point Objective) per critical service
+- DR pattern: cold / warm / hot standby — justify the choice against cost and RTO
+- Backup strategy: what is backed up, frequency, retention, restore testing cadence
+- Failover mechanism: automatic vs manual, detection method
+- Runbook: link to or outline the incident recovery procedure
+
+### 5.5 Cost Estimation
+Estimate infrastructure cost at two scales:
+- **Launch** (expected initial traffic): itemize compute, database, storage, third-party APIs, AI inference
+- **Growth target** (10x launch): which components scale linearly vs which hit pricing cliffs
+- Identify the top 3 cost drivers and the levers available to reduce each
+- Flag any components that cost more idle than active (always-on vs scale-to-zero)
+
 ---
 
 ## 6. Cross-Cutting Concerns
+
+### 6.0 SLA/SLO Definitions
+Define measurable targets for the system's critical paths. Without these, observability and alerting have no baseline.
+- **Availability SLO**: e.g., 99.9% uptime (8.7h downtime/year)
+- **Latency SLO**: e.g., p50 < 100ms, p99 < 500ms for primary API
+- **Error budget**: how much failure is tolerable before freezing deployments
+- **Business SLOs** (if applicable): e.g., successful payment rate > 99.5%
+
+For each SLO, state: the metric, the threshold, the measurement window, and the alerting condition.
 
 ### 6.1 Authentication & Authorization
 - Auth flow (OAuth2, JWT, session-based, etc.)
@@ -299,13 +326,19 @@ Numbered list of unresolved decisions. For each:
 For each significant decision, write a brief ADR:
 
 ### ADR-{N}: {Title}
-- **Status**: Proposed | Accepted | Deprecated
+- **Status**: Proposed | Accepted | Deprecated | Superseded by ADR-{M}
+- **Reversibility**: One-way door (irreversible, high analysis) | Two-way door (reversible, decide fast)
 - **Context**: What situation motivates this decision?
 - **Decision**: What did we decide?
-- **Alternatives Considered**:
-  - Alternative A: description -> rejected because...
-  - Alternative B: description -> rejected because...
+- **Alternatives Considered** (use evaluation matrix for one-way doors):
+  | Criterion (weighted) | Option A | Option B | Option C |
+  |---|---|---|---|
+  | e.g., Latency (30%) | +++ | ++ | + |
+  | e.g., Cost (25%) | + | ++ | +++ |
+  | e.g., DX (20%) | +++ | ++ | + |
+  For two-way doors, a brief prose comparison is sufficient.
 - **Consequences**: What are the positive and negative outcomes?
+- **Quality Attributes Affected**: Which system qualities change (performance, security, cost, maintainability, etc.)?
 
 Include ADRs for at minimum:
 1. Backend language and framework

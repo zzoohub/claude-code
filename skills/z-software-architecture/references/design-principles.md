@@ -63,6 +63,25 @@ A solo developer's productivity is the binding constraint. Architecture decision
 
 **Application**: Choose platforms that support local development parity (Neon branching for DB, Docker Compose for services). Prefer unified ecosystems (GCP services together) over best-of-breed when the DX improvement outweighs the capability gap. Minimize the number of dashboards, CLIs, and credentials a single developer must manage.
 
+### 8. Conway's Law — Architecture Mirrors Organization
+
+"Any organization that designs a system will produce a design whose structure is a copy of the organization's communication structure." For a solo developer, this is a superpower: you can design the architecture to match the ideal structure without organizational politics. But be aware of the inverse: if you later grow to a team, the architecture you built alone may need to evolve to match team boundaries.
+
+**Application**: When choosing between monolith and services, consider who will maintain each boundary. One developer maintaining three microservices is paying overhead for organizational isolation that doesn't exist. A modular monolith gives you the domain separation without the deployment overhead — extract to services when team structure demands it.
+
+*Reference*: Mel Conway's 1967 paper. The "Inverse Conway Maneuver" (ThoughtWorks) deliberately structures teams to produce the desired architecture.
+
+### 9. Evolutionary Architecture — Design for Change You Can't Predict
+
+Architecture decisions made today will face requirements that don't exist yet. Rather than trying to predict the future, build **fitness functions** — automated checks that verify architectural properties are maintained as the system evolves.
+
+**Application**:
+- **Fitness functions**: Automated tests that enforce architectural constraints (e.g., "no domain module imports infrastructure code", "API response time stays under 200ms", "no circular dependencies between modules"). Run these in CI.
+- **Sacrificial architecture**: Accept that your first architecture may need to be replaced. Design for replaceability — clean interfaces, isolated modules, data contracts — rather than permanence.
+- **Decision reversibility**: Classify every architecture decision as one-way door (irreversible: database choice, primary language) or two-way door (reversible: cache strategy, library choice). Invest analysis time proportionally.
+
+*Reference*: Neal Ford & Rebecca Parsons, "Building Evolutionary Architectures." Amazon's Type 1 / Type 2 decision framework.
+
 ---
 
 ## Lessons from Production Incidents
