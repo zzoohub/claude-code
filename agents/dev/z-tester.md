@@ -37,7 +37,7 @@ Framework defaults:
 
 | Stack | Test Runner | Key Libraries |
 |-------|------------|---------------|
-| Axum | `cargo nextest run` | `insta` (snapshot testing) |
+| Axum | `cargo nextest run` | — |
 | FastAPI | `pytest` | `httpx` (async client), `anyio` (async runtime) |
 | Next.js | `vitest` | `@vitejs/plugin-react`, `@testing-library/react` |
 | TanStack / SolidJS | `vitest` | `@solidjs/testing-library` |
@@ -246,7 +246,7 @@ async fn returns_user_by_id() {
 }
 ```
 
-- Use `insta::assert_json_snapshot!` for response body validation — snapshots catch regressions without brittle manual assertions
+- Use `assert_eq!` for response body validation — autonomous execution requires deterministic pass/fail without human review
 - Use `tower::ServiceExt::oneshot` for handler testing without starting a server
 - Test extractors independently when they contain custom validation logic
 - For database tests, use a transaction that rolls back after each test
