@@ -1,10 +1,10 @@
 ---
-name: z-interactive
+name: z-motion
 description: |
-  Build everything interactive — motion, gestures, sensory atmosphere, visual effects, and interactive charts — for web and React Native.
-  Use when: user says "make it interactive", "add animations", "more dynamic", "add wow factor", "add scroll effects", "creative landing page", "parallax", "reveal on scroll", "smooth scroll", "cursor effect", "page transition", "loading animation", "intro sequence", "make it feel alive", "more cinematic", "more immersive", "interactive portfolio", "gesture", "swipe interaction", "shared element transition", "spring animation", "hero animation", "micro-interactions", "kinetic typography", "text animation", "loading screen", "splash screen", "marquee", "ticker", "reveal effect", "motion design", "interactive chart", "animated chart", "data visualization", "bar chart", "line chart", "donut chart", "area chart", "d3", or any request to enhance the sensory experience of an existing UI on either web or mobile.
-  Do NOT use for: basic CSS hover states (use z-design-system motion tokens), building components from scratch, UX flow decisions (use z-ux-design), data/API work, or 3D/WebGL/WebGPU scenes (consider a dedicated 3D skill).
-  Workflow position: z-ux-design (flow) -> z-design-system (tokens) -> UI implementation -> **this skill** (apply interactive).
+  Motion design for web and React Native — animation, scroll effects, gestures, page transitions, visual atmosphere, and interactive charts.
+  Use when: user says "add animations", "more dynamic", "add wow factor", "add scroll effects", "creative landing page", "parallax", "reveal on scroll", "smooth scroll", "cursor effect", "page transition", "loading animation", "intro sequence", "make it feel alive", "more cinematic", "more immersive", "interactive portfolio", "gesture", "swipe interaction", "shared element transition", "spring animation", "hero animation", "micro-interactions", "kinetic typography", "text animation", "loading screen", "splash screen", "marquee", "ticker", "reveal effect", "motion design", "interactive chart", "animated chart", "data visualization", "bar chart", "line chart", "donut chart", "area chart", "d3", "make it interactive", or any request to add motion, animation, or sensory polish to an existing UI on either web or mobile.
+  Do NOT use for: basic CSS hover states (use z-design-system motion tokens), building components from scratch, UX flow decisions (use z-ux-design), data/API work, or 3D/WebGL/WebGPU scenes (consider z-web3d).
+  Workflow position: z-ux-design (flow) -> z-design-system (tokens) -> UI implementation -> **this skill** (motion polish).
 references:
   - references/motion-theory.md
   - references/web-conventions.md
