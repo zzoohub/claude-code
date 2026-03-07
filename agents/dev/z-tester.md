@@ -57,7 +57,7 @@ Figure out what actually changed — only test what's been modified, not the ent
 
 ```bash
 # Staged + unstaged changes
-git diff --name-only HEAD 2>/dev/null
+git diff --name-only HEAD
 
 # Include newly added untracked files
 git ls-files --others --exclude-standard

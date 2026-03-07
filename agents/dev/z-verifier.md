@@ -26,7 +26,11 @@ Run tests, execute E2E suites, verify in browser. Report what passed, what faile
 Before anything else, figure out **what was actually modified**:
 
 ```bash
-git diff --name-only HEAD   # or git diff --staged --name-only
+# Staged + unstaged changes
+git diff --name-only HEAD
+
+# Include newly added untracked files
+git ls-files --others --exclude-standard
 ```
 
 - Identify changed files, their types (component, API, config, style, logic, etc.)

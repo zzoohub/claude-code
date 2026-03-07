@@ -46,7 +46,7 @@ Only review what's been modified. Use caller-provided file list if available, ot
 
 ```bash
 # Staged + unstaged changes
-git diff --name-only HEAD 2>/dev/null
+git diff --name-only HEAD
 
 # Include newly added untracked files
 git ls-files --others --exclude-standard
