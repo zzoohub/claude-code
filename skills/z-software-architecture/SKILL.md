@@ -34,23 +34,29 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ### Step 0 — Intake & Clarification
 
-**Complete Step 0 before writing.** Resolve all 4 choices below using this procedure:
+**Complete Step 0 before writing.** There are 4 choices to resolve. A choice is RESOLVED only if the user explicitly stated it. Never auto-fill from defaults — if the user didn't say it, ask.
 
-1. Scan the user's prompt and mark each choice as RESOLVED or UNRESOLVED
-2. For RESOLVED choices, confirm them in one line (e.g., "Solo, Global로 진행합니다.")
-3. For UNRESOLVED choices, ask them **one at a time in order** — do not skip any UNRESOLVED choice
-4. After all 4 are resolved, proceed to Clarification
+Procedure:
+1. Scan the user's prompt. Check each box only if the user explicitly stated that choice.
+2. Confirm resolved choices in one line.
+3. Ask each unresolved choice one at a time, in order. Do not skip.
+4. After all 4 are resolved, proceed to 0-5.
 
-Use `AskUserQuestion` for each UNRESOLVED choice. If unavailable, present as a numbered list.
+Use `AskUserQuestion` for each unresolved choice. If unavailable, present as a numbered list.
 
-**The 4 choices:**
-
-| # | Choice | Resolved if user said | Options |
-|---|---|---|---|
-| 0-1 | Context | "solo", "team" | **Solo** — 3-6 page decision journal / **Team** — 10-25 page design doc |
-| 0-2 | Audience | "global", "korea", "korea-first" | **Global** — Neon, Google OAuth, Stripe, us-east / **Korea-first** — Supabase Seoul, Kakao/Naver OAuth, Toss Payments |
-| 0-3 | Backend | "rust", "axum", "hono", "fastapi" | **Rust/Axum + Cloud Run** (default) / **Hono + CF Workers** / **FastAPI + Cloud Run** |
-| 0-4 | Frontend | "tanstack", "solid", "nextjs", "react" | **TanStack Start + SolidJS** (default) / **Next.js (React)** |
+- [ ] **0-1. Context** — resolved if user said "solo" or "team"
+  - Solo — 3-6 page decision journal
+  - Team — 10-25 page design doc
+- [ ] **0-2. Audience** — resolved if user said "global" or "korea-first"
+  - Global — Neon (Virginia), Google OAuth, Stripe, us-east
+  - Korea-first — Supabase (Seoul), Kakao/Naver OAuth, Toss Payments
+- [ ] **0-3. Backend** — resolved if user said "rust", "axum", "hono", or "fastapi"
+  - Rust/Axum + GCP Cloud Run — mark (Recommended) based on requirements
+  - Hono + Cloudflare Workers
+  - FastAPI + GCP Cloud Run — only when Python-only libraries required
+- [ ] **0-4. Frontend** — resolved if user said "tanstack", "solid", "nextjs", or "react"
+  - TanStack Start + SolidJS — mark (Recommended) based on requirements
+  - Next.js (React)
 
 **0-5. Clarification** — infer from PRD. Only ask if genuinely missing.
 
