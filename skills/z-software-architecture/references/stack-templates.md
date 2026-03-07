@@ -113,7 +113,7 @@ Choose based on the target audience:
 | Audience | Default DB | Region | Rationale |
 |---|---|---|---|
 | **Global** | **Neon** | us-east-1 (Virginia, AWS) | Scale-to-zero, branching, serverless driver for edge runtimes |
-| **Korea-only** | **Supabase** | ap-northeast-2 (Seoul) | Neon has no Korean region — Supabase provides Seoul region with free tier, bundled Auth/Realtime/Storage |
+| **Korea-first** | **Supabase** | ap-northeast-2 (Seoul) | Neon has no Korean region — Supabase provides Seoul region with free tier, bundled Auth/Realtime/Storage |
 
 ### Neon (Serverless PostgreSQL) — global default
 
@@ -136,7 +136,7 @@ postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/db
 postgresql://user:pass@ep-xxx-pooler.us-east-1.aws.neon.tech/db
 ```
 
-### Supabase — Korea-only default
+### Supabase — Korea-first default
 
 - PostgreSQL on AWS ap-northeast-2 (Seoul) — lowest latency for Korean users
 - Bundled features save development time: Auth (Kakao/Naver OAuth built-in), Realtime subscriptions, Storage (S3-compatible)
@@ -241,7 +241,7 @@ Follow the **platform cohesion principle** -- prefer services from the same plat
 | Scenario | Compute | DB | Region |
 |---|---|---|---|
 | **Global** | Cloud Run (us-east4) or Workers (global) | Neon (us-east-1) | Virginia |
-| **Korea-only** | Cloud Run (asia-northeast3, Seoul) | Supabase (ap-northeast-2, Seoul) | Seoul |
+| **Korea-first** | Cloud Run (asia-northeast3, Seoul) | Supabase (ap-northeast-2, Seoul) | Seoul |
 | **Hono backend** | Cloudflare Workers | Neon or Supabase per audience | Workers are inherently global |
 
-**Co-location rule**: Keep compute and database in the same geographic region to minimize inter-service latency. For Korea-only apps, co-locate both in Seoul. This is more important than putting compute close to users -- use Cloudflare CDN/edge for that.
+**Co-location rule**: Keep compute and database in the same geographic region to minimize inter-service latency. For Korea-first apps, co-locate both in Seoul. This is more important than putting compute close to users -- use Cloudflare CDN/edge for that.

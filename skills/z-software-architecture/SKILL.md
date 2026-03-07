@@ -38,7 +38,11 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 Before writing anything, read the PRD thoroughly. Then:
 
-**1. Stack selection**: Ask two separate questions. Mark your recommendation with **(Recommended)** based on the PRD. The user can mix and match any backend with any frontend.
+**1. Target audience** — ask first, as it determines DB, auth, payments, and region:
+- **Global** → Neon (Virginia), Google OAuth, Stripe, us-east region
+- **Korea-first** → Supabase (Seoul), Kakao/Naver OAuth, Toss Payments, Seoul region
+
+**2. Stack selection** — ask two separate questions. Mark **(Recommended)** on both choices independently based on the PRD. Any backend + frontend combination is valid.
 
 **Backend** (pick one):
 - **Rust/Axum + GCP Cloud Run** — Performance/cost critical, type safety maximalist (default)
@@ -49,9 +53,9 @@ Before writing anything, read the PRD thoroughly. Then:
 - **TanStack Start + SolidJS** — Fine-grained reactivity, smaller bundles, no virtual DOM (default)
 - **Next.js (React)** — Rich React ecosystem needed (Radix, shadcn/ui, etc.), SEO-critical content-heavy product, or team has deep React expertise
 
-Mark **(Recommended)** on both the backend and the frontend choices independently based on the PRD. Backend defaults to Rust unless Python-only libs are needed or edge-first is the priority. Frontend defaults to TanStack Start unless the project needs the React ecosystem. See `references/stack-templates.md` for full details.
+Backend defaults to Rust unless Python-only libs are needed or edge-first is the priority. Frontend defaults to TanStack Start unless the project needs the React ecosystem. See `references/stack-templates.md` for full details.
 
-**2. Clarification**: Identify gaps by asking yourself (and the user if needed):
+**3. Clarification**: Identify gaps by asking yourself (and the user if needed):
 
 1. **Scale signals**: Expected users, requests/sec, data volume, growth trajectory?
 2. **Latency requirements**: Which user-facing paths are latency-critical?
