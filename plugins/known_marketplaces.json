@@ -32,7 +32,7 @@
       "repo": "anthropics/knowledge-work-plugins"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/knowledge-work-plugins",
-    "lastUpdated": "2026-03-07T12:00:37.005Z",
+    "lastUpdated": "2026-03-07T13:50:59.064Z",
     "autoUpdate": true
   },
   "pulumi-agent-skills": {
@@ -50,7 +50,7 @@
       "repo": "neondatabase-labs/ai-rules"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/neon",
-    "lastUpdated": "2026-03-07T10:23:05.442Z",
+    "lastUpdated": "2026-03-07T12:42:00.466Z",
     "autoUpdate": true
   }
 }
