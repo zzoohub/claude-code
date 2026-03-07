@@ -38,6 +38,8 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 **You MUST complete Step 0 before writing any part of the design document.** Step 0 is a multi-turn conversation — ask one question, wait for the answer, then ask the next. Do NOT batch all questions into a single message. Do NOT proceed to Step 1 until the user has answered all required questions.
 
+**Tool note**: Each step below uses `AskUserQuestion`. If that tool is unavailable, present the choices as a numbered list in your message and ask the user to pick.
+
 **Step 0-1. Target audience**
 → Call `AskUserQuestion` with these choices:
 - **Global** → Neon (Virginia), Google OAuth, Stripe, us-east region
@@ -283,6 +285,21 @@ For each SLO, state: the metric, the threshold, the measurement window, and the 
 - Identified bottlenecks and mitigation
 - Scaling triggers and limits
 
+### 6.7 Accessibility Architecture
+- **Compliance target**: WCAG 2.1 AA (default) or AAA — state the target and rationale
+- **Semantic HTML & ARIA**: Component-level strategy for screen reader support
+- **Keyboard navigation**: Focus management, skip links, focus trapping in modals
+- **Automated testing**: Axe-core or similar in CI pipeline to catch regressions
+- **Design system integration**: Color contrast, focus indicators, motion preferences (`prefers-reduced-motion`)
+
+### 6.8 Data Governance (if applicable)
+Include when the system handles PII, operates in regulated industries, or includes AI/ML features:
+- **Data classification**: What data is collected, sensitivity levels (public, internal, confidential, restricted)
+- **Data lineage**: How data flows from ingestion to storage to consumption — who can access what at each stage
+- **Retention & deletion**: Per data category — how long is it kept, how is it purged, right-to-erasure compliance
+- **Consent management**: How user consent is captured, stored, and enforced across the system
+- **AI data governance** (if applicable): Training data provenance, model input/output logging policy, PII masking before LLM calls
+
 ---
 
 ## 7. Integration Points
@@ -376,7 +393,9 @@ The following reference files contain detailed decision frameworks. Read the rel
 
 **Read `references/design-principles.md`** during the self-review phase — it contains core architecture principles, production incident patterns, security architecture, and observability patterns to verify your design against.
 
-**Read `references/ai-architecture.md`** if the PRD includes AI-powered features (LLM generation, RAG, agents, semantic search, copilot, chat) — it covers LLM integration tiers, RAG architecture, agent patterns, streaming, vector storage, cost optimization, guardrails, and observability. **Important**: embedding model rankings and LLM pricing shift frequently. When making AI architecture decisions, verify current pricing and model capabilities against provider docs or web search before committing.
+**Read `references/ai-architecture.md`** if the PRD includes AI-powered features (LLM generation, RAG, semantic search, copilot, chat) — it covers LLM integration tiers, RAG architecture, streaming, vector storage, cost optimization, guardrails, and observability. **Important**: embedding model rankings and LLM pricing shift frequently. When making AI architecture decisions, verify current pricing and model capabilities against provider docs or web search before committing.
+
+**Read `references/ai-agents.md`** if the system includes autonomous agents, multi-step tool orchestration, or human-in-the-loop workflows — it covers agent patterns (ReAct, Plan-and-Execute, Multi-Agent), Rust-first implementation, state management & checkpointing, and MCP tool integration.
 
 ---
 
@@ -386,7 +405,7 @@ Not every project deserves the same depth. Calibrate the document to the system'
 
 | Complexity | Signals | Document Depth |
 |---|---|---|
-| **Light** | Single service, CRUD-dominant, no async, no external integrations beyond DB | 5-8 pages. Sections 8 (Migration) and 7 (Integration) can be omitted. Keep ADRs to 2-3. Combine sections where there's little to say. |
+| **Light** | Single service, CRUD-dominant, no async, no external integrations beyond DB | 5-8 pages. Omit sections 7 (Integration), 8 (Migration), 11 (AI/LLM). Merge 4.2+4.3 into one "Storage" section. Omit 6.3 (Resilience), 6.7 (Accessibility), 6.8 (Data Governance) unless specifically relevant. Keep ADRs to 2-3. Combine sections where there's little to say. |
 | **Standard** | Multiple components, some async processing, a few external integrations, auth required | 10-15 pages. Full template. This is the default. |
 | **Complex** | Distributed services, event-driven, real-time features, multiple data stores, compliance requirements, AI/LLM integration | 15-25 pages. Full template with deeper treatment. Consider separate D2 diagrams for each major subsystem. Data flow diagrams for all critical paths, not just top 2-3. |
 
@@ -397,7 +416,7 @@ Not every project deserves the same depth. Calibrate the document to the system'
 - **Direct and opinionated**. State what you chose and why. Don't hedge excessively.
 - **Trade-offs over descriptions**. Every choice should discuss what was gained and what was sacrificed.
 - **Concrete over abstract**. "Redis with 15-minute TTL" beats "a caching layer."
-- **Diagrams with D2**. Generate architecture diagrams using D2 (invoke the `d2:diagram` skill). If unavailable, use Mermaid or ASCII diagrams. Produce a System Context diagram (C4 Level 1) and Container diagram (C4 Level 2) at minimum. Use D2 classes for consistent styling -- `person` for actors, `cylinder` for databases, `queue` for message brokers, dashed borders for system boundaries.
+- **Diagrams with D2**. Use D2 classes for consistent styling -- `person` for actors, `cylinder` for databases, `queue` for message brokers, dashed borders for system boundaries. Minimum: System Context (C4 L1) + Container (C4 L2) diagrams.
 - **No filler**. If you catch yourself writing "it is important to note that" -- delete it.
 - **Reference real-world precedent** when helpful: "Netflix uses a similar circuit-breaker pattern for their API gateway" adds credibility and context.
 
