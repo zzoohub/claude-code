@@ -138,14 +138,16 @@ If smoke fails, stop and report immediately.
 
 #### How to run
 
-Detect the E2E command from project config:
 ```bash
-# Check justfile first, then package.json scripts
-just --list 2>/dev/null | grep -i e2e
-node -e "const p=require('./package.json'); const s=p.scripts||{}; console.log(Object.keys(s).filter(k=>k.includes('e2e')).map(k=>k+': '+s[k]).join('\n'))"
+# Smoke tier
+just e2e-smoke
+
+# Full run (or targeted)
+just e2e
+just e2e --grep "checkout"
 ```
 
-Run with `--project=chromium` in headless mode. On failure, capture screenshots/traces. Distinguish: real failure vs flaky test vs expected change from the code update.
+On failure, check `just e2e-report` for traces and screenshots. Distinguish: real failure vs flaky test vs expected change from the code update.
 
 ---
 
