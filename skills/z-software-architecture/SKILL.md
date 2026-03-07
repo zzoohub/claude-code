@@ -407,4 +407,5 @@ If no Phase PRD exists, omit phase tags entirely.
 
 ## Output
 
-Save to `docs/design-doc.md`.
+Save to `docs/design-doc.md` (English) and `docs/design-doc-ko.md` (Korean).
+Korean version: natural Korean, not word-for-word translation. Keep technical terms in English. Same structure, formatting, and diagrams.

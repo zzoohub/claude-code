@@ -165,7 +165,8 @@ Grounded in evidence, names a specific persona, quantifies the pain.
 
 ## Output
 
-Save to `docs/product-brief.md`.
+Save to `docs/product-brief.md` (English) and `docs/product-brief-ko.md` (Korean).
+Korean version: natural Korean, not word-for-word translation. Keep technical terms in English. Same structure and formatting.
 
 - Default: Markdown
 - If the user has a company template: follow their structure, supplement from this framework

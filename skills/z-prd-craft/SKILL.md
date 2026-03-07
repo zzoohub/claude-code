@@ -255,21 +255,20 @@ Link to supporting materials (don't inline them):
 
 ## Output Format
 
-**Always produce two separate documents:**
+**Always produce English + Korean (`-ko` suffix) versions of each document:**
 
-1. **`docs/prd.md`** — Full PRD covering the complete product vision (Sections 1-11)
-2. **`docs/prd-phase-1.md`** — Phase 1 PRD scoping the first release
+1. `docs/prd.md` + `docs/prd-ko.md`
+2. `docs/prd-phase-1.md` + `docs/prd-phase-1-ko.md`
 
-**Naming conventions:**
-- Phase scoping: `docs/prd-phase-{n}.md` (e.g., `prd-phase-1.md`, `prd-phase-2.md`)
-- Feature PRDs: `docs/prd-{feature-slug}.md` (e.g., `prd-auth.md`, `prd-billing.md`)
+Korean versions: natural Korean, not word-for-word translation. Keep technical terms in English. Same structure and formatting.
+Apply the same `-ko` suffix pattern to phase/feature PRDs (e.g., `prd-phase-2-ko.md`, `prd-auth-ko.md`).
 
-Write both in Markdown. Full PRD first, then derive the Phase PRD from it.
+Write all in Markdown. Full PRD first, then derive the Phase PRD from it.
 Read `references/prd-phase.md` for the Phase PRD template and scoping principles.
 
 **Formatting rules:**
 - Tables for structured data (metrics, requirements, timelines)
-- Plain English; avoid jargon unless the audience is technical
+- Avoid jargon unless the audience is technical
 
 ## Anti-Patterns
 
