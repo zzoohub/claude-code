@@ -32,44 +32,24 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ## Process
 
-### Step 0 — Intake & Clarification
+### Step 0 — Intake
 
-**Complete Step 0 before writing.**
+Ask all 4 choices below, one at a time. Do not infer or auto-fill.
 
----
+- [ ] **Context**: Solo (3-6p decision journal) / Team (10-25p design doc)
+- [ ] **Audience**: Global (Neon, Google OAuth, Stripe) / Korea-first (Supabase Seoul, Kakao/Naver, Toss)
+- [ ] **Backend**: Rust/Axum + Cloud Run / Hono + CF Workers / FastAPI + Cloud Run
+- [ ] **Frontend**: TanStack Start + SolidJS / Next.js (React)
 
-**INTAKE CHECKLIST — 4 choices to resolve**
+Mark **(Recommended)** based on PRD when presenting each choice.
 
-A choice is RESOLVED **only** if the user wrote the keyword in their design-doc request (e.g., "design doc 만들어줘, solo, global, axum, tanstack"). Do NOT resolve from PRD content, CLAUDE.md, MEMORY.md, or any other context. "PRD mentions Rust" does NOT mean the user chose Rust/Axum.
-
-For each unresolved choice: **ask the user**. One at a time, in order. Do not skip.
-
-- [ ] **0-1. Context** — keyword: "solo" / "team"
-  - Solo — 3-6 page decision journal
-  - Team — 10-25 page design doc
-- [ ] **0-2. Audience** — keyword: "global" / "korea-first"
-  - Global — Neon (Virginia), Google OAuth, Stripe, us-east
-  - Korea-first — Supabase (Seoul), Kakao/Naver OAuth, Toss Payments
-- [ ] **0-3. Backend** — keyword: "rust", "axum", "hono", "fastapi"
-  - Rust/Axum + GCP Cloud Run
-  - Hono + Cloudflare Workers
-  - FastAPI + GCP Cloud Run — only when Python-only libraries required
-- [ ] **0-4. Frontend** — keyword: "tanstack", "solid", "nextjs", "react"
-  - TanStack Start + SolidJS
-  - Next.js (React)
-
-Use `AskUserQuestion` for each unresolved choice. If unavailable, present as a numbered list. When asking, mark **(Recommended)** based on the PRD requirements to help the user decide.
-
----
-
-**0-5. Clarification** — infer from PRD. Only ask if genuinely missing.
-
-If Solo: expected scale (DAU range), real-time needs, regulatory requirements.
-If Team: scale signals, latency requirements, consistency model, real-time needs, multi-tenancy, regulatory.
+After all 4 resolved, check if anything critical is missing from the PRD:
+- Solo: expected scale, real-time needs, regulatory requirements
+- Team: scale signals, latency, consistency model, real-time, multi-tenancy, regulatory
 
 ### Step 1 — Write the Design Document
 
-Based on the project context from Step 0-1:
+Based on the project context from Step 0:
 
 - **Solo** → Read `references/template-solo.md` and follow that template
 - **Team** → Read `references/template-team.md` and follow that template
