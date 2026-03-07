@@ -34,7 +34,7 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ### Step 0 — Intake
 
-Ask all 4 choices below, one at a time. Do not infer or auto-fill.
+Ask all 4 choices below, one at a time, using `AskUserQuestion`. Do not infer or auto-fill.
 
 - [ ] **Context**: Solo (3-6p decision journal) / Team (10-25p design doc)
 - [ ] **Audience**: Global (Neon, Google OAuth, Stripe) / Korea-first (Supabase Seoul, Kakao/Naver, Toss)
