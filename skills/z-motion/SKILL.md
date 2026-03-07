@@ -14,6 +14,8 @@ references:
 
 # Interactive Motion
 
+**TDD**: Write all tests first as a spec, then implement, then verify all pass. (Tests → Impl → Green)
+
 ## Philosophy
 
 Motion is a design material, not decoration. Every animation must serve one of three purposes: **guide attention**, **communicate relationships**, or **create emotional response**. If it doesn't do one of these, remove it.

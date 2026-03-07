@@ -402,6 +402,8 @@ function UserDetail() {
 
 ## Testing
 
+**TDD**: Write all tests first as a spec, then implement, then verify all pass. (Tests → Impl → Green)
+
 ```tsx
 import { render, screen } from "@solidjs/testing-library"
 import userEvent from "@testing-library/user-event"

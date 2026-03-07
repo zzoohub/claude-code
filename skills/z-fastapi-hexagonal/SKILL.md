@@ -361,6 +361,7 @@ Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 - [ ] `from_engine()` on adapters for test injection
 
 ### Testing
+**TDD**: Write all tests first as a spec, then implement, then verify all pass. (Tests → Impl → Green)
 - [ ] `conftest.py` with fixtures: `test_config`, `db_engine`, `client`
 - [ ] `asyncio_mode = "auto"` in pytest config
 → Test mocks (stub, saboteur, spy, noop) and test app helper: `references/examples-bootstrap.md`

@@ -25,6 +25,8 @@ references:
 
 # Web 3D & XR Development
 
+**TDD**: Write all tests first as a spec, then implement, then verify all pass. (Tests → Impl → Green)
+
 ## Tech Stack
 
 | Layer | Technology |

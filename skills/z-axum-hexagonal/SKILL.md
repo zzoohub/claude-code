@@ -314,6 +314,7 @@ impl FromRef<AppState> for Arc<dyn AuthorService> { ... }
 - [ ] Health check endpoint (readiness probe checks DB)
 
 ### Testing
+**TDD**: Write all tests first as a spec, then implement, then verify all pass. (Tests → Impl → Green)
 → Test mocks (stub, saboteur, spy, noop) and test app helper: `references/examples-bootstrap.md`
 
 ### Setup
