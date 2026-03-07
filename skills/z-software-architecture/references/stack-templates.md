@@ -106,22 +106,46 @@ If the user doesn't specify, use **Rust/Axum + TanStack Start** as the default c
 
 ---
 
-## Shared: Database (All Templates)
+## Shared: Database
 
-**Neon (Serverless PostgreSQL)** -- used across all templates.
+Choose based on the target audience:
 
-| Aspect | Detail |
-|---|---|
-| Default region | us-east-1 (Virginia, AWS) for global; ap-northeast-2 (Seoul) for Korea-only |
-| Why Neon | Scale-to-zero pricing, branching for dev/staging, full PostgreSQL (pgvector, extensions), serverless driver works from Workers |
+| Audience | Default DB | Region | Rationale |
+|---|---|---|---|
+| **Global** | **Neon** | us-east-1 (Virginia, AWS) | Scale-to-zero, branching, serverless driver for edge runtimes |
+| **Korea-only** | **Supabase** | ap-northeast-2 (Seoul) | Neon has no Korean region — Supabase provides Seoul region with free tier, bundled Auth/Realtime/Storage |
 
-**Cross-cloud latency note**: Neon runs on AWS (us-east-1) while Cloud Run runs on GCP (us-east4). Both are in Virginia — inter-cloud latency within the same geographic area is typically 1-3ms, comparable to cross-AZ latency. This is negligible for most workloads. Use the Neon serverless driver for lowest overhead.
+### Neon (Serverless PostgreSQL) — global default
 
-**Neon serverless driver** (`@neondatabase/serverless`): Works over HTTP/WebSocket, specifically designed for edge runtimes (Cloudflare Workers, Vercel Edge). No TCP connection needed.
+- Scale-to-zero pricing, branching for dev/staging, full PostgreSQL (pgvector, extensions)
+- **Cross-cloud latency note**: Neon runs on AWS (us-east-1) while Cloud Run runs on GCP (us-east4). Both are in Virginia — inter-cloud latency within the same geographic area is typically 1-3ms, negligible for most workloads.
 
-**When to consider alternatives**:
-- **Supabase** (ap-northeast-2): When Supabase's bundled features (Auth, Realtime, Storage) would save significant development time AND the project targets Korean users. Note: free tier limited to 2 active projects.
-- **GCP Cloud SQL**: When you need full Postgres control, pg_cron, custom extensions, or vertical scaling beyond Neon's limits.
+**Serverless connection strategy** — serverless environments can exhaust DB connection limits. Choose the right approach per runtime:
+
+| Runtime | Connection Method | Why |
+|---|---|---|
+| **Cloudflare Workers** | Neon serverless driver (HTTP) | V8 runtime has no TCP sockets — HTTP is the only option |
+| **Cloud Run (Rust/SQLx, Python/psycopg2)** | Neon pooler endpoint (`-pooler` URL) | Native Postgres drivers require TCP — use PgBouncer pooler. Keep pool small per instance (`max_connections=5`). |
+| **Next.js on Vercel** | Neon serverless driver (HTTP) | Edge Runtime has no TCP; Node.js Runtime also benefits from HTTP — serverless functions have short lifespans making persistent connections wasteful |
+
+Neon pooler endpoint example:
+```
+# Direct (connection exhaustion risk)
+postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/db
+# Pooler (recommended for TCP clients)
+postgresql://user:pass@ep-xxx-pooler.us-east-1.aws.neon.tech/db
+```
+
+### Supabase — Korea-only default
+
+- PostgreSQL on AWS ap-northeast-2 (Seoul) — lowest latency for Korean users
+- Bundled features save development time: Auth (Kakao/Naver OAuth built-in), Realtime subscriptions, Storage (S3-compatible)
+- Free tier: 2 active projects, 500MB DB, 1GB storage
+- Supabase client SDK works from both server and edge runtimes
+- Trade-off: no branching (use migrations instead), less granular scale-to-zero than Neon
+
+### When to consider GCP Cloud SQL
+- Need full Postgres control, pg_cron, custom extensions, or vertical scaling beyond Neon/Supabase limits
 
 ---
 
@@ -214,10 +238,10 @@ Follow the **platform cohesion principle** -- prefer services from the same plat
 
 ## Shared: Region Strategy
 
-| Scenario | Primary Region | Rationale |
-|---|---|---|
-| Global service | us-east (Virginia) | Central to NA/EU, major cloud provider hubs |
-| Korea-only service | ap-northeast-2 (Seoul) | Lowest latency for Korean users |
-| TypeScript template | Cloudflare global | Workers are inherently global |
+| Scenario | Compute | DB | Region |
+|---|---|---|---|
+| **Global** | Cloud Run (us-east4) or Workers (global) | Neon (us-east-1) | Virginia |
+| **Korea-only** | Cloud Run (asia-northeast3, Seoul) | Supabase (ap-northeast-2, Seoul) | Seoul |
+| **Hono backend** | Cloudflare Workers | Neon or Supabase per audience | Workers are inherently global |
 
-**Co-location rule**: Keep compute and database in the same region to minimize inter-service latency. This is more important than putting compute close to users -- use Cloudflare CDN/edge for that.
+**Co-location rule**: Keep compute and database in the same geographic region to minimize inter-service latency. For Korea-only apps, co-locate both in Seoul. This is more important than putting compute close to users -- use Cloudflare CDN/edge for that.
