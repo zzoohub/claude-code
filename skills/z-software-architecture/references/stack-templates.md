@@ -57,6 +57,7 @@ If the user doesn't specify, use **Rust/Axum + TanStack Start** as the default c
 - Lightweight, Web Standards API compatible
 - Predictable pricing, generous free tier
 - Perfect for API-heavy services and edge computing
+- HonoRPC for end-to-end type-safe API calls between frontend and backend (built-in, no extra dependency)
 
 **Compute**: Cloudflare Workers (global edge)
 - No region selection needed -- deployed globally by default
@@ -100,6 +101,7 @@ If the user doesn't specify, use **Rust/Axum + TanStack Start** as the default c
 - Mature SSR/SSG/ISR with excellent SEO support
 - Rich React ecosystem: Radix, shadcn/ui, React Three Fiber, Framer Motion, etc.
 - App Router with Server Components and Server Actions
+- tRPC for end-to-end type-safe API layer when using Next.js as fullstack (API Routes)
 - Deploy to Vercel (default) or Cloudflare via OpenNext
 
 **Choose when**: The project depends heavily on React ecosystem libraries with no SolidJS equivalents, the team has deep React expertise, or the product is SEO-critical and content-heavy.
