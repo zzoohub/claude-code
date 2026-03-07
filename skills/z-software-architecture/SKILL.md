@@ -36,23 +36,29 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ### Step 0 — Intake & Clarification
 
-Before writing anything, read the PRD thoroughly. Then walk through the following steps **in order**, one `AskUserQuestion` call per step. Do NOT skip ahead or decide on behalf of the user.
+**You MUST complete Step 0 before writing any part of the design document.** Step 0 is a multi-turn conversation — ask one question, wait for the answer, then ask the next. Do NOT batch all questions into a single message. Do NOT proceed to Step 1 until the user has answered all required questions.
 
 **Step 0-1. Target audience**
-→ `AskUserQuestion`: "Which market does this target?"
+→ Call `AskUserQuestion` with these choices:
 - **Global** → Neon (Virginia), Google OAuth, Stripe, us-east region
 - **Korea-first** → Supabase (Seoul), Kakao/Naver OAuth, Toss Payments, Seoul region
 
+STOP. Wait for the user's answer. Then proceed to Step 0-2.
+
 **Step 0-2. Backend**
-→ `AskUserQuestion`: Present the options below. Mark **(Recommended)** based on the PRD.
+→ Call `AskUserQuestion` with these choices. Mark **(Recommended)** based on the requirements.
 - **Rust/Axum + GCP Cloud Run** — Performance/cost critical, type safety maximalist (default)
 - **Hono + Cloudflare Workers** — Edge-first, fullstack TypeScript, global distribution
 - **FastAPI + GCP Cloud Run** — Only when Python-only libraries are required (PyTorch, transformers, etc.)
 
+STOP. Wait for the user's answer. Then proceed to Step 0-3.
+
 **Step 0-3. Frontend**
-→ `AskUserQuestion`: Present the options below. Mark **(Recommended)** based on the PRD.
+→ Call `AskUserQuestion` with these choices. Mark **(Recommended)** based on the requirements.
 - **TanStack Start + SolidJS** — Fine-grained reactivity, smaller bundles, no virtual DOM (default)
 - **Next.js (React)** — Rich React ecosystem needed (Radix, shadcn/ui, etc.), SEO-critical content-heavy product, or team has deep React expertise
+
+STOP. Wait for the user's answer. Then proceed to Step 0-4.
 
 **Step 0-4. Clarification**
 → Infer from the requirements. Only ask the user if critical information is genuinely missing. Check for:
@@ -64,7 +70,7 @@ Before writing anything, read the PRD thoroughly. Then walk through the followin
 6. Regulatory (GDPR, CCPA, PCI-DSS, SOC2)
 7. Budget posture (solopreneur vs enterprise)
 
-If the PRD covers all of these, skip straight to Step 1.
+If the requirements cover all of these, proceed to Step 1. Otherwise ask the user the missing items first.
 
 ### Step 1 — Write the Design Document
 
