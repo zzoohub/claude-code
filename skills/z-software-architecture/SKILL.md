@@ -36,36 +36,35 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ### Step 0 — Intake & Clarification
 
-Before writing anything, read the PRD thoroughly. Then:
+Before writing anything, read the PRD thoroughly. Then walk through the following steps **in order**, one `AskUserQuestion` call per step. Do NOT skip ahead or decide on behalf of the user.
 
-**1. Target audience** — ask first, as it determines DB, auth, payments, and region:
+**Step 0-1. Target audience**
+→ `AskUserQuestion`: "Which market does this target?"
 - **Global** → Neon (Virginia), Google OAuth, Stripe, us-east region
 - **Korea-first** → Supabase (Seoul), Kakao/Naver OAuth, Toss Payments, Seoul region
 
-**2. Stack selection** — ask two separate questions. Mark **(Recommended)** on both choices independently based on the PRD. Any backend + frontend combination is valid.
-
-**Backend** (pick one):
+**Step 0-2. Backend**
+→ `AskUserQuestion`: Present the options below. Mark **(Recommended)** based on the PRD.
 - **Rust/Axum + GCP Cloud Run** — Performance/cost critical, type safety maximalist (default)
 - **Hono + Cloudflare Workers** — Edge-first, fullstack TypeScript, global distribution
 - **FastAPI + GCP Cloud Run** — Only when Python-only libraries are required (PyTorch, transformers, etc.)
 
-**Frontend** (pick one):
+**Step 0-3. Frontend**
+→ `AskUserQuestion`: Present the options below. Mark **(Recommended)** based on the PRD.
 - **TanStack Start + SolidJS** — Fine-grained reactivity, smaller bundles, no virtual DOM (default)
 - **Next.js (React)** — Rich React ecosystem needed (Radix, shadcn/ui, etc.), SEO-critical content-heavy product, or team has deep React expertise
 
-Backend defaults to Rust unless Python-only libs are needed or edge-first is the priority. Frontend defaults to TanStack Start unless the project needs the React ecosystem. See `references/stack-templates.md` for full details.
+**Step 0-4. Clarification**
+→ Read the PRD and fill in as much as possible yourself. Only ask the user if critical information is genuinely missing from the PRD. Check for:
+1. Scale signals (expected users, requests/sec, data volume)
+2. Latency requirements (which paths are latency-critical)
+3. Consistency model (eventual vs strong, where)
+4. Real-time needs (WebSocket, SSE, polling)
+5. Multi-tenancy (single vs multi, data isolation)
+6. Regulatory (GDPR, CCPA, PCI-DSS, SOC2)
+7. Budget posture (solopreneur vs enterprise)
 
-**3. Clarification**: Identify gaps by asking yourself (and the user if needed):
-
-1. **Scale signals**: Expected users, requests/sec, data volume, growth trajectory?
-2. **Latency requirements**: Which user-facing paths are latency-critical?
-3. **Consistency model**: Is eventual consistency acceptable? Where is strong consistency required?
-4. **Offline / real-time**: Does the product need real-time features (WebSocket, SSE, polling)?
-5. **Multi-tenancy**: Single-tenant or multi-tenant? Data isolation requirements?
-6. **Regulatory**: GDPR, CCPA, PCI-DSS, SOC2, or other compliance needs?
-7. **Budget posture**: Solopreneur cost-sensitive vs. enterprise budget?
-
-If the PRD answers these clearly, proceed. If not, ask the user **only the critical missing questions** — do not block on nice-to-haves.
+If the PRD covers all of these, skip straight to Step 1.
 
 ### Step 1 — Write the Design Document
 
