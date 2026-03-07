@@ -281,7 +281,7 @@ AI inference costs can dominate cloud spend. Address this architecturally, not a
 
 **Semantic caching**: Use vector similarity to identify queries with the same meaning and serve cached responses. Redis with vector search is the simplest option. Cache hit rates of 60-85% are typical for support/docs workloads -- cache hits return in ~50ms vs. 1-2s for inference.
 
-**Our stack**: Start with prompt optimization + model cascading (biggest ROI). Add semantic caching via Redis (Memorystore) for workloads with repetitive queries. Use batch APIs for background processing (content generation, data extraction).
+**Our stack**: Start with prompt optimization + model cascading (biggest ROI). Add semantic caching via Redis (Upstash) for workloads with repetitive queries — HTTP for Workers/Edge, TCP for Cloud Run, scale-to-zero. Use batch APIs for background processing (content generation, data extraction).
 
 ### Guardrails & Safety
 

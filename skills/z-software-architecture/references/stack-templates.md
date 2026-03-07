@@ -192,8 +192,8 @@ Choose based on the product's audience:
 | Service | Choice | Rationale |
 |---|---|---|
 | Object Storage | Cloudflare R2 | S3-compatible, no egress fees. Use presigned URLs for direct client uploads. |
-| Email (Inbound) | Cloudflare Email Routing | Free, simple, integrates with Workers for processing. |
-| Email (Outbound) | Resend | Developer-friendly API, React Email for templates, good deliverability. |
+| Email (Outbound) | Resend | Developer-friendly API, React Email for templates, good deliverability. 100 emails/day free tier. |
+| Email (Inbound) | Cloudflare Email Routing | Only if the app needs to receive/process emails. Free, integrates with Workers. Most apps don't need this. |
 | Error Tracking | Sentry | Industry standard. Source maps, breadcrumbs, performance monitoring. |
 | Infrastructure as Code | Pulumi | TypeScript-native IaC. Avoids HCL context-switch. |
 | Payments (Global) | Stripe | Gold standard for global payments. Extensive API, webhook reliability. |
@@ -211,7 +211,7 @@ Choose based on the product's audience:
 | **Hono** (Workers) | Cloudflare Queues | Native Workers integration. For heavier needs, consider GCP Pub/Sub. |
 | **FastAPI** (Cloud Run) | GCP Pub/Sub | Same as Rust. |
 
-**Redis (Memorystore)**: Add when you need sub-ms caching, session storage, or rate limiting. Not a replacement for durable messaging.
+**Redis (Upstash)**: Add when you need caching, session storage, or rate limiting. Supports both HTTP and TCP — HTTP for Workers/Edge (no TCP sockets), TCP for Cloud Run (lower latency). Scale-to-zero pricing aligns with solopreneur cost model. Upstash also provides rate limiting SDK (`@upstash/ratelimit`) out of the box. Upgrade path: GCP Memorystore when you need sub-ms latency at high throughput and are on Cloud Run only.
 
 **Kafka**: Not needed until millions of events/sec with complex stream processing. Upgrade path via GCP Managed Kafka.
 
@@ -226,7 +226,7 @@ Follow the **platform cohesion principle** -- prefer services from the same plat
 
 | Backend | Primary Platform | Prefer Services From |
 |---|---|---|
-| **Rust/Axum** | GCP | Cloud Scheduler, Cloud Tasks, Memorystore, Pub/Sub, Cloud Logging/Monitoring |
+| **Rust/Axum** | GCP | Cloud Scheduler, Cloud Tasks, Pub/Sub, Cloud Logging/Monitoring |
 | **Hono** | Cloudflare | Cron Triggers, Queues, KV, Durable Objects, Logpush |
 | **FastAPI** | GCP | Same as Rust/Axum |
 
