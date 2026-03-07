@@ -1,8 +1,8 @@
 ---
 name: z-interactive
 description: |
-  Build everything interactive — motion, gestures, sensory atmosphere, and visual effects — for web and React Native.
-  Use when: user says "make it interactive", "add animations", "more dynamic", "add wow factor", "add scroll effects", "creative landing page", "parallax", "reveal on scroll", "smooth scroll", "cursor effect", "page transition", "loading animation", "intro sequence", "make it feel alive", "more cinematic", "more immersive", "interactive portfolio", "gesture", "swipe interaction", "shared element transition", "spring animation", "hero animation", "micro-interactions", "kinetic typography", "text animation", "loading screen", "splash screen", "marquee", "ticker", "reveal effect", "motion design", or any request to enhance the sensory experience of an existing UI on either web or mobile.
+  Build everything interactive — motion, gestures, sensory atmosphere, visual effects, and interactive charts — for web and React Native.
+  Use when: user says "make it interactive", "add animations", "more dynamic", "add wow factor", "add scroll effects", "creative landing page", "parallax", "reveal on scroll", "smooth scroll", "cursor effect", "page transition", "loading animation", "intro sequence", "make it feel alive", "more cinematic", "more immersive", "interactive portfolio", "gesture", "swipe interaction", "shared element transition", "spring animation", "hero animation", "micro-interactions", "kinetic typography", "text animation", "loading screen", "splash screen", "marquee", "ticker", "reveal effect", "motion design", "interactive chart", "animated chart", "data visualization", "bar chart", "line chart", "donut chart", "area chart", "d3", or any request to enhance the sensory experience of an existing UI on either web or mobile.
   Do NOT use for: basic CSS hover states (use z-design-system motion tokens), building components from scratch, UX flow decisions (use z-ux-design), data/API work, or 3D/WebGL/WebGPU scenes (consider a dedicated 3D skill).
   Workflow position: z-ux-design (flow) -> z-design-system (tokens) -> UI implementation -> **this skill** (apply interactive).
 references:
@@ -12,6 +12,7 @@ references:
   - references/web/cursor-and-hover.md
   - references/web/css-native-motion.md
   - references/web/page-transitions.md
+  - references/web/d3-bindable-charts.md
   - references/web/performance.md
   - references/react/gsap-patterns.md
   - references/react/scroll-patterns.md
@@ -100,6 +101,7 @@ What platform?
 | Library | Role | Size | Thread |
 |---------|------|------|--------|
 | **GSAP** + ScrollTrigger | All DOM animation: timelines, scroll choreography, stagger, text split, cursor | ~35KB | Main (JS) |
+| **D3.js** | Interactive charts/graphs: scales, axes, data binding, transitions | ~30KB (tree-shaken) | Main (JS) |
 | **Lenis** | Smooth scroll feel | ~8KB | Main (JS) |
 | **CSS native** | Simple scroll-linked, View Transitions, `@starting-style` | 0KB | Compositor |
 
@@ -132,6 +134,9 @@ Need animation?
 │  ├─ Simple hover → CSS/Tailwind :hover
 │  └─ Magnetic, tilt, cursor, spotlight → GSAP
 │
+├─ Interactive chart/graph (bar, line, area, donut)? → D3.js
+│  └─ Scroll-triggered chart entrance? → D3 (structure) + GSAP ScrollTrigger (reveal)
+│
 ├─ Smooth scroll? → Lenis
 └─ Basic hover state? → Tailwind/CSS (use z-design-system)
 ```
@@ -156,6 +161,7 @@ Tailwind owns **layout and styling**. GSAP owns **motion**. They never overlap. 
 | Pin, horizontal scroll, parallax, snap, Lenis setup | `references/web/scroll-patterns.md` | `references/react/scroll-patterns.md` |
 | Custom cursor, magnetic button, tilt card, spotlight | `references/web/cursor-and-hover.md` | `references/react/cursor-and-hover.md` |
 | CSS scroll-driven, View Transitions, @starting-style | `references/web/css-native-motion.md` | — (CSS, no framework needed) |
+| Interactive charts (bar, line, area, donut), tooltips, zoom, brush | `references/web/d3-bindable-charts.md` | — (D3, framework-agnostic) |
 | GSAP overlay wipe, staggered page transitions | `references/web/page-transitions.md` | `references/react/page-transitions.md` |
 | Bundle size, cleanup, will-change, device tier, reduced motion | `references/web/performance.md` | `references/react/performance.md` |
 
@@ -190,7 +196,7 @@ Framework-specific wrappers (React components, Svelte actions, Vue composables) 
 | **react-native-skia** | GPU-rendered graphics: shaders, particles, custom drawing | GPU via Skia |
 | **Gesture Handler** | Touch input: tap, pan, pinch, rotation, fling | UI thread (native) |
 
-Reanimated is the primary engine. Skia only for GPU graphics. Lottie only for pre-made designer files.
+Reanimated is the primary engine. Skia only for GPU graphics.
 
 ### Why Springs Are the Default on Mobile
 
@@ -215,8 +221,7 @@ Need animation?
 ├─ Shared element transition? → Reanimated SharedTransition
 ├─ Custom drawing (charts, paths, gradients)? → Skia Canvas
 ├─ GPU shader effect? → Skia RuntimeEffect
-├─ Particle system? → Skia + Reanimated shared values
-└─ Pre-made animation from designer? → Lottie
+└─ Particle system? → Skia + Reanimated shared values
 ```
 
 ### Core Patterns (see references for full code)
