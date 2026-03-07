@@ -55,7 +55,7 @@ Before writing anything, read the PRD thoroughly. Then walk through the followin
 - **Next.js (React)** — Rich React ecosystem needed (Radix, shadcn/ui, etc.), SEO-critical content-heavy product, or team has deep React expertise
 
 **Step 0-4. Clarification**
-→ Read the PRD and fill in as much as possible yourself. Only ask the user if critical information is genuinely missing from the PRD. Check for:
+→ Infer from the requirements. Only ask the user if critical information is genuinely missing. Check for:
 1. Scale signals (expected users, requests/sec, data volume)
 2. Latency requirements (which paths are latency-critical)
 3. Consistency model (eventual vs strong, where)
