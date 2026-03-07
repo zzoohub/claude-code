@@ -20,7 +20,7 @@ The user picks one backend and one frontend independently. Any combination is va
 
 | Frontend | Deploy To | Choose When |
 |---|---|---|
-| **TanStack Start + SolidJS** (default) | Cloudflare Pages/Workers | Fine-grained reactivity, smaller bundles, no virtual DOM overhead |
+| **TanStack Start + SolidJS** (default) | Cloudflare Workers | Fine-grained reactivity, smaller bundles, no virtual DOM overhead |
 | **Next.js (React)** | Vercel (default) or Cloudflare via OpenNext | Rich React ecosystem needed (Radix, shadcn/ui, etc.), SEO-critical content-heavy product, team has deep React expertise |
 
 ### Shared across all combinations
@@ -90,7 +90,7 @@ If the user doesn't specify, use **Rust/Axum + TanStack Start** as the default c
 - TanStack Router: type-safe routing with built-in data loading
 - Vinxi/Nitro based: deploys to Cloudflare Workers, Vercel, Node, any platform
 - Smaller bundle sizes than React equivalents
-- Deploy to Cloudflare Pages/Workers (default)
+- Deploy to Cloudflare Workers (default)
 
 **SSR/SSG trade-off**: TanStack Start's SSR/SSG is less mature than Next.js. For the rare SEO-critical marketing page, consider a static site generator or dedicated landing page. Most solopreneur apps live behind auth where SEO is irrelevant.
 
