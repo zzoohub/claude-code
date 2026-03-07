@@ -40,7 +40,23 @@ Adjust review depth based on data sensitivity:
 | Internal Business Data | Standard — full checklist pass |
 | Public Content | Light — injection and misconfiguration focus |
 
-### Phase 2: Quick Scan
+### Phase 2: Scope Changes
+
+Only review what's been modified. Use caller-provided file list if available, otherwise:
+
+```bash
+# Staged + unstaged changes
+git diff --name-only HEAD 2>/dev/null
+
+# Include newly added untracked files
+git ls-files --others --exclude-standard
+```
+
+- Read related files (imports, config) for context, but don't review the entire codebase
+- Config/env files → always check regardless of change status
+- Dependency file changes → trigger supply-chain checklist
+
+### Phase 3: Quick Scan
 
 Use the **Grep tool** (not bash grep) for pattern detection. Run these searches in parallel to catch low-hanging fruit:
 
@@ -55,7 +71,7 @@ Use the **Grep tool** (not bash grep) for pattern detection. Run these searches 
 | Wildcard CORS | `Access-Control-Allow-Origin.*\*\|cors.*origin.*\*` | `*.{ts,js,py,rs,go,java,rb}` |
 | Unsafe deserialization | `yaml\.load\|unserialize\|ObjectInputStream\|Marshal\.load` | `*.{py,php,java,rb}` |
 
-### Phase 3: Domain Analysis
+### Phase 4: Domain Analysis
 
 Reference the **z-security-checklists** skill. Select checklists based on what the code does:
 
@@ -73,7 +89,7 @@ Reference the **z-security-checklists** skill. Select checklists based on what t
 
 Read **every relevant checklist** — most reviews need 3-5 checklists.
 
-### Phase 4: Attack Chain Analysis
+### Phase 5: Attack Chain Analysis
 
 Don't just list individual findings. Ask: **how do these combine?**
 
@@ -85,7 +101,7 @@ Examples of chained attacks:
 
 Document chains as escalation paths in the report.
 
-### Phase 5: Positive Security Verification
+### Phase 6: Positive Security Verification
 
 Verify the PRESENCE of security controls, not just the absence of flaws:
 
@@ -100,7 +116,7 @@ Verify the PRESENCE of security controls, not just the absence of flaws:
 | Audit Logging | Security events logged with context |
 | Error Sanitization | Generic errors to clients, detailed logs server-side |
 
-### Phase 6: Severity Classification & Report
+### Phase 7: Severity Classification & Report
 
 ---
 

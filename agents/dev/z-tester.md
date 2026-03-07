@@ -59,9 +59,6 @@ Figure out what actually changed — only test what's been modified, not the ent
 # Staged + unstaged changes
 git diff --name-only HEAD 2>/dev/null
 
-# If HEAD fails (initial commit), fall back to:
-git diff --name-only --cached; git diff --name-only
-
 # Include newly added untracked files
 git ls-files --others --exclude-standard
 ```
