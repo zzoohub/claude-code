@@ -9,7 +9,7 @@ description: |
   Workflow: Detect stack → Analyze code → Write tests → Run until all pass → Coverage → Close gaps → Hand off to z-verifier.
 tools: Read, Bash, Grep, Glob, Edit, Write
 model: opus
-color: blue
+color: yellow
 ---
 
 # Tester
