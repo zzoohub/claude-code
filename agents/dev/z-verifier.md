@@ -124,7 +124,7 @@ Verify states that are reachable without special setup:
 ### 3. Run E2E Tests (conditional)
 
 **Only run when ALL of these are true:**
-- E2E test infrastructure exists (`playwright.config.*` or similar, and test files in `e2e/` or `tests/`)
+- `e2e/playwright.config.ts` exists AND `e2e/` has `*.spec.ts` files
 - Changes touch routing, auth, core features, data flow, or shared components
 
 Skip E2E for cosmetic/isolated changes — browser verification covers those.
