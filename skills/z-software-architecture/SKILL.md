@@ -34,29 +34,33 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ### Step 0 — Intake & Clarification
 
-**Complete Step 0 before writing.** There are 4 choices to resolve. A choice is RESOLVED only if the user explicitly stated it. Never auto-fill from defaults — if the user didn't say it, ask.
+**Complete Step 0 before writing.**
 
-Procedure:
-1. Scan the user's prompt. Check each box only if the user explicitly stated that choice.
-2. Confirm resolved choices in one line.
-3. Ask each unresolved choice one at a time, in order. Do not skip.
-4. After all 4 are resolved, proceed to 0-5.
+---
 
-Use `AskUserQuestion` for each unresolved choice. If unavailable, present as a numbered list.
+**INTAKE CHECKLIST — 4 choices to resolve**
 
-- [ ] **0-1. Context** — resolved if user said "solo" or "team"
+A choice is RESOLVED **only** if the user wrote the keyword in their design-doc request (e.g., "design doc 만들어줘, solo, global, axum, tanstack"). Do NOT resolve from PRD content, CLAUDE.md, MEMORY.md, or any other context. "PRD mentions Rust" does NOT mean the user chose Rust/Axum.
+
+For each unresolved choice: **ask the user**. One at a time, in order. Do not skip.
+
+- [ ] **0-1. Context** — keyword: "solo" / "team"
   - Solo — 3-6 page decision journal
   - Team — 10-25 page design doc
-- [ ] **0-2. Audience** — resolved if user said "global" or "korea-first"
+- [ ] **0-2. Audience** — keyword: "global" / "korea-first"
   - Global — Neon (Virginia), Google OAuth, Stripe, us-east
   - Korea-first — Supabase (Seoul), Kakao/Naver OAuth, Toss Payments
-- [ ] **0-3. Backend** — resolved if user said "rust", "axum", "hono", or "fastapi"
-  - Rust/Axum + GCP Cloud Run — mark (Recommended) based on requirements
+- [ ] **0-3. Backend** — keyword: "rust", "axum", "hono", "fastapi"
+  - Rust/Axum + GCP Cloud Run
   - Hono + Cloudflare Workers
   - FastAPI + GCP Cloud Run — only when Python-only libraries required
-- [ ] **0-4. Frontend** — resolved if user said "tanstack", "solid", "nextjs", or "react"
-  - TanStack Start + SolidJS — mark (Recommended) based on requirements
+- [ ] **0-4. Frontend** — keyword: "tanstack", "solid", "nextjs", "react"
+  - TanStack Start + SolidJS
   - Next.js (React)
+
+Use `AskUserQuestion` for each unresolved choice. If unavailable, present as a numbered list. When asking, mark **(Recommended)** based on the PRD requirements to help the user decide.
+
+---
 
 **0-5. Clarification** — infer from PRD. Only ask if genuinely missing.
 
