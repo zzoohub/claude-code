@@ -96,3 +96,5 @@ Read the relevant references before making architecture decisions.
 ## Output
 
 Save to `docs/design-doc.md`.
+
+Start the document with a **Table of Contents** (linked to each section heading) right after the title. Long design docs are hard to navigate without one.

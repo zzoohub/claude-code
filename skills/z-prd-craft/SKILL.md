@@ -262,6 +262,7 @@ Write all in Markdown. Full PRD first, then derive the Phase PRD from it.
 Read `references/prd-phase.md` for the Phase PRD template and scoping principles.
 
 **Formatting rules:**
+- Start each document with a **Table of Contents** (linked to each section heading) right after the title and metadata. PRDs are long — a TOC makes them navigable.
 - Tables for structured data (metrics, requirements, timelines)
 - Avoid jargon unless the audience is technical
 

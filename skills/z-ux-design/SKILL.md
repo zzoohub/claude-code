@@ -212,3 +212,5 @@ Before finalizing any UX decision:
 ## Output
 
 Save to `docs/ux-design.md`.
+
+Start the document with a **Table of Contents** (linked to each section heading) right after the title. UX design docs get long — a TOC makes them navigable.
