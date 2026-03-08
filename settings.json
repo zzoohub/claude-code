@@ -14,14 +14,11 @@
     "sentry@claude-plugins-official": true,
     "d2@claude-d2-diagrams": true,
     "pulumi-authoring@pulumi-agent-skills": true,
-    "supabase@claude-plugins-official": true,
     "claude-md-management@claude-plugins-official": true,
     "neon-plugin@neon": true,
     "posthog@claude-plugins-official": true,
     "vercel@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
-    "skill-creator@claude-plugins-official": true,
-    "stripe@claude-plugins-official": true
-  },
-  "effortLevel": "high"
+    "skill-creator@claude-plugins-official": true
+  }
 }

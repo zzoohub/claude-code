@@ -141,16 +141,6 @@
         "gitCommitSha": "3230a42ddb5ba4e0aa5cb5584daa8a0de5ca6f63"
       }
     ],
-    "supabase@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/supabase/205b6e0b3036",
-        "version": "205b6e0b3036",
-        "installedAt": "2026-02-11T12:29:24.777Z",
-        "lastUpdated": "2026-03-04T08:07:34.706Z",
-        "gitCommitSha": "2cd88e7947b7382e045666abee790c7f55f669f3"
-      }
-    ],
     "claude-md-management@claude-plugins-official": [
       {
         "scope": "user",
@@ -209,16 +199,6 @@
         "installedAt": "2026-02-23T04:08:49.808Z",
         "lastUpdated": "2026-03-04T08:07:34.714Z",
         "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
-      }
-    ],
-    "stripe@claude-plugins-official": [
-      {
-        "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/stripe/0.1.0",
-        "version": "0.1.0",
-        "installedAt": "2026-03-06T23:05:10.172Z",
-        "lastUpdated": "2026-03-06T23:05:10.172Z",
-        "gitCommitSha": "205b6e0b30366a969412d9aab7b99bea99d58db1"
       }
     ]
   }
