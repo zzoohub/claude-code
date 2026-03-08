@@ -100,63 +100,50 @@ When the user asks to review a UX design:
 
 Do not dump full designs into the conversation — save to file instead.
 
-### File Location
+### File Structure
 
-All UX work goes into a single file: `docs/ux-design.md`
+Output is split into two levels:
 
-- If the file already exists, **update it in place**. Do not create separate files for diagnosis or review.
-- Only create the file if it doesn't exist yet.
-- The file should always reflect the latest design state.
+- **`docs/ux-design.md`** — Application-level: IA, navigation, global patterns, shared conventions
+- **`docs/ux/<page-name>.md`** — Page-level: one file per screen with detailed specs
 
-### Deliverable Structure
+If files already exist, **update in place**. Files should always reflect the latest design state.
 
-For each design, the output file must contain:
+### `docs/ux-design.md` — Application-Level
 
-1. **Context**
-   - User goal (JTBD statement)
-   - User context (device, environment, constraints)
-   - Proto-persona (if created)
+Contains app-wide UX decisions only:
 
-2. **Information Architecture**
-   - Navigation pattern chosen (with justification)
-   - Screen hierarchy (sitemap — ASCII tree or Mermaid)
-   - Entry points and cross-links
+1. **Context** — User goals (JTBD), target devices, proto-personas
+2. **Information Architecture** — Navigation pattern, screen hierarchy (sitemap), entry points
+3. **Global Flows** — Critical paths spanning multiple screens (Mermaid diagrams)
+4. **Shared Conventions** — Common interaction rules (toast, modal, error handling), global state patterns (auth, offline, loading)
+5. **Accessibility Standards** — App-wide contrast, focus management, keyboard nav, WCAG compliance
+6. **Design Rationale** — Key app-level decisions with principle citations
+7. **Page Index** — Links to all `docs/ux/<page-name>.md` files
 
-3. **User Flow**
-   - Critical path: entry → goal completion
-   - Decision points with defaults
-   - Alternative paths
-   - Error and edge case handling
-   - Flow diagram (Mermaid syntax)
+### `docs/ux/<page-name>.md` — Page-Level
 
-4. **Screen Specifications**
-   Per screen:
-   - Primary action (ONE)
-   - Information shown (only what supports current decision)
-   - All states (empty, loading, loaded, error, partial, refreshing, offline)
-   - Interaction patterns (feedback, gestures, transitions)
-   - UX copy (headings, button labels, error messages, empty state copy)
-   - ASCII wireframe when helpful
+One file per independently navigable screen. Each contains:
 
-5. **Accessibility Notes**
-   - Contrast requirements
-   - Focus management (modal focus trap, return focus)
-   - Keyboard navigation path
-   - Screen reader considerations
-   - Dynamic Type / scalable text impact
-   - WCAG 2.1 AA compliance per `ergonomics.md`
+1. **Page Purpose** — User goal (JTBD) for this specific screen
+2. **Screen Layout** — Content hierarchy, primary action (ONE)
+3. **All 7 States** — Empty, loading, loaded, error, partial, refreshing, offline
+4. **Interaction Details** — Feedback, gestures, transitions specific to this page
+5. **UX Copy** — Headings, button labels, error messages, empty state copy, tooltips
+6. **Accessibility Notes** — Page-specific focus management, screen reader considerations
+7. **Design Rationale** — Decisions with principle citations
+8. **ASCII wireframe** when helpful
 
-6. **Design Rationale**
-   - Which cognitive principles informed each key decision (cite by name)
-   - What was removed and why
-   - Platform conventions followed
-   - Open questions or trade-offs noted for discussion
+Naming: kebab-case matching the screen name (e.g., `account-settings.md`, `onboarding-welcome.md`).
+Modals, drawers, and sheets belong in their parent screen's file.
 
 ### What You Return to the Main Agent
 
 ```
 ## Completed
 - Updated: docs/ux-design.md
+- Updated: docs/ux/page-name.md
+- Created: docs/ux/new-page.md
 
 ## Summary
 [2-3 sentences: what was designed, key UX decisions, any open questions]

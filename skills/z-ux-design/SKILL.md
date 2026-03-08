@@ -211,6 +211,38 @@ Before finalizing any UX decision:
 
 ## Output
 
-Save to `docs/ux-design.md`.
+Split output into two levels:
 
-Start the document with a **Table of Contents** (linked to each section heading) right after the title. UX design docs get long — a TOC makes them navigable.
+### `docs/ux-design.md` — Application-Level Design
+
+The single source of truth for app-wide UX decisions. Covers:
+
+- Information architecture (sitemap, navigation structure)
+- Global navigation patterns and routing logic
+- Common interaction rules (toast, modal, error handling conventions)
+- Shared state patterns (auth states, offline, loading)
+- Platform-specific conventions (iOS vs Android vs Web)
+- Accessibility standards applied globally
+- Phase Implementation Summary (if phases exist)
+
+Start with a **Table of Contents** linking to each section and to individual page files.
+
+### `docs/ux/<page-name>.md` — Page-Level Design
+
+One file per screen or distinct view. Each page file covers:
+
+- Page purpose and user goal (JTBD)
+- Screen layout and content hierarchy
+- All 7 states (empty, loading, loaded, error, partial, refreshing, offline)
+- User flows and decision points within the page
+- Interaction details specific to this page
+- UX copy (labels, errors, empty states, tooltips)
+- Phase tag (e.g., `[Phase 1]`) if phases exist
+
+**Naming:** Use kebab-case matching the screen name (e.g., `account-settings.md`, `project-dashboard.md`, `onboarding-welcome.md`).
+
+**When to create a new file vs. add to an existing one:** Each independently navigable screen gets its own file. Modals, drawers, and sheets that belong to a specific screen go in that screen's file. If a flow spans multiple screens, each screen still gets its own file — cross-reference between them.
+
+### File Size Guideline
+
+Keep each file under ~1500 lines. If a page file grows beyond this, split sub-sections into child pages (e.g., `settings-profile.md`, `settings-billing.md`).
