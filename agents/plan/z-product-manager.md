@@ -54,15 +54,13 @@ All documents are saved as files. Never dump full documents into the conversatio
 ### File Locations
 
 ```
-docs/product-brief.md                    # Product brief
-docs/prd-{feature-name}.md              # PRD (kebab-case feature name)
+docs/product-brief.md    # Product brief
+docs/prd.md              # PRD (single canonical file)
+docs/prd-phase-{n}.md    # Phase PRDs (e.g., prd-phase-1.md, prd-phase-2.md)
 ```
 
-### File Naming
-
-- All lowercase, kebab-case
-- PRD files include the feature or product name: `prd-user-onboarding.md`, `prd-payment-flow.md`
-- If the user doesn't specify a name, derive one from the core problem or feature
+- If the file already exists, **update it in place**. Do not create separate files per feature.
+- The file should always reflect the latest state.
 
 ### What You Return to the Main Agent
 
@@ -70,8 +68,9 @@ After completing your work, return:
 
 ```
 ## Completed
-- Created: docs/product-brief.md
-- Created: docs/prd-{name}.md
+- Updated: docs/product-brief.md
+- Updated: docs/prd.md
+- Updated: docs/prd-phase-1.md
 
 ## Key Decisions
 - Target user: [who]

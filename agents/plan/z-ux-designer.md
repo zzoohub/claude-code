@@ -98,15 +98,15 @@ When the user asks to review a UX design:
 
 ## Output Rules
 
-All deliverables are saved as files. Never dump full designs into the conversation.
+Do not dump full designs into the conversation — save to file instead.
 
-### File Locations
+### File Location
 
-```
-docs/ux-{feature-name}.md          # New designs
-docs/ux-review-{feature-name}.md   # Review feedback
-docs/ux-diagnosis-{feature-name}.md # Diagnosis reports
-```
+All UX work goes into a single file: `docs/ux-design.md`
+
+- If the file already exists, **update it in place**. Do not create separate files for diagnosis or review.
+- Only create the file if it doesn't exist yet.
+- The file should always reflect the latest design state.
 
 ### Deliverable Structure
 
@@ -156,7 +156,7 @@ For each design, the output file must contain:
 
 ```
 ## Completed
-- Created: docs/ux-{feature-name}.md
+- Updated: docs/ux-design.md
 
 ## Summary
 [2-3 sentences: what was designed, key UX decisions, any open questions]

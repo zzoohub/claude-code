@@ -5,7 +5,7 @@ description: |
   Use when: validating changes before commit/PR, verifying UI behavior in actual browser, or confirming bug fixes visually.
   Does NOT write test code or fix issues — the main agent handles those.
   Workflow: Understand changes → Browser verify (always attempt) → Run E2E if warranted → Report results.
-tools: Read, Bash, Grep, Glob
+tools: Read, Bash, Grep, Glob, mcp__claude-in-chrome__*, mcp__plugin_playwright_playwright__*
 mcpServers:
   - claude-in-chrome
   - playwright
@@ -40,13 +40,13 @@ git diff --name-only HEAD~1..HEAD
 
 ### 2. Browser Verification (claude-in-chrome)
 
-**MANDATORY. Always attempt. This is your primary job.**
+**MANDATORY. Always attempt. This is your primary job — do not skip it without exhausting retries.**
 
-If Chrome extension is not connected (tool calls fail), fall back to E2E-only mode and note browser verification was skipped in the report.
+If Chrome extension is not connected after retries, fall back to E2E-only mode and note browser verification was skipped in the report.
 
 #### Startup
 
-1. Call `tabs_context_mcp` first. If the tool call fails, Chrome is unavailable — skip to E2E.
+1. Call `mcp__claude-in-chrome__tabs_context_mcp` first. If it fails, retry up to 3 times (wait 2s between attempts). Only after 3 consecutive failures, consider Chrome unavailable and skip to E2E.
 2. Detect dev server — check common ports:
    ```bash
    lsof -i :3000 -i :3001 -i :4321 -i :5173 -i :4173 -i :8080 -i :8000 -i :5000 -i :19006
@@ -121,33 +121,11 @@ Verify states that are reachable without special setup:
 
 ---
 
-### 3. Run E2E Tests (conditional)
+### 3. Run E2E Tests (default: run)
 
-**Only run when ALL of these are true:**
-- `e2e/playwright.config.ts` exists AND `e2e/` has `*.spec.ts` files
-- Changes touch routing, auth, core features, data flow, or shared components
+**Run E2E when** `*.spec.ts` files exist in the project. Skip only for purely cosmetic changes (CSS-only, copy, comments, docs). When in doubt, run them.
 
-Skip E2E for cosmetic/isolated changes — browser verification covers those.
-
-#### Tiers
-
-**Smoke** (always when E2E runs): app boots, main pages render, login works.
-If smoke fails, stop and report immediately.
-
-**Critical Path** (broad changes): key user journeys end to end.
-
-#### How to run
-
-```bash
-# Smoke tier
-just e2e-smoke
-
-# Full run (or targeted)
-just e2e
-just e2e --grep "checkout"
-```
-
-On failure, check `just e2e-report` for traces and screenshots. Distinguish: real failure vs flaky test vs expected change from the code update.
+Look for `playwright.config.*` and spec files in project root, `e2e/`, or `tests/`. Use `just e2e` or the project's test runner. On failure, distinguish real failure vs flaky test vs expected change.
 
 ---
 
@@ -205,5 +183,5 @@ Only include sections that were actually executed. Omit sections that were skipp
 2. **Don't run unit tests** — the main agent handles those via TDD
 3. **Understand what changed first** — use caller-provided scope or git diff
 4. **Always attempt browser verification** — fall back to E2E-only if Chrome unavailable
-5. **E2E only when warranted** — broad changes to core flows, not every small fix
+5. **E2E by default** — skip only for purely cosmetic changes (CSS-only, copy, comments, docs)
 6. **Be specific in reports** — include file:line, screenshots, exact errors
