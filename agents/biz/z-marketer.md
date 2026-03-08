@@ -93,6 +93,9 @@ If context doc doesn't exist, offer to auto-draft from codebase. Capture: Produc
 
 ## Output Locations
 
+If a file already exists, **update it in place** — do not create a duplicate or a new version.
+Only create a new file when the deliverable genuinely doesn't exist yet.
+
 | Content Type | Path |
 |-------------|------|
 | Marketing strategy | `biz/marketing/strategy.md` |

@@ -123,6 +123,9 @@ When experiments produce data, hand off to z-data-analyst for:
 
 ## Output Locations
 
+If a file already exists, **update it in place** — do not create a duplicate or a new version.
+Only create a new file when the deliverable genuinely doesn't exist yet.
+
 | Deliverable | Path |
 |------------|------|
 | Growth experiments log | `biz/growth/experiments.md` |

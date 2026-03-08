@@ -120,6 +120,9 @@ Solopreneur products often have small user bases — dozens or low hundreds of u
 
 ## Output Locations
 
+If a file already exists, **update it in place** — do not create a duplicate or a new version.
+Only create a new file when the deliverable genuinely doesn't exist yet.
+
 | Deliverable | Path |
 |------------|------|
 | Tracking plan + Aha Moment | `biz/analytics/tracking-plan.md` |
