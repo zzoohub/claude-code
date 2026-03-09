@@ -207,9 +207,8 @@ Produce these files:
 
 | File | Content |
 |---|---|
-| `docs/database-design.md` | **Table of Contents** (linked) → Requirements summary → ERD (Mermaid) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. Design doc deviations noted inline. Start with a TOC right after the title — the document gets long and a TOC makes it navigable. |
+| `docs/database-design.md` | **Table of Contents** (linked) → Requirements summary → ERD (Mermaid, consult `references/mermaid-erd.md` for syntax) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. Design doc deviations noted inline. Start with a TOC right after the title — the document gets long and a TOC makes it navigable. |
 | `db/migrations/001_initial_schema.sql` | Executable DDL (tables, indexes, constraints, comments) + matching `_rollback.sql` |
-| `docs/erd.mermaid` | Standalone Mermaid ERD (also embedded in the design doc) → consult `references/mermaid-erd.md` for syntax |
 
 ## Recommended Extensions
 
