@@ -373,6 +373,23 @@ How to evolve APIs without breaking existing clients.
 
 **Our stack**: For internal APIs (backend ↔ frontend you control), additive changes are sufficient. For public APIs, URL path versioning (`/v1/`) — it's the most explicit and debuggable option.
 
+### Event Schema Evolution
+
+When using event-driven architecture, event schemas will change over time. Without a strategy, schema changes break consumers silently.
+
+| Strategy | How It Works | When |
+|---|---|---|
+| **Additive only** | Never remove or rename fields, only add new ones | Default. Covers 90% of cases. |
+| **Versioned events** | `OrderCreatedV1`, `OrderCreatedV2` as separate event types | Breaking changes to event structure |
+| **Schema envelope** | Wrap payload in `{ version, schema, data }` | Multiple consumers at different versions |
+
+**Key rules**:
+- **Producers** must be backward compatible — old consumers should still work with new events
+- **Consumers** must be forward compatible — ignore unknown fields
+- **Never delete fields** that consumers might depend on. Deprecate first, remove after all consumers are updated.
+
+For solo/small team: additive-only is almost always sufficient. If you find yourself needing versioned events, that's a signal the domain boundary might be wrong.
+
 ### Feature Flag Architecture
 
 Decouple deployment from release. Ship code to production without exposing it to users until ready.

@@ -11,16 +11,17 @@ Target length: **3-6 pages**. If it's longer, you're probably over-documenting. 
 | # | Section | What It Answers |
 |---|---|---|
 | 1 | Problem & Context | What am I building and why? |
-| 2 | Goals & Non-Goals | What's in scope, what's explicitly out? |
+| 2 | Goals, Non-Goals & Quality Targets | What's in scope, what's out, what are the numbers? |
 | 3 | Architecture | What pattern, what stack, how do pieces connect? |
 | 4 | Data | Where does data live, how does it flow? |
 | 5 | Infrastructure & Cost | Where does it run, how much does it cost? |
 | 6 | Auth & Security | How do users log in, what's locked down? |
 | 7 | Observability | How do I know when something breaks? |
-| 8 | External Services | What third-party dependencies, what if they break? |
-| 9 | AI/LLM Architecture | How does AI integrate? *(only if applicable)* |
-| 10 | Risks & Open Questions | What could go wrong, what's undecided? |
-| 11 | Key Decisions | Why did I choose X over Y? |
+| 8 | External Services & Resilience | What dependencies, what if they break, how do I handle it? |
+| 9 | Testing Strategy | What's tested, how does it connect to the architecture? |
+| 10 | AI/LLM Architecture | How does AI integrate? *(only if applicable)* |
+| 11 | Risks & Open Questions | What could go wrong, what's undecided? |
+| 12 | Key Decisions | Why did I choose X over Y? |
 
 ---
 
@@ -49,13 +50,22 @@ List any assumptions the architecture depends on. If wrong, the architecture may
 
 ---
 
-## 2. Goals & Non-Goals
+## 2. Goals, Non-Goals & Quality Targets
 
 ### Goals
 Bulleted. What this system must do. Be specific enough that you can check them off.
 
 ### Non-Goals
 What you're explicitly not building (yet). This prevents scope creep — future-you will thank present-you.
+
+### Quality Targets
+2-3 measurable targets for the critical path. These drive caching, monitoring, and scaling decisions. Without numbers, every architecture choice is a guess.
+
+| Path | Target | Drives |
+|---|---|---|
+| e.g., API response (main flow) | p99 < 500ms | Caching? DB query optimization? |
+| e.g., Uptime | 99.5% (3.6h downtime/month) | Health checks, alerting, redundancy |
+| e.g., AI response (if applicable) | First token < 2s | Streaming required? Model choice? |
 
 ---
 
@@ -133,28 +143,43 @@ Keep it concise. If it's Google OAuth + JWT + RBAC, say that and move on.
 
 ## 7. Observability
 
-How you'll know when things break in production. Keep it simple — no distributed tracing or SLO dashboards needed at this stage.
+How you'll know when things break. Prioritize by what to set up when.
 
-- **Logging**: Structured JSON to stdout. Platform (Cloud Logging / Logpush) handles aggregation.
-- **Error tracking**: Sentry — catches unhandled exceptions, gives stack traces with context.
-- **Uptime**: Health check endpoint (`GET /health`) + external monitor (e.g., BetterStack, Pinger) to alert when the service is down.
+**Day 1** (before launch):
+- **Error tracking**: Sentry — unhandled exceptions with stack traces
+- **Uptime**: Health check (`GET /health`) + external monitor (BetterStack, Pinger)
+- **Logging**: Structured JSON to stdout. Platform handles aggregation.
 
-If you're running AI features, also track: token usage per request and cost per user/feature.
-
----
-
-## 8. External Services
-
-For each third-party dependency:
-
-| Service | Purpose | If It's Down |
-|---|---|---|
-| e.g., Stripe | Payments | Show "payments temporarily unavailable" |
-| e.g., Neon | Database | System offline — no fallback needed for primary DB |
+**When you have users**:
+- Alert on quality target violations from Section 2 (e.g., error rate > 1% over 5 min)
+- If running AI features: token usage per request, cost per user/feature
 
 ---
 
-## 9. AI/LLM Architecture (if applicable)
+## 8. External Services & Resilience
+
+For each third-party dependency, decide **upfront** how the system behaves when it fails. Read `references/operational-patterns.md` for timeout budgets, retry policies, and common patterns (file uploads, background jobs, payments).
+
+| Service | Purpose | Timeout | Retry | If It's Down |
+|---|---|---|---|---|
+| e.g., Neon | Database | 5s | Backoff ×3 | System offline |
+| e.g., Stripe | Payments | 15s | Idempotency key | "Payments temporarily unavailable" |
+| e.g., LLM API | AI features | 120s | Backoff ×2 | "AI unavailable" + cached fallback |
+| e.g., Resend | Email | 5s | Queue for later | Silent — never block user action |
+
+---
+
+## 9. Testing Strategy
+
+Hexagonal architecture splits neatly into test layers. Keep it simple — you don't need 100% coverage, you need confidence in the critical path.
+
+- **Domain logic** (inside ports): Unit tests. Mock adapters. This is where hexagonal pays off — pure functions, no infra deps.
+- **Adapters** (DB, external APIs): Integration tests against real services. Neon branch for DB tests.
+- **Critical user flows** (1-2 max): E2E tests covering the main money path (e.g., signup → purchase → access).
+
+---
+
+## 10. AI/LLM Architecture (if applicable)
 
 Include only if the product has AI features. Cover:
 - Integration pattern (direct API, gateway, RAG, agent)
@@ -166,7 +191,7 @@ Read `references/ai-architecture.md` for detailed patterns. If the system includ
 
 ---
 
-## 10. Risks & Open Questions
+## 11. Risks & Open Questions
 
 ### Risks
 | Risk | Impact | What I'll Do |
@@ -178,7 +203,7 @@ Things you haven't decided yet. For each: what are the options, what do you need
 
 ---
 
-## 11. Key Decisions
+## 12. Key Decisions
 
 For each significant choice, a brief record:
 
@@ -205,8 +230,11 @@ Before finalizing, check:
 
 - [ ] Every technology choice has a "why" and a "what else I considered"
 - [ ] Non-goals are listed (prevents future scope creep)
+- [ ] Quality targets have numbers (not "fast" or "reliable" — actual thresholds)
 - [ ] Cost estimate exists for launch traffic
 - [ ] Data flow is traceable for the main user journey
+- [ ] Every external dependency has a timeout, retry policy, and degradation strategy
+- [ ] Testing strategy connects to architecture choice (hexagonal → test layers)
 - [ ] You can re-read this in 15 minutes and understand the full system
 - [ ] No section exists just because "a design doc should have it" — every section earns its place
 

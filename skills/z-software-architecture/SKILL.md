@@ -104,3 +104,5 @@ Read the relevant references before making architecture decisions.
 **`references/ai-architecture.md`** — Read if the PRD includes AI-powered features (LLM generation, RAG, semantic search, copilot, chat). Covers LLM integration tiers, RAG architecture, streaming, vector storage, cost optimization, guardrails, and observability. **Important**: verify current pricing and model capabilities before committing.
 
 **`references/ai-agents.md`** — Read if the system includes autonomous agents, multi-step tool orchestration, or human-in-the-loop workflows. Covers agent patterns, protocols (MCP, A2A, AG-UI), context engineering, durable execution, multi-agent systems, and safety.
+
+**`references/operational-patterns.md`** — Practical patterns that almost every production system needs: resilience (timeout budgets, retry, graceful degradation), file upload architecture, background jobs decision framework, payments & webhook reliability, and local development environment setup. Reference when writing the External Services & Resilience section.

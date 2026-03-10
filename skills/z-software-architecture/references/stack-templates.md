@@ -264,3 +264,22 @@ Follow the **platform cohesion principle** -- prefer services from the same plat
 | **Hono backend** | Cloudflare Workers | Neon or Supabase per audience | Workers are inherently global |
 
 **Co-location rule**: Keep compute and database in the same geographic region to minimize inter-service latency. For Korea-first apps, co-locate both in Seoul. This is more important than putting compute close to users -- use Cloudflare CDN/edge for that.
+
+---
+
+## Evolution Triggers
+
+When to revisit architecture decisions. Don't optimize prematurely — wait for these signals.
+
+| Signal | Threshold | Action |
+|---|---|---|
+| DB query latency climbing | p99 > 200ms consistently | Add read replica, review N+1 queries, add caching |
+| DB connections exhausting | > 80% pool utilization | Verify pooler config, reduce per-instance pool size |
+| API response time degrading | Exceeding quality targets | Profile hot paths, add caching, async offloading |
+| Background job queue growing | Processing delay > 5min | Separate worker instance, increase concurrency |
+| Monthly infra cost spiking | > 2x previous month | Audit resource usage, check scale-to-zero, review LLM costs |
+| Cold starts impacting UX | > 3s first request | Set minimum instances, prewarming, or switch runtime |
+| Single service doing too much | > 5 unrelated domain modules | Tighten module boundaries, consider service extraction |
+| LLM costs dominating spend | > 40% of total infra | Add model cascading, semantic caching, review prompt lengths |
+
+**Rule of thumb**: If you're spending more time operating infrastructure than building product, something needs to change. But don't change it until you feel the pain.
