@@ -316,3 +316,82 @@ Partition the system into independent, self-contained cells. Each cell serves a 
 **Premature CQRS**: Adding read/write separation when your read/write ratio is 2:1 and a single database handles both fine. CQRS adds operational overhead — justify it with data.
 
 **Pattern Resume-Driven Development**: Choosing microservices + event sourcing + CQRS + Kubernetes for a todo app because the tech stack looks impressive. Match complexity to the problem.
+
+---
+
+## Cross-Cutting Architecture Decisions
+
+### Multi-Tenancy
+
+How to isolate data and compute between tenants (customers, organizations, workspaces).
+
+| Model | Isolation Level | Complexity | Cost | Choose When |
+|---|---|---|---|---|
+| **Shared everything** (tenant_id column) | Logical | Low | Lowest | Early stage, < 100 tenants, no compliance requirements |
+| **Schema-per-tenant** | Schema | Medium | Medium | Stronger isolation needed without separate databases, moderate tenant count |
+| **Database-per-tenant** | Physical | High | Highest | Regulatory requirements (data residency), enterprise customers demanding full isolation |
+
+**Default**: Shared everything with `tenant_id` on every table + Row-Level Security (RLS) in PostgreSQL. This covers 90% of SaaS products. RLS enforces isolation at the database level — application bugs can't leak data across tenants.
+
+**Scaling pattern**: Start shared, extract high-value or regulated tenants to dedicated schemas/databases as needed. The tenant routing layer should be an architectural boundary from day one, even if the implementation is just a `WHERE tenant_id = ?`.
+
+**Who uses it**: Slack (workspace-per-tenant, shared infrastructure), Salesforce (shared database with org isolation), Neon (database-per-tenant for their own product).
+
+### Real-Time Communication
+
+Patterns for bidirectional or push-based communication beyond LLM streaming (for LLM-specific streaming, see `references/ai-architecture.md` § Streaming Architecture).
+
+| Protocol | Direction | Use Case | Complexity |
+|---|---|---|---|
+| **SSE (Server-Sent Events)** | Server → Client | Notifications, live feeds, status updates | Low |
+| **WebSocket** | Bidirectional | Chat, collaborative editing, gaming, live dashboards | Medium |
+| **WebTransport** | Bidirectional | Low-latency, multiplexed streams (next-gen WebSocket) | High |
+
+**Architecture decision**: SSE handles most "real-time" needs (notifications, feeds, progress). Use WebSocket only when the client needs to send frequent messages to the server (chat, collaboration). Don't use WebSocket just because "it's real-time."
+
+**Our stack**:
+- **Cloud Run**: Supports WebSocket with session affinity. Set timeout to match max connection duration.
+- **Cloudflare Workers**: Use Durable Objects for WebSocket state management. Each Durable Object holds connections for a room/channel.
+- **Scaling**: For presence and pub/sub across instances, use Redis (Upstash) or Neon `LISTEN/NOTIFY` for low-scale, Pub/Sub for high-scale.
+
+**Connection management**: WebSocket connections are stateful. Plan for: reconnection with message replay, heartbeat/ping-pong for dead connection detection, graceful connection draining during deployments, and connection limits per instance.
+
+### API Versioning Strategy
+
+How to evolve APIs without breaking existing clients.
+
+| Strategy | Mechanism | Trade-off |
+|---|---|---|
+| **URL path versioning** (`/v1/users`) | Version in URL | Simple and explicit. But proliferates endpoints and pollutes routing. |
+| **Header versioning** (`Accept: application/vnd.api+json;version=2`) | Version in header | Cleaner URLs. But less visible, harder to test in browser. |
+| **Query parameter** (`/users?version=2`) | Version in query | Easy to default. But mixes concerns in query string. |
+| **No versioning (additive only)** | Never break, only add | Zero overhead. Requires discipline — no field removal, no type changes. |
+
+**Default for most products**: **Additive changes only**. Add new fields, never remove or rename existing ones. This eliminates versioning complexity entirely and works until you need a fundamental API redesign.
+
+**When to version**: Breaking changes to core resources, fundamental data model changes, or when supporting enterprise clients with long upgrade cycles.
+
+**Our stack**: For internal APIs (backend ↔ frontend you control), additive changes are sufficient. For public APIs, URL path versioning (`/v1/`) — it's the most explicit and debuggable option.
+
+### Feature Flag Architecture
+
+Decouple deployment from release. Ship code to production without exposing it to users until ready.
+
+**Use cases**:
+- **Gradual rollout**: Release to 1% → 10% → 50% → 100% of users
+- **Kill switch**: Instantly disable a broken feature without redeployment
+- **A/B testing**: Route users to different feature variants
+- **Entitlements**: Gate features by plan tier (free, pro, enterprise)
+
+**Architecture**:
+```
+Client/Server --> Flag evaluation (local SDK) --> Flag configuration store
+                                                  (PostHog / LaunchDarkly)
+```
+
+**Key decisions**:
+- **Server-side vs client-side evaluation**: Server-side for security-sensitive flags (plan gating, beta access). Client-side for UI experiments where latency matters.
+- **Flag lifecycle**: Every flag should have an owner and an expiration date. Permanent flags (entitlements) are fine; temporary flags (rollouts) that linger become tech debt.
+- **Default values**: Always define a safe default (typically `false` / control variant) for when the flag service is unreachable.
+
+**Our stack**: PostHog (already in stack) provides feature flags with targeting rules, percentage rollouts, and A/B testing. No additional infrastructure needed.

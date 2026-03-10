@@ -78,9 +78,9 @@ Architecture decisions made today will face requirements that don't exist yet. R
 **Application**:
 - **Fitness functions**: Automated tests that enforce architectural constraints (e.g., "no domain module imports infrastructure code", "API response time stays under 200ms", "no circular dependencies between modules"). Run these in CI.
 - **Sacrificial architecture**: Accept that your first architecture may need to be replaced. Design for replaceability — clean interfaces, isolated modules, data contracts — rather than permanence.
-- **Decision reversibility**: Classify every architecture decision as one-way door (irreversible: database choice, primary language) or two-way door (reversible: cache strategy, library choice). Invest analysis time proportionally.
+- Apply Principle 3 (Delay Irreversible Decisions) to classify each decision's reversibility and invest analysis time proportionally.
 
-*Reference*: Neal Ford & Rebecca Parsons, "Building Evolutionary Architectures." Amazon's Type 1 / Type 2 decision framework.
+*Reference*: Neal Ford & Rebecca Parsons, "Building Evolutionary Architectures."
 
 ---
 
@@ -115,7 +115,7 @@ Architecture decisions made today will face requirements that don't exist yet. R
 **Impact**: First request latency spikes to seconds.
 **Architecture implication**: If using serverless, document: (a) minimum instances configuration, (b) cold start time budget, (c) warm-up strategy.
 
-*Reference*: Discord's blog on why they moved from Go to Rust mentioned cold start performance as a factor.
+*Real-world signal*: Teams have migrated to lower-level languages for serverless environments where cold start and memory overhead are critical. Verify current benchmarks for your runtime.
 
 ---
 
@@ -167,3 +167,35 @@ Don't alert on symptoms. Alert on SLO violations:
 - "Error rate > 1% over 5 minutes" (availability SLO)
 - "p99 latency > 500ms over 10 minutes" (latency SLO)
 - "Successful login rate < 95% over 15 minutes" (business SLO)
+
+---
+
+## Quality Attribute Prioritization
+
+Before making architecture decisions, identify which quality attributes matter most. Not all attributes can be optimized simultaneously — they trade off against each other. This prioritization drives every downstream decision in the design doc.
+
+### Core Quality Attributes
+
+| Attribute | Measures | Typical Trade-off |
+|---|---|---|
+| **Performance** | Latency, throughput | vs. Maintainability (optimization adds complexity) |
+| **Availability** | Uptime, fault tolerance | vs. Cost (redundancy is expensive) |
+| **Scalability** | Load handling, growth capacity | vs. Simplicity (distributed systems are complex) |
+| **Security** | Data protection, access control | vs. Usability (more security = more friction) |
+| **Maintainability** | Changeability, debuggability | vs. Performance (abstractions add overhead) |
+| **Testability** | Ease of verification | vs. Time-to-market (test infrastructure takes effort) |
+| **Deployability** | Release frequency, rollback speed | vs. Stability (more deploys = more risk surface) |
+| **Cost Efficiency** | Infrastructure spend per user | vs. Performance/Availability |
+
+### Prioritization Process
+
+1. **Extract signals from the PRD**: latency requirements, scale targets, compliance needs, uptime expectations, budget constraints
+2. **Rank the top 3-4 attributes** for this system — these drive architecture decisions
+3. **Identify conflicts** between priorities and make explicit trade-offs
+4. **Record the prioritization** in the design doc — it explains why certain patterns were chosen over others
+
+**Example**: A real-time trading system prioritizes Performance > Availability > Security. A content management system prioritizes Maintainability > Security > Scalability. A solopreneur MVP prioritizes Cost Efficiency > Deployability > Maintainability.
+
+### Connecting Attributes to Decisions
+
+Each ADR in the design doc should reference which quality attributes it optimizes for and which it trades away. This creates a traceable chain: PRD requirements → quality attribute priorities → architecture decisions.

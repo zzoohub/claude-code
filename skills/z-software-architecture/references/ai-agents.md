@@ -94,7 +94,7 @@ Three complementary protocols are converging as the standard stack for agent sys
 (Agent ↔ Agent)  (Agent ↔ User)
 ```
 
-All three are governed under the **Agentic AI Foundation (AAIF)** at the Linux Foundation (announced Dec 2025). Platinum members: Anthropic, OpenAI, AWS, Google, Microsoft, Bloomberg, Cloudflare.
+All three are governed under the **Agentic AI Foundation (AAIF)** at the Linux Foundation. Verify current membership and governance status.
 
 ### MCP (Model Context Protocol)
 
@@ -113,7 +113,7 @@ All three are governed under the **Agentic AI Foundation (AAIF)** at the Linux F
 
 **Auth**: OAuth 2.1 for HTTP transports. MCP servers act as OAuth Resource Servers. Supports dynamic client registration.
 
-**Adoption**: 97M+ SDK downloads. Adopted by virtually all major AI platforms and IDEs.
+**Adoption**: Widely adopted across major AI platforms and IDEs. Verify current adoption metrics.
 
 ### A2A (Agent-to-Agent Protocol)
 
@@ -130,7 +130,7 @@ All three are governed under the **Agentic AI Foundation (AAIF)** at the Linux F
 
 **Auth**: OAuth 2.0, mTLS, signed Agent Cards.
 
-**Adoption**: RC v1.0. 100+ enterprise partners (Atlassian, Salesforce, SAP, PayPal, etc.).
+**Adoption**: Growing enterprise adoption (Atlassian, Salesforce, SAP, PayPal, etc.). Verify current spec version and partner ecosystem.
 
 ### AG-UI (Agent-User Interaction Protocol)
 
@@ -145,9 +145,9 @@ All three are governed under the **Agentic AI Foundation (AAIF)** at the Linux F
 
 | Protocol | Direction | Creator | Status |
 |---|---|---|---|
-| **MCP** | Agent ↔ Tools (vertical) | Anthropic → AAIF | Production, 97M+ downloads |
-| **A2A** | Agent ↔ Agent (horizontal) | Google → AAIF | RC v1.0, 100+ partners |
-| **AG-UI** | Agent ↔ User (presentation) | CopilotKit | Growing adoption |
+| **MCP** | Agent ↔ Tools (vertical) | Anthropic → AAIF | Production — verify current adoption |
+| **A2A** | Agent ↔ Agent (horizontal) | Google → AAIF | Maturing — verify current spec version |
+| **AG-UI** | Agent ↔ User (presentation) | CopilotKit | Emerging — verify current status |
 
 An agent uses MCP to access its tools, A2A to collaborate with peer agents, and AG-UI to communicate with users.
 
@@ -368,14 +368,11 @@ Choice depends on trust level, session duration, and compliance requirements.
 
 ### Input/Output Guardrails
 
-```
-Input → [Rule-based filters ~1ms] → [ML classifiers ~10ms] → [LLM validators ~200ms]
-  → Agent Execution →
-Output → [Format validation ~1ms] → [Factuality check ~10ms] → [Safety review ~200ms]
-  → Response
-```
+Same layered defense pattern as general LLM systems — see `references/ai-architecture.md` § Guardrails & Safety for the full diagram and implementation details. Agent-specific additions:
 
-Layer defenses by cost and speed. For real-time chat, consider async monitoring — let the response through immediately but run background checks and flag/retract if needed.
+- **Tool call validation**: Verify tool parameters against schemas before execution. Reject calls that exceed the agent's permission scope.
+- **Action audit trail**: Log every tool invocation with input, output, and the agent's reasoning for choosing that tool.
+- **Escalation triggers**: Define conditions that halt autonomous execution and require human review (e.g., financial transactions above threshold, irreversible deletions).
 
 ---
 
@@ -411,7 +408,7 @@ Is this going to production?
 
 ## 10. Anti-Patterns
 
-**Agent When a Pipeline Will Do**: If steps are predictable and don't depend on intermediate LLM reasoning, a hardcoded pipeline is simpler, faster, cheaper, and more debuggable.
+See also the general AI anti-patterns in `references/ai-architecture.md` § Anti-Patterns — covers shared concerns like "Agent When a Pipeline Will Do" and "Prompt Engineering as Architecture."
 
 **Bag of Agents**: Throwing multiple agents at a problem without structured orchestration. Error amplification makes this worse than a single agent. Every agent added multiplies failure probability.
 
@@ -420,7 +417,5 @@ Is this going to production?
 **Autonomous Everything**: Granting agents full autonomy from day one. Start with human approval for high-risk actions, progressively automate as trust builds from measured accuracy.
 
 **Framework Lock-In**: Choosing an agent framework before understanding the architecture. The harness (infrastructure) matters more than the framework. Evaluate durable execution, observability, and tool integration independently.
-
-**Prompt Engineering as Architecture**: Relying on prompt tweaks to compensate for missing retrieval, poor tool design, or wrong agent pattern. Fix the architecture first — prompts refine behavior, they don't compensate for structural problems.
 
 **Monolithic Context**: Stuffing everything into a single agent's context window instead of using sub-agents, RAG, or memory tiers. Context overflow degrades all capabilities simultaneously.

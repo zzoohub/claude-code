@@ -50,7 +50,7 @@ If the user doesn't specify, use **Rust/Axum + TanStack Start** as the default c
 
 ---
 
-## TypeScript Template
+## Hono Template
 
 **Backend**: Hono on Cloudflare Workers
 - Edge-first, near-zero cold starts, global distribution by default
@@ -105,6 +105,23 @@ If the user doesn't specify, use **Rust/Axum + TanStack Start** as the default c
 - Deploy to Vercel (default) or Cloudflare via OpenNext
 
 **Choose when**: The project depends heavily on React ecosystem libraries with no SolidJS equivalents, the team has deep React expertise, or the product is SEO-critical and content-heavy.
+
+---
+
+## Mobile: React Native (Expo)
+
+Include only when the PRD specifies mobile app requirements.
+
+- **Framework**: React Native with Expo (managed workflow)
+- **Navigation**: Expo Router (file-based routing, deep linking built-in)
+- **Styling**: NativeWind (Tailwind CSS for React Native) or StyleSheet API
+- **State**: Same approach as web frontend (TanStack Query for server state)
+- **Distribution**: EAS Build + EAS Submit for App Store / Play Store
+- **OTA Updates**: EAS Update for instant JS-layer patches without store review
+
+**When to include mobile**: Only when the PRD explicitly requires a native mobile app. A responsive web app (PWA) covers most solopreneur use cases without the overhead of app store review cycles, platform-specific bugs, and dual codebases.
+
+**Architecture implication**: Mobile adds a second API consumer. Design the backend API for multiple clients from the start — consistent auth tokens, appropriate payload sizes, and offline-friendly patterns (optimistic updates, conflict resolution).
 
 ---
 

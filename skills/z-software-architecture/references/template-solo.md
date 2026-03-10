@@ -215,3 +215,7 @@ Before finalizing, check:
 The **"6-Month Test"**: If you come back to this project after 6 months away, can you read this doc and understand the system well enough to start making changes within 10 minutes?
 
 If yes, it's good enough. If not, add clarity where you'd be confused.
+
+## Output
+
+Save to `docs/design-doc.md`.

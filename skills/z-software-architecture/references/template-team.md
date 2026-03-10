@@ -89,7 +89,7 @@ Architecture decisions:
 
 **Stack**: Per the chosen backend + frontend combination from Step 0. See `references/stack-templates.md` for full details.
 
-**Mobile**: React Native (Expo).
+**Mobile** (if PRD includes mobile): React Native (Expo). See `references/stack-templates.md` § Mobile for rationale.
 
 **Rationale**: Explain trade-offs for the system architecture choice. Reference team size, expected scale, operational complexity budget, and data consistency needs.
 
@@ -366,3 +366,9 @@ When the input PRD has companion Phase PRDs (`docs/prd-phase-*.md`):
 ```
 
 If no Phase PRD exists, omit phase tags entirely.
+
+## Output
+
+Save to `docs/design-doc.md`.
+
+Start the document with a **Table of Contents** (linked to each section heading) right after the title. Long design docs are hard to navigate without one.

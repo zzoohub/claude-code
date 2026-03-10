@@ -34,18 +34,32 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ### Step 0 — Intake
 
-Ask all 4 choices below, one at a time, using `AskUserQuestion`. Do not infer or auto-fill.
+Use `AskUserQuestion` for each phase. Do not infer or auto-fill.
 
-- [ ] **Context**: Solo (3-6p decision journal) / Team (10-25p design doc)
-- [ ] **Audience**: Global (Neon, Google OAuth, Stripe) / Korea-first (Supabase Seoul, Kakao/Naver, Toss)
-- [ ] **Backend**: Rust/Axum + Cloud Run / Hono + CF Workers / FastAPI + Cloud Run
-- [ ] **Frontend**: TanStack Start + SolidJS / Next.js (React)
+**Phase 1 — Scope & Audience**
+- [ ] **Document scope**: Solo (3-6p decision journal) / Team (10-25p design doc)
+- [ ] **Target audience**: Global / Region-specific (specify region — e.g., Korea-first, Japan-first, EU-first)
 
-Mark **(Recommended)** based on PRD when presenting each choice.
+**Phase 2 — Requirements Extraction**
+Analyze the PRD and extract architecture-driving requirements:
+- Expected scale (users, requests/sec, data volume)
+- Latency requirements (real-time needs, p99 targets)
+- Consistency model (strong vs eventual, where)
+- Multi-tenancy needs
+- Regulatory/compliance constraints
+- Quality attribute priorities (see `references/design-principles.md` § Quality Attribute Prioritization)
 
-After all 4 resolved, check if anything critical is missing from the PRD:
-- Solo: expected scale, real-time needs, regulatory requirements
-- Team: scale signals, latency, consistency model, real-time, multi-tenancy, regulatory
+Ask the user to confirm or fill gaps. For Solo scope, focus on scale, real-time, and regulatory. For Team scope, cover all items above.
+
+**Phase 3 — Stack Recommendation**
+Based on the requirements analysis, **recommend** a stack combination with trade-off rationale:
+- **Backend**: Rust/Axum + Cloud Run / Hono + CF Workers / FastAPI + Cloud Run
+- **Frontend**: TanStack Start + SolidJS / Next.js (React)
+- **Mobile** (if PRD includes mobile): React Native (Expo)
+
+Mark **(Recommended)** with 1-2 sentence rationale. The user confirms or overrides.
+
+> **Note**: This skill is optimized for the stack combinations above. If the project uses a different stack, apply the same architectural patterns and principles — adjust specific tooling to match the target ecosystem.
 
 ### Step 1 — Write the Design Document
 
@@ -81,20 +95,12 @@ Read the relevant references before making architecture decisions.
 
 **`references/template-team.md`** — Team/enterprise design doc template. Comprehensive, 10-25 pages, with full cross-cutting concerns, ADRs, and compliance sections.
 
-**`references/architecture-patterns.md`** — System architecture decision framework: patterns (request-response, event-driven, CQRS, event sourcing, modular monolith), language selection, composition flowchart, real-world examples, and anti-patterns.
+**`references/architecture-patterns.md`** — System architecture decision framework: patterns (request-response, event-driven, CQRS, event sourcing, modular monolith), language selection, composition flowchart, real-world examples, anti-patterns, and cross-cutting decisions (multi-tenancy, real-time communication, API versioning, feature flags).
 
-**`references/stack-templates.md`** — Technology and infrastructure decisions per stack template (Rust/Axum, Hono, FastAPI, TanStack Start, Next.js), shared services, auth patterns, and region strategy.
+**`references/stack-templates.md`** — Technology and infrastructure decisions per stack template (Rust/Axum, Hono, FastAPI, TanStack Start, Next.js, React Native/Expo), shared services, auth patterns, and region strategy.
 
-**`references/design-principles.md`** — Core architecture principles, production incident patterns, security architecture, and observability patterns. Use during self-review to verify your design.
+**`references/design-principles.md`** — Core architecture principles, production incident patterns, security architecture, observability patterns, and quality attribute prioritization framework. Use during self-review to verify your design.
 
 **`references/ai-architecture.md`** — Read if the PRD includes AI-powered features (LLM generation, RAG, semantic search, copilot, chat). Covers LLM integration tiers, RAG architecture, streaming, vector storage, cost optimization, guardrails, and observability. **Important**: verify current pricing and model capabilities before committing.
 
 **`references/ai-agents.md`** — Read if the system includes autonomous agents, multi-step tool orchestration, or human-in-the-loop workflows. Covers agent patterns, protocols (MCP, A2A, AG-UI), context engineering, durable execution, multi-agent systems, and safety.
-
----
-
-## Output
-
-Save to `docs/design-doc.md`.
-
-Start the document with a **Table of Contents** (linked to each section heading) right after the title. Long design docs are hard to navigate without one.
