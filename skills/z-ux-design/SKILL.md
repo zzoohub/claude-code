@@ -243,6 +243,9 @@ One file per screen or distinct view. Each page file covers:
 
 **When to create a new file vs. add to an existing one:** Each independently navigable screen gets its own file. Modals, drawers, and sheets that belong to a specific screen go in that screen's file. If a flow spans multiple screens, each screen still gets its own file — cross-reference between them.
 
-### File Size Guideline
+### Line Limits
 
-Keep each file under ~1500 lines. If a page file grows beyond this, split sub-sections into child pages (e.g., `settings-profile.md`, `settings-billing.md`).
+Before updating, check the file's line count. If it exceeds the limit, first consolidate — tighten wording, merge redundant content, collapse outdated details — then apply changes.
+
+- `docs/ux-design.md`: **500 lines**
+- `docs/ux/<page-name>.md`: **300 lines** — if a page file exceeds this, split into child pages (e.g., `settings-profile.md`, `settings-billing.md`)

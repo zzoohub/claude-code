@@ -61,6 +61,10 @@ docs/prd-phase-{n}.md    # Phase PRDs (e.g., prd-phase-1.md, prd-phase-2.md)
 
 - If the file already exists, **update it in place**. Do not create separate files per feature.
 - The file should always reflect the latest state.
+- **Line limits:** Before updating, check the file's line count. If it exceeds the limit, first consolidate — merge redundant sections, tighten wording, remove resolved open questions, collapse outdated details into summaries — then apply changes.
+  - `product-brief.md`: **200 lines**
+  - `prd.md`: **800 lines**
+  - `prd-phase-{n}.md`: **300 lines**
 
 ### What You Return to the Main Agent
 

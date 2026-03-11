@@ -160,5 +160,7 @@ An existing product with users and data exists. The goal is to **expand value ba
 
 ## Naming Convention
 
-- Phase scoping: `docs/prd-phase-{n}.md` (e.g., `prd-phase-1.md`, `prd-phase-2.md`)
-- Feature PRDs: `docs/prd-{feature-slug}.md` (e.g., `prd-auth.md`, `prd-teacher-dashboard.md`)
+- `docs/prd.md` — Single canonical PRD. Always update in place.
+- `docs/prd-phase-{n}.md` — Phase PRDs (e.g., `prd-phase-1.md`, `prd-phase-2.md`)
+
+Do NOT create feature-specific files like `prd-auth.md` or `prd-search.md`. All features belong in the single `prd.md`.

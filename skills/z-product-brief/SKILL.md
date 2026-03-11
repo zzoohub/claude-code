@@ -165,8 +165,9 @@ Grounded in evidence, names a specific persona, quantifies the pain.
 
 ## Output
 
-Save to `docs/product-brief.md`.
+Save to `docs/product-brief.md`. Always update this single file in place. Do NOT create feature-specific files like `product-brief-search.md`.
 
 - Default: Markdown
 - If the user has a company template: follow their structure, supplement from this framework
 - Prioritize clarity and brevity over comprehensiveness
+- **200-line limit:** If the file exceeds 200 lines before your update, first consolidate — tighten wording, merge redundant content, remove resolved questions — then apply changes.

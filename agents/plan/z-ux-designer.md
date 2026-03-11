@@ -109,6 +109,10 @@ Output is split into two levels:
 
 If files already exist, **update in place**. Files should always reflect the latest design state.
 
+**Line limits:** Before updating, check the file's line count. If it exceeds the limit, first consolidate — tighten wording, merge redundant content, collapse outdated details — then apply changes.
+- `docs/ux-design.md`: **500 lines**
+- `docs/ux/<page-name>.md`: **300 lines**
+
 ### `docs/ux-design.md` — Application-Level
 
 Contains app-wide UX decisions only:

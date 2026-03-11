@@ -255,11 +255,17 @@ Link to supporting materials (don't inline them):
 
 ## Output Format
 
-1. `docs/prd.md`
-2. `docs/prd-phase-1.md`
+1. `docs/prd.md` — Single canonical file. Always update in place.
+2. `docs/prd-phase-{n}.md` — Phase PRDs derived from the full PRD.
+
+Do NOT create feature-specific files like `prd-auth.md`. All features belong in the single `prd.md`.
 
 Write all in Markdown. Full PRD first, then derive the Phase PRD from it.
 Read `references/prd-phase.md` for the Phase PRD template and scoping principles.
+
+**Line limits:** Before updating, check the file's line count. If it exceeds the limit, first consolidate — merge redundant sections, tighten wording, remove resolved open questions, collapse outdated details — then apply changes.
+- `prd.md`: **800 lines**
+- `prd-phase-{n}.md`: **300 lines**
 
 **Formatting rules:**
 - Start each document with a **Table of Contents** (linked to each section heading) right after the title and metadata. PRDs are long — a TOC makes them navigable.
