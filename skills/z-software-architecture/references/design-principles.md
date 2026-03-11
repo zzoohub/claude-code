@@ -148,9 +148,11 @@ Internal services authenticate to each other. "It's inside our VPC" is not an au
 
 | Pillar | What to Capture | Tool |
 |---|---|---|
-| **Logs** | Structured events (request received, business event, error occurred). Include correlation IDs. | stdout → Cloud Logging / Logpush |
-| **Metrics** | Request rate, error rate, duration (RED method). Resource utilization. Business KPIs. | Prometheus / Cloud Monitoring |
-| **Traces** | End-to-end request path across service boundaries. Latency breakdown by component. | OpenTelemetry → Jaeger / Cloud Trace |
+| **Logs** | Structured events (request received, business event, error occurred). Include correlation IDs. | `console.log()` → Workers Logs (CF) / Logpush → R2 for retention |
+| **Metrics** | Request rate, error rate, duration (RED method). Resource utilization. Business KPIs. | Analytics Engine (CF) for custom metrics / Sentry for error rates |
+| **Traces** | End-to-end request path across service boundaries. Latency breakdown by component. | Workers Automatic Tracing (CF) → Sentry or Honeycomb via OTLP |
+
+See `references/cloudflare-platform.md` § Observability Implementation Guide for detailed setup with code examples.
 
 ### The RED Method (for every service)
 - **R**ate: Requests per second

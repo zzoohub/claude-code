@@ -18,6 +18,7 @@ Architecture patterns, protocols, and infrastructure for LLM-powered autonomous 
 8. [Safety & Guardrails](#8-safety--guardrails)
 9. [Decision Flowchart](#9-decision-flowchart)
 10. [Anti-Patterns](#10-anti-patterns)
+11. [Cloudflare Implementation Bridge](#11-cloudflare-implementation-bridge)
 
 ---
 
@@ -435,3 +436,69 @@ See also the general AI anti-patterns in `references/ai-architecture.md` § Anti
 **Framework Lock-In**: Choosing an agent framework before understanding the architecture. The harness (infrastructure) matters more than the framework. Evaluate durable execution, observability, and tool integration independently.
 
 **Monolithic Context**: Stuffing everything into a single agent's context window instead of using sub-agents, RAG, or memory tiers. Context overflow degrades all capabilities simultaneously.
+
+---
+
+## 11. Cloudflare Implementation Bridge
+
+This section maps the abstract agent patterns above to concrete Cloudflare platform primitives. Read `references/cloudflare-platform.md` for full tech stack details.
+
+### Pattern → CF Service Mapping
+
+| Abstract Pattern (Section 2) | CF Implementation | When |
+|---|---|---|
+| Augmented LLM, Prompt Chaining | Workers + AI Gateway | Stateless, single-request AI features. Most "AI-powered" products start here |
+| Routing, Tool-Use-First | Agents SDK (DO-based) | Stateful tool orchestration with memory, MCP server, scheduling. Zero idle cost via hibernation |
+| Orchestrator-Workers, Plan-and-Execute | Agents SDK + Workflows | Durable multi-step pipelines. Per-step checkpoint, auto-retry, sleep, `waitForEvent`. Long-running agent tasks |
+| Evaluator-Optimizer, Autonomous Agent | LangGraph.js on Workers | Complex graph orchestration where imperative Workflows become unmaintainable. Needs custom DO-backed checkpointer |
+| Multi-Agent (Section 6) | Multiple Agents SDK instances | Each agent is a DO — natural isolation, independent state, communicate via RPC or Queues |
+
+### CF Agents SDK — Core Capabilities
+
+The Agents SDK builds on Durable Objects. Each agent instance is a globally unique DO with:
+
+- **Persistent state**: Built-in KV storage via `this.ctx.storage`. State survives across requests and hibernation
+- **Memory**: Conversation history, learned context — stored in DO storage or Vectorize for semantic retrieval
+- **MCP server**: Expose agent as an MCP server — other agents or tools can discover and invoke it
+- **Scheduling**: `this.schedule()` for deferred actions. Agent can schedule itself to wake up later
+- **Real-time**: WebSocket support for streaming responses to clients. Voice and email triggers
+- **Hibernation**: Zero compute cost when idle. Wakes on incoming request — perfect for agents that wait for user input
+
+### Durable Execution on CF
+
+The abstract durable execution patterns from Section 5 map to CF primitives:
+
+| Abstract Pattern | CF Implementation | Notes |
+|---|---|---|
+| Database checkpointing | Agents SDK DO storage | `this.ctx.storage.put()` — transactional, survives crashes |
+| Node-level (graph-based) | LangGraph.js + custom DO checkpointer | LangGraph expects a checkpointer — implement via DO storage or D1 |
+| Workflow steps | Workflows `step.do()` | Each step is a checkpoint. Auto-retry on failure. `step.sleep()`, `step.waitForEvent()` |
+| Event-history replay | Not available on CF | Use Temporal on Cloud Run if you need exactly-once event sourcing |
+
+### Decision Flow (CF-Specific)
+
+```
+Does the agent need persistent state or memory?
+├── NO → Workers + AI Gateway (stateless AI features)
+└── YES → Continue
+
+Is the task a single conversation / tool-calling session?
+├── YES → Agents SDK (DO-based)
+└── NO → Continue (multi-step pipeline)
+
+Can steps be expressed as a linear pipeline with retry?
+├── YES → Agents SDK + Workflows
+└── NO → Continue (complex orchestration)
+
+Does the orchestration need conditional branching, cycles, or parallel fan-out?
+├── YES → LangGraph.js on Workers (graph-based)
+└── NO → Agents SDK + Workflows is sufficient
+
+Does the agent need Python ML libraries (torch, transformers)?
+├── YES → CF Containers + LangGraph Python (escape hatch)
+└── NO → Stay on Workers
+```
+
+### Vendor Lock-in Note
+
+Agents SDK is CF-only with no portable equivalent. If portability matters, keep agent logic in plain TS functions and use Agents SDK only as the hosting harness. The migration path out is: rewrite DO state management to Redis/PostgreSQL + deploy agent logic on any Node.js runtime.

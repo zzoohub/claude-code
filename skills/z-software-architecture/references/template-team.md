@@ -221,12 +221,10 @@ For each SLO, state: the metric, the threshold, the measurement window, and the 
 - Identified bottlenecks and mitigation
 - Scaling triggers and limits
 
-### 6.7 Accessibility Architecture
+### 6.7 Accessibility (if applicable)
 - **Compliance target**: WCAG 2.1 AA (default) or AAA — state the target and rationale
-- **Semantic HTML & ARIA**: Component-level strategy for screen reader support
-- **Keyboard navigation**: Focus management, skip links, focus trapping in modals
 - **Automated testing**: Axe-core or similar in CI pipeline to catch regressions
-- **Design system integration**: Color contrast, focus indicators, motion preferences (`prefers-reduced-motion`)
+- Component-level accessibility (ARIA, focus management, keyboard navigation) is an implementation concern — note the compliance target here and defer details to the implementation phase
 
 ### 6.8 Data Governance (if applicable)
 Include when the system handles PII, operates in regulated industries, or includes AI/ML features:
@@ -340,32 +338,9 @@ The **"3 AM Test"**: If an on-call engineer gets paged at 3 AM for a production 
 
 If yes, the doc is good enough. If not, it needs more clarity.
 
-## Phase Tagging
+## Phase Tagging (optional)
 
-When the input PRD has companion Phase PRDs (`docs/prd-phase-*.md`):
-
-1. **Write the full document for the complete vision** — do not shrink the architecture to fit a single phase
-2. **Tag sections inline** — append `[Phase 1]`, `[Phase 2]`, `[Phase 3+]` etc. to component headings, ADR titles, and integration points to indicate when each becomes relevant
-3. **Add a Phase Implementation Summary** at the end of the document:
-
-```markdown
-## Phase Implementation Summary
-
-### Phase 1
-- Components: ...
-- Infrastructure: ...
-- Key ADRs: ...
-
-### Phase 2
-- Components: ...
-- New integrations: ...
-
-### Phase 3+
-- Components: ...
-- New integrations: ...
-```
-
-If no Phase PRD exists, omit phase tags entirely.
+If the input PRD has companion Phase PRDs (`docs/prd-phase-*.md`), write the full architecture for the complete vision but tag sections inline with `[Phase 1]`, `[Phase 2]`, etc. to indicate when each component becomes relevant. Add a brief Phase Implementation Summary at the end. If no Phase PRD exists, omit phase tags entirely.
 
 ## Output
 

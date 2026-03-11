@@ -100,12 +100,14 @@ Read the relevant references before making architecture decisions.
 
 **`references/stack-templates.md`** — Platform bundle selection (Cloudflare, Vercel), backend/frontend framework options, shared services, auth patterns, region strategy, and evolution triggers.
 
-**`references/cloudflare-platform.md`** — Detailed Cloudflare bundle tech stack reference with ①② priority rankings per role. Covers compute (Workers, DO, Containers), storage (Neon+Hyperdrive, R2, KV, D1), AI services, platform services, security, observability, and deploy tooling. Read when designing on the Cloudflare bundle.
+**`references/cloudflare-platform.md`** — Detailed Cloudflare bundle tech stack reference with ①② priority rankings per role. Covers compute (Workers, DO, Containers, Agents SDK), storage (Neon+Hyperdrive, R2, KV, D1), AI services, platform services, security, and deploy tooling. Includes a comprehensive **Observability Implementation Guide** with code examples for Sentry on Workers (`withSentry`, `instrumentDurableObjectWithSentry`, `instrumentWorkflowWithSentry`), Workers Automatic Tracing, structured logging (`workers-tagged-logger`), PostHog on Workers, uptime monitoring, alerting, and phased rollout (Day 1 / Growth / Scale). Read when designing on the Cloudflare bundle.
 
 **`references/design-principles.md`** — Core architecture principles, production incident patterns, security architecture, observability patterns, and quality attribute prioritization framework. Use during self-review to verify your design.
 
 **`references/ai-architecture.md`** — Read if the PRD includes AI-powered features (LLM generation, RAG, semantic search, copilot, chat). Covers LLM integration tiers, RAG architecture, streaming, vector storage, cost optimization, guardrails, and observability. **Important**: verify current pricing and model capabilities before committing.
 
-**`references/ai-agents.md`** — Read if the system includes autonomous agents, multi-step tool orchestration, or human-in-the-loop workflows. Covers agent patterns, protocols (MCP, A2A, AG-UI), context engineering, durable execution, multi-agent systems, and safety.
+**`references/ai-agents.md`** — Read if the system includes autonomous agents, multi-step tool orchestration, or human-in-the-loop workflows. Covers agent patterns, protocols (MCP, A2A, AG-UI), context engineering, durable execution, multi-agent systems, safety, and a **Cloudflare implementation bridge** mapping abstract patterns to CF Agents SDK, Workflows, and LangGraph.js.
 
 **`references/operational-patterns.md`** — Practical patterns that almost every production system needs: resilience (timeout budgets, retry, graceful degradation), file upload architecture, background jobs decision framework, payments & webhook reliability, and local development environment setup. Reference when writing the External Services & Resilience section.
+
+**`references/cost-reference.md`** — Service pricing data (free tier + first paid tier) for CF services, Neon, Supabase, Sentry, PostHog, Resend, Stripe, Better Auth, Honeycomb. Includes solopreneur cost scenarios at 100 DAU and 1K DAU. **Last verified March 2026** — verify current rates for cost-sensitive decisions.

@@ -49,7 +49,7 @@ Service --HTTP POST--> LLM Provider API
 **When**: Single provider, single model, low request volume, no fallback needs.
 **Trade-offs**: Simplest to build, but you're coupled to one provider. No automatic fallback, no cost tracking, no caching.
 
-**Our stack**: Rust with `reqwest`. LLM providers expose HTTP APIs — use them directly. For structured request/response handling, `serde` makes JSON serialization type-safe at compile time.
+**Our stack**: Native `fetch` in Hono on Workers. LLM providers expose HTTP APIs — use them directly. Zod for response validation ensures type safety at runtime.
 
 ### Tier 2: LLM Gateway
 
@@ -64,7 +64,9 @@ Service --> LLM Gateway --> Provider A (primary)
 **When**: Multiple models or providers, need automatic failover, want unified cost tracking, or need request/response logging.
 **Trade-offs**: Adds 50-200ms latency per request. Worth it for production reliability.
 
-**Our stack**: Search for current open-source LLM gateway/proxy projects. Look for: unified multi-provider interface, YAML/config-based setup, ability to run as sidecar on Cloud Run. The gateway itself may be Python — that's fine, your calling service remains Rust via HTTP.
+**Our stack**:
+- **CF bundle**: **AI Gateway** (Cloudflare-native). Multi-provider proxy (OpenAI, Anthropic, Bedrock, etc.), caching, rate limiting, cost tracking, fallback routing. Zero setup — just route through `gateway.ai.cloudflare.com`.
+- **Container escape hatch**: Search for current open-source LLM gateway/proxy projects. Look for: unified multi-provider interface, YAML/config-based setup, ability to run as sidecar.
 
 ### Tier 3: Model Cascading
 
@@ -102,7 +104,7 @@ Client --POST /chat--> API Server --SSE stream--> LLM Provider
 ```
 
 **Key decisions**:
-- **Backpressure**: In Rust (Axum), use `axum::response::sse::Sse` with `async-stream` or `futures::Stream`. For raw byte passthrough (proxying LLM SSE directly), use `Body::from_stream(reqwest_response.bytes_stream())`.
+- **Backpressure**: In Hono on Workers, use `c.stream()` or `c.streamSSE()` for SSE responses. For raw byte passthrough (proxying LLM SSE directly), pipe the provider's `ReadableStream` through. In Rust (Axum), use `axum::response::sse::Sse` with `async-stream`.
 - **Structured output streaming**: When the LLM emits structured JSON token-by-token, use a partial JSON parser to render progressive UI updates. This is a hard problem — plan for it if your feature requires structured generation.
 - **Frontend consumption**: Vercel AI SDK (`useChat()`, `useCompletion()`) handles SSE parsing, streaming state, and error recovery out of the box. Despite the name, it has **zero Vercel dependency** — it's an open-source (MIT) library that works on any hosting. For custom implementations without the SDK, use `fetch` + `ReadableStream`.
 - **Timeout budgets**: LLM responses can take 30-60 seconds for long generations. Set Cloud Run request timeout to 300s for LLM-facing endpoints. Standard 60s timeouts will cause truncated responses.
@@ -248,7 +250,9 @@ Standard RED metrics (Rate, Errors, Duration) plus AI-specific metrics:
 - Cache hit rate (if using semantic caching)
 - Retrieval quality (if using RAG): precision@k, relevance score
 
-**Our stack**: PostHog for user-level analytics + Sentry for error tracking (already in stack). For AI-specific observability, search for current open-source LLM observability tools that support: prompt/completion tracing, token usage tracking, cost attribution, and latency monitoring. Prefer tools with an HTTP API so Rust services integrate via `reqwest` without needing a language-specific SDK.
+**Our stack**: PostHog for user-level analytics + Sentry for error tracking (already in stack). For AI-specific observability:
+- **CF bundle**: AI Gateway provides built-in cost tracking, request logging, and caching metrics. Combine with Workers Analytics Engine for custom AI metrics (token usage, TTFT, cost per user).
+- For deeper LLM tracing (prompt/completion traces, quality scoring), search for current open-source LLM observability tools that support HTTP API integration.
 
 **OpenTelemetry**: The OpenLLMetry project extends OTel with GenAI semantic conventions — standardized spans for LLM calls, tool usage, and agent steps. Use this if you're already on OTel and want unified tracing across LLM and non-LLM services.
 

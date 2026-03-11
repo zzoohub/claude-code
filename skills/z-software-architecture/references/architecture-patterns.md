@@ -28,7 +28,9 @@ Client → API Gateway → Service A → Service B → DB
 
 **Who uses it**: Most startups, early-stage products. Stripe's core payment flow is synchronous by design — money movement needs strong consistency.
 
-**Our stack**: Cloud Run + Neon. No additional infra needed. This is the default.
+**Our stack**:
+- **CF bundle**: Workers (Hono) + Neon via Hyperdrive. No additional infra. This is the default.
+- **Container escape hatch**: CF Containers or Cloud Run + Neon pooler endpoint.
 
 ### Event-Driven Architecture (EDA)
 
@@ -48,7 +50,10 @@ Service A ──publishes──▶ Event Broker ──delivers──▶ Service 
 - **Uber**: Real-time pricing, fraud detection, trip state management all event-driven via Kafka + Flink. Exactly-once semantics for financial accuracy.
 - **Slack**: Message delivery, indexing, and notifications propagated as events through Kafka. Events carry full metadata so consumers don't need to query the producer.
 
-**Our stack**: Cloud Run + Neon + **GCP Pub/Sub**. Pub/Sub is serverless, auto-scales, integrates natively with Cloud Run (push subscriptions), and is pay-per-use. Kafka is overkill until you're processing millions of events/sec with complex stream processing needs. For CDC from Neon, enable logical replication + wal2json.
+**Our stack**:
+- **CF bundle**: Workers + Neon + **CF Queues** (fan-out, DLQ, schedule triggers). Queues are Workers-native, pay-per-message, no infra management. For high-throughput multi-consumer, add **Upstash Kafka**.
+- **Container escape hatch**: CF Containers or Cloud Run + **GCP Pub/Sub** (push subscriptions to Cloud Run).
+- For CDC from Neon, enable logical replication + wal2json.
 
 ### CQRS (Command Query Responsibility Segregation)
 
@@ -70,7 +75,10 @@ User Input ──┤                         │
 - **Netflix**: Personalization system — writes capture viewing events, reads serve pre-computed recommendation lists optimized per device type.
 - Financial systems where audit trails (write side) and reporting dashboards (read side) have completely different performance characteristics.
 
-**Our stack**: Cloud Run + Neon (write) + **Neon read replica** (read, denormalized views). For heavier read optimization, project from Neon via logical replication to a separate read-optimized store. Upgrade path: AlloyDB for OLTP+OLAP hybrid if Neon read replicas become insufficient.
+**Our stack**:
+- **CF bundle**: Workers + Neon (write) + **Neon read replica** (read, denormalized views) via Hyperdrive. Workers KV for edge-cached read models (eventual consistency OK).
+- **Container escape hatch**: CF Containers or Cloud Run + Neon read replica via pooler endpoint.
+- Upgrade path: Neon logical replication to a separate read-optimized store if read replicas become insufficient.
 
 ### Event Sourcing
 
@@ -91,7 +99,11 @@ Current state = replay all events (or read from snapshot + recent events)
 
 **Warning**: Event sourcing is powerful but adds substantial complexity. Don't adopt it just because it sounds elegant. Most applications are better served by EDA + a good audit log table.
 
-**Our stack**: Cloud Run + Neon (append-only event tables + snapshot tables) + **Pub/Sub** (event projection/fan-out). Neon's logical replication supports CDC to stream events to downstream consumers. For "event sourcing lite" (audit trail + state reconstruction), Neon alone is sufficient. Upgrade path: GCP Managed Kafka if you need long-term event retention with replay and complex stream processing.
+**Our stack**:
+- **CF bundle**: Workers + Neon (append-only event tables + snapshot tables) + **CF Queues** (event projection/fan-out). For "event sourcing lite" (audit trail + state reconstruction), Neon alone is sufficient.
+- **Container escape hatch**: CF Containers or Cloud Run + Neon + **GCP Pub/Sub** for projection/fan-out.
+- Neon's logical replication supports CDC to stream events to downstream consumers.
+- Upgrade path: Upstash Kafka if you need long-term event retention with replay and complex stream processing.
 
 ### Saga Pattern (Distributed Transactions)
 
@@ -113,7 +125,9 @@ Order Service ──▶ Payment Service ──▶ Inventory Service
 - **Uber**: Trip lifecycle (match rider → assign driver → process payment → rate) is an orchestrated saga.
 - Any e-commerce checkout flow that spans order, payment, and inventory services.
 
-**Our stack**: Cloud Run services + **Pub/Sub** (choreography) or **Cloud Tasks** (orchestration with retries/delays). For simple sequential sagas, Cloud Tasks is lighter than Pub/Sub. For fan-out sagas, Pub/Sub.
+**Our stack**:
+- **CF bundle**: Workers + **CF Workflows** (orchestration with auto-retry, checkpoint, sleep) or **CF Queues** (choreography). Workflows are the natural fit — they provide durable execution with step-level checkpointing.
+- **Container escape hatch**: Cloud Run + **GCP Pub/Sub** (choreography) or **Cloud Tasks** (orchestration with retries/delays).
 
 ### Modular Monolith
 
@@ -139,7 +153,9 @@ One deployable unit, but internally organized into strictly isolated modules wit
 - **Toss** (Korean fintech): Modular monolith with clear module boundaries — team autonomy without microservice operational overhead. Proven at massive scale in Korean market.
 - **Shopify**: Started as a monolith, evolved to modular monolith before selective extraction to services.
 
-**Our stack**: Cloud Run (single service) + Neon. No additional infra. Internal module communication is in-process function calls or in-app event bus. This is the simplest and cheapest configuration.
+**Our stack**:
+- **CF bundle**: Workers (single Hono app) + Neon via Hyperdrive. No additional infra. Internal module communication is in-process function calls or in-app event bus. Simplest and cheapest configuration.
+- **Container escape hatch**: CF Containers (single Rust/Axum service) or Cloud Run + Neon pooler endpoint. Same module pattern, different runtime.
 
 ---
 
@@ -178,24 +194,30 @@ Document your code structure choice as an ADR with rationale.
 
 | Priority | Language | When to Use |
 |---|---|---|
-| **Default** | **Rust (Axum)** | All services unless Python-only libraries are required. Sub-ms response times, 10-30MB memory, near-zero cold starts. Compiler as second reviewer — if it compiles, entire error classes are eliminated. Lower cloud cost (critical for solopreneur economics). |
-| **Exception** | **Python (FastAPI)** | Only when Python-only libraries are physically required: PyTorch, transformers, pandas/numpy heavy pipelines, or SDKs with no Rust equivalent. LLM API calls and agent patterns do NOT require Python -- implement with `reqwest` + `serde` in Rust. LangGraph is justified only when its graph orchestration + LangSmith debugging provide clear value over a Rust implementation. |
+| **Default** | **TypeScript (Hono)** | All Workers and general web services. <4kB, RPC with end-to-end type safety, Workers-first. Fullstack type consistency across Workers, Drizzle, TanStack Start. |
+| **CPU-intensive / Container** | **Rust (Axum)** | CF Containers or Cloud Run. CPU-heavy processing, memory safety critical, maximum performance. Sub-ms response times, 10-30MB memory, minimal cold starts. |
+| **ML-only** | **Python (FastAPI)** | Only when Python-only libraries are physically required: PyTorch, transformers, pandas/numpy heavy pipelines. LLM API calls and agent patterns do NOT require Python — use `fetch` in TS or `reqwest` in Rust. |
 
-### Rust Ecosystem (Recommended)
+### TypeScript Ecosystem (Default)
+- **Web framework**: Hono (Workers-first, <4kB, middleware chaining)
+- **ORM/Query**: Drizzle ORM (type-safe, lightweight, Workers-compatible)
+- **Validation**: Zod (integrated with Hono via `@hono/zod-validator`)
+- **HTTP client**: Native `fetch` (Workers environment)
+- **RPC**: Hono RPC (end-to-end type safety between backend and frontend)
+
+### Rust Ecosystem (Container / CPU-intensive)
 - **Web**: Axum (tower-based, async)
 - **ORM/Query**: SQLx (compile-time checking) or SeaORM
 - **Serialization**: serde + serde_json
 - **Async runtime**: Tokio
 - **HTTP client**: reqwest
 - **Validation**: validator
-- **Config**: config + envy
 
-### Python (FastAPI) Ecosystem (Recommended)
+### Python (FastAPI) Ecosystem (ML workloads only)
 - **ORM**: SQLAlchemy 2.0 (async) + Alembic
 - **Validation**: Pydantic v2 (built into FastAPI)
 - **HTTP client**: httpx (async)
 - **Task queue**: Celery or ARQ (lightweight, Redis-based)
-- **Testing**: pytest + pytest-asyncio + httpx
 
 ---
 
@@ -224,12 +246,18 @@ Is this a single-purpose service or product?
 
 Step 2: Language (Code structure is always Hexagonal)
 ─────────────────────────────────────────────────────
-Are Python-only libraries required? (LangGraph, PyTorch, transformers, etc.)
-├── YES → Python (FastAPI) + Hexagonal
-└── NO  → Rust (Axum) + Hexagonal
+Running on Workers?
+├── YES → TypeScript (Hono) + Hexagonal
+└── NO (Container) →
+    CPU-intensive or memory safety critical?
+    ├── YES → Rust (Axum) + Hexagonal
+    └── NO  → TypeScript (Hono on Node.js) or Rust (Axum)
+
+Python-only ML libraries required? (PyTorch, transformers, etc.)
+├── YES → Python (FastAPI) + Hexagonal (container only)
+└── NO  → Stay with TS or Rust
 
 Note: LLM API calls and agent patterns do NOT require Python.
-Use Rust with reqwest + serde for LLM integration and custom agent loops.
 ```
 
 ---
@@ -267,7 +295,9 @@ Client --> Facade/Router
 
 **Who uses it**: Shopify (monolith extraction), Amazon (from monolith to SOA), Airbnb (SOA migration by domain boundary).
 
-**Our stack**: Cloudflare Workers as the routing facade (path-based routing to Cloud Run services). Or within a modular monolith, use feature flags to switch between old and new module implementations.
+**Our stack**:
+- **CF bundle**: Workers as the routing facade (path-based routing to Workers or CF Containers). Within a modular monolith, use feature flags (PostHog + KV) to switch between old and new module implementations.
+- **Container escape hatch**: Workers routing facade → Cloud Run services for backend migration.
 
 ### Backend-for-Frontend (BFF)
 
@@ -284,7 +314,7 @@ Mobile App --> Mobile BFF --> Backend Services
 
 **Who uses it**: Netflix (per-device BFFs), SoundCloud (pioneered the pattern), Spotify.
 
-**Our stack**: For most products, a single API with response field selection (sparse fieldsets or GraphQL) is simpler than maintaining separate BFFs. Consider BFF only when the divergence between clients is substantial.
+**Our stack**: For solopreneur products, a single API (Hono on Workers) with response field selection is simpler than maintaining separate BFFs. Consider BFF only when web and mobile clients have substantially different data needs.
 
 ### Cell-based Architecture
 
@@ -303,7 +333,7 @@ Partition the system into independent, self-contained cells. Each cell serves a 
 
 **Who uses it**: AWS (all major services are cell-based internally), DoorDash, Slack.
 
-**Our stack**: Overkill for most single-product systems. Consider when your system grows to multi-tenant with strict isolation requirements or SLA commitments that demand blast radius containment.
+**Our stack**: Overkill for solopreneur products. Consider when your system grows to multi-tenant with strict isolation requirements or SLA commitments that demand blast radius containment. Workers for Platforms provides a lightweight form of cell-based isolation for B2B use cases.
 
 ### Event Lakehouse
 
@@ -319,7 +349,9 @@ App events → Queue/Stream → Transform → Object Storage (Parquet/Iceberg) �
 **Trade-offs**: Query latency higher than a dedicated warehouse (seconds, not milliseconds). Not for real-time dashboards.
 **Choose when**: You need analytics beyond what PostHog provides, data volume grows past what a Postgres materialized view handles comfortably, or you want a unified data lake for multiple consumers.
 
-**Our stack**: CF Pipelines + R2 (Parquet/Iceberg via R2 Data Catalog) + R2 SQL for petabyte-scale analytics. For GCP: Cloud Storage + BigQuery. The key insight is that object storage is the new data warehouse — Parquet on R2/S3 is durable, cheap, and queryable.
+**Our stack**:
+- **CF bundle**: Pipelines + R2 (Parquet/Iceberg via R2 Data Catalog) + R2 SQL for petabyte-scale analytics. Zero egress. The key insight is that object storage is the new data warehouse — Parquet on R2 is durable, cheap, and queryable.
+- **Container escape hatch**: Cloud Storage + BigQuery on GCP.
 
 ---
 

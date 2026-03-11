@@ -52,6 +52,91 @@ Framework choice is independent of bundle. Pick based on workload, not platform.
 
 ---
 
+## Monorepo Structure
+
+Solopreneur projects use a **monorepo always** — one repo, multiple packages. Keeps deployment simple, enables code sharing, and avoids cross-repo dependency hell.
+
+### Bun Workspaces
+
+Use **bun workspaces** for package linking. No Turborepo or Nx — they add build orchestration overhead that a solo developer doesn't need. Bun's native workspace support handles dependency resolution and linking.
+
+```jsonc
+// package.json (root)
+{
+  "private": true,
+  "workspaces": ["packages/*"]
+}
+```
+
+**Typical structure**:
+```
+project/
+├── package.json              # root — workspaces config
+├── packages/
+│   ├── api/                  # Hono backend (Workers)
+│   │   ├── package.json
+│   │   ├── wrangler.jsonc
+│   │   └── src/
+│   ├── web/                  # TanStack Start + SolidJS (or Next.js)
+│   │   ├── package.json
+│   │   └── src/
+│   └── shared/               # Shared types, utils, validation schemas
+│       ├── package.json
+│       └── src/
+```
+
+**Cross-package imports**: Reference workspace packages by name in `package.json` dependencies:
+```jsonc
+// packages/web/package.json
+{
+  "dependencies": {
+    "@project/shared": "workspace:*",
+    "@project/api": "workspace:*"    // for Hono RPC client type
+  }
+}
+```
+
+**Wrangler runs on Node, not Bun**: Wrangler uses Node-specific APIs internally. Run `npx wrangler` (or `bunx wrangler`) — both invoke Node. Don't `bun run wrangler` directly. All other scripts (`bun test`, `bun run dev`) work with Bun.
+
+### Hono RPC (End-to-End Type Safety)
+
+Hono RPC provides type-safe API calls between backend and frontend without code generation. The backend exports its `AppType`, and the frontend uses `hc<AppType>()` to get a fully typed client.
+
+**Backend** — export the app type:
+```typescript
+// packages/api/src/index.ts
+const app = new Hono()
+  .get('/users/:id', async (c) => {
+    const user = await getUser(c.req.param('id'));
+    return c.json(user);
+  })
+  .post('/users', zValidator('json', createUserSchema), async (c) => {
+    const data = c.req.valid('json');
+    return c.json(await createUser(data), 201);
+  });
+
+export type AppType = typeof app;
+```
+
+**Frontend** — import the type, get autocomplete:
+```typescript
+// packages/web/src/api.ts
+import { hc } from 'hono/client';
+import type { AppType } from '@project/api';
+
+const client = hc<AppType>('https://api.example.com');
+
+// Fully typed — route params, request body, response shape
+const user = await client.users[':id'].$get({ param: { id: '123' } });
+const created = await client.users.$post({ json: { name: 'Alice' } });
+```
+
+**Why this matters**: No OpenAPI spec generation, no codegen step, no drift between backend and frontend types. Changes to API routes produce instant TypeScript errors in the frontend. This is the primary reason to use Hono over other frameworks in a monorepo.
+
+**Limitation**: Hono RPC only works when both backend and frontend are TypeScript in the same monorepo. For mobile (React Native) or external consumers, expose a standard REST API alongside RPC.
+
+---
+
 ## Cloudflare Bundle
 
 Default bundle. All services from one platform.
@@ -85,8 +170,8 @@ For Next.js + Supabase projects. Korea-first or React-ecosystem-heavy products.
 ### Why This Bundle Exists
 - Next.js is first-class on Vercel — OpenNext on CF has friction
 - Supabase Seoul region — lowest latency for Korean users
-- Supabase Auth with Kakao/Naver/Google OAuth built-in — no custom implementation
 - Supabase Realtime — chat, notifications, live updates bundled
+- Better Auth handles auth the same way as CF bundle — unified auth experience
 
 ### Stack
 
@@ -95,7 +180,7 @@ For Next.js + Supabase projects. Korea-first or React-ecosystem-heavy products.
 | Compute | Vercel Functions | Serverless (Node.js) + Edge Runtime |
 | Frontend | Next.js App Router | SSR/SSG/ISR. Server Components + Server Actions |
 | DB | Supabase PostgreSQL | Seoul region available. Free tier: 2 projects, 500MB |
-| Auth | Supabase Auth | Kakao, Naver, Google OAuth built-in. No MAU billing on free tier |
+| Auth | Better Auth | TS-native, stores in Supabase DB. Kakao, Naver, Google via plugins. No MAU billing |
 | Storage | Supabase Storage | S3-compatible. Direct client uploads via signed URLs |
 | Realtime | Supabase Realtime | WebSocket subscriptions. Presence, broadcast, DB changes |
 | Cache | Vercel KV | Upstash Redis under the hood. Session, rate limit |
@@ -116,7 +201,7 @@ For Next.js + Supabase projects. Korea-first or React-ecosystem-heavy products.
 | Container compute | CF Containers (native) | None — need Cloud Run escape hatch |
 | DB flexibility | Neon (any region) + Hyperdrive | Supabase (Seoul, Virginia, Frankfurt, etc.) |
 | Realtime | Durable Objects (custom build) | Supabase Realtime (batteries-included) |
-| Auth | Better Auth (custom, flexible) | Supabase Auth (batteries-included, Kakao/Naver) |
+| Auth | Better Auth (unified across bundles) | Better Auth (same — unified) |
 | AI services | Workers AI, AI Gateway, Vectorize | None native — use external APIs |
 | Pricing model | Pay-per-request, predictable | Function invocations + bandwidth |
 
@@ -175,7 +260,7 @@ Choose based on target audience and bundle:
 ### Supabase — Vercel bundle / Korea-first default
 
 - PostgreSQL on AWS ap-northeast-2 (Seoul) — lowest latency for Korean users
-- Bundled: Auth (Kakao/Naver built-in), Realtime, Storage
+- Bundled: Realtime, Storage (use Better Auth for auth — unified across bundles)
 - Free tier: 2 active projects, 500MB DB, 1GB storage
 - Trade-off: no branching (use migrations), less granular scale-to-zero than Neon
 
@@ -191,12 +276,12 @@ Choose based on the product's audience:
 |---|---|---|
 | **Global B2C** | Google OAuth2 + self-issued JWT | Widest reach, lowest friction |
 | **Korea B2C** | Kakao OAuth2 (primary) + Naver + Google | Kakao dominates Korean market |
-| **B2B / SaaS** | Email magic link or SSO (OIDC/SAML) | Enterprise expects SSO |
+| **B2B / SaaS** | Email magic link | Keep it simple for solopreneur B2B |
 | **Internal tools** | Google Workspace OAuth2 | Single-click for team members |
 
-**Implementation by bundle**:
-- **Cloudflare**: Better Auth (TS-native, D1/Neon as auth DB, no MAU billing)
-- **Vercel**: Supabase Auth (Kakao/Naver built-in, no custom implementation)
+**Implementation**: **Better Auth** (TS-native) for all bundles and scenarios. Open-source, no MAU billing, stores auth data directly in your DB (Neon/D1). Supports social providers (Google, Kakao, Naver, GitHub, etc.) via plugins. Runs on the TanStack Start server — no separate auth service needed.
+
+**Exception**: For Rust container backends without a TS frontend server, use **Clerk** (managed, HTTP API) or implement auth directly with the provider's OAuth2 flow + JWT verification.
 
 **Token strategy** (all scenarios):
 - Access token: short-lived (15min), in memory or Authorization header

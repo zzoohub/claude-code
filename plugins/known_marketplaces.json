@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-03-11T15:17:54.802Z",
+    "lastUpdated": "2026-03-11T17:30:24.325Z",
     "autoUpdate": true
   },
   "expo-plugins": {
@@ -50,7 +50,7 @@
       "repo": "neondatabase-labs/ai-rules"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/neon",
-    "lastUpdated": "2026-03-11T15:13:54.014Z",
+    "lastUpdated": "2026-03-11T17:20:02.874Z",
     "autoUpdate": true
   }
 }
