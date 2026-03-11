@@ -88,3 +88,47 @@ Most services stay within free tiers at this scale.
 - **CF AI Gateway**: Unified Billing launched — pay third-party model usage on CF invoice
 - **PostHog**: Free survey responses increased 250 → 1,500/mo. Added error tracking (100K free)
 - **Sentry**: Aug 2025 restructured base quotas. Added Sentry Logs product
+
+---
+
+## AI / LLM API Costs
+
+Pricing varies dramatically across model tiers. **Always verify current pricing** — providers update rates frequently, often with significant reductions.
+
+### Cost Tiers (approximate ranges)
+
+| Tier | Input (per 1M tokens) | Output (per 1M tokens) | Examples | Use Case |
+|---|---|---|---|---|
+| **Frontier** | $10-20 | $30-80 | Claude Opus, GPT-4.5, Gemini Ultra | Complex reasoning, research, multi-step agents |
+| **Balanced** | $2-5 | $8-20 | Claude Sonnet, GPT-4o, Gemini Pro | Default for most production features |
+| **Fast/Cheap** | $0.10-1.00 | $0.25-5.00 | Claude Haiku, GPT-4o-mini, Gemini Flash | Classification, extraction, high-volume tasks |
+| **Embedding** | $0.01-0.10 | N/A | text-embedding-3-small/large, Cohere embed | RAG, semantic search, similarity |
+| **Edge inference** | Per-neuron pricing | Varies | CF Workers AI | Low-latency edge inference, no external API call |
+
+### Monthly Cost Estimation
+
+Formula: `monthly_cost = (avg_input_tokens + avg_output_tokens) × requests_per_day × 30 × price_per_token`
+
+| Scenario | Model Tier | Requests/Day | Avg Tokens (in+out) | Est. Monthly Cost |
+|---|---|---|---|---|
+| Light AI feature (classification) | Fast | 500 | 500 | $1-5 |
+| Chat / copilot (moderate use) | Balanced | 1,000 | 2,000 | $50-150 |
+| RAG Q&A (knowledge base) | Balanced | 2,000 | 3,000 | $100-400 |
+| Content generation (heavy) | Balanced | 5,000 | 4,000 | $300-1,000 |
+| Agent workflows (complex) | Frontier | 500 | 10,000 | $200-800 |
+
+### Cost Optimization Impact
+
+| Strategy | Typical Reduction | Effort |
+|---|---|---|
+| Model cascading (cheap model first) | 70-87% | Medium |
+| Semantic caching | 30-70% | Medium |
+| Prompt optimization (trim context) | 15-30% | Low |
+| Batch API (non-real-time) | ~50% | Low |
+
+### Key Cost Traps
+
+- **Long system prompts**: A 4,000-token system prompt on every request at 10K req/day = 1.2B input tokens/month
+- **Vision/multimodal**: Image tokens cost 10-50x text. Resize images before sending
+- **Agent loops**: An agent taking 15 tool-call steps uses 15x the tokens of a single call. Set step limits
+- **Embedding re-indexing**: Re-embedding entire corpus on model change. Plan embedding model switches carefully

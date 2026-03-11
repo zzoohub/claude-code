@@ -222,3 +222,124 @@ Workflow.step("notify")    → Send confirmation
 - **Stripe CLI**: `stripe listen --forward-to localhost:PORT/webhooks` for local webhook testing.
 - **Hot reload**: Vite dev server (frontend), `wrangler dev` (Workers). Optimize for sub-second feedback.
 - **Wrangler dev**: `wrangler dev` for Workers local development with bindings (KV, R2, D1, DO). Use `--remote` flag to test against real services.
+
+---
+
+## Caching Architecture
+
+### Caching Patterns
+
+| Pattern | How It Works | When to Use |
+|---|---|---|
+| **Cache-Aside (Lazy Loading)** | App checks cache → miss → read from DB → write to cache → return | Default. Read-heavy workloads. App controls cache population |
+| **Write-Through** | App writes to cache AND DB on every write. Reads always hit cache | When cache consistency matters more than write latency |
+| **Write-Behind (Write-Back)** | App writes to cache, cache asynchronously syncs to DB | High write throughput. Risk: data loss if cache crashes before sync |
+| **Read-Through** | Cache itself loads from DB on miss (cache acts as proxy) | When you want the cache layer to own data loading logic |
+| **Refresh-Ahead** | Cache proactively refreshes entries before TTL expires | Predictable access patterns, latency-sensitive reads |
+
+**Default**: Cache-aside. Simple, explicit, and you control exactly what gets cached.
+
+### Cache Invalidation
+
+| Strategy | How It Works | Trade-offs |
+|---|---|---|
+| **TTL-based** | Set expiry time, accept staleness within window | Simple. Good enough when seconds-old data is acceptable |
+| **Event-driven** | Invalidate on write events (DB trigger, app event, webhook) | Consistent but requires event infrastructure |
+| **Versioned keys** | Include version/hash in cache key, new version = new key | No explicit invalidation needed. Old entries expire naturally via TTL |
+
+### Stampede Prevention
+
+When a popular cache entry expires, many concurrent requests hit the DB simultaneously (thundering herd). Solutions:
+
+- **Lock-based recomputation**: First request acquires a lock, recomputes, others wait. Use distributed lock (Redis `SET NX`) for multi-instance
+- **Stale-while-revalidate**: Serve stale data while one request refreshes in the background. Best UX — users never see a cache miss
+- **Probabilistic early expiration**: Each request has a small random chance of refreshing before TTL. Spreads recomputation over time
+
+### Our Stack (CF Bundle)
+
+| Layer | Service | Consistency | Best For |
+|---|---|---|---|
+| **Edge (global)** | KV | Eventually consistent (~60s propagation) | Config, feature flags, static data, public content |
+| **Edge (per-request)** | Workers Cache API | Per-PoP, no global sync | HTML fragments, API response caching, CDN-like behavior |
+| **Connection-level** | Hyperdrive query cache | Automatic, connection-scoped | Repeated identical DB queries within request lifecycle |
+| **Application-level** | Upstash Redis | Strongly consistent | Sessions, rate limiting, counters, leaderboards, real-time data |
+
+**Decision flow**:
+```
+Is the data public or rarely changes?
+├── YES → KV (60s eventual consistency OK)
+└── NO  →
+    Is strong consistency required?
+    ├── YES → Upstash Redis
+    └── NO  →
+        Is it per-request/per-page caching?
+        ├── YES → Workers Cache API (per-PoP)
+        └── NO  → Upstash Redis (shared state)
+```
+
+**What NOT to cache**: Auth tokens/sessions in KV (eventual consistency = security risk), data that changes per-request, anything where stale data causes financial or safety issues.
+
+---
+
+## Rate Limiting Architecture
+
+### Algorithm Selection
+
+| Algorithm | How It Works | Trade-offs |
+|---|---|---|
+| **Fixed Window** | Count requests per time window (e.g., 100/min). Reset at boundary | Simple. Burst at window edges (up to 2x limit across boundaries) |
+| **Sliding Window Log** | Track timestamp of each request, count within sliding window | Precise. Memory-heavy at high volume |
+| **Sliding Window Counter** | Weighted blend of current and previous window counts | Good precision, low memory. Best general-purpose choice |
+| **Token Bucket** | Bucket fills at steady rate, each request consumes a token | Allows controlled bursts. Natural rate smoothing |
+| **Leaky Bucket** | Requests queue and process at fixed rate | Strict enforcement, no bursts. Good for downstream protection |
+
+**Default**: Sliding window counter — good balance of precision and resource usage. Use token bucket when you want to allow controlled bursts (API rate limits for external consumers).
+
+### Rate Limit Dimensions
+
+| Dimension | When to Use | Evasion Risk |
+|---|---|---|
+| **IP address** | Unauthenticated endpoints, public APIs | High — proxies, VPNs, shared IPs |
+| **User/API key** | Authenticated endpoints | Low — tied to account |
+| **Tenant/org** | Multi-tenant SaaS | Low — tied to billing entity |
+| **Endpoint** | Expensive operations (search, AI, exports) | Combine with user dimension |
+| **Composite** (user + endpoint) | Granular control per operation | Most flexible, most complex |
+
+**Layered approach**: Apply multiple limits simultaneously — global (per IP), per user, and per endpoint. The tightest limit wins.
+
+### Response Convention
+
+Return rate limit state in headers so clients can self-regulate:
+
+```
+RateLimit-Limit: 100
+RateLimit-Remaining: 42
+RateLimit-Reset: 1678886400
+Retry-After: 30          (only on 429 responses)
+```
+
+Return `429 Too Many Requests` with a clear error message and `Retry-After` header.
+
+### Our Stack (CF Bundle)
+
+| Layer | Service | Scope | Notes |
+|---|---|---|---|
+| **Edge (DDoS/WAF)** | CF WAF Rate Limiting Rules | Per IP, path, headers | Built-in, no code. First line of defense |
+| **Application (simple)** | Hono rate-limit middleware + KV | Per user/key | KV for distributed counter. Eventually consistent — OK for rate limiting |
+| **Application (precise)** | Upstash Redis + `@upstash/ratelimit` | Per user/key/endpoint | Strongly consistent. Sliding window built-in. Best for paid API tiers |
+| **AI-specific** | AI Gateway rate limiting | Per model, per user | Built-in per-provider rate limiting and quota management |
+
+**Decision flow**:
+```
+Is it DDoS / bot protection?
+├── YES → CF WAF Rate Limiting Rules (no code, edge-level)
+└── NO  →
+    Is it API tier enforcement (free: 100/hr, pro: 10K/hr)?
+    ├── YES → Upstash Redis (precise, per-user tracking)
+    └── NO  →
+        Is it basic abuse prevention?
+        ├── YES → Hono middleware + KV (simple, low cost)
+        └── NO  → Combine layers as needed
+```
+
+**Cost-aware tip**: At solopreneur scale, CF WAF rate limiting + a simple KV counter covers most needs. Add Upstash Redis only when you need precise per-user enforcement for paid API tiers.

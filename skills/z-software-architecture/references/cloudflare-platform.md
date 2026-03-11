@@ -12,9 +12,9 @@ Read this when designing a system on the Cloudflare bundle. For bundle selection
 |---|---|---|---|
 | Language | ① | TypeScript | Default for all web services. Type consistency across Workers, Hono, Drizzle |
 | Language | ② | Rust | CPU-intensive or memory-safety-critical. workers-rs + Axum for Workers deploy |
-| Client (fullstack) | ① | TanStack Start + SolidJS (External) | Fine-grained reactivity, minimal bundles, Workers binding friendly |
-| Client (content-first) | ① | Astro (External) | Islands architecture, static-first. Blog/marketing pages. CF Workers adapter native |
-| Client (React ecosystem) | ③ | Next.js (External) | Max ecosystem. OpenNext for Workers deploy — overhead vs CF-native options |
+| Client (fullstack, React) | ① | Next.js (External) | Largest ecosystem, broadest talent pool. OpenNext for Workers deploy, native on Vercel |
+| Client (fullstack, perf) | ① | TanStack Start + SolidJS (External) | Fine-grained reactivity, minimal bundles, Workers binding friendly |
+| Client (content-first) | ② | Astro (External) | Islands architecture, static-first. Blog/marketing pages. CF Workers adapter native |
 | Server (Workers) | ① | Hono TS (CF) | <4kB, middleware chaining, RPC, Workers-first |
 | Server (Workers) | ② | workers-rs + Axum (CF) | CPU-intensive API/parsing. Memory safety required |
 | Server (Container) | ① | Rust/Axum | Minimal cold start. Default for CF Containers |

@@ -86,6 +86,8 @@ Architecture decisions made today will face requirements that don't exist yet. R
 
 ## Lessons from Production Incidents
 
+These patterns help you recognize architectural pitfalls during design. For implementation-level solutions (timeout budgets, retry policies, graceful degradation), see `references/operational-patterns.md`.
+
 ### The N+1 Query Problem (Common at Every Scale)
 **Pattern**: ORM loads a list of entities, then lazily loads related entities one-by-one.
 **Impact**: A page that should make 2 queries makes 200.
@@ -146,13 +148,13 @@ Internal services authenticate to each other. "It's inside our VPC" is not an au
 
 ### The Three Pillars, Applied
 
-| Pillar | What to Capture | Tool |
+| Pillar | What to Capture | Architecture Decision |
 |---|---|---|
-| **Logs** | Structured events (request received, business event, error occurred). Include correlation IDs. | `console.log()` → Workers Logs (CF) / Logpush → R2 for retention |
-| **Metrics** | Request rate, error rate, duration (RED method). Resource utilization. Business KPIs. | Analytics Engine (CF) for custom metrics / Sentry for error rates |
-| **Traces** | End-to-end request path across service boundaries. Latency breakdown by component. | Workers Automatic Tracing (CF) → Sentry or Honeycomb via OTLP |
+| **Logs** | Structured events (request received, business event, error occurred). Include correlation IDs. | Structured JSON to stdout. Platform handles aggregation and retention |
+| **Metrics** | Request rate, error rate, duration (RED method). Resource utilization. Business KPIs. | Instrument at service boundaries. Custom metrics for business KPIs |
+| **Traces** | End-to-end request path across service boundaries. Latency breakdown by component. | OpenTelemetry-compliant spans. Export to observability backend via OTLP |
 
-See `references/cloudflare-platform.md` § Observability Implementation Guide for detailed setup with code examples.
+For platform-specific implementation (tool selection, setup, code examples, phased rollout), see `references/cloudflare-platform.md` § Observability Implementation Guide.
 
 ### The RED Method (for every service)
 - **R**ate: Requests per second

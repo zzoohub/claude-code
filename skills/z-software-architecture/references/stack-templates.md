@@ -10,7 +10,7 @@ Choose one bundle per project. Backend framework choice is independent of bundle
 
 | Bundle | Compute | Frontend | DB | Choose When |
 |---|---|---|---|---|
-| **Cloudflare** (default) | Workers + CF Containers | TanStack Start + SolidJS | Neon + Hyperdrive | Edge-first, global low-latency, TS fullstack, unified CF infra |
+| **Cloudflare** (default) | Workers + CF Containers | Next.js / TanStack Start | Neon + Hyperdrive | Edge-first, global low-latency, TS fullstack, unified CF infra |
 | **Vercel** | Vercel Functions | Next.js (React) | Supabase | Content-heavy, SEO, React ecosystem, Korea-first (Supabase Seoul) |
 
 **GCP Cloud Run** = escape hatch when CF Containers can't do it (GPU, Vertex AI, GCP-only integrations).
@@ -44,11 +44,15 @@ Framework choice is independent of bundle. Pick based on workload, not platform.
 
 ## Frontend Options
 
+Frontend choice is independent of backend bundle. Pick based on team expertise and project needs.
+
 | Frontend | Deploy To | Choose When |
 |---|---|---|
-| **TanStack Start + SolidJS** (default) | CF Workers | Fine-grained reactivity, minimal bundles, Workers binding friendly |
+| **Next.js (React)** | Vercel (native) / CF Workers (OpenNext) | Largest ecosystem, broadest talent pool, mature patterns. Default when team has React experience or project needs extensive third-party integrations |
+| **TanStack Start + SolidJS** | CF Workers | Fine-grained reactivity, minimal bundles, Workers-native deploy. Choose when bundle size and runtime performance are priorities and team is comfortable with smaller ecosystem |
 | **Astro** | CF Workers adapter | Content-first, Islands architecture. Blog/marketing/docs pages |
-| **Next.js (React)** | Vercel (default) | React ecosystem, SEO-critical content-heavy product, team has React expertise |
+
+**Default guidance**: If unsure, **Next.js** is the safer choice — the ecosystem advantage (component libraries, tutorials, hiring) outweighs the performance edge of SolidJS for most products. Choose TanStack Start + SolidJS when you're building a highly interactive app where fine-grained reactivity and small bundle size are meaningful differentiators.
 
 ---
 

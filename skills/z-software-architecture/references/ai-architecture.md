@@ -12,12 +12,13 @@ Architecture patterns for systems that integrate Large Language Models. Use this
 2. [Streaming Architecture](#2-streaming-architecture) — SSE, backpressure, frontend consumption
 3. [RAG (Retrieval-Augmented Generation)](#3-rag-retrieval-augmented-generation) — When to use, tiers, vector storage, chunking, embeddings
 4. [Agent Architecture](#4-agent-architecture) — Patterns, Rust-first implementation, state management, MCP
-5. [Cross-Cutting Concerns for AI Systems](#5-cross-cutting-concerns-for-ai-systems) — Cost, guardrails, observability, prompt management
-6. [AI Testing & Evaluation](#6-ai-testing--evaluation) — RAG quality, agent reliability, prompt regression, EDD
-7. [Fine-Tuning Decision Framework](#7-fine-tuning-decision-framework) — When to fine-tune vs. prompt engineer vs. RAG
-8. [Model Lifecycle Management](#8-model-lifecycle-management) — Migration strategy, data flywheel
-9. [AI Architecture Decision Flowchart](#9-ai-architecture-decision-flowchart)
-10. [Anti-Patterns](#10-anti-patterns)
+5. [Multimodal Architecture](#5-multimodal-architecture) — Vision, audio/speech, multimodal RAG, output generation
+6. [Cross-Cutting Concerns for AI Systems](#6-cross-cutting-concerns-for-ai-systems) — Cost, guardrails, observability, prompt management
+7. [AI Testing & Evaluation](#7-ai-testing--evaluation) — RAG quality, agent reliability, prompt regression, EDD
+8. [Fine-Tuning Decision Framework](#8-fine-tuning-decision-framework) — When to fine-tune vs. prompt engineer vs. RAG
+9. [Model Lifecycle Management](#9-model-lifecycle-management) — Migration strategy, data flywheel
+10. [AI Architecture Decision Flowchart](#10-ai-architecture-decision-flowchart)
+11. [Anti-Patterns](#11-anti-patterns)
 
 ---
 
@@ -199,7 +200,87 @@ Choose based on your scale and existing infrastructure:
 
 ---
 
-## 5. Cross-Cutting Concerns for AI Systems
+## 5. Multimodal Architecture
+
+When the system processes or generates images, audio, video, or documents beyond plain text. Multimodal adds distinct architectural concerns: larger payloads, specialized preprocessing, different latency profiles, and storage requirements.
+
+### Input Modalities
+
+| Modality | Architecture Pattern | Key Decisions |
+|---|---|---|
+| **Vision (images)** | Presigned upload → preprocess → LLM vision API | Max image size, resize before API call (cost/latency), format conversion |
+| **Documents (PDF, DOCX)** | Upload → extract text/structure → process as text | Extraction approach: OCR vs structured parsing vs multimodal LLM. Layout-aware extraction for tables/forms |
+| **Audio/Speech** | Upload or stream → STT → process text → TTS (optional) | Real-time vs batch, streaming STT for live input, language detection, speaker diarization |
+| **Video** | Upload → extract frames + audio track → process separately | Frame sampling rate, keyframe extraction, parallel audio/visual analysis |
+
+### Vision Integration
+
+Most common multimodal pattern. Two approaches:
+
+**Direct vision API**: Send image + text prompt to a multimodal LLM (Claude, GPT-4o). Simple, handles most use cases.
+
+```
+Client → upload image → API → multimodal LLM (image + prompt) → response
+```
+
+**Pipeline with preprocessing**: When you need structured extraction, OCR validation, or cost optimization.
+
+```
+Client → upload image → resize/optimize → specialized model (OCR/detection)
+                                        → multimodal LLM (complex reasoning only)
+                                        → merge results → response
+```
+
+**Cost consideration**: Vision API calls cost significantly more than text-only (image tokens are expensive). For high-volume image processing, preprocess with cheaper specialized models (OCR, object detection) and send only extracted data to the LLM for reasoning.
+
+### Audio/Speech Architecture
+
+**Speech-to-Text (STT)**:
+- **Batch**: Upload audio file → STT API → text. Simple, higher latency
+- **Streaming**: WebSocket audio stream → streaming STT → real-time text. Required for voice interfaces and live transcription
+- Provider options: Whisper API, Deepgram, AssemblyAI, CF Workers AI (Whisper models). Verify current pricing and accuracy benchmarks
+
+**Text-to-Speech (TTS)**:
+- Generate audio from LLM output for voice interfaces
+- **Streaming TTS**: Generate audio chunks as text streams in — critical for conversational UX
+- Cache commonly generated phrases to reduce cost and latency
+
+**Voice agents**: Combine streaming STT → LLM → streaming TTS for real-time voice conversation. Latency budget is tight (~500ms total round-trip for natural feel). Consider WebRTC for lowest latency transport.
+
+**Our stack**: CF Agents SDK supports voice triggers natively. For custom voice pipelines, Workers + WebSocket for streaming, R2 for audio storage.
+
+### Multimodal RAG
+
+Extending RAG (Section 3) to handle non-text content:
+
+| Content Type | Indexing Strategy | Retrieval |
+|---|---|---|
+| **Images in documents** | Extract description with multimodal LLM, embed the description | Text query matches image descriptions |
+| **Diagrams/charts** | Multimodal LLM generates structured description + data extraction | Text or structured query |
+| **Audio/video** | Transcribe → chunk → embed transcription. Store timestamps for seeking | Text query, return with timestamp references |
+| **Mixed documents** | Process each modality separately, link via document ID | Unified query across modalities |
+
+**Key insight**: Most multimodal RAG works by converting non-text content into text representations for embedding. True multimodal embeddings (CLIP-style) are useful for image-to-image similarity but add complexity. Start with text-based indexing of multimodal content.
+
+### Output Modalities
+
+| Output | Architecture | Considerations |
+|---|---|---|
+| **Image generation** | Text prompt → image model API → store result | Async generation (2-30s), progress indication, R2 for storage |
+| **Audio generation (TTS)** | Text → TTS API → audio stream/file | Streaming for real-time, batch for pre-generation |
+| **Document generation** | LLM generates structured content → render to PDF/DOCX | Template-based rendering, not LLM-generated binary |
+
+### Multimodal Anti-Patterns
+
+**Sending raw high-res images to LLMs**: Resize to the minimum resolution the model needs. A 4000x3000 image costs 10x more tokens than 1000x750 with negligible quality difference for most tasks.
+
+**Synchronous video processing**: Video analysis is inherently slow. Always use async processing with progress callbacks. Never block a user request on video analysis.
+
+**Ignoring modality-specific costs**: A single image analysis can cost 10-50x a text-only call. Track cost per modality separately and apply model cascading per modality.
+
+---
+
+## 6. Cross-Cutting Concerns for AI Systems
 
 ### Cost Optimization
 
@@ -268,7 +349,7 @@ For solopreneur scale, storing prompts as version-controlled files in the repo i
 
 ---
 
-## 6. AI Testing & Evaluation
+## 7. AI Testing & Evaluation
 
 AI systems need testing strategies beyond conventional software testing because outputs are non-deterministic. Treat evaluation as a first-class architectural concern — "evals are the new unit tests."
 
@@ -309,7 +390,7 @@ Offline evaluation often doesn't correlate with business metrics. Production A/B
 
 ---
 
-## 7. Fine-Tuning Decision Framework
+## 8. Fine-Tuning Decision Framework
 
 | Approach | When to Use | Cost | Maintenance |
 |---|---|---|---|
@@ -328,7 +409,7 @@ Offline evaluation often doesn't correlate with business metrics. Production A/B
 
 ---
 
-## 8. Model Lifecycle Management
+## 9. Model Lifecycle Management
 
 ### Model Migration Strategy
 
@@ -366,7 +447,7 @@ For solopreneur scale, start with simple feedback collection (store prompt/respo
 
 ---
 
-## 9. AI Architecture Decision Flowchart
+## 10. AI Architecture Decision Flowchart
 
 ```
 Does the feature need an LLM?
@@ -396,13 +477,13 @@ Is the agent long-running or failure-prone?
 +-- NO -> Stateless agent loop is fine
 |
 Has prompt engineering plateaued with enough training data available?
-|-- YES -> Consider fine-tuning (Section 7)
+|-- YES -> Consider fine-tuning (Section 8)
 +-- NO -> Keep optimizing prompts and RAG
 ```
 
 ---
 
-## 10. Anti-Patterns
+## 11. Anti-Patterns
 
 **RAG Everything**: Shoving all data into a vector store when half of it would be better served by structured queries (SQL) or API calls. Vector search is for semantic similarity — use the right tool for each data type.
 
