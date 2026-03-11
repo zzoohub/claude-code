@@ -43,8 +43,8 @@ Unless you have measured evidence of a performance problem, optimize for maintai
 | Build, Release, Run | CI/CD pipeline produces immutable container images. |
 | Processes | Stateless processes. Session state in external store (Redis, DB), never in memory. |
 | Port Binding | Service exposes itself via port binding. No reliance on runtime injection by app server. |
-| Concurrency | Scale horizontally via process model. Cloud Run handles this natively. |
-| Disposability | Fast startup, graceful shutdown. Critical for serverless/container environments. |
+| Concurrency | Scale horizontally via process model. Workers/Cloud Run handle this natively. |
+| Disposability | Fast startup, graceful shutdown. Critical for edge/serverless/container environments. |
 | Dev/Prod Parity | Minimize gaps. Use same DB engine in dev and prod (Neon branching helps here). |
 | Logs | Treat as event streams. Structured JSON to stdout. Platform handles aggregation. |
 | Admin Processes | Run management tasks as one-off processes in the same environment. |

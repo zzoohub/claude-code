@@ -115,6 +115,22 @@ All three are governed under the **Agentic AI Foundation (AAIF)** at the Linux F
 
 **Adoption**: Widely adopted across major AI platforms and IDEs. Verify current adoption metrics.
 
+### MCP as Product API
+
+MCP is not just a tool integration protocol — it's becoming a **product distribution channel**. By exposing your product's capabilities as an MCP server, AI agents can discover, authenticate, and use your product without custom integration code.
+
+**Architecture implication**: Design your API surface with two consumers in mind:
+1. **Human users** via your web/mobile UI
+2. **AI agents** via MCP server
+
+**What changes**:
+- **Tool naming and descriptions** become part of your product's developer experience — agents choose tools based on these
+- **Structured input/output schemas** must be self-documenting (JSON Schema with descriptions)
+- **OAuth 2.1** for agent authentication — scoped tokens per capability
+- **Idempotency** is critical — agents retry aggressively
+
+**Decision**: Expose MCP alongside (not instead of) your REST/GraphQL API. MCP is optimized for agent consumption; your existing API serves human-facing clients. Both can share the same backend service layer.
+
 ### A2A (Agent-to-Agent Protocol)
 
 **Scope**: Agent ↔ Agent. Enables agents built by different vendors to discover, communicate, and collaborate.

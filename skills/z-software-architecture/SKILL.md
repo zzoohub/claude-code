@@ -51,15 +51,16 @@ Analyze the PRD and extract architecture-driving requirements:
 
 Ask the user to confirm or fill gaps. For Solo scope, focus on scale, real-time, and regulatory. For Team scope, cover all items above.
 
-**Phase 3 — Stack Recommendation**
-Based on the requirements analysis, **recommend** a stack combination with trade-off rationale:
-- **Backend**: Rust/Axum + Cloud Run / Hono + CF Workers / FastAPI + Cloud Run
-- **Frontend**: TanStack Start + SolidJS / Next.js (React)
+**Phase 3 — Bundle & Stack Recommendation**
+Based on the requirements analysis, **recommend** a platform bundle with trade-off rationale:
+- **Cloudflare bundle** (default): Hono + Workers/CF Containers, TanStack Start + SolidJS, Neon + Hyperdrive
+- **Vercel bundle**: Next.js (React), Supabase (Korea-first, content-heavy, React ecosystem)
+- **Backend framework**: Hono (TS) / Rust/Axum / FastAPI (Python) — independent of bundle
 - **Mobile** (if PRD includes mobile): React Native (Expo)
 
 Mark **(Recommended)** with 1-2 sentence rationale. The user confirms or overrides.
 
-> **Note**: This skill is optimized for the stack combinations above. If the project uses a different stack, apply the same architectural patterns and principles — adjust specific tooling to match the target ecosystem.
+> **Note**: This skill is optimized for the platform bundles above. If the project uses a different stack, apply the same architectural patterns and principles — adjust specific tooling to match the target ecosystem.
 
 ### Step 1 — Write the Design Document
 
@@ -97,7 +98,9 @@ Read the relevant references before making architecture decisions.
 
 **`references/architecture-patterns.md`** — System architecture decision framework: patterns (request-response, event-driven, CQRS, event sourcing, modular monolith), language selection, composition flowchart, real-world examples, anti-patterns, and cross-cutting decisions (multi-tenancy, real-time communication, API versioning, feature flags).
 
-**`references/stack-templates.md`** — Technology and infrastructure decisions per stack template (Rust/Axum, Hono, FastAPI, TanStack Start, Next.js, React Native/Expo), shared services, auth patterns, and region strategy.
+**`references/stack-templates.md`** — Platform bundle selection (Cloudflare, Vercel), backend/frontend framework options, shared services, auth patterns, region strategy, and evolution triggers.
+
+**`references/cloudflare-platform.md`** — Detailed Cloudflare bundle tech stack reference with ①② priority rankings per role. Covers compute (Workers, DO, Containers), storage (Neon+Hyperdrive, R2, KV, D1), AI services, platform services, security, observability, and deploy tooling. Read when designing on the Cloudflare bundle.
 
 **`references/design-principles.md`** — Core architecture principles, production incident patterns, security architecture, observability patterns, and quality attribute prioritization framework. Use during self-review to verify your design.
 

@@ -79,28 +79,66 @@ Triggered by user action?
 │         User can't wait?    → Async job
 └── NO  → Scheduled job
 
-Async:
+Async (CF bundle):
+├── Simple fire-and-forget      → Queues → Worker handler
+├── Fan-out (one event, many)   → Queues (fan-out) or Pub/Sub
+└── Complex multi-step          → Workflows (auto-retry, checkpoint)
+
+Async (Container / Cloud Run):
 ├── Simple fire-and-forget      → Cloud Tasks (HTTP callback)
 ├── Fan-out (one event, many)   → Pub/Sub
 └── Complex multi-step          → Pub/Sub + Cloud Tasks
 
 Scheduled:
-├── Cloudflare Workers           → Cron Triggers
+├── CF bundle                    → Cron Triggers (simple) or Workflows (complex)
 ├── Cloud Run                    → Cloud Scheduler → HTTP trigger
 └── Database-level               → pg_cron on Neon
 ```
 
 ### Common Jobs
 
-| Job | Trigger | Pattern |
-|---|---|---|
-| Send email | User action | Cloud Tasks → POST /jobs/send-email |
-| Process upload | Upload complete | Cloud Tasks → POST /jobs/process-upload |
-| Sync Stripe state | Stripe webhook | Pub/Sub handler |
-| Daily metrics | Cron | Cloud Scheduler → POST /jobs/daily-metrics |
-| Cleanup orphaned files | Cron | Cloud Scheduler → POST /jobs/cleanup |
+| Job | Trigger | CF Bundle | Container (Cloud Run) |
+|---|---|---|---|
+| Send email | User action | Queues → Worker handler | Cloud Tasks → POST /jobs/send-email |
+| Process upload | Upload complete | Queues → Worker handler | Cloud Tasks → POST /jobs/process-upload |
+| Sync Stripe state | Stripe webhook | Worker handler | Pub/Sub handler |
+| Daily metrics | Cron | Cron Trigger → Worker | Cloud Scheduler → POST /jobs/daily-metrics |
+| Cleanup orphaned files | Cron | Cron Trigger → Worker | Cloud Scheduler → POST /jobs/cleanup |
 
-**Key insight**: At solo scale, your Cloud Run service handles both user requests AND job callbacks — same service, different endpoints, different auth (service account, not user JWT). No separate worker needed.
+**Key insight**: At solo scale, your Workers (or Cloud Run service) handle both user requests AND job callbacks — same service, different routes, different auth. No separate worker service needed.
+
+---
+
+## Durable Execution
+
+When async work involves multiple steps, any of which can fail, simple queues aren't enough. Durable execution treats each step as a **checkpoint** — if the process crashes, it resumes from the last checkpoint, not from scratch.
+
+### When to Use
+
+```
+Simple fire-and-forget (send email, resize image)  → Queue is enough
+Multi-step with side effects (payment → provision → notify)  → Durable execution
+Long-running with waits (human approval, external callback)  → Durable execution
+```
+
+### Core Primitives
+
+| Primitive | What It Does |
+|---|---|
+| **step.run()** | Execute a function with automatic retry on failure |
+| **step.sleep()** | Pause workflow for a duration (minutes to days) without consuming compute |
+| **step.waitForEvent()** | Pause until an external signal arrives (webhook, user action) |
+| **checkpoint** | State persisted after each step — crash-safe resume |
+
+### Platform Options
+
+| Platform | Model | Our Stack Fit |
+|---|---|---|
+| **CF Workflows** | Worker-native, auto-retry, sleep/checkpoint | CF bundle default |
+| **Temporal** | Event-history replay, exactly-once, polyglot | Container / Cloud Run |
+| **Inngest** | Event-driven harness, step functions, any runtime | Platform-agnostic |
+
+**Architecture implication**: Durable execution replaces ad-hoc retry logic, manual state machines, and "check if already processed" patterns. If you find yourself writing status columns (`pending → processing → done → failed`) with polling loops, you likely need durable execution instead.
 
 ---
 
@@ -137,10 +175,33 @@ active → past_due → canceled
 
 Map provider statuses to your entitlement model. Gate features via PostHog feature flags by plan tier.
 
+### Webhook Fan-out + Durable Wait
+
+When a single webhook triggers multiple downstream actions (provision, notify, sync analytics), combine queue fan-out with durable execution's `waitForEvent`:
+
+```
+Provider → Webhook endpoint → return 200 immediately
+                ↓
+            Queue fan-out → Handler A (provision account)
+                          → Handler B (send welcome email)
+                          → Handler C (sync to analytics)
+
+For multi-step flows:
+Workflow.step("charge")    → Stripe API
+Workflow.waitForEvent("stripe.charge.succeeded", timeout: 10m)
+Workflow.step("provision") → Create user resources
+Workflow.step("notify")    → Send confirmation
+```
+
+**Key decisions**:
+- **Immediate 200**: Never do heavy processing in the webhook handler. Return 200, enqueue, process async.
+- **Fan-out via queue**: Each downstream action is an independent consumer. One failure doesn't block others.
+- **waitForEvent for async providers**: Virtual accounts (가상계좌), bank transfers, and manual approval flows — the workflow sleeps until the confirmation webhook arrives.
+
 ### Toss Payments (Korea-specific)
 
 - Two-step: authorize → confirm (다른 결제 플로우)
-- Virtual account (가상계좌): async — user transfers later, webhook confirms
+- Virtual account (가상계좌): async — user transfers later, webhook confirms via `waitForEvent`
 - Same webhook reliability patterns apply
 
 ---
@@ -159,4 +220,5 @@ Map provider statuses to your entitlement model. Gate features via PostHog featu
 - **Neon branching**: Instant dev branch from production schema. Same engine, free. No Docker Postgres needed.
 - **`.env.local`** for local overrides. Never commit `.env`. Maintain `.env.example` as template.
 - **Stripe CLI**: `stripe listen --forward-to localhost:PORT/webhooks` for local webhook testing.
-- **Hot reload**: `cargo-watch` (Rust), Vite dev server (frontend). Optimize for sub-second feedback.
+- **Hot reload**: Vite dev server (frontend), `wrangler dev` (Workers). Optimize for sub-second feedback.
+- **Wrangler dev**: `wrangler dev` for Workers local development with bindings (KV, R2, D1, DO). Use `--remote` flag to test against real services.

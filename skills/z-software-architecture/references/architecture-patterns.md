@@ -305,6 +305,22 @@ Partition the system into independent, self-contained cells. Each cell serves a 
 
 **Our stack**: Overkill for most single-product systems. Consider when your system grows to multi-tenant with strict isolation requirements or SLA commitments that demand blast radius containment.
 
+### Event Lakehouse
+
+Replace traditional data warehouses with an object-storage-native analytics pipeline. Events flow through a queue, are transformed into columnar format (Parquet/Iceberg), and queried in-place with a serverless SQL engine.
+
+```
+App events → Queue/Stream → Transform → Object Storage (Parquet/Iceberg) → SQL Engine
+                                              ↓
+                                        Dashboard / BI tool
+```
+
+**Strengths**: Pay-per-query (no always-on warehouse), storage and compute scale independently, open formats (no vendor lock-in), same pipeline handles both operational analytics and data science.
+**Trade-offs**: Query latency higher than a dedicated warehouse (seconds, not milliseconds). Not for real-time dashboards.
+**Choose when**: You need analytics beyond what PostHog provides, data volume grows past what a Postgres materialized view handles comfortably, or you want a unified data lake for multiple consumers.
+
+**Our stack**: CF Pipelines + R2 (Parquet/Iceberg via R2 Data Catalog) + R2 SQL for petabyte-scale analytics. For GCP: Cloud Storage + BigQuery. The key insight is that object storage is the new data warehouse — Parquet on R2/S3 is durable, cheap, and queryable.
+
 ---
 
 ## Anti-Patterns to Watch For

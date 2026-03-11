@@ -1,110 +1,141 @@
 # Stack Templates
 
-When starting a design doc, ask the user to choose a stack template. Each template is a proven, internally consistent set of technology choices optimized for solopreneur development.
+Platform bundles optimized for solopreneur development. Each bundle is a cohesive set of compute, storage, and services from the same ecosystem — unified billing, single CLI, one dashboard.
 
 ---
 
-## Stack Selection (Two Axes)
+## Bundle Selection
 
-The user picks one backend and one frontend independently. Any combination is valid.
+Choose one bundle per project. Backend framework choice is independent of bundle.
 
-### Backend Options
+| Bundle | Compute | Frontend | DB | Choose When |
+|---|---|---|---|---|
+| **Cloudflare** (default) | Workers + CF Containers | TanStack Start + SolidJS | Neon + Hyperdrive | Edge-first, global low-latency, TS fullstack, unified CF infra |
+| **Vercel** | Vercel Functions | Next.js (React) | Supabase | Content-heavy, SEO, React ecosystem, Korea-first (Supabase Seoul) |
 
-| Backend | Infra | Choose When |
+**GCP Cloud Run** = escape hatch when CF Containers can't do it (GPU, Vertex AI, GCP-only integrations).
+
+If the user doesn't specify, use the **Cloudflare bundle**.
+
+### Bundle Decision Flow
+
+```
+Project characteristics?
+├── Edge-first, API-heavy, TS fullstack     → Cloudflare bundle
+├── Content/SEO-heavy, React ecosystem      → Vercel bundle
+├── Korea-first + Kakao/Naver auth needed   → Vercel bundle (Supabase Seoul + Auth)
+├── Korea-first + edge API priority         → Cloudflare bundle + Supabase via Hyperdrive
+└── GPU / GCP-locked legacy                 → Cloudflare bundle + Cloud Run escape hatch
+```
+
+---
+
+## Backend Framework Options
+
+Framework choice is independent of bundle. Pick based on workload, not platform.
+
+| Framework | Runtime | Choose When |
 |---|---|---|
-| **Rust/Axum** (default) | GCP Cloud Run + Cloudflare | Performance/cost critical, long-running services, type safety maximalist |
-| **Hono** | Cloudflare Workers | Edge-first, fullstack TypeScript, global distribution |
-| **FastAPI** | GCP Cloud Run + Cloudflare | Core product requires Python-only libraries (PyTorch, transformers, etc.) |
+| **Hono (TS)** (default) | Workers / CF Containers / Node.js | General web services, API, fullstack TS. <4kB, RPC built-in |
+| **Rust/Axum** | Workers (workers-rs) / CF Containers / Cloud Run | CPU-intensive, memory safety, maximum performance |
+| **FastAPI (Python)** | CF Containers / Cloud Run | Python-only ML libraries (PyTorch, transformers). LLM API calls alone do NOT justify Python |
 
-### Frontend Options
+---
+
+## Frontend Options
 
 | Frontend | Deploy To | Choose When |
 |---|---|---|
-| **TanStack Start + SolidJS** (default) | Cloudflare Workers | Fine-grained reactivity, smaller bundles, no virtual DOM overhead |
-| **Next.js (React)** | Vercel (default) or Cloudflare via OpenNext | Rich React ecosystem needed (Radix, shadcn/ui, etc.), SEO-critical content-heavy product, team has deep React expertise |
-
-### Shared across all combinations
-- **Database**: Neon (Serverless PostgreSQL)
-- **CDN/DNS**: Cloudflare
-
-If the user doesn't specify, use **Rust/Axum + TanStack Start** as the default combination.
+| **TanStack Start + SolidJS** (default) | CF Workers | Fine-grained reactivity, minimal bundles, Workers binding friendly |
+| **Astro** | CF Workers adapter | Content-first, Islands architecture. Blog/marketing/docs pages |
+| **Next.js (React)** | Vercel (default) | React ecosystem, SEO-critical content-heavy product, team has React expertise |
 
 ---
 
-## Rust Template
+## Cloudflare Bundle
 
-**Backend**: Rust (Axum) on GCP Cloud Run
-- Container-based, auto-scaling, generous free tier
-- Sub-ms response times, 10-30MB memory, near-zero cold starts
-- Compiler as second reviewer -- if it compiles, entire error classes are eliminated
-- Lower cloud cost (critical for solopreneur economics)
+Default bundle. All services from one platform.
 
-**Compute**: GCP Cloud Run (us-east4, Virginia)
-- Default for container workloads
-- Cold starts acceptable for most B2C workloads
-- Scaling: horizontal auto-scale, scale-to-zero
+See **`references/cloudflare-platform.md`** for the full tech stack reference with ①② priority rankings per role.
 
-**When to deviate**:
-- Cloudflare Workers for edge-latency-sensitive paths (auth validation, content personalization) where V8 runtime isn't a blocker
-- GCP Compute Engine for persistent processes (WebSocket servers), GPU access
+**Key characteristics**:
+- Workers: stateless edge compute, 330+ PoP, ~0ms cold start
+- CF Containers: long-running containers (16vCPU/64GB), sleep/wake cycle
+- Durable Objects: stateful coordination, WebSocket hub
+- Workflows + Queues: async processing with retry/checkpoint
+- R2, KV, D1, Vectorize: storage primitives
+- AI Gateway, Workers AI: LLM proxy and edge inference
+- Wrangler CLI: single tool for deploy and config
 
----
-
-## Hono Template
-
-**Backend**: Hono on Cloudflare Workers
-- Edge-first, near-zero cold starts, global distribution by default
-- Lightweight, Web Standards API compatible
-- Predictable pricing, generous free tier
-- Perfect for API-heavy services and edge computing
-- HonoRPC for end-to-end type-safe API calls between frontend and backend (built-in, no extra dependency)
-
-**Compute**: Cloudflare Workers (global edge)
-- No region selection needed -- deployed globally by default
-- Workers for API/backend logic
-- Pages for static assets and frontend
-
-**When to deviate**:
-- GCP Cloud Run when you need longer execution times (>30s), larger payloads, or container-based workloads that don't fit the Workers model. Use Hono on Node.js for consistency with the Workers codebase (same API, different runtime), or Fastify if you need its plugin ecosystem.
+**Compute decision flow**:
+```
+├── Stateless API, <30s             → Workers
+├── Stateful, WebSocket             → Durable Objects
+├── Async, multi-step               → Workflows + Queues
+├── Container, CPU/memory heavy     → CF Containers
+└── GPU, GCP-locked                 → Cloud Run (escape hatch)
+```
 
 ---
 
-## Python AI Template
+## Vercel Bundle
 
-**Backend**: FastAPI on GCP Cloud Run
-- Only use when the project physically requires Python-only libraries (PyTorch, transformers, pandas/numpy heavy pipelines)
-- LLM API calls alone do NOT justify Python -- use the Rust template with reqwest
-- Async-first, Pydantic v2 validation built-in
+For Next.js + Supabase projects. Korea-first or React-ecosystem-heavy products.
 
-**Compute**: GCP Cloud Run (us-east4, Virginia)
-- Same as Rust template -- container-based, auto-scaling
-- Set request timeout to 300s for ML inference endpoints
+### Why This Bundle Exists
+- Next.js is first-class on Vercel — OpenNext on CF has friction
+- Supabase Seoul region — lowest latency for Korean users
+- Supabase Auth with Kakao/Naver/Google OAuth built-in — no custom implementation
+- Supabase Realtime — chat, notifications, live updates bundled
 
-**When to deviate**: Same as Rust template.
+### Stack
+
+| Role | Service | Notes |
+|---|---|---|
+| Compute | Vercel Functions | Serverless (Node.js) + Edge Runtime |
+| Frontend | Next.js App Router | SSR/SSG/ISR. Server Components + Server Actions |
+| DB | Supabase PostgreSQL | Seoul region available. Free tier: 2 projects, 500MB |
+| Auth | Supabase Auth | Kakao, Naver, Google OAuth built-in. No MAU billing on free tier |
+| Storage | Supabase Storage | S3-compatible. Direct client uploads via signed URLs |
+| Realtime | Supabase Realtime | WebSocket subscriptions. Presence, broadcast, DB changes |
+| Cache | Vercel KV | Upstash Redis under the hood. Session, rate limit |
+| Cron | Vercel Cron Jobs | Simple scheduled tasks via vercel.json |
+| Edge Config | Vercel Edge Config | Ultra-low latency reads. Feature flags, A/B config |
+| Error Tracking | Sentry | Same as Cloudflare bundle |
+| Analytics | PostHog | Same as Cloudflare bundle |
+| Email | Resend | Vercel has no native email service |
+| Payments | Stripe / Toss Payments | Same as Cloudflare bundle |
+| CI/CD | Vercel Git Integration | Auto-deploy on push. Preview deploys per PR |
+| DNS/CDN | Cloudflare → Vercel | Cloudflare DNS proxying to Vercel. Best of both |
+
+### Trade-offs vs Cloudflare
+
+| Aspect | Cloudflare | Vercel |
+|---|---|---|
+| Edge compute | Workers (global, ~0ms cold start) | Edge Functions (limited runtime) |
+| Container compute | CF Containers (native) | None — need Cloud Run escape hatch |
+| DB flexibility | Neon (any region) + Hyperdrive | Supabase (Seoul, Virginia, Frankfurt, etc.) |
+| Realtime | Durable Objects (custom build) | Supabase Realtime (batteries-included) |
+| Auth | Better Auth (custom, flexible) | Supabase Auth (batteries-included, Kakao/Naver) |
+| AI services | Workers AI, AI Gateway, Vectorize | None native — use external APIs |
+| Pricing model | Pay-per-request, predictable | Function invocations + bandwidth |
 
 ---
 
-## Frontend: TanStack Start + SolidJS (default)
+## Container Escape Hatch: GCP Cloud Run
 
-- Fine-grained reactivity: no virtual DOM diffing, surgical DOM updates
-- TanStack Router: type-safe routing with built-in data loading
-- Vinxi/Nitro based: deploys to Cloudflare Workers, Vercel, Node, any platform
-- Smaller bundle sizes than React equivalents
-- Deploy to Cloudflare Workers (default)
+Use only when neither Workers nor CF Containers meet requirements.
 
-**SSR + Hydration**: TanStack Start is an SSR framework (Vinxi/Nitro based). For SPA-only use cases, use TanStack Router directly without Start. The ecosystem is smaller than Next.js but the core SSR/streaming pipeline is production-ready.
+| Trigger | Example |
+|---|---|
+| GPU access | ML training, Vertex AI integration |
+| GCP-specific services | BigQuery, Cloud TPU, Firestore |
+| Legacy GCP infrastructure | Existing Cloud SQL, Pub/Sub pipelines |
 
----
-
-## Frontend: Next.js (React)
-
-- Mature SSR/SSG/ISR with excellent SEO support
-- Rich React ecosystem: Radix, shadcn/ui, React Three Fiber, Framer Motion, etc.
-- App Router with Server Components and Server Actions
-- tRPC for end-to-end type-safe API layer when using Next.js as fullstack (API Routes)
-- Deploy to Vercel (default) or Cloudflare via OpenNext
-
-**Choose when**: The project depends heavily on React ecosystem libraries with no SolidJS equivalents, the team has deep React expertise, or the product is SEO-critical and content-heavy.
+- **Framework**: Rust/Axum (default) or FastAPI (Python ML only)
+- **DB connection**: Neon pooler endpoint (`-pooler` URL) for TCP clients. Keep pool small (`max_connections=5`)
+- **Region**: us-east4 (Virginia) for global, asia-northeast3 (Seoul) for Korea-first
+- **Scaling**: Horizontal auto-scale, scale-to-zero
 
 ---
 
@@ -119,52 +150,34 @@ Include only when the PRD specifies mobile app requirements.
 - **Distribution**: EAS Build + EAS Submit for App Store / Play Store
 - **OTA Updates**: EAS Update for instant JS-layer patches without store review
 
-**When to include mobile**: Only when the PRD explicitly requires a native mobile app. A responsive web app (PWA) covers most solopreneur use cases without the overhead of app store review cycles, platform-specific bugs, and dual codebases.
+**When to include mobile**: Only when the PRD explicitly requires a native mobile app. A responsive web app (PWA) covers most solopreneur use cases.
 
-**Architecture implication**: Mobile adds a second API consumer. Design the backend API for multiple clients from the start — consistent auth tokens, appropriate payload sizes, and offline-friendly patterns (optimistic updates, conflict resolution).
+**Architecture implication**: Mobile adds a second API consumer. Design the backend API for multiple clients — consistent auth tokens, appropriate payload sizes, offline-friendly patterns.
 
 ---
 
 ## Shared: Database
 
-Choose based on the target audience:
+Choose based on target audience and bundle:
 
-| Audience | Default DB | Region | Rationale |
+| Audience | Bundle | Default DB | Region |
 |---|---|---|---|
-| **Global** | **Neon** | us-east-1 (Virginia, AWS) | Scale-to-zero, branching, serverless driver for edge runtimes |
-| **Korea-first** | **Supabase** | ap-northeast-2 (Seoul) | Neon has no Korean region — Supabase provides Seoul region with free tier, bundled Auth/Realtime/Storage |
+| **Global** | Cloudflare | **Neon** + Hyperdrive | us-east-1 (Virginia) |
+| **Korea-first** | Vercel | **Supabase** | ap-northeast-2 (Seoul) |
+| **Korea-first** | Cloudflare | **Supabase** via Hyperdrive | ap-northeast-2 (Seoul) |
 
-### Neon (Serverless PostgreSQL) — global default
+### Neon — Cloudflare bundle default
 
 - Scale-to-zero pricing, branching for dev/staging, full PostgreSQL (pgvector, extensions)
-- **Cross-cloud latency note**: Neon runs on AWS (us-east-1) while Cloud Run runs on GCP (us-east4). Both are in Virginia — inter-cloud latency within the same geographic area is typically 1-3ms, negligible for most workloads.
+- **Hyperdrive** handles connection pooling at the edge — no manual pooler config needed for Workers
+- For CF Containers or Cloud Run: use Neon pooler endpoint (`-pooler` URL) as TCP fallback
 
-**Serverless connection strategy** — serverless environments can exhaust DB connection limits. Choose the right approach per runtime:
-
-| Runtime | Connection Method | Why |
-|---|---|---|
-| **Cloudflare Workers** | Neon serverless driver (HTTP) | V8 runtime has no TCP sockets — HTTP is the only option |
-| **Cloud Run (Rust/SQLx, Python/psycopg2)** | Neon pooler endpoint (`-pooler` URL) | Native Postgres drivers require TCP — use PgBouncer pooler. Keep pool small per instance (`max_connections=5`). |
-| **Next.js on Vercel** | Neon serverless driver (HTTP) | Edge Runtime has no TCP; Node.js Runtime also benefits from HTTP — serverless functions have short lifespans making persistent connections wasteful |
-
-Neon pooler endpoint example:
-```
-# Direct (connection exhaustion risk)
-postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/db
-# Pooler (recommended for TCP clients)
-postgresql://user:pass@ep-xxx-pooler.us-east-1.aws.neon.tech/db
-```
-
-### Supabase — Korea-first default
+### Supabase — Vercel bundle / Korea-first default
 
 - PostgreSQL on AWS ap-northeast-2 (Seoul) — lowest latency for Korean users
-- Bundled features save development time: Auth (Kakao/Naver OAuth built-in), Realtime subscriptions, Storage (S3-compatible)
+- Bundled: Auth (Kakao/Naver built-in), Realtime, Storage
 - Free tier: 2 active projects, 500MB DB, 1GB storage
-- Supabase client SDK works from both server and edge runtimes
-- Trade-off: no branching (use migrations instead), less granular scale-to-zero than Neon
-
-### When to consider GCP Cloud SQL
-- Need full Postgres control, pg_cron, custom extensions, or vertical scaling beyond Neon/Supabase limits
+- Trade-off: no branching (use migrations), less granular scale-to-zero than Neon
 
 ---
 
@@ -177,93 +190,56 @@ Choose based on the product's audience:
 | Scenario | Primary Method | Notes |
 |---|---|---|
 | **Global B2C** | Google OAuth2 + self-issued JWT | Widest reach, lowest friction |
-| **Korea B2C** | Kakao OAuth2 (primary) + Naver + Google | Kakao dominates Korean market. Naver is second. Google for non-Korean users. |
-| **B2B / SaaS** | Email magic link or SSO (OIDC/SAML) | Enterprise customers expect SSO. Magic link for self-serve signups. |
+| **Korea B2C** | Kakao OAuth2 (primary) + Naver + Google | Kakao dominates Korean market |
+| **B2B / SaaS** | Email magic link or SSO (OIDC/SAML) | Enterprise expects SSO |
 | **Internal tools** | Google Workspace OAuth2 | Single-click for team members |
+
+**Implementation by bundle**:
+- **Cloudflare**: Better Auth (TS-native, D1/Neon as auth DB, no MAU billing)
+- **Vercel**: Supabase Auth (Kakao/Naver built-in, no custom implementation)
 
 **Token strategy** (all scenarios):
 - Access token: short-lived (15min), in memory or Authorization header
 - Refresh token: long-lived (7-30 days), httpOnly secure cookie
 
-**Future**: Passkey (WebAuthn) as password-free upgrade path for all scenarios.
-
 ### Authorization
-- **Default model**: RBAC (Role-Based Access Control) — sufficient for most apps
-- **Consider ABAC** (Attribute-Based Access Control) when permissions depend on resource attributes (e.g., "users can edit only their own posts")
-- **Consider ReBAC** (Relationship-Based Access Control) when permissions follow a graph of relationships (e.g., "org admin can manage all projects in their org") — Google Zanzibar pattern
-- **Enforcement**: Middleware layer in backend (not in database, not in frontend)
+- **Default**: RBAC — sufficient for most apps
+- **ABAC**: When permissions depend on resource attributes
+- **ReBAC**: When permissions follow relationship graphs (Google Zanzibar pattern)
+- **Enforcement**: Middleware layer in backend
 
 ---
 
 ## Shared: CDN & DNS
 
-| Service | Choice | Rationale |
-|---|---|---|
-| **CDN** | Cloudflare | Already in stack (all templates). Free tier includes global CDN, DDoS protection, and edge caching. |
-| **DNS** | Cloudflare DNS | Fastest authoritative DNS. Unified with CDN and edge services. Proxy mode enables WAF and caching without infrastructure changes. |
+Cloudflare DNS + CDN regardless of bundle. Even Vercel bundle uses Cloudflare DNS proxying to Vercel for unified DNS management, DDoS protection, and WAF.
 
-**Edge caching strategy**: Cache static assets aggressively (immutable hashes, 1yr TTL). Use `stale-while-revalidate` for API responses where eventual consistency is acceptable. Never cache authenticated API responses at the edge.
+**Edge caching**: Cache static assets aggressively (immutable hashes, 1yr TTL). Use `stale-while-revalidate` for API responses where eventual consistency is acceptable. Never cache authenticated responses at the edge.
 
 ---
 
 ## Shared: Supporting Services
 
+Cross-bundle services — no native alternative in either platform:
+
 | Service | Choice | Rationale |
 |---|---|---|
-| Object Storage | Cloudflare R2 | S3-compatible, no egress fees. Use presigned URLs for direct client uploads. |
-| Email (Outbound) | Resend | Developer-friendly API, React Email for templates, good deliverability. 100 emails/day free tier. |
-| Email (Inbound) | Cloudflare Email Routing | Only if the app needs to receive/process emails. Free, integrates with Workers. Most apps don't need this. |
-| Error Tracking | Sentry | Industry standard. Source maps, breadcrumbs, performance monitoring. |
-| Infrastructure as Code | Pulumi | TypeScript-native IaC. Avoids HCL context-switch. |
-| Payments (Global) | Stripe | Gold standard for global payments. Extensive API, webhook reliability. |
-| Payments (Korea) | Toss Payments | Required for Korean payment methods. |
-| User Analytics | PostHog | Self-hostable, feature flags, session replay, funnels. Privacy-friendly. |
-| CI/CD | GitHub Actions | Integrated with Git workflow. Free tier generous for open source. |
-
----
-
-## Shared: Messaging & Async Processing
-
-| Backend | Default | Notes |
-|---|---|---|
-| **Rust/Axum** (Cloud Run) | GCP Pub/Sub | Native Cloud Run push integration. Cloud Tasks for sequential orchestration. |
-| **Hono** (Workers) | Cloudflare Queues | Native Workers integration. For heavier needs, consider GCP Pub/Sub. |
-| **FastAPI** (Cloud Run) | GCP Pub/Sub | Same as Rust. |
-
-**Redis (Upstash)**: Add when you need caching, session storage, or rate limiting. Supports both HTTP and TCP — HTTP for Workers/Edge (no TCP sockets), TCP for Cloud Run (lower latency). Scale-to-zero pricing aligns with solopreneur cost model. Upstash also provides rate limiting SDK (`@upstash/ratelimit`) out of the box. Upgrade path: GCP Memorystore when you need sub-ms latency at high throughput and are on Cloud Run only.
-
-**Kafka**: Not needed until millions of events/sec with complex stream processing. Upgrade path via GCP Managed Kafka.
-
-### Neon as Event Source (CDC)
-Neon supports logical replication with wal2json output. Stream database changes directly to Pub/Sub, Kafka, or other consumers. Enable via Neon Console -> Project Settings -> Logical Replication.
-
----
-
-## Shared: Platform Ecosystem Strategy
-
-Follow the **platform cohesion principle** -- prefer services from the same platform as your compute:
-
-| Backend | Primary Platform | Prefer Services From |
-|---|---|---|
-| **Rust/Axum** | GCP | Cloud Scheduler, Cloud Tasks, Pub/Sub, Cloud Logging/Monitoring |
-| **Hono** | Cloudflare | Cron Triggers, Queues, KV, Durable Objects, Logpush |
-| **FastAPI** | GCP | Same as Rust/Axum |
-
-**Secrets**: `pulumi config set --secret` for solopreneur scale. Upgrade to GCP Secret Manager when you need automated rotation, audit trails, or shared team access -- document the migration as an ADR.
-
-**Why platform cohesion**: Reduced network hops, unified billing, consistent auth model, simpler operational surface. Mixing ecosystems increases cognitive load and failure surface without proportional benefit for a solopreneur.
+| Error Tracking | Sentry | Stack traces, issue grouping, alerts. No platform alternative |
+| Product Analytics | PostHog | Feature flags, session replay, funnels. Privacy-friendly |
+| Payments (Global) | Stripe | Extensive API, webhook reliability |
+| Payments (Korea) | Toss Payments | Korean payment methods required |
+| CI/CD | GitHub Actions | Test/lint pipeline. Pairs with Workers Builds (CF) or Vercel Git Integration |
 
 ---
 
 ## Shared: Region Strategy
 
-| Scenario | Compute | DB | Region |
-|---|---|---|---|
-| **Global** | Cloud Run (us-east4) or Workers (global) | Neon (us-east-1) | Virginia |
-| **Korea-first** | Cloud Run (asia-northeast3, Seoul) | Supabase (ap-northeast-2, Seoul) | Seoul |
-| **Hono backend** | Cloudflare Workers | Neon or Supabase per audience | Workers are inherently global |
+| Scenario | Cloudflare Bundle | Vercel Bundle |
+|---|---|---|
+| **Global** | Workers (global) + Neon (Virginia) | Vercel (auto) + Supabase (Virginia) |
+| **Korea-first** | Workers (global) + Supabase (Seoul) via Hyperdrive | Vercel (icn1) + Supabase (Seoul) |
 
-**Co-location rule**: Keep compute and database in the same geographic region to minimize inter-service latency. For Korea-first apps, co-locate both in Seoul. This is more important than putting compute close to users -- use Cloudflare CDN/edge for that.
+**Co-location rule**: Keep compute and database in the same geographic region. For Korea-first, co-locate DB in Seoul. Workers are inherently global — Hyperdrive optimizes the edge-to-DB connection.
 
 ---
 
@@ -274,12 +250,13 @@ When to revisit architecture decisions. Don't optimize prematurely — wait for 
 | Signal | Threshold | Action |
 |---|---|---|
 | DB query latency climbing | p99 > 200ms consistently | Add read replica, review N+1 queries, add caching |
-| DB connections exhausting | > 80% pool utilization | Verify pooler config, reduce per-instance pool size |
+| DB connections exhausting | > 80% pool utilization | Verify Hyperdrive/pooler config, reduce per-instance pool |
 | API response time degrading | Exceeding quality targets | Profile hot paths, add caching, async offloading |
-| Background job queue growing | Processing delay > 5min | Separate worker instance, increase concurrency |
-| Monthly infra cost spiking | > 2x previous month | Audit resource usage, check scale-to-zero, review LLM costs |
+| Background job queue growing | Processing delay > 5min | Separate worker, increase concurrency |
+| Monthly infra cost spiking | > 2x previous month | Audit usage, check scale-to-zero, review LLM costs |
 | Cold starts impacting UX | > 3s first request | Set minimum instances, prewarming, or switch runtime |
 | Single service doing too much | > 5 unrelated domain modules | Tighten module boundaries, consider service extraction |
 | LLM costs dominating spend | > 40% of total infra | Add model cascading, semantic caching, review prompt lengths |
+| Workers CPU limit hit | Regular 50ms+ CPU time | Move hot path to CF Containers or Rust (workers-rs) |
 
 **Rule of thumb**: If you're spending more time operating infrastructure than building product, something needs to change. But don't change it until you feel the pain.
