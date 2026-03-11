@@ -12,8 +12,9 @@ Read this when designing a system on the Cloudflare bundle. For bundle selection
 |---|---|---|---|
 | Language | ① | TypeScript | Default for all web services. Type consistency across Workers, Hono, Drizzle |
 | Language | ② | Rust | CPU-intensive or memory-safety-critical. workers-rs + Axum for Workers deploy |
-| Client (fullstack, React) | ① | Next.js (External) | Largest ecosystem, broadest talent pool. OpenNext for Workers deploy, native on Vercel |
-| Client (fullstack, perf) | ① | TanStack Start + SolidJS (External) | Fine-grained reactivity, minimal bundles, Workers binding friendly |
+| Client (fullstack, default) | ① | React Router v7 framework (External) | Full-stack React, Workers-native via `@react-router/cloudflare`. Loaders/actions, nested routes, type-safe data flow |
+| Client (fullstack, React) | ② | Next.js (External) | Largest ecosystem, broadest talent pool. OpenNext for Workers deploy, native on Vercel |
+| Client (fullstack, perf) | ② | TanStack Start + SolidJS (External) | Fine-grained reactivity, minimal bundles, Workers binding friendly |
 | Client (content-first) | ② | Astro (External) | Islands architecture, static-first. Blog/marketing pages. CF Workers adapter native |
 | Server (Workers) | ① | Hono TS (CF) | <4kB, middleware chaining, RPC, Workers-first |
 | Server (Workers) | ② | workers-rs + Axum (CF) | CPU-intensive API/parsing. Memory safety required |
@@ -92,7 +93,7 @@ Request type?
 
 | Role | Pri | Service | Notes |
 |---|---|---|---|
-| Auth | ① | Better Auth (External) | TS-native, D1/Neon as auth DB. No MAU billing. Runs on TanStack Start server. Social providers (Google, Kakao, Naver, GitHub) via plugins |
+| Auth | ① | Better Auth (External) | TS-native, D1/Neon as auth DB. No MAU billing. Runs on frontend server (React Router v7 / TanStack Start). Social providers (Google, Kakao, Naver, GitHub) via plugins |
 | Email (transactional) | ① | Resend (External) | Proven deliverability. Payment receipts, password resets, security alerts |
 | Email (notification) | ① | CF Email Service (CF) | Workers native binding, no API key. SPF/DKIM/DMARC auto. Deliverability unproven |
 | Email (notification) | ② | Resend (External) | When notification deliverability also needs guarantee |

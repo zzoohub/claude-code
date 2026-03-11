@@ -10,7 +10,7 @@ Choose one bundle per project. Backend framework choice is independent of bundle
 
 | Bundle | Compute | Frontend | DB | Choose When |
 |---|---|---|---|---|
-| **Cloudflare** (default) | Workers + CF Containers | Next.js / TanStack Start | Neon + Hyperdrive | Edge-first, global low-latency, TS fullstack, unified CF infra |
+| **Cloudflare** (default) | Workers + CF Containers | React Router v7 / Next.js | Neon + Hyperdrive | Edge-first, global low-latency, TS fullstack, unified CF infra |
 | **Vercel** | Vercel Functions | Next.js (React) | Supabase | Content-heavy, SEO, React ecosystem, Korea-first (Supabase Seoul) |
 
 **GCP Cloud Run** = escape hatch when CF Containers can't do it (GPU, Vertex AI, GCP-only integrations).
@@ -48,11 +48,12 @@ Frontend choice is independent of backend bundle. Pick based on team expertise a
 
 | Frontend | Deploy To | Choose When |
 |---|---|---|
-| **Next.js (React)** | Vercel (native) / CF Workers (OpenNext) | Largest ecosystem, broadest talent pool, mature patterns. Default when team has React experience or project needs extensive third-party integrations |
+| **React Router v7** | CF Workers (Cloudflare adapter) / Node.js | Full-stack React framework with SSR/SSG, nested routes, loaders/actions, type-safe data flow. Workers-native deploy via `@react-router/cloudflare`. Default choice — React ecosystem + Workers-first |
+| **Next.js (React)** | Vercel (native) / CF Workers (OpenNext) | Largest ecosystem, broadest talent pool, mature patterns. When project needs extensive third-party integrations or Vercel-native features (ISR, Server Actions) |
 | **TanStack Start + SolidJS** | CF Workers | Fine-grained reactivity, minimal bundles, Workers-native deploy. Choose when bundle size and runtime performance are priorities and team is comfortable with smaller ecosystem |
 | **Astro** | CF Workers adapter | Content-first, Islands architecture. Blog/marketing/docs pages |
 
-**Default guidance**: If unsure, **Next.js** is the safer choice — the ecosystem advantage (component libraries, tutorials, hiring) outweighs the performance edge of SolidJS for most products. Choose TanStack Start + SolidJS when you're building a highly interactive app where fine-grained reactivity and small bundle size are meaningful differentiators.
+**Default guidance**: If unsure, **React Router v7** is the default choice — React ecosystem benefits (component libraries, talent pool, tutorials) with Workers-native deployment via Cloudflare adapter, no OpenNext shim needed. Choose **Next.js** when Vercel-native features or specific integrations are required. Choose **TanStack Start + SolidJS** when fine-grained reactivity and minimal bundle size are meaningful differentiators.
 
 ---
 
@@ -81,7 +82,7 @@ project/
 │   │   ├── package.json
 │   │   ├── wrangler.jsonc
 │   │   └── src/
-│   ├── web/                  # TanStack Start + SolidJS (or Next.js)
+│   ├── web/                  # React Router v7 (or Next.js, TanStack Start)
 │   │   ├── package.json
 │   │   └── src/
 │   └── shared/               # Shared types, utils, validation schemas
@@ -283,7 +284,7 @@ Choose based on the product's audience:
 | **B2B / SaaS** | Email magic link | Keep it simple for solopreneur B2B |
 | **Internal tools** | Google Workspace OAuth2 | Single-click for team members |
 
-**Implementation**: **Better Auth** (TS-native) for all bundles and scenarios. Open-source, no MAU billing, stores auth data directly in your DB (Neon/D1). Supports social providers (Google, Kakao, Naver, GitHub, etc.) via plugins. Runs on the TanStack Start server — no separate auth service needed.
+**Implementation**: **Better Auth** (TS-native) for all bundles and scenarios. Open-source, no MAU billing, stores auth data directly in your DB (Neon/D1). Supports social providers (Google, Kakao, Naver, GitHub, etc.) via plugins. Runs on the frontend server (React Router v7 / TanStack Start) — no separate auth service needed.
 
 **Exception**: For Rust container backends without a TS frontend server, use **Clerk** (managed, HTTP API) or implement auth directly with the provider's OAuth2 flow + JWT verification.
 
