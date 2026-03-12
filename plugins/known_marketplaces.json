@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-03-12T14:05:24.272Z",
+    "lastUpdated": "2026-03-12T23:26:37.965Z",
     "autoUpdate": true
   },
   "expo-plugins": {
@@ -23,7 +23,7 @@
       "url": "https://github.com/heathdutton/claude-d2-diagrams.git"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/claude-d2-diagrams",
-    "lastUpdated": "2026-03-06T00:43:05.753Z",
+    "lastUpdated": "2026-03-12T23:11:07.949Z",
     "autoUpdate": true
   },
   "knowledge-work-plugins": {
@@ -32,7 +32,7 @@
       "repo": "anthropics/knowledge-work-plugins"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/knowledge-work-plugins",
-    "lastUpdated": "2026-03-11T21:59:03.262Z",
+    "lastUpdated": "2026-03-12T23:24:18.727Z",
     "autoUpdate": true
   },
   "pulumi-agent-skills": {
@@ -41,7 +41,7 @@
       "repo": "pulumi/agent-skills"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/pulumi-agent-skills",
-    "lastUpdated": "2026-03-11T18:57:39.743Z",
+    "lastUpdated": "2026-03-12T23:15:37.038Z",
     "autoUpdate": true
   },
   "neon": {
