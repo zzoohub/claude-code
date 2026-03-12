@@ -53,8 +53,8 @@ Ask the user to confirm or fill gaps. For Solo scope, focus on scale, real-time,
 
 **Phase 3 — Bundle & Stack Recommendation**
 Based on the requirements analysis, **recommend** a platform bundle with trade-off rationale:
-- **Cloudflare bundle** (default): Hono + Workers/CF Containers, React Router v7, Neon + Hyperdrive
-- **Vercel bundle**: Next.js (React), Supabase (Korea-first, content-heavy, React ecosystem)
+- **Cloudflare bundle** (default): Hono + Workers/CF Containers, TanStack Start (React), Neon + Hyperdrive
+- **Vercel bundle**: TanStack Start (React) or SvelteKit, Supabase (Korea-first, content-heavy)
 - **Backend framework**: Hono (TS) / Rust/Axum / FastAPI (Python) — independent of bundle
 - **Mobile** (if PRD includes mobile): React Native (Expo)
 

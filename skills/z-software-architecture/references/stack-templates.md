@@ -10,8 +10,8 @@ Choose one bundle per project. Backend framework choice is independent of bundle
 
 | Bundle | Compute | Frontend | DB | Choose When |
 |---|---|---|---|---|
-| **Cloudflare** (default) | Workers + CF Containers | React Router v7 / Next.js | Neon + Hyperdrive | Edge-first, global low-latency, TS fullstack, unified CF infra |
-| **Vercel** | Vercel Functions | Next.js (React) | Supabase | Content-heavy, SEO, React ecosystem, Korea-first (Supabase Seoul) |
+| **Cloudflare** (default) | Workers + CF Containers | TanStack Start (React) | Neon + Hyperdrive | Edge-first, global low-latency, TS fullstack, unified CF infra |
+| **Vercel** | Vercel Functions | TanStack Start (React) / SvelteKit | Supabase | Content-heavy, Korea-first (Supabase Seoul) |
 
 **GCP Cloud Run** = escape hatch when CF Containers can't do it (GPU, Vertex AI, GCP-only integrations).
 
@@ -22,7 +22,7 @@ If the user doesn't specify, use the **Cloudflare bundle**.
 ```
 Project characteristics?
 ├── Edge-first, API-heavy, TS fullstack     → Cloudflare bundle
-├── Content/SEO-heavy, React ecosystem      → Vercel bundle
+├── Content/SEO-heavy, Supabase needed       → Vercel bundle
 ├── Korea-first + Kakao/Naver auth needed   → Vercel bundle (Supabase Seoul + Auth)
 ├── Korea-first + edge API priority         → Cloudflare bundle + Supabase via Hyperdrive
 └── GPU / GCP-locked legacy                 → Cloudflare bundle + Cloud Run escape hatch
@@ -48,12 +48,12 @@ Frontend choice is independent of backend bundle. Pick based on team expertise a
 
 | Frontend | Deploy To | Choose When |
 |---|---|---|
-| **React Router v7** | CF Workers (Cloudflare adapter) / Node.js | Full-stack React framework with SSR/SSG, nested routes, loaders/actions, type-safe data flow. Workers-native deploy via `@react-router/cloudflare`. Default choice — React ecosystem + Workers-first |
-| **Next.js (React)** | Vercel (native) / CF Workers (OpenNext) | Largest ecosystem, broadest talent pool, mature patterns. When project needs extensive third-party integrations or Vercel-native features (ISR, Server Actions) |
-| **TanStack Start + SolidJS** | CF Workers | Fine-grained reactivity, minimal bundles, Workers-native deploy. Choose when bundle size and runtime performance are priorities and team is comfortable with smaller ecosystem |
+| **TanStack Start (React)** | CF Workers / Vercel / Node.js | Full-stack React framework with SSR/SSG, type-safe server functions, file-based routing. Default choice — React ecosystem + TanStack Router's type-safe navigation |
+| **TanStack Start (SolidJS)** | CF Workers / Vercel / Node.js | Fine-grained reactivity, minimal bundles, same TanStack Start primitives. Choose when bundle size and runtime performance are priorities |
+| **SvelteKit** | CF Workers / Vercel / Node.js | Compiler-first, minimal JS shipped, built-in SSR/SSG. Strong DX with runes reactivity. Choose when simplicity and performance are priorities |
 | **Astro** | CF Workers adapter | Content-first, Islands architecture. Blog/marketing/docs pages |
 
-**Default guidance**: If unsure, **React Router v7** is the default choice — React ecosystem benefits (component libraries, talent pool, tutorials) with Workers-native deployment via Cloudflare adapter, no OpenNext shim needed. Choose **Next.js** when Vercel-native features or specific integrations are required. Choose **TanStack Start + SolidJS** when fine-grained reactivity and minimal bundle size are meaningful differentiators.
+**Default guidance**: If unsure, **TanStack Start (React)** is the default choice — React ecosystem benefits (component libraries, talent pool, tutorials) with type-safe routing and server functions. Choose **TanStack Start (SolidJS)** or **SvelteKit** when fine-grained reactivity and minimal bundle size are meaningful differentiators. Both deploy to Workers, Vercel, or Node.js without shims.
 
 ---
 
@@ -82,7 +82,7 @@ project/
 │   │   ├── package.json
 │   │   ├── wrangler.jsonc
 │   │   └── src/
-│   ├── web/                  # React Router v7 (or Next.js, TanStack Start)
+│   ├── web/                  # TanStack Start (React/SolidJS) or SvelteKit
 │   │   ├── package.json
 │   │   └── src/
 │   └── shared/               # Shared types, utils, validation schemas
@@ -170,12 +170,12 @@ See **`references/cloudflare-platform.md`** for the full tech stack reference wi
 
 ## Vercel Bundle
 
-For Next.js + Supabase projects. Korea-first or React-ecosystem-heavy products.
+For Supabase projects. Korea-first or content-heavy products.
 
 ### Why This Bundle Exists
-- Next.js is first-class on Vercel — OpenNext on CF has friction
 - Supabase Seoul region — lowest latency for Korean users
 - Supabase Realtime — chat, notifications, live updates bundled
+- Vercel Functions — simple serverless compute with good DX
 - Better Auth handles auth the same way as CF bundle — unified auth experience
 
 ### Stack
@@ -183,7 +183,7 @@ For Next.js + Supabase projects. Korea-first or React-ecosystem-heavy products.
 | Role | Service | Notes |
 |---|---|---|
 | Compute | Vercel Functions | Serverless (Node.js) + Edge Runtime |
-| Frontend | Next.js App Router | SSR/SSG/ISR. Server Components + Server Actions |
+| Frontend | TanStack Start (React) / SvelteKit | SSR/SSG, type-safe routing, server functions |
 | DB | Supabase PostgreSQL | Seoul region available. Free tier: 2 projects, 500MB |
 | Auth | Better Auth | TS-native, stores in Supabase DB. Kakao, Naver, Google via plugins. No MAU billing |
 | Storage | Supabase Storage | S3-compatible. Direct client uploads via signed URLs |
@@ -284,7 +284,7 @@ Choose based on the product's audience:
 | **B2B / SaaS** | Email magic link | Keep it simple for solopreneur B2B |
 | **Internal tools** | Google Workspace OAuth2 | Single-click for team members |
 
-**Implementation**: **Better Auth** (TS-native) for all bundles and scenarios. Open-source, no MAU billing, stores auth data directly in your DB (Neon/D1). Supports social providers (Google, Kakao, Naver, GitHub, etc.) via plugins. Runs on the frontend server (React Router v7 / TanStack Start) — no separate auth service needed.
+**Implementation**: **Better Auth** (TS-native) for all bundles and scenarios. Open-source, no MAU billing, stores auth data directly in your DB (Neon/D1). Supports social providers (Google, Kakao, Naver, GitHub, etc.) via plugins. Runs on the frontend server (TanStack Start / SvelteKit) — no separate auth service needed.
 
 **Exception**: For Rust container backends without a TS frontend server, use **Clerk** (managed, HTTP API) or implement auth directly with the provider's OAuth2 flow + JWT verification.
 
