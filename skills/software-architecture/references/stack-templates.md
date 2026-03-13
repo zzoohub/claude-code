@@ -315,6 +315,8 @@ Cross-bundle services — no native alternative in either platform:
 | Service | Choice | Rationale |
 |---|---|---|
 | Error Tracking | Sentry | Stack traces, issue grouping, alerts. No platform alternative |
+| Observability | Axiom | Unified logs, traces, metrics across all projects. Logpush + OTLP ingestion. Free 500GB/mo |
+| Uptime Monitoring | BetterStack | External health checks, status page, incident management. Free tier: 10 monitors |
 | Product Analytics | PostHog | Feature flags, session replay, funnels. Privacy-friendly |
 | Payments (Global) | Stripe | Extensive API, webhook reliability |
 | Payments (Korea) | Toss Payments | Korean payment methods required |

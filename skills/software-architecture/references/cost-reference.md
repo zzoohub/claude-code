@@ -36,7 +36,7 @@ All CF developer platform services require or benefit from the **Workers Paid pl
 | **Resend** | 3K emails/mo | **Pro $20/mo**: 50K emails. Marketing Pro $40/mo: 5K contacts | Daily send limits on free |
 | **Stripe** | No monthly fee | 2.9% + $0.30/transaction (US cards). +0.5% international | $15 per dispute. Refunds don't return fee |
 | **Better Auth** | **Fully free, MIT open source** | N/A — self-hosted only | Cost = your DB + server hosting. No MAU billing |
-| **Honeycomb** | 20M events/mo, forever free | **Pro $130/mo**: 100M events/mo | Needed only when CF built-in tracing isn't enough |
+| **Axiom** | 500 GB/mo ingest, 30-day retention | **Pro $25/mo**: 2 TB/mo ingest, 60-day retention | Unified logs + traces + metrics. Default observability backend |
 
 ---
 
@@ -76,7 +76,7 @@ Most services stay within free tiers at this scale.
 - **LLM inference** dominates spend at scale — add model cascading and caching early
 - **Durable Objects idle duration** — use Hibernatable DOs
 - **Supabase Pro** jumps to $25/mo per project (vs Neon's $5/mo)
-- **Honeycomb Pro** is $130/mo — only add when CF built-in observability isn't enough
+- **Axiom Pro** is $25/mo — free tier (500GB) covers most solopreneur projects
 - **Stripe disputes** cost $15 each regardless of outcome
 
 ---

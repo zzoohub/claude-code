@@ -190,10 +190,11 @@ For each SLO, state: the metric, the threshold, the measurement window, and the 
 - Where auth is enforced (middleware, gateway, per-service)
 
 ### 6.2 Observability
-- **Logging**: What is logged, structured format, log levels, aggregation
-- **Metrics**: Key business and infra metrics, collection mechanism
-- **Tracing**: Distributed tracing approach if applicable
-- **Alerting**: Critical alert conditions
+- **Error tracking**: Sentry — error grouping, stack traces, release tracking, cron monitoring
+- **Logs + Tracing + Metrics**: Axiom — unified observability via Logpush + OTLP. Dashboards, alerts, long-term retention
+- **Uptime**: BetterStack — external health checks, status page, incident management
+- **Structured logging**: Format, log levels, context propagation (e.g., `workers-tagged-logger`)
+- **Alerting**: Sentry (error spikes) + BetterStack (downtime) + Axiom (latency anomalies)
 
 ### 6.3 Error Handling & Resilience
 - Retry policies (which calls, backoff strategy)

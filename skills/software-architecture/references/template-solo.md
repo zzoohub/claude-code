@@ -146,9 +146,10 @@ Keep it concise. If it's Google OAuth + JWT + RBAC, say that and move on.
 How you'll know when things break. Prioritize by what to set up when.
 
 **Day 1** (before launch):
-- **Error tracking**: Sentry — unhandled exceptions with stack traces
-- **Uptime**: Health check (`GET /health`) + external monitor (BetterStack, Pinger)
-- **Logging**: Structured JSON to stdout. Platform handles aggregation.
+- **Error tracking**: Sentry — unhandled exceptions, stack traces, issue grouping
+- **Logs + Tracing + Metrics**: Axiom — Logpush + OTLP export. Single dashboard across all projects
+- **Uptime**: Health check (`GET /health`) + BetterStack (external monitor)
+- **Structured logging**: `workers-tagged-logger` for JSON logs with request context
 
 **When you have users**:
 - Alert on quality target violations from Section 2 (e.g., error rate > 1% over 5 min)

@@ -119,14 +119,10 @@ Request type?
 | Role | Pri | Service | Notes |
 |---|---|---|---|
 | Auto tracing | ① | Workers Automatic Tracing (CF) | Zero-code OTel spans for KV, DO, R2, D1, fetch, queue/scheduled handlers |
-| Logs | ① | Workers Logs (CF) | Structured log storage, Query Builder, 7-day retention. $0.60/M after included volume |
-| Realtime log query | ① | Workers Observability Dashboard (CF) | Query language + Query Builder. Boolean logic, field queries, free text search |
-| Error tracking | ① | Sentry via `@sentry/cloudflare` (External) | Official SDK. `withSentry` for Hono, `instrumentDurableObjectWithSentry`, `instrumentWorkflowWithSentry` |
-| Distributed tracing | ② | Honeycomb or Grafana Cloud (External) | OTLP export from Workers. Add when CF dashboard isn't enough |
-| Custom metrics | ② | Analytics Engine (CF) | `writeDataPoint()` for custom business metrics. SQL API to query. Non-blocking writes |
-| Log long-term storage | ② | Logpush → R2 (CF) | Workers Trace Event Logs to R2. $0.05/M requests. Add when 7-day retention insufficient |
+| Logs + Tracing + Metrics | ① | Axiom (External) | Unified observability. Logpush + OTLP ingestion. Dashboards, alerts, long-term retention. Free 500GB/mo |
+| Error tracking | ① | Sentry via `@sentry/cloudflare` (External) | `withSentry` for Hono, `instrumentDurableObjectWithSentry`, `instrumentWorkflowWithSentry` |
 | Uptime monitoring | ① | BetterStack (External) | External health checks, status page, incident management. Free tier: 10 monitors |
-| Product analytics | ① | PostHog (External) | Event tracking, session replay, user journey analysis. No CF alternative |
+| Product analytics | ① | PostHog (External) | Event tracking, session replay, user journey analysis |
 | Feature flags | ① | KV + PostHog (CF+External) | KV TTL cache for 0ms edge evaluation. PostHog for flag management + analytics |
 
 ### Observability Implementation Guide
@@ -245,7 +241,7 @@ Zero-code, OpenTelemetry-compliant spans. Enable in config, get full visibility.
 **What it does NOT cover (gaps):**
 - Internal business logic timing (add custom spans via Sentry if needed)
 - SQL query details through Neon/Hyperdrive (the HTTP fetch is traced, not the SQL itself)
-- Custom business metrics (use Analytics Engine for those)
+- Custom business metrics (track via Axiom dashboards)
 
 **Configuration:**
 ```jsonc
@@ -262,7 +258,7 @@ Zero-code, OpenTelemetry-compliant spans. Enable in config, get full visibility.
 
 **Pricing (as of March 2026):** Each span = one observability event, sharing the same monthly quota and pricing as Workers Logs.
 
-**OTLP export** — send traces to external backends without code changes:
+**OTLP export** — send traces to Axiom without code changes:
 ```jsonc
 // wrangler.jsonc — after creating destination in CF dashboard
 {
@@ -270,44 +266,13 @@ Zero-code, OpenTelemetry-compliant spans. Enable in config, get full visibility.
     "traces": {
       "enabled": true,
       "head_sample_rate": 1,
-      "destinations": ["sentry-prod"]   // name from dashboard config
+      "destinations": ["axiom-prod"]   // name from dashboard config
     }
   }
 }
 ```
 
-Sentry OTLP endpoint: `https://{HOST}/api/{PROJECT_ID}/integration/otlp/v1/traces`
-Auth header: `sentry sentry_key={SENTRY_PUBLIC_KEY}`
-
-#### Workers Logs
-
-**Capabilities:**
-- Stores `console.log()` / `console.warn()` / `console.error()` output
-- Query Builder: filters, aggregations, groupings, graphical + tabular visualizations
-- Query language: `status = 500`, `$workers.wallTimeMs > 100`, `contains(field, value)`, AND/OR/NOT
-- Free text search across all metadata and attributes
-- Save queries for reuse
-
-**Limitations:**
-- 7-day retention (Paid plan). Not long-term storage — use Logpush for that
-- No built-in alerting (use Sentry alerts or BetterStack for that)
-- Daily limit: 5B logs/account/day (1% sampling after limit — irrelevant at solopreneur scale)
-- Max single log size: 256 KB
-
-**Configuration:**
-```jsonc
-{
-  "observability": {
-    "logs": {
-      "enabled": true,            // default for new Workers
-      "head_sample_rate": 1,      // 0-1. Reduce at high volume
-      "invocation_logs": "auto"   // "auto" | "off"
-    }
-  }
-}
-```
-
-**Pricing:** $0.60/M log lines after included volume. At solopreneur scale this is effectively free.
+Configure Axiom OTLP endpoint in CF dashboard > Observability > Trace destinations. Also supports Sentry, Honeycomb, Grafana Cloud, and any OTLP-compatible backend.
 
 #### Structured Logging
 
@@ -356,48 +321,6 @@ For Durable Objects, use the `@WithLogTags` class method decorator for automatic
 - `console.error()` → failures needing investigation
 
 **Sampling strategy:** At < 100K req/day, log everything. Above that, sample routine logs at 10-50% but keep 100% for errors. Use `head_sample_rate` in wrangler config for global sampling; use conditional logging in code for per-level control.
-
-#### Analytics Engine (Custom Metrics)
-
-Use for operational metrics that Cloudflare does not track automatically. Skip this on Day 1 if PostHog covers your product analytics.
-
-**Good use cases:** p99 latency by endpoint, error rates by customer/tenant, queue processing duration, DO operation counts, feature usage counts.
-
-```jsonc
-// wrangler.jsonc
-{
-  "analytics_engine_datasets": [
-    { "binding": "METRICS", "dataset": "app_metrics" }
-  ]
-}
-```
-
-```typescript
-// Non-blocking — no await needed. Zero added latency.
-env.METRICS.writeDataPoint({
-  indexes: [request.url],                          // sampling key
-  blobs: [request.method, '/api/users', '200'],    // string dimensions
-  doubles: [responseTimeMs, 1],                    // numeric values
-});
-```
-
-Query via SQL API or connect to Grafana. Create an API Token with Account Analytics Read permission.
-
-#### Logpush
-
-Sends Workers Trace Event Logs to external destinations for long-term retention. Add when 7-day Workers Logs retention is not enough.
-
-**Cheapest path:** Push to R2 ($0.05/M requests).
-
-**Setup:**
-1. Dashboard > Analytics & Logs > Logpush
-2. Dataset: "Workers trace events"
-3. Destination: R2 (auto-creates bucket) or custom
-4. Ensure `observability.logs.enabled = true` in wrangler config
-
-**Other destinations:** S3, GCS, Azure Blob, Sumo Logic, Datadog, Splunk, BetterStack.
-
-**Cost control:** Configure filters and sampling rate in Logpush to control data volume.
 
 #### PostHog on Workers
 
@@ -480,65 +403,29 @@ Neon provides built-in monitoring — no extra tooling needed at solopreneur sca
 
 **At scale:** Neon exports OpenTelemetry and Datadog metrics (including PgBouncer pooling metrics). Grafana Cloud has a native Neon integration for dashboards.
 
-#### When to Add External Observability Tools
+#### Day 1 Setup
 
-| Signal | Action |
-|---|---|
-| CF dashboard + Sentry answers all debugging questions | Stay with built-in tools |
-| Spending > 30 min/week debugging production incidents | Add Honeycomb or Grafana Cloud |
-| Need to correlate traces across > 3 Workers/DOs | Add Honeycomb (event-based pricing, unlimited cardinality) |
-| Need pre-built dashboards + long-term metrics | Add Grafana Cloud (per-byte pricing) |
-| Need log retention > 7 days | Add Logpush → R2 (cheapest) or Axiom (generous free: 500 GB/mo ingest) |
-| Need to correlate Workers + Neon + external API metrics | Add Grafana Cloud (single pane of glass) |
-
-**OTLP export is a config change, not a code change.** Workers traces are OpenTelemetry-compliant. Switching from CF dashboard to Honeycomb/Grafana/Axiom means adding a destination in the dashboard and a `destinations` array in wrangler config.
-
-#### Day 1 vs Growth Observability
-
-**Day 1 (Pre-launch / MVP) — $0/month additional:**
+All tools below are free at solopreneur scale. Set up once, reuse across all projects.
 
 | Layer | Tool | Setup |
 |---|---|---|
-| Error tracking | `@sentry/cloudflare` with `withSentry` (Hono), `instrumentDurableObjectWithSentry`, `instrumentWorkflowWithSentry` | 1 hour |
-| Logs | Workers Logs enabled in wrangler.jsonc | 5 min |
-| Tracing | Workers Automatic Tracing enabled in wrangler.jsonc | 5 min |
-| Structured logging | `workers-tagged-logger` for JSON logs with request context | 1 hour |
-| Product analytics | PostHog (already in stack) | — |
-| Uptime | BetterStack free tier (10 monitors) or UptimeFlare | 30 min |
+| Error tracking | `@sentry/cloudflare` | 1 hour |
+| Logs + Tracing + Metrics | Axiom via Logpush + OTLP export | 30 min |
+| Structured logging | `workers-tagged-logger` | 1 hour |
+| Product analytics | PostHog | — |
+| Uptime | BetterStack free tier (10 monitors) | 30 min |
 
 ```jsonc
-// Day 1 wrangler.jsonc observability config
+// wrangler.jsonc observability config
 {
   "observability": {
     "logs": { "enabled": true, "head_sample_rate": 1, "invocation_logs": "auto" },
-    "traces": { "enabled": true, "head_sample_rate": 1 }
+    "traces": { "enabled": true, "head_sample_rate": 1, "destinations": ["axiom-prod"] }
   }
 }
 ```
 
-**Growth (paying users, < 50K DAU) — ~$25-50/month additional:**
-
-Everything from Day 1, plus:
-
-| Layer | Tool | Why |
-|---|---|---|
-| Uptime (upgraded) | BetterStack paid (~$21/mo) | 1-min checks, SMS alerts, on-call |
-| Log retention | Logpush → R2 | 30+ day retention, audit trail |
-| Custom metrics | Analytics Engine | p99 latency, error rates by endpoint |
-| Sentry tuning | Lower `tracesSampleRate` to 0.2-0.5 | Cost control |
-| Alerting | Sentry alerts + BetterStack | Error spike + downtime detection |
-
-**Scale (> 50K DAU, revenue > $10K MRR):**
-
-Everything from Growth, plus:
-
-| Layer | Tool | Why |
-|---|---|---|
-| Distributed tracing | Honeycomb or Grafana Cloud via OTLP | Multi-service debugging |
-| Dashboards | Grafana Cloud or Honeycomb boards | Single pane of glass |
-| Log analysis | Axiom or Grafana Loki (via Logpush) | Long-term querying beyond 7 days |
-| Neon monitoring | Neon OTel → Grafana Cloud | Correlate DB + Workers metrics |
-| Sampling | Lower `head_sample_rate` to 0.1-0.5 | Cost control at scale |
+**At scale:** Lower `head_sample_rate` and `tracesSampleRate` for cost control. Upgrade BetterStack for 1-min checks + SMS alerts.
 
 ---
 
