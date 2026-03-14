@@ -269,7 +269,7 @@ Ensure `engine.dispose()` in a `finally` block for clean shutdown.
 
 | Item | Value |
 |------|-------|
-| Password hashing | `argon2-cffi` (default), `bcrypt` (fallback). Not passlib. |
+| Password hashing | `pwdlib[argon2]` (default), `bcrypt` (fallback) |
 | JWT library | `PyJWT` (not python-jose, which is unmaintained) |
 | JWT access token | 15 min |
 | JWT refresh (web) | 90 days |
