@@ -3,9 +3,8 @@ name: axum-hexagonal
 description: |
   Axum 0.8+ with hexagonal architecture patterns in Rust.
   Use when: building any Rust API — this is the default backend implementation skill.
-  Covers: domain modeling, ports & adapters, service layer, error handling, testing.
-  Do not use for: API design decisions (use rest-api-design skill).
-  Workflow: rest-api-design (design) → this skill (implementation).
+  Covers: API design (utoipa-axum + OpenApiRouter), domain modeling, ports & adapters, service layer, error handling, testing.
+  Do not use for: database schema design (use database-design skill).
 references:
   - references/examples-domain.md
   - references/examples-adapters.md
@@ -101,19 +100,34 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 
 ## Inbound Layer
 
-- **HttpServer wrapper** — wrap axum so `main` never imports axum.
-  Expose `build_router()` for tests — returns `Router` without binding a port.
+- **HttpServer wrapper** — use `utoipa_axum::router::OpenApiRouter` instead of `axum::Router`.
+  `main` never imports axum. Expose `build_router()` for tests.
+  ```rust
+  // Each domain module returns its own OpenApiRouter
+  pub fn router() -> OpenApiRouter<AppState> {
+      OpenApiRouter::new()
+          .routes(routes!(list_authors, create_author))
+          .routes(routes!(get_author, update_author, delete_author))
+  }
+
+  // Top-level composes modules and splits for axum
+  let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
+      .nest("/api/v1/authors", authors::router())
+      .nest("/api/v1/posts", posts::router())
+      .split_for_parts();
+  ```
 - **Path params use `{id}` syntax** (not `:id`). Axum 0.8 changed this.
   Wildcards: `{*path}` (not `*path`). Literal braces: `{{` / `}}`.
 - **DI via State** — services wrapped in `Arc` inside `AppState`.
   - **Single service:** generic `AppState<AS>`.
   - **Multiple services:** concrete `AppState` with `FromRef` for sub-extraction.
-- **Handlers** do three things only: parse input → call service → map response. No SQL.
-- **Request types** decoupled from domain — `try_into_domain()` validates into domain type.
-- **Response types** built via `From<&Author>` — never expose domain structs.
+- **Handlers** annotated with `#[utoipa::path]` for OpenAPI generation. Do three things only: parse input → call service → map response. No SQL.
+- **Request types** decoupled from domain — `try_into_domain()` validates into domain type. Derive `ToSchema` + `Deserialize`.
+- **Response types** built via `From<&Author>` — never expose domain structs. Derive `ToSchema` + `Serialize`.
+- **`ToSchema` / `IntoParams`** are inbound-layer concerns only. Domain models never derive utoipa traits.
 - **API errors** mapped manually from domain errors. Never leak domain strings to users.
   `Unknown` → log server-side, return generic message. Use RFC 9457 ProblemDetails.
-- **API docs** — serve OpenAPI spec from the `openapi.yaml` produced by rest-api-design. Don't use annotation-based generation (e.g. `utoipa`). The spec file is the single source of truth.
+- **API docs** — `utoipa-axum` generates OpenAPI from code via `OpenApiRouter` + `routes!` + `split_for_parts()`. Serve with `utoipa-swagger-ui` or `utoipa-scalar`. Consult `references/api-design.md` for conventions and `references/api-patterns.md` for HTTP patterns.
 - **Middleware (Tower layers)** — lives in inbound layer, invisible to domain.
   Layers wrap services: `TraceLayer → TimeoutLayer → CompressionLayer → CorsLayer`.
 - **Health checks** live in the inbound layer (not domain). Readiness probes check DB pool.
@@ -167,20 +181,20 @@ All three are wired into the same HttpServer. Domain doesn't know which triggere
 
 ### Pagination
 
-**Default to offset pagination.** The pattern flows through all three layers:
-- **Domain port**: `list_authors(&self, pagination: &Pagination) -> Result<Page<Author>, anyhow::Error>`
-- **Outbound adapter**: `LIMIT` / `OFFSET` + `COUNT(*)` query
-- **Inbound handler**: return `PageResponse<T>` with items, total, page, per_page, total_pages
+**Default to cursor-based pagination.** The pattern flows through all three layers:
+- **Domain port**: `list_authors(&self, cursor: Option<&str>, limit: usize) -> Result<CursorPage<Author>, anyhow::Error>`
+- **Outbound adapter**: `WHERE (created_at, id) > ($1, $2) ORDER BY created_at, id LIMIT $3`
+- **Inbound handler**: return `CursorPageResponse<T>` with data, limit, next_cursor, has_more
 
-Cap `per_page` at the handler level (e.g. `Pagination::new` clamps to 1..100). The domain doesn't care about max page size — that's a transport concern.
+Cap `limit` at the handler level (e.g. clamp to 1..100, default 20). The domain doesn't care about max page size — that's a transport concern.
 
-#### Offset vs Cursor
+#### Cursor vs Offset
+
+**Cursor** (default) — `WHERE (created_at, id) > ($1, $2) ORDER BY created_at, id LIMIT $3`.
+Consistent performance regardless of dataset size. Ideal for feeds, timelines, and large/mutable data. Always use a **composite cursor** `(sort_field, id)`. Cursor is an opaque base64-encoded string in the API; decode in the adapter only.
 
 **Offset** — `LIMIT` / `OFFSET` + `COUNT(*)`.
-Simple to implement, provides `total` count for page number UIs. Downside: deeper pages get slower as the DB scans and discards rows, and rows inserted/deleted between requests can cause duplicates or skips.
-
-**Cursor** — `WHERE (created_at, id) > ($1, $2) ORDER BY created_at, id LIMIT $3`.
-Consistent performance regardless of dataset size. Ideal for infinite scroll and feeds. Downside: no `total` count, page number UI not possible, higher implementation complexity. Always use a **composite cursor** `(sort_field, id)` — a single field like `created_at` isn't unique, so ties produce non-deterministic ordering. Cursor is an opaque base64-encoded string in the API; decode in the adapter only.
+Use for admin panels and small/static datasets. Provides `total` count for page number UIs. Downside: deeper pages get slower, and row mutations between requests cause duplicates or skips.
 
 ### Query Method
 
@@ -313,6 +327,8 @@ impl FromRef<AppState> for Arc<dyn AuthorService> { ... }
 | Test app? | `HttpServer::build_router()` + `tower::oneshot` |
 | Health checks? | Inbound layer, not domain |
 | Graceful shutdown? | `with_graceful_shutdown()` + `TimeoutLayer` |
+| OpenAPI generation? | `utoipa-axum`: `OpenApiRouter` + `routes!` + `split_for_parts()` |
+| ToSchema/IntoParams? | Inbound request/response types only, never domain models |
 
 ---
 
@@ -324,6 +340,7 @@ impl FromRef<AppState> for Arc<dyn AuthorService> { ... }
 - [ ] All handlers (HTTP, tasks, webhooks): parse → service → respond
 - [ ] Transactions in adapters only, `&mut **tx` for SQLx 0.8+
 - [ ] Errors: domain enum → `From<DomainError> for ApiError` → RFC 9457
+- [ ] If phase-tagged schema exists, implement Phase 1 endpoints only
 
 ### Framework
 - [ ] Axum wrapped in `HttpServer`, `build_router()` for tests

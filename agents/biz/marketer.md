@@ -107,10 +107,10 @@ Only create a new file when the deliverable genuinely doesn't exist yet.
 
 ---
 
-## Cross-References
+## Context Files (read if they exist)
 
 - `docs/product-brief.md` — product context
 - `biz/analytics/tracking-plan.md` — UTM and conversion tracking
 - `biz/ops/feedback-log.md` — customer feedback for content ideas
-- **growth-optimizer** (agent) — conversion optimization, referral programs, churn prevention
-- **data-analyst** (agent) — analytics, experiment results, retention metrics
+- `biz/growth/experiments.md` — experiment results (output by growth-optimizer)
+- `biz/analytics/kill-criteria.md` — product health metrics (output by data-analyst)

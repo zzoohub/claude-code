@@ -1,0 +1,157 @@
+# API Design Conventions
+
+Reference for REST API endpoint design. Consult when defining routes, request/response types, and error handling.
+
+---
+
+## Resource Identification
+
+1. List nouns from PRD, database schema, or requirements
+2. Decide: first-class resource (own lifecycle) or property (part of another)?
+3. List operations needed — think beyond CRUD to real workflows
+4. Map relationships
+
+**From DB schema**: singular `snake_case` → plural `kebab-case` (`user_account` → `/v1/user-accounts`)
+
+**Sub-resource vs flat route:**
+
+| Signal | Sub-resource `/parents/{id}/children` | Flat `/children?parentId=X` |
+|--------|--------------------------------------|-----------------------------|
+| Child cannot exist without parent | Yes | — |
+| Child belongs to exactly one parent | Either works | Either works |
+| Child can belong to multiple parents | — | Yes |
+| Need to list children across parents | — | Yes |
+| Nesting would exceed 2 levels | — | Yes (flatten) |
+
+Default to flat routes. Use sub-resources only when parent-child ownership is fundamental.
+
+**PATCH vs custom action:**
+
+| Signal | PATCH | Custom action `POST /resources/{id}/{action}` |
+|--------|-------|-----------------------------------------------|
+| Changing a data field | Yes | — |
+| Triggering a side effect | — | Yes |
+| State machine transition | — | Yes |
+
+---
+
+## Naming
+
+- **Paths**: Plural nouns, lowercase, kebab-case (`/v1/line-items`)
+- **No verbs in paths** — HTTP methods express actions
+- **`/v1/` prefix** on all paths
+- **Max 2 levels** of nesting
+
+| Pattern | Example |
+|---------|---------|
+| Collection | `/v1/users` |
+| Single | `/v1/users/{userId}` |
+| Nested | `/v1/users/{userId}/orders` |
+| Filtered | `/v1/orders?userId=123` |
+| Custom action | `POST /v1/orders/{orderId}/cancel` |
+
+**Schema naming:**
+
+| Purpose | Pattern | Example |
+|---------|---------|---------|
+| Create request | `Create{Resource}` | `CreateUser` |
+| Update request | `Update{Resource}` | `UpdateUser` |
+| Full resource | `{Resource}` | `User` |
+| Error | `ProblemDetail` | RFC 9457 |
+
+---
+
+## Response Format
+
+**Single**: `{ "data": {...}, "meta": { "requestId": "..." } }`
+
+**Collection**: `{ "data": [...], "meta": { "limit": 20, "nextCursor": "...", "hasMore": true } }`
+
+**Errors** (RFC 9457, `application/problem+json`):
+
+```json
+{
+  "type": "https://api.example.com/errors/validation-failed",
+  "title": "Validation Failed",
+  "status": 422,
+  "detail": "Email is required",
+  "instance": "/v1/users",
+  "errors": [{ "field": "email", "code": "required", "message": "Email is required" }],
+  "requestId": "req_abc"
+}
+```
+
+**Status codes:**
+
+| Operation | Success | Common errors |
+|-----------|---------|---------------|
+| POST create | 201 + Location | 409, 422 |
+| GET | 200 | 404 |
+| PATCH | 200 | 404, 422 |
+| DELETE | 204 | 404 |
+| Custom action | 200 | 409 |
+| Async | 202 + Location | |
+
+---
+
+## Pagination
+
+**Cursor** (default): `?cursor=X&limit=20` → meta: `{ limit, nextCursor, hasMore }`
+
+**Offset** (admin panels, small datasets): `?page=2&limit=20` → meta: `{ page, limit, total, totalPages }`
+
+---
+
+## Filtering, Sorting, Field Selection
+
+```
+GET /v1/users?role=admin&status=active
+GET /v1/users?sort=-createdAt,name          # - = descending
+GET /v1/users?fields=id,name,email
+```
+
+---
+
+## Soft Delete
+
+DELETE → 204, mark `deletedAt` internally. Filter deleted by default. `?includeDeleted=true` for admin.
+
+---
+
+## Security
+
+| Context | Pattern |
+|---------|---------|
+| User-facing | JWT Bearer (ES256/EdDSA) |
+| Public API | API keys, OAuth 2.0 |
+| Service-to-service | mTLS |
+| Webhooks | HMAC-SHA256 |
+
+Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`
+
+`Idempotency-Key` for safe POST retries.
+
+---
+
+## Caching
+
+`ETag` + `If-None-Match` → 304. `Cache-Control: public/private/no-store`. `Vary` for cache key variation.
+
+---
+
+## Versioning
+
+`/v1/` prefix. Bump only for breaking changes. `Sunset` header for deprecation.
+
+---
+
+## Checklist
+
+- [ ] Plural nouns, no verbs in paths
+- [ ] POST → 201, DELETE → 204, async → 202
+- [ ] Collections have cursor pagination
+- [ ] Errors use RFC 9457 with `application/problem+json`
+- [ ] Create/Update types exclude readOnly fields (id, createdAt, updatedAt)
+- [ ] Custom actions use `POST /resources/{id}/{verb}`
+- [ ] No nesting beyond 2 levels
+- [ ] If phase-tagged schema exists, implement Phase 1 endpoints only

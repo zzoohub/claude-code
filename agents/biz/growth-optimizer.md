@@ -39,7 +39,7 @@ Growth is a system, not a collection of tactics. Every optimization must be meas
 | Paywall/upgrade flow | cro | `references/paywall-upgrade-cro.md` |
 | Pricing strategy for paywall/upgrade | pricing | `references/tier-structure.md` |
 | A/B test / experiment design | cro | `references/experiments.md` |
-| Aha Moment definition & activation metrics | product-analytics | (skill body) |
+| Aha Moment definition & activation metrics | *See `biz/analytics/tracking-plan.md`* | Output by data-analyst |
 | Activation path / onboarding optimization | cro | `references/onboarding-cro.md` |
 | Persuasion principles for growth | marketing-psychology | `references/mental-models-reference.md` |
 | Conversion copy quality | copywriting | (skill body) |
@@ -111,13 +111,16 @@ Design referral programs that create compounding growth loops.
 5. Run experiment → analyze → iterate
 6. When improvement plateaus, move to next biggest drop-off
 
-### 3. Experiment-to-Analysis Handoff
+### 3. Experiment Results
 
-When experiments produce data, hand off to data-analyst for:
-- Statistical significance calculation
-- Cohort comparison analysis
-- Long-term retention impact assessment
-- CC (Carrying Capacity) impact estimation
+When experiments produce data, log results in `biz/growth/experiments.md` and include in your return summary:
+
+```
+## Suggested Next
+- Run data-analyst: experiment "{name}" has data ready for significance testing
+```
+
+The main agent will route to data-analyst for statistical analysis, cohort comparison, retention impact, and CC estimation.
 
 ---
 
@@ -136,11 +139,10 @@ Only create a new file when the deliverable genuinely doesn't exist yet.
 
 ---
 
-## Cross-References
+## Context Files (read if they exist)
 
-- **data-analyst** (agent) — For experiment results analysis and retention metrics
-- **marketer** (agent) — For acquisition strategy (this agent handles post-acquisition)
-- `docs/product-brief.md` — Product context
-- `biz/analytics/tracking-plan.md` — Event tracking for experiments
-- `biz/analytics/health-score.md` — Customer health score model
-- `biz/ops/feedback-log.md` — Qualitative churn signals
+- `docs/product-brief.md` — product context
+- `biz/analytics/tracking-plan.md` — event tracking for experiments
+- `biz/analytics/health-score.md` — customer health score model
+- `biz/ops/feedback-log.md` — qualitative churn signals
+- `biz/growth/experiments.md` — prior experiment log

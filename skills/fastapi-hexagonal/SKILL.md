@@ -3,9 +3,8 @@ name: fastapi-hexagonal
 description: |
   FastAPI with hexagonal architecture patterns in Python.
   Use when: building Python APIs — only when Python-only libraries are required (LangGraph, PyTorch, transformers, etc.).
-  Covers: domain modeling, ports & adapters, service layer, error handling, async patterns, testing, Alembic migrations, pagination, healthcheck endpoints.
-  Do not use for: API design decisions (use rest-api-design skill). Default to axum-hexagonal unless Python-only libraries are needed.
-  Workflow: rest-api-design (design) → this skill (implementation).
+  Covers: API design (Pydantic + auto OpenAPI), domain modeling, ports & adapters, service layer, error handling, async patterns, testing, Alembic migrations, pagination, healthcheck endpoints.
+  Do not use for: database schema design (use database-design skill). Default to axum-hexagonal unless Python-only libraries are needed.
 references:
   - references/examples-domain.md
   - references/examples-adapters.md
@@ -116,7 +115,7 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 - **Response types** built via `from_domain()` classmethod — never expose domain models directly.
 - **API errors** mapped via `@app.exception_handler`. Never leak domain strings to users.
   `UnknownAuthorError` → log server-side, return generic message. Use RFC 9457 ProblemDetails.
-- **API docs** — serve OpenAPI spec from the `openapi.yaml` produced by rest-api-design. Don't rely on FastAPI's auto-generated docs from annotations. The spec file is the single source of truth.
+- **API docs** — use Pydantic models for request/response definition. FastAPI auto-generates OpenAPI docs at `/docs`. Consult `references/api-design.md` for conventions and `references/api-patterns.md` for HTTP patterns.
 - **Middleware** — lives in inbound layer, invisible to domain.
   **CORS middleware before routers** (order matters).
 
@@ -199,20 +198,20 @@ create_async_engine(url, pool_size=10, pool_timeout=3, pool_pre_ping=True)
 
 ## Pagination
 
-List endpoints need pagination. **Default to offset pagination.** The pattern flows through all three layers:
-- **Domain port**: `list_authors(page, page_size) -> tuple[list[Author], int]`
-- **Outbound adapter**: offset/limit + `COUNT(*)` query
-- **Inbound handler**: return `PaginatedList[T]` with `data`, `total`, `page`, `page_size`, `has_next`
+List endpoints need pagination. **Default to cursor-based pagination.** The pattern flows through all three layers:
+- **Domain port**: `list_authors(cursor: str | None, limit: int) -> CursorPage[Author]`
+- **Outbound adapter**: `WHERE (created_at, id) > (:cursor) ORDER BY created_at, id LIMIT :limit`
+- **Inbound handler**: return `CursorPageResponse[T]` with `data`, `limit`, `next_cursor`, `has_more`
 
-Cap `page_size` at the handler level (e.g. `Query(20, ge=1, le=100)`). The domain doesn't care about max page size — that's a transport concern.
+Cap `limit` at the handler level (e.g. `Query(20, ge=1, le=100)`). The domain doesn't care about max page size — that's a transport concern.
 
-### Offset vs Cursor
+### Cursor vs Offset
+
+**Cursor** (default) — `WHERE (created_at, id) > (:cursor) ORDER BY created_at, id LIMIT :limit`.
+Consistent performance regardless of dataset size. Ideal for feeds, timelines, and large/mutable data. Always use a **composite cursor** `(sort_field, id)`. Cursor is an opaque base64-encoded string in the API; decode in the adapter only.
 
 **Offset** — `OFFSET` / `LIMIT` + `COUNT(*)`.
-Simple to implement, provides `total` count for page number UIs. Downside: deeper pages get slower as the DB scans and discards rows, and rows inserted/deleted between requests can cause duplicates or skips.
-
-**Cursor** — `WHERE (created_at, id) > (:cursor) ORDER BY created_at, id LIMIT :page_size`.
-Consistent performance regardless of dataset size. Ideal for infinite scroll and feeds. Downside: no `total` count, page number UI not possible, higher implementation complexity. Always use a **composite cursor** `(sort_field, id)` — a single field like `created_at` isn't unique, so ties produce non-deterministic ordering. Cursor is an opaque base64-encoded string in the API; decode in the adapter only.
+Use for admin panels and small/static datasets. Provides `total` count for page number UIs. Downside: deeper pages get slower, and row mutations between requests cause duplicates or skips.
 
 > Full pagination examples (port, adapter, handler): `references/examples-adapters.md`
 
@@ -340,7 +339,7 @@ Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 | Background workers? | `Application` + `asyncio.TaskGroup` |
 | Migrations? | Alembic, lives alongside app (not in hex layers) |
 | Healthcheck? | `/healthz` + `/readyz` in inbound, no domain |
-| Pagination? | `PaginatedList[T]` wrapper, offset in adapter |
+| Pagination? | `CursorPageResponse[T]` wrapper, cursor in adapter |
 | JWT / passwords? | `PyJWT` + `bcrypt` (not jose/passlib) |
 
 ---
@@ -353,6 +352,7 @@ Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 - [ ] All handlers (HTTP, tasks, webhooks): parse → service → respond
 - [ ] Transactions in adapters only, ORM ↔ domain mapper in outbound
 - [ ] Errors: domain hierarchy → exception handlers → RFC 9457
+- [ ] If phase-tagged schema exists, implement Phase 1 endpoints only
 
 ### Framework
 - [ ] Shell wraps FastAPI, `build_test_app()` for tests
