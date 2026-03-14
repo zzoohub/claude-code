@@ -16,7 +16,7 @@ Every external dependency will fail. Every network call will timeout. Every disk
 ### 2. Make the Wrong Thing Hard, Not the Right Thing Easy
 Good architecture makes it difficult to introduce certain classes of bugs. Compile-time safety (Rust), type systems (TypeScript strict), schema validation (Pydantic, Zod) — these are architectural decisions, not code style preferences.
 
-**Application**: Choose technologies and patterns that prevent errors at the earliest possible stage (compile time > deploy time > runtime > production).
+**Application**: Choose technologies and patterns that prevent errors at the earliest possible stage (compile time > deploy time > runtime > production). At the domain layer, this extends to making errors explicit in function signatures — `Result<T, E>` types force callers to handle failures instead of accidentally ignoring thrown exceptions. See the hexagonal implementation skills for concrete patterns.
 
 ### 3. Delay Irreversible Decisions
 Two-way doors (reversible decisions) can be made quickly. One-way doors (irreversible) deserve design docs. Database choice, primary language, authentication architecture — these are one-way doors. Library choice, caching strategy, log format — these are two-way doors.

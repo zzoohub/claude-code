@@ -188,6 +188,8 @@ Events)  │  │                               │   │   APIs)
 
 Document your code structure choice as an ADR with rationale.
 
+**In-process domain events**: When side effects grow, direct calls raise coupling. Refactor so the service emits `AuthorCreatedEvent` and independent handlers react — adding side effects no longer touches the service. Trade-off: flow spreads across files. Distinct from system-level EDA (Kafka/Queues) — these are in-process, within a single service.
+
 ---
 
 ## Language Selection

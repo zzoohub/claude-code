@@ -4,6 +4,20 @@ Practical architecture patterns that almost every production system needs. Refer
 
 ---
 
+## Pagination Strategy
+
+An architectural decision for every list endpoint. Choose based on the UI and data characteristics.
+
+**Offset** — `LIMIT / OFFSET` + `COUNT(*)`.
+Simple to implement, provides `total` count for page number UIs. Suited for admin dashboards, back-office tools, and small-to-medium datasets. Downside: deeper pages get slower as the DB scans and discards rows, and rows inserted/deleted between requests can cause duplicates or skips.
+
+**Cursor** — `WHERE (created_at, id) > (:cursor) ORDER BY created_at, id LIMIT :size`.
+Consistent performance regardless of dataset size. Ideal for feeds, timelines, infinite scroll, and large datasets. Downside: no `total` count, page number UI not possible, higher implementation complexity. Always use a **composite cursor** `(sort_field, id)` — a single field like `created_at` isn't unique, so ties produce non-deterministic ordering. Cursor is an opaque base64-encoded string in the API; decode in the adapter only.
+
+Document your pagination choice per endpoint in the design doc.
+
+---
+
 ## Resilience Patterns
 
 ### Timeout Budgets

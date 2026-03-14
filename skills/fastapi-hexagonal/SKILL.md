@@ -86,7 +86,7 @@ tests/
 ### Errors
 - Exhaustive hierarchy: one class per business rule violation + generic `UnknownAuthorError`.
 - **Never raise `HTTPException` in domain** — that leaks transport concerns.
-- **Domain ports return `Result[T, E]` instead of raising.** This makes errors visible in the function signature. Define `Result` as a simple union `T | E` with discriminator, or use a `@dataclass Result` in `domain/shared/result.py`. Adapters use try/except internally and convert to `Result` before returning. Value objects (like `AuthorName`) may still raise since they're called at construction time.
+- **Domain ports return `Result[T, E]` instead of raising** — errors become visible in the type signature. Adapters use try/except internally and convert to `Result` before returning. Value objects may still raise on construction.
 
 ### Ports (Protocols)
 

@@ -74,7 +74,7 @@ src/
 - Exhaustive enum: one variant per business rule violation + `Unknown(anyhow::Error)`.
 - Don't panic on unexpected errors — poisons mutexes, surprises other devs. Return errors.
 - Domain errors = complete description of what can go wrong in an operation.
-- **Domain ports return `Result<T, E>` exclusively — never panic on business errors.** This is already Rust's natural pattern. Ensure all port trait methods return `Result`, and adapters map infrastructure errors (e.g. sqlx errors) into domain error types before returning.
+- **Domain ports return `Result<T, E>` exclusively — never panic on business errors.** Adapters map infrastructure errors (e.g. sqlx) into domain error types before returning.
 
 ### Ports (Traits)
 

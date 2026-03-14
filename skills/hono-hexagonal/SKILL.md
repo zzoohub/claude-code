@@ -83,7 +83,7 @@ tests/
 - Exhaustive hierarchy: one class per business rule violation + generic `UnknownAuthorError`.
 - **Never throw `HTTPException` in domain** — that leaks transport concerns.
 - Use custom error classes extending `Error` with a `readonly tag` discriminant for exhaustive matching.
-- **Domain ports return `Result<T, E>` instead of throwing.** This makes errors visible in the function signature — callers can't accidentally forget to handle them. `Result` is a simple discriminated union defined in `domain/shared/result.ts`. Adapters use try/catch internally and convert to `Result` before returning. Value objects (like `AuthorName.create()`) may still throw since they're called at construction time and failure means invalid input.
+- **Domain ports return `Result<T, E>` instead of throwing** — errors become visible in the type signature. Adapters use try/catch internally and convert to `Result` before returning. Value objects may still throw on construction.
 
 ### Ports (Interfaces)
 
