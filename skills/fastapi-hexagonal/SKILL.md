@@ -86,6 +86,7 @@ tests/
 ### Errors
 - Exhaustive hierarchy: one class per business rule violation + generic `UnknownAuthorError`.
 - **Never raise `HTTPException` in domain** — that leaks transport concerns.
+- **Domain ports return `Result[T, E]` instead of raising.** This makes errors visible in the function signature. Define `Result` as a simple union `T | E` with discriminator, or use a `@dataclass Result` in `domain/shared/result.py`. Adapters use try/except internally and convert to `Result` before returning. Value objects (like `AuthorName`) may still raise since they're called at construction time.
 
 ### Ports (Protocols)
 
@@ -97,6 +98,7 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 - `Protocol` declaring business API + class `AuthorServiceImpl` implementing it.
 - Orchestrates: repo → metrics → notifications → return result.
 - Handlers call Service, never Repository directly.
+- **Evolution path:** Direct calls (repo → metrics → notifier) keep the flow visible in one place — good for simple apps. As side effects grow, the service has to know about every consequence, raising coupling. When this becomes a pain, refactor to domain events: the service emits `AuthorCreatedEvent`, independent handlers react. Adding a new side effect no longer requires touching the service. Trade-off: flow is spread across files, harder to trace.
 
 → Full domain examples (models, errors, ports, service): `references/examples-domain.md`
 
@@ -197,12 +199,20 @@ create_async_engine(url, pool_size=10, pool_timeout=3, pool_pre_ping=True)
 
 ## Pagination
 
-List endpoints need pagination. The pattern flows through all three layers:
+List endpoints need pagination. **Default to offset pagination.** The pattern flows through all three layers:
 - **Domain port**: `list_authors(page, page_size) -> tuple[list[Author], int]`
 - **Outbound adapter**: offset/limit + `COUNT(*)` query
 - **Inbound handler**: return `PaginatedList[T]` with `data`, `total`, `page`, `page_size`, `has_next`
 
 Cap `page_size` at the handler level (e.g. `Query(20, ge=1, le=100)`). The domain doesn't care about max page size — that's a transport concern.
+
+### Offset vs Cursor
+
+**Offset** — `OFFSET` / `LIMIT` + `COUNT(*)`.
+Simple to implement, provides `total` count for page number UIs. Downside: deeper pages get slower as the DB scans and discards rows, and rows inserted/deleted between requests can cause duplicates or skips.
+
+**Cursor** — `WHERE (created_at, id) > (:cursor) ORDER BY created_at, id LIMIT :page_size`.
+Consistent performance regardless of dataset size. Ideal for infinite scroll and feeds. Downside: no `total` count, page number UI not possible, higher implementation complexity. Always use a **composite cursor** `(sort_field, id)` — a single field like `created_at` isn't unique, so ties produce non-deterministic ordering. Cursor is an opaque base64-encoded string in the API; decode in the adapter only.
 
 > Full pagination examples (port, adapter, handler): `references/examples-adapters.md`
 
@@ -264,6 +274,8 @@ Ensure `engine.dispose()` in a `finally` block for clean shutdown.
 | JWT access token | 15 min |
 | JWT refresh (web) | 90 days |
 | JWT refresh (mobile) | 1 year |
+| Refresh token rotation | **Required** — issue new refresh token on each use, revoke old immediately |
+| Refresh token storage | DB table with `jti`, `user_id`, `revoked_at`, `expires_at` |
 | Timestamps | `datetime.now(UTC)` (not deprecated `utcnow()`) |
 | CORS | Explicit origins only (no wildcard) |
 

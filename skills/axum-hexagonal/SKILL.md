@@ -74,6 +74,7 @@ src/
 - Exhaustive enum: one variant per business rule violation + `Unknown(anyhow::Error)`.
 - Don't panic on unexpected errors — poisons mutexes, surprises other devs. Return errors.
 - Domain errors = complete description of what can go wrong in an operation.
+- **Domain ports return `Result<T, E>` exclusively — never panic on business errors.** This is already Rust's natural pattern. Ensure all port trait methods return `Result`, and adapters map infrastructure errors (e.g. sqlx errors) into domain error types before returning.
 
 ### Ports (Traits)
 
@@ -92,6 +93,7 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 - Constructor takes all dependencies: `fn new(repo: R, metrics: M, notifier: N) -> Self`.
 - Orchestrates: repo → metrics → notifications → return result.
 - Handlers call Service, never Repository directly.
+- **Evolution path:** Direct calls (repo → metrics → notifier) keep the flow visible in one place — good for simple apps. As side effects grow, the service has to know about every consequence, raising coupling. When this becomes a pain, refactor to domain events: the service emits `AuthorCreatedEvent`, independent handlers react. Adding a new side effect no longer requires touching the service. Trade-off: flow is spread across files, harder to trace.
 
 → Full domain examples (models, errors, ports, service): `references/examples-domain.md`
 
@@ -163,6 +165,23 @@ All three are wired into the same HttpServer. Domain doesn't know which triggere
 
 → Full outbound examples (SQLite, Postgres adapters, row mapper): `references/examples-adapters.md`
 
+### Pagination
+
+**Default to offset pagination.** The pattern flows through all three layers:
+- **Domain port**: `list_authors(&self, pagination: &Pagination) -> Result<Page<Author>, anyhow::Error>`
+- **Outbound adapter**: `LIMIT` / `OFFSET` + `COUNT(*)` query
+- **Inbound handler**: return `PageResponse<T>` with items, total, page, per_page, total_pages
+
+Cap `per_page` at the handler level (e.g. `Pagination::new` clamps to 1..100). The domain doesn't care about max page size — that's a transport concern.
+
+#### Offset vs Cursor
+
+**Offset** — `LIMIT` / `OFFSET` + `COUNT(*)`.
+Simple to implement, provides `total` count for page number UIs. Downside: deeper pages get slower as the DB scans and discards rows, and rows inserted/deleted between requests can cause duplicates or skips.
+
+**Cursor** — `WHERE (created_at, id) > ($1, $2) ORDER BY created_at, id LIMIT $3`.
+Consistent performance regardless of dataset size. Ideal for infinite scroll and feeds. Downside: no `total` count, page number UI not possible, higher implementation complexity. Always use a **composite cursor** `(sort_field, id)` — a single field like `created_at` isn't unique, so ties produce non-deterministic ordering. Cursor is an opaque base64-encoded string in the API; decode in the adapter only.
+
 ### Query Method
 
 | Situation | Method |
@@ -189,6 +208,8 @@ PgPoolOptions::new()
 | JWT access token | 15 min |
 | JWT refresh (web) | 90 days |
 | JWT refresh (mobile) | 1 year |
+| Refresh token rotation | **Required** — issue new refresh token on each use, revoke old immediately |
+| Refresh token storage | DB table with `jti`, `user_id`, `revoked_at`, `expires_at` |
 | CORS | Explicit origins only |
 
 Auth middleware lives in the inbound layer. Domain never handles raw tokens.
