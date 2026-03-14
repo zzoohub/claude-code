@@ -290,7 +290,7 @@ Choose based on the product's audience:
 
 **Token strategy** (all scenarios):
 - Access token: short-lived (15min), in memory or Authorization header
-- Refresh token: long-lived (7-30 days), httpOnly secure cookie
+- Refresh token: long-lived, httpOnly secure cookie — 90 days (web), 1 year (mobile)
 - **Refresh token rotation (required)**: issue a new refresh token on every use, revoke the old one immediately. Store `jti` + `revokedAt` in DB. Without rotation, a stolen refresh token is usable for its entire lifetime. On logout, revoke all active tokens for the user.
 
 ### Authorization

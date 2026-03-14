@@ -257,7 +257,7 @@ For simple apps, `console.log` is fine — Hono's built-in `hono/logger` middlew
 
 | Item | Value |
 |------|-------|
-| Password hashing | `@node-rs/argon2` or `bcrypt` |
+| Password hashing | `@node-rs/argon2` (default), `bcrypt` (fallback) |
 | JWT library | `hono/jwt` middleware or `jose` |
 | JWT access token | 15 min |
 | JWT refresh (web) | 90 days |
