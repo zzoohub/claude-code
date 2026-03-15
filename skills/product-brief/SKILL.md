@@ -112,7 +112,7 @@ Before presenting, verify:
 ### Step 4: Next Steps
 
 After presenting the brief, suggest proceeding to the PRD to define
-requirements, tech stack, feature specs, and development order.
+requirements, feature specs, and development order.
 
 ## Calibration: Weak vs. Strong
 

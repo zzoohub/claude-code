@@ -41,7 +41,7 @@ This skill produces three types of documents:
 ```
 docs/prd/
  ├─ product-brief.md       # Upstream (product-brief skill owns this)
- ├─ prd.md                 # Vision + tech stack + dev order (~300 lines)
+ ├─ prd.md                 # Vision + requirements + dev order (~300 lines)
  └─ features/
      ├─ auth.md            # Feature spec: requirements, journeys, decisions
      ├─ billing.md
@@ -54,7 +54,7 @@ TASKS.md                   # Root-level progress tracking (all features)
 
 | File | Contains | When Read | When Modified |
 |------|----------|-----------|---------------|
-| `prd.md` | Vision, tech stack, dev order, success metrics, scope | Every session start | Rarely after initial creation |
+| `prd.md` | Vision, constraints, dev order, success metrics, scope | Every session start | Rarely after initial creation |
 | `features/*.md` | Feature-level requirements, user journeys, technical decisions | When working on that feature | When requirements change |
 | `TASKS.md` | Task checklists grouped by feature, progress state | Every session start | Every task completion |
 
@@ -82,7 +82,7 @@ on the user's answer, follow the thread naturally:
 3. **Map the current state:** "How do they solve this today? What's painful about that?"
 4. **Define success:** "If we nail this, what changes? How would we measure it?"
 5. **Scope and constraints:** "What's explicitly out of scope? Any hard constraints — timeline, regulatory, budget?"
-6. **Tech stack:** "Any technology decisions already made? Preferred stack?"
+6. **Technical constraints:** "Are there any technical constraints or existing systems this must integrate with?"
 
 Don't ask all of these if answers are already clear from context. Skip what you
 know, dig deeper on what's vague.
@@ -147,9 +147,10 @@ Define 1-3 primary personas with context, needs, and pain points.
 
 ---
 
-## 4. Tech Stack
+## 4. Technical Constraints
 
-Technologies, frameworks, and infrastructure decisions.
+Integration targets, regulatory/platform constraints, pre-decided boundaries.
+(Tech stack selection → software architecture design doc.)
 
 ---
 
@@ -267,7 +268,7 @@ Read `references/anti-patterns.md` for the full list.
 The most critical to catch:
 1. **Solution masquerading as a problem** — "We need to build X" is not a problem
 2. **The metrics-free zone** — No numbers anywhere
-3. **The technical spec in disguise** — Names specific libraries in requirements (tech stack section is fine)
+3. **The technical spec in disguise** — Names specific libraries or frameworks in requirements (tech stack belongs in the architecture design doc)
 4. **The design document in disguise** — Contains wireframes or UI specs
 
 ## Line Limits
