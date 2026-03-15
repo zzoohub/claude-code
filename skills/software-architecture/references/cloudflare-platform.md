@@ -34,7 +34,7 @@ Read this when designing a system on the Cloudflare bundle. For bundle selection
 | Agent (Python ML) | ③ | CF Containers + LangGraph Python | Escape hatch for torch/transformers |
 | Container (long-running) | ① | CF Containers + Rust/Axum (CF) | 16vCPU/64GB RAM, sleep/wake cycle. Minimal cold start |
 | Container (long-running) | ③ | CF Containers + Python/FastAPI (CF) | Escape hatch: ML library dependency only |
-| Container (long-running) | ③ | Cloud Run (External) | Escape hatch: GPU, GCP-locked, CF Containers immaturity |
+| Container (long-running) | ② | Cloud Run (External) | GPU, GCP services, existing GCP infra |
 
 ### Compute Decision Flow
 
@@ -46,8 +46,9 @@ Request type?
 ├── Agent, stateful/real-time     → Agents SDK (DO-based)
 ├── Agent, durable pipeline       → Agents SDK + Workflows
 ├── Agent, graph orchestration    → LangGraph.js on Workers
-├── Container, CPU/memory heavy   → CF Containers (Rust or Python)
-└── GPU, Vertex AI, GCP-locked    → Cloud Run (escape hatch)
+└── Container, CPU/memory heavy   → CF Containers or Cloud Run (Rust or Python)
+    ├── CF ecosystem, no GPU       → CF Containers
+    └── GPU, GCP services needed   → Cloud Run
 ```
 
 ---

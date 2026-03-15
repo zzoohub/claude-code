@@ -123,15 +123,12 @@ const created = await client.users.$post({ json: { name: 'Alice' } });
 
 ---
 
-## Container Escape Hatch: GCP Cloud Run
+## Container Runtime
 
-Use only when neither Workers nor CF Containers meet requirements.
-
-| Trigger | Example |
+| Runtime | Choose When |
 |---|---|
-| GPU access | ML training, Vertex AI integration |
-| GCP-specific services | BigQuery, Cloud TPU, Firestore |
-| Legacy GCP infrastructure | Existing Cloud SQL, Pub/Sub pipelines |
+| **CF Containers** | Default. CF ecosystem, unified billing, sleep/wake cycle. No GPU |
+| **Cloud Run** | GPU needed, GCP services (BigQuery, Pub/Sub), existing GCP infra |
 
 - **Framework**: Rust/Axum (default) or FastAPI (Python ML only)
 - **DB connection**: Neon pooler endpoint (`-pooler` URL) for TCP clients. Keep pool small (`max_connections=5`)

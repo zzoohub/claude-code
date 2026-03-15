@@ -51,18 +51,18 @@ Then analyze the PRD and extract architecture-driving requirements:
 
 For Solo scope, focus on scale, real-time, and regulatory. For Team scope, cover all items above. If the PRD has clear gaps, ask. Otherwise proceed.
 
-**Stack is auto-decided** from the requirements — do not ask the user to choose. Apply these rules:
+**Stack is auto-decided** from the requirements. Apply these rules:
 
 | Decision | Rule |
 |---|---|
-| Platform | Cloudflare (Workers + CF Containers). Always. |
-| Frontend | TanStack Start (React). SolidJS only when PRD explicitly demands minimal bundle / fine-grained reactivity. |
+| Platform | Cloudflare Workers + CF Containers or Cloud Run. |
+| Frontend | TanStack Start (React or SolidJS). SolidJS when PRD demands minimal bundle / fine-grained reactivity; React otherwise. |
 | Edge API | Hono (TS). Always for Workers. |
 | Container backend | Rust/Axum. Only when PRD requires CPU-intensive processing or long-running containers. |
 | DB | Neon + Hyperdrive (global). Supabase via Hyperdrive (Korea-first / Seoul region). |
 | Mobile | React Native (Expo). Only when PRD explicitly requires native mobile. |
 
-> **Escape hatch**: FastAPI (Python) only when Python-only ML libraries (PyTorch, transformers) are physically required. GCP Cloud Run for GPU or GCP-locked workloads. State as an ADR if used.
+> **Escape hatch**: FastAPI (Python) only when Python-only ML libraries (PyTorch, transformers) are physically required. State as an ADR if used.
 
 ### Step 1 — Write the Design Document
 
