@@ -32,7 +32,7 @@ When the user asks to "plan a product", "define a feature", or gives a broad pro
 
 1. **Discovery** — Ask the user essential clarifying questions. Be conversational, not interrogative. Skip questions the user has already answered.
 2. **Product Brief** — Apply product-brief to write a lean strategic one-pager.
-3. **PRD** — Apply prd-craft to write the vision PRD. Concise: problem, target users, tech stack, success metrics, feature overview, dev order, scope.
+3. **PRD** — Apply prd-craft to write the vision PRD. Concise: problem, target users, success metrics, feature overview, dev order, scope.
 4. **Feature Specs** — For each feature in the PRD, create a spec in `docs/prd/features/`.
 5. **Return summary** to the main agent.
 
@@ -112,7 +112,6 @@ After completing your work, return:
 ## Key Decisions
 - Target user: [who]
 - Core problem: [one sentence]
-- Tech stack: [key technologies] (if known at this stage)
 - Primary success metric: [metric + target]
 
 ## Summary
