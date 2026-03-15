@@ -11,6 +11,10 @@
 !commands/**
 !skills/
 !skills/**
+# skills 빌드 산출물 제외
+skills/**/dist/
+skills/**/node_modules/
+skills/**/*.bun-build
 !settings.json
 
 # 플러그인 메타만
