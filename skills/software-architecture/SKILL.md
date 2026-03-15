@@ -74,7 +74,7 @@ See `references/design-flow.md` for detailed methodology for each stage.
 
 Use `AskUserQuestion` once to confirm:
 
-- [ ] **Target audience**: Global / Region-specific (specify region — e.g., Korea-first, Japan-first, EU-first)
+- [ ] **Target audience**: Global / Korea-first
 - [ ] **System boundary scope**: What this system does vs. what's handled externally
 
 Then analyze the PRD and extract architecture-driving requirements:
