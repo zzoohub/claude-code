@@ -125,18 +125,18 @@ Contains app-wide UX decisions only:
 4. **Shared Conventions** — Common interaction rules (toast, modal, error handling), global state patterns (auth, offline, loading)
 5. **Accessibility Standards** — App-wide contrast, focus management, keyboard nav, WCAG compliance
 6. **Design Rationale** — Key app-level decisions with principle citations
-7. **Page Index** — Links to all `docs/ux/screens/<screen-name>.md` files
+7. **Screen Index** — Links to all `docs/ux/screens/<screen-name>.md` files
 
-### `docs/ux/screens/<screen-name>.md` — Page-Level
+### `docs/ux/screens/<screen-name>.md` — Screen-Level
 
 One file per independently navigable screen. Each contains:
 
-1. **Page Purpose** — User goal (JTBD) for this specific screen
+1. **Screen Purpose** — User goal (JTBD) for this specific screen
 2. **Screen Layout** — Content hierarchy, primary action (ONE)
 3. **All 7 States** — Empty, loading, loaded, error, partial, refreshing, offline
-4. **Interaction Details** — Feedback, gestures, transitions specific to this page
+4. **Interaction Details** — Feedback, gestures, transitions specific to this screen
 5. **UX Copy** — Headings, button labels, error messages, empty state copy, tooltips
-6. **Accessibility Notes** — Page-specific focus management, screen reader considerations
+6. **Accessibility Notes** — Screen-specific focus management, screen reader considerations
 7. **Design Rationale** — Decisions with principle citations
 8. **ASCII wireframe** when helpful
 
@@ -148,8 +148,8 @@ Modals, drawers, and sheets belong in their parent screen's file.
 ```
 ## Completed
 - Updated: docs/ux/ux-design.md
-- Updated: docs/ux/screens/page-name.md
-- Created: docs/ux/screens/new-page.md
+- Updated: docs/ux/screens/screen-name.md
+- Created: docs/ux/screens/new-screen.md
 
 ## Summary
 [2-3 sentences: what was designed, key UX decisions, any open questions]
