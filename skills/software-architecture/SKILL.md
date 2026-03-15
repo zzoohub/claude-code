@@ -52,15 +52,15 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 | Stage | Name | What It Answers | Output File |
 |---|---|---|---|
 | 0 | Intake | Who is this for? What constraints exist? | — |
-| 1 | Problem Definition | What problem, for whom, why now? | `eng/context.md` §1-2 |
-| 2 | ASR Extraction & Utility Tree | Which quality attributes drive the architecture? | `eng/context.md` §3 |
-| 3 | Domain Model | What are the core concepts and boundaries? | `eng/context.md` §4 |
-| 4 | Pattern Selection & ATAM Gate | What patterns satisfy the architecture drivers? | `eng/design.md` §1 |
-| 5 | Component Design & Stack | What are the concrete components? | `eng/design.md` §2 |
-| 6 | Data Architecture | Where does data live, how does it flow? | `eng/design.md` §3 |
-| 7 | Deployment | How does code get to production? | `eng/design.md` §4 |
-| 8 | Cross-cutting Concerns | What properties hold across all components? | `eng/design.md` §5 |
-| 9 | ADR & Risk Review | Are all decisions recorded? What could go wrong? | `eng/decisions.md` |
+| 1 | Problem Definition | What problem, for whom, why now? | `arch/context.md` §1-2 |
+| 2 | ASR Extraction & Utility Tree | Which quality attributes drive the architecture? | `arch/context.md` §3 |
+| 3 | Domain Model | What are the core concepts and boundaries? | `arch/context.md` §4 |
+| 4 | Pattern Selection & ATAM Gate | What patterns satisfy the architecture drivers? | `arch/design.md` §1 |
+| 5 | Component Design & Stack | What are the concrete components? | `arch/design.md` §2 |
+| 6 | Data Architecture | Where does data live, how does it flow? | `arch/design.md` §3 |
+| 7 | Deployment | How does code get to production? | `arch/design.md` §4 |
+| 8 | Cross-cutting Concerns | What properties hold across all components? | `arch/design.md` §5 |
+| 9 | ADR & Risk Review | Are all decisions recorded? What could go wrong? | `arch/decisions.md` |
 
 **Stages 2 ↔ 3 ↔ 4 co-evolve** (Twin Peaks model): Domain modeling reveals new ASRs, pattern selection changes domain boundaries. One iteration is usually sufficient at solopreneur scale.
 
@@ -76,7 +76,8 @@ Use `AskUserQuestion` once to confirm:
 
 - [ ] **Target audience**: Global / Korea-first
 
-Then analyze the PRD and extract architecture-driving requirements (including system boundary — what this system does vs. what's handled externally):
+Then analyze the PRD and extract architecture-driving requirements:
+- System boundary scope (what this system does vs. what's handled externally)
 - Expected scale (users, requests/sec, data volume)
 - Latency requirements (real-time needs, p99 targets)
 - Consistency model (strong vs eventual, where)
@@ -107,9 +108,9 @@ The design flow produces three output files:
 
 | File | Stages | Purpose | Template |
 |---|---|---|---|
-| `eng/context.md` | 0-3 | What and why — problem, ASRs, domain model | `references/templates/context.md` |
-| `eng/design.md` | 4-8 | How — patterns, components, data, deployment, cross-cutting | `references/templates/design.md` |
-| `eng/decisions.md` | All | Decisions and risks — ADRs, risk register, tech debt | `references/templates/decisions.md` |
+| `arch/context.md` | 0-3 | What and why — problem, ASRs, domain model | `references/templates/context.md` |
+| `arch/design.md` | 4-8 | How — patterns, components, data, deployment, cross-cutting | `references/templates/design.md` |
+| `arch/decisions.md` | All | Decisions and risks — ADRs, risk register, tech debt | `references/templates/decisions.md` |
 
 Read the template files before writing output. Follow their structure.
 
@@ -119,9 +120,9 @@ Read the template files before writing output. Follow their structure.
 
 For future Claude sessions working on this project:
 
-- **New session** → always load `eng/context.md` first
-- **Implementation work** → also load `eng/design.md`
-- **Decision point** → append to `eng/decisions.md` immediately
+- **New session** → always load `arch/context.md` first
+- **Implementation work** → also load `arch/design.md`
+- **Decision point** → append to `arch/decisions.md` immediately
 
 ---
 
@@ -175,7 +176,7 @@ Before finalizing, verify:
 | File | Content |
 |---|---|
 | `references/design-flow.md` | 10-stage methodology (stages 1-9). **Read first.** |
-| `references/templates/*.md` | Output templates for `eng/context.md`, `eng/design.md`, `eng/decisions.md` |
+| `references/templates/*.md` | Output templates for `arch/context.md`, `arch/design.md`, `arch/decisions.md` |
 | `references/system-architecture.md` | System patterns, composition flowchart, real-world examples |
 | `references/service-architecture.md` | Internal service structure: hexagonal (default), clean, vertical slice, FC/IS |
 | `references/stack-templates.md` | Cloudflare-first stack, language ecosystems, auth, region strategy |

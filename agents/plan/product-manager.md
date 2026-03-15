@@ -36,7 +36,7 @@ When the user asks to "plan a product", "define a feature", or gives a broad pro
 4. **Feature Specs** — For each feature in the PRD, create a spec in `docs/prd/features/`.
 5. **Return summary** to the main agent.
 
-**Note:** TASKS.md is NOT generated here. Tasks require architecture decisions (design-doc, database-design) to be finalized first. Use Mode E after design is complete.
+**Note:** TASKS.md is NOT generated here. Tasks require architecture decisions (`docs/arch/`, database-design) to be finalized first. Use Mode E after design is complete.
 
 ### Mode B: Brief Only
 
@@ -62,11 +62,11 @@ When the user wants to add a new feature to an existing product:
 
 ### Mode E: Generate Tasks
 
-When the user asks to "create tasks", "generate TASKS.md", or "break down into tasks" — typically after design-doc and database-design are finalized:
+When the user asks to "create tasks", "generate TASKS.md", or "break down into tasks" — typically after architecture docs and database-design are finalized:
 
 1. Read `docs/prd/prd.md` for dev order and feature overview.
 2. Read `docs/prd/features/*.md` for detailed requirements.
-3. Read `docs/design-doc.md` and `docs/database-design.md` for architecture decisions — tasks must reflect the chosen stack, data model, and component boundaries.
+3. Read `docs/arch/context.md`, `docs/arch/design.md`, `docs/arch/decisions.md`, and `docs/database-design.md` for architecture decisions — tasks must reflect the chosen stack, data model, and component boundaries.
 4. Generate `TASKS.md` at the project root.
 5. Return summary.
 
@@ -131,7 +131,7 @@ When generating or updating `TASKS.md`:
 - Each task should be **PR-sized** — completable in one Claude Code session
 - Order tasks by dependency within each feature
 - Order feature sections by dev order from `prd.md`
-- Tasks must reflect architecture decisions from `docs/design-doc.md` — use the chosen stack, patterns, and component names
+- Tasks must reflect architecture decisions from `docs/arch/` — use the chosen stack, patterns, and component names
 - Tasks should be specific and actionable, not vague
   - Bad: "Set up auth"
   - Good: "Configure Better Auth with Google OAuth provider on CF Workers"

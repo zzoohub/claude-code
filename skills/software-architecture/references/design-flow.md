@@ -21,7 +21,7 @@ ADRs are written immediately when decisions occur, not batched at the end.
 
 ### Output
 
-Write to `eng/context.md` §1 (Problem) and §2 (System Boundary).
+Write to `arch/context.md` §1 (Problem) and §2 (System Boundary).
 
 ---
 
@@ -99,7 +99,7 @@ Rank the top 3-4 attributes for this system. Identify conflicts and make explici
 
 ### Output
 
-Write to `eng/context.md` §3 (ASR & Utility Tree).
+Write to `arch/context.md` §3 (ASR & Utility Tree).
 
 ---
 
@@ -137,7 +137,7 @@ Read `references/service-architecture.md` for DDD tactical patterns (entities, v
 
 ### Output
 
-Write to `eng/context.md` §4 (Domain Model).
+Write to `arch/context.md` §4 (Domain Model).
 
 ---
 
@@ -185,11 +185,11 @@ For every **[H,H] ASR** from stage 2:
 If a [H,H] ASR has no satisfactory pattern:
 - Revisit the utility tree — is the importance/difficulty rating correct?
 - Consider hybrid patterns
-- If still unsatisfied: document the best-effort pattern and its gaps in `eng/design.md` §1, add to `eng/decisions.md` Risk Register as high-impact risk, and confirm with the user via `AskUserQuestion` before proceeding
+- If still unsatisfied: document the best-effort pattern and its gaps in `arch/design.md` §1, add to `arch/decisions.md` Risk Register as high-impact risk, and confirm with the user via `AskUserQuestion` before proceeding
 
 ### Output
 
-Write to `eng/design.md` §1 (Patterns). Write ADRs for pattern decisions to `eng/decisions.md`.
+Write to `arch/design.md` §1 (Patterns). Write ADRs for pattern decisions to `arch/decisions.md`.
 
 ---
 
@@ -249,7 +249,7 @@ Produce a C4 Level 2 container diagram in D2. Show:
 
 ### Output
 
-Write to `eng/design.md` §2 (Components).
+Write to `arch/design.md` §2 (Components).
 
 ---
 
@@ -286,7 +286,7 @@ Trace 2-3 critical user journeys through the data layer:
 
 ### Output
 
-Write to `eng/design.md` §3 (Data).
+Write to `arch/design.md` §3 (Data).
 
 ---
 
@@ -325,7 +325,7 @@ Read `references/cost-reference.md` for pricing data.
 
 ### Output
 
-Write to `eng/design.md` §4 (Deployment & Cost).
+Write to `arch/design.md` §4 (Deployment & Cost).
 
 ---
 
@@ -428,7 +428,7 @@ Use these principles to evaluate the design, not as prescriptions to follow blin
 
 ### Output
 
-Write to `eng/design.md` §5 (Cross-cutting).
+Write to `arch/design.md` §5 (Cross-cutting).
 
 ---
 
@@ -496,4 +496,4 @@ Architecture built by a solo developer mirrors solo communication structure — 
 
 ### Output
 
-Final review of `eng/decisions.md`.
+Final review of `arch/decisions.md`.

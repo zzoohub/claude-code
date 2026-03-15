@@ -50,12 +50,12 @@ Enums:        snake_case (order_status, NOT OrderStatus)
 
 ### Step 1: Gather Requirements
 
-**If a design doc exists** (`docs/design-doc.md`), read it first and extract:
-- Domain entities and data flows (from Sections 1, 3, 4)
-- Storage strategy and database choice (from Section 4.2)
-- Performance/scalability expectations (from Section 6.5)
-- Consistency model (from Section 4.1, 4.2)
-- Ingestion patterns and data volume (from Section 4.1, 6.5)
+**If architecture docs exist** (`docs/arch/`), read them first and extract:
+- Domain entities and data flows (from `context.md` §1, §4 and `design.md` §2)
+- Storage strategy and database choice (from `design.md` §3)
+- Performance/scalability expectations (from `context.md` §3 and `design.md` §5)
+- Consistency model (from `design.md` §3)
+- Ingestion patterns and data volume (from `context.md` §3)
 
 For most decisions, follow the design doc as-is — it represents system-level decisions already made. However, **independently evaluate** decisions where database domain expertise is more appropriate:
 
