@@ -1,17 +1,12 @@
-# Backend Architecture Decision Framework
+# System Architecture Patterns
 
-Architecture decisions happen on **two axes**: system architecture and language.
+System architecture defines **what components exist and how they connect** — service communication, infrastructure topology, data flow between components, and cross-cutting infrastructure decisions.
 
-| Axis | Question | Options |
-|---|---|---|
-| **System Architecture** | How do services/components communicate? | Request-Response, Event-Driven, CQRS, Event Sourcing, Hybrid |
-| **Language** | What language/framework? | TS (Hono) for edge, Rust (Axum) for containers |
-
-**Code structure is always Hexagonal (Ports & Adapters).** AI-assisted development eliminates the boilerplate cost that previously made hexagonal feel heavy for simple services. The benefits (testability, swappable adapters, clean domain isolation) apply universally.
+For internal service structure (layers, domain isolation, code organization), see `service-architecture.md`.
 
 ---
 
-## Axis 1: System Architecture Patterns
+## Communication Patterns
 
 ### Request-Response (Synchronous)
 
@@ -159,70 +154,9 @@ One deployable unit, but internally organized into strictly isolated modules wit
 
 ---
 
-## Code Structure: Hexagonal (Default)
-
-The default code structure is **Hexagonal Architecture (Ports & Adapters)**. Choose it unless you have a specific reason not to.
-
-```
-         ┌─────────────────────────────────────┐
-         │            Application               │
-         │  ┌───────────────────────────────┐   │
-Driving  │  │                               │   │  Driven
-Adapters │  │     Domain / Business Logic    │   │  Adapters
-(HTTP,   │──│                               │──▶│  (DB, Queue,
-CLI,     │  │     (Pure, no dependencies)    │   │   External
-Events)  │  │                               │   │   APIs)
-         │  └───────────────────────────────┘   │
-         │         Ports (Interfaces)           │
-         └─────────────────────────────────────┘
-```
-
-**Why hexagonal by default**: AI-assisted development generates boilerplate instantly — the traditional cost of hexagonal (more files, more wiring) is near-zero. The benefits remain: domain isolation, swappable adapters, pure domain unit tests, and no refactoring needed when complexity grows.
-
-**Dependencies always point inward.** Domain code never imports framework or infrastructure code.
-
-**When to deviate**:
-- **Simple CRUD with no business logic** (admin dashboards, internal tools): Framework conventions or layered architecture may be simpler. The overhead of ports/adapters adds indirection without meaningful domain isolation if there's no domain to isolate.
-- **Vertical Slice Architecture**: Organize by feature instead of by layer. Each feature owns its full stack (handler → logic → data access). Works well with CQRS where each command/query is a self-contained slice.
-- **Team already uses Clean Architecture**: Clean Architecture (Uncle Bob) shares the same core principle (dependency inversion, domain at center). The difference is naming and layer organization, not philosophy. Don't force a migration — the benefits are equivalent.
-
-Document your code structure choice as an ADR with rationale.
-
-**In-process domain events**: When side effects grow, direct calls raise coupling. Refactor so the service emits `AuthorCreatedEvent` and independent handlers react — adding side effects no longer touches the service. Trade-off: flow spreads across files. Distinct from system-level EDA (Kafka/Queues) — these are in-process, within a single service.
-
----
-
-## Language Selection
-
-| Priority | Language | When to Use |
-|---|---|---|
-| **Edge API** | **TypeScript (Hono)** | Workers and general web services. <4kB, RPC with end-to-end type safety, Workers-first. Fullstack type consistency across Workers, Drizzle, TanStack Start. |
-| **Container** | **Rust (Axum)** | CF Containers or Cloud Run. CPU-heavy processing, memory safety critical, maximum performance. Sub-ms response times, 10-30MB memory, minimal cold starts. |
-
-> **Escape hatch**: Python (FastAPI) on containers only when Python-only ML libraries are physically required (PyTorch, transformers). LLM API calls and agent patterns do NOT require Python — use `fetch` in TS or `reqwest` in Rust.
-
-### TypeScript Ecosystem (Default)
-- **Web framework**: Hono (Workers-first, <4kB, middleware chaining)
-- **ORM/Query**: Drizzle ORM (type-safe, lightweight, Workers-compatible)
-- **Validation**: Zod (integrated with Hono via `@hono/zod-validator`)
-- **HTTP client**: Native `fetch` (Workers environment)
-- **RPC**: Hono RPC (end-to-end type safety between backend and frontend)
-
-### Rust Ecosystem (Container / CPU-intensive)
-- **Web**: Axum (tower-based, async)
-- **ORM/Query**: SQLx (compile-time checking) or SeaORM
-- **Serialization**: serde + serde_json
-- **Async runtime**: Tokio
-- **HTTP client**: reqwest
-- **Validation**: validator
-
----
-
 ## Composition Decision Flowchart
 
 ```
-Step 1: System Architecture
-─────────────────────────
 Is this a single-purpose service or product?
 ├── YES → Modular Monolith or Single Service
 │         Does it need async processing (notifications, analytics, ML)?
@@ -240,13 +174,6 @@ Is this a single-purpose service or product?
     Is full audit trail / state history a hard requirement?
     ├── YES → Event Sourcing for that domain
     └── NO  → Don't add it
-
-Step 2: Language (Code structure is always Hexagonal)
-─────────────────────────────────────────────────────
-Running on Workers?
-├── YES → TypeScript (Hono) + Hexagonal
-└── NO (Container) → Rust (Axum) + Hexagonal
-    (Escape hatch: Python/FastAPI only for PyTorch/transformers dependency)
 ```
 
 ---
@@ -344,7 +271,7 @@ App events → Queue/Stream → Transform → Object Storage (Parquet/Iceberg) �
 
 ---
 
-## Anti-Patterns to Watch For
+## Anti-Patterns
 
 **Distributed Monolith**: Microservices that can't deploy independently because they share a database or have synchronous call chains. Worse than a monolith — all the complexity, none of the benefits.
 

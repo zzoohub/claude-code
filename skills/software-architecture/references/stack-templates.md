@@ -27,6 +27,21 @@ See **`references/cloudflare-platform.md`** for the full service catalog with â‘
 
 > **Escape hatch**: FastAPI (Python) on CF Containers or Cloud Run â€” only when Python-only ML libraries (PyTorch, transformers) are physically required. LLM API calls alone do NOT justify Python.
 
+### TypeScript Ecosystem (Default)
+- **Web framework**: Hono (Workers-first, <4kB, middleware chaining)
+- **ORM/Query**: Drizzle ORM (type-safe, lightweight, Workers-compatible)
+- **Validation**: Zod (integrated with Hono via `@hono/zod-validator`)
+- **HTTP client**: Native `fetch` (Workers environment)
+- **RPC**: Hono RPC (end-to-end type safety between backend and frontend)
+
+### Rust Ecosystem (Container / CPU-intensive)
+- **Web**: Axum (tower-based, async)
+- **ORM/Query**: SQLx (compile-time checking) or SeaORM
+- **Serialization**: serde + serde_json
+- **Async runtime**: Tokio
+- **HTTP client**: reqwest
+- **Validation**: validator
+
 ---
 
 ## Frontend

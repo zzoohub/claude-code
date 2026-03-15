@@ -98,9 +98,11 @@ Read the relevant references before making architecture decisions.
 
 **`references/template-team.md`** — Team/enterprise design doc template. Comprehensive, 10-25 pages, with full cross-cutting concerns, ADRs, and compliance sections.
 
-**`references/architecture-patterns.md`** — System architecture decision framework: patterns (request-response, event-driven, CQRS, event sourcing, modular monolith), language selection, composition flowchart, real-world examples, anti-patterns, and cross-cutting decisions (multi-tenancy, real-time communication, API versioning, feature flags).
+**`references/system-architecture.md`** — System architecture patterns (request-response, event-driven, CQRS, event sourcing, saga, modular monolith), composition flowchart, real-world examples, additional patterns (strangler fig, BFF, cell-based, event lakehouse), anti-patterns, and cross-cutting decisions (multi-tenancy, real-time, API versioning, event schema evolution, feature flags).
 
-**`references/stack-templates.md`** — Cloudflare-first stack (Hono + Axum, TanStack Start, Neon/Supabase), shared services, auth patterns, region strategy, and evolution triggers.
+**`references/service-architecture.md`** — Service architecture patterns for internal service structure: hexagonal (default), clean architecture, vertical slice, functional core/imperative shell. Includes decision guide, in-process domain events, DDD tactical patterns, and anti-patterns.
+
+**`references/stack-templates.md`** — Cloudflare-first stack (Hono + Axum, TanStack Start, Neon/Supabase), language ecosystems (TS and Rust toolchains), shared services, auth patterns, region strategy, and evolution triggers.
 
 **`references/cloudflare-platform.md`** — Full Cloudflare tech stack catalog with ①② priority rankings, compute decision flow, observability implementation guide, and vendor lock-in assessment. Read when designing on the Cloudflare bundle.
 

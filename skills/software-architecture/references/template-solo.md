@@ -74,7 +74,7 @@ What you're explicitly not building (yet). This prevents scope creep — future-
 ### 3.1 Architecture Style
 What pattern and why. For most solo projects this is "Modular Monolith + Request-Response." State that and explain why it fits.
 
-Reference `references/architecture-patterns.md` for the full decision framework.
+Reference `references/system-architecture.md` and `references/service-architecture.md` for the full decision framework.
 
 ### 3.2 Stack & Rationale
 

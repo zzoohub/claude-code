@@ -85,7 +85,7 @@ Architecture decisions:
 - Monolith / Modular Monolith / Microservices / Serverless
 - Request-Response / Event-Driven / CQRS / Event Sourcing / Hybrid
 
-**Code Structure**: Default Hexagonal (Ports & Adapters). See `references/architecture-patterns.md` for rationale and alternatives.
+**Code Structure**: Default Hexagonal (Ports & Adapters). See `references/service-architecture.md` for rationale and alternatives.
 
 **Stack**: Per the chosen backend + frontend combination from Step 0. See `references/stack-templates.md` for full details.
 
