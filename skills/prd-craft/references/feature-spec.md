@@ -63,17 +63,6 @@ Step-by-step flows showing how users interact with this feature.
 
 ---
 
-## Technical Decisions
-
-Decisions specific to this feature. Not the full tech stack (that's in prd.md),
-just what's relevant here.
-
-- **Auth provider:** Supabase Auth (already in stack, handles OAuth + sessions)
-- **Session storage:** Supabase manages JWT + refresh tokens
-- **Middleware:** Next.js middleware for route protection
-
----
-
 ## Edge Cases
 
 - User revokes OAuth access externally → next API call returns 401, redirect to login
@@ -111,7 +100,6 @@ verify it passes or fails.
 |---------|-------------|-----|----------|
 | Requirements | Yes | Feature overview only | No |
 | User journeys | Yes | No | No |
-| Technical decisions | Feature-specific | Stack-level | No |
 | Task checklists | No | No | Yes |
 | Success metrics | No | Yes | No |
 | Dev order | No | Yes | No |
