@@ -1,17 +1,32 @@
 ---
 name: software-architecture
-description: Produce a Software Architecture Design Document from a PRD. Use when the user says "design doc", "software architecture", "system design", "architect this", "architecture design", "tech spec", "how should I build this", "what's the right architecture for", "help me plan the backend", "design the system", or provides a PRD and asks for technical architecture. Also use when the system involves AI/LLM features (RAG, agents, chat, copilot, semantic search). Generates a design document covering system context, component architecture, data flow, infrastructure decisions, AI/LLM integration patterns, and key decision records. Produces D2 architecture diagrams and outputs a markdown design doc. Make sure to use this skill whenever the user wants to plan or structure a new project, even if they don't explicitly say "architecture."
-allowed-tools:  
+description: Produce a Software Architecture Design Document from a PRD. Use when the user says "design doc", "software architecture", "system design", "architect this", "architecture design", "tech spec", "how should I build this", "what's the right architecture for", "help me plan the backend", "design the system", "ASR", "utility tree", "domain model", "ATAM", "event storming", or provides a PRD and asks for technical architecture. Also use when the system involves AI/LLM features (RAG, agents, chat, copilot, semantic search). Produces architecture documents covering system context, ASRs, domain model, pattern selection, component design, data architecture, deployment, cross-cutting concerns, and decision records. Produces D2 architecture diagrams. Make sure to use this skill whenever the user wants to plan or structure a new project, even if they don't explicitly say "architecture."
+allowed-tools:
   - AskUserQuestion
 ---
 
 # Software Architect Skill
 
-When given a Product Requirements Document (PRD), produce a **Design Doc** — a decision record that captures the system's structure, trade-offs, and rationale.
+When given a Product Requirements Document (PRD), produce architecture documents through a 10-stage design flow that captures the system's structure, trade-offs, and rationale.
+
+## Premise
+
+Solopreneur + Claude Code flips traditional architecture methodology:
+
+- **Eliminate**: Team workshops, persuasion docs, onboarding diagrams, convention agreements
+- **Strengthen**: Logical rigor of decisions, context-restorable structure (for future self + Claude), fitness functions as automated reviewers
+
+Architecture for **system correctness**, not for persuasion.
 
 ## Philosophy
 
-Great architecture documents are **decision records, not implementation manuals**. Every section must answer *why* a choice was made, not just *what* was chosen. If there are no trade-offs to discuss, the section doesn't belong in this document.
+Great architecture documents are **decision records, not implementation manuals**. Every section must answer *why* a choice was made, not just *what* was chosen. If there are no trade-offs to discuss, the section doesn't belong.
+
+**Cost-Aware Architecture**: Infrastructure cost is an architectural constraint on par with performance. Every component justifies its existence against a "what does this cost at low traffic?" test. Prefer scale-to-zero, zero-egress-fee storage, free tiers for development.
+
+**DX as Force Multiplier**: A solo developer's productivity is the binding constraint. Architecture decisions that save 10ms of request latency but add 30 minutes of deployment friction are net negative. Optimize for fast feedback loops.
+
+**The "6-Month Test"**: If you come back to this project after 6 months away, can you read the docs and understand the system well enough to start making changes within 10 minutes? If yes, it's good enough.
 
 ---
 
@@ -32,20 +47,41 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ---
 
-## Process
+## Design Flow Overview
 
-### Step 0 — Intake
+| Stage | Name | What It Answers | Output File |
+|---|---|---|---|
+| 0 | Intake | Who is this for? What constraints exist? | — |
+| 1 | Problem Definition | What problem, for whom, why now? | `eng/context.md` §1-2 |
+| 2 | ASR Extraction & Utility Tree | Which quality attributes drive the architecture? | `eng/context.md` §3 |
+| 3 | Domain Model | What are the core concepts and boundaries? | `eng/context.md` §4 |
+| 4 | Pattern Selection & ATAM Gate | What patterns satisfy the architecture drivers? | `eng/design.md` §1 |
+| 5 | Component Design & Stack | What are the concrete components? | `eng/design.md` §2 |
+| 6 | Data Architecture | Where does data live, how does it flow? | `eng/design.md` §3 |
+| 7 | Deployment | How does code get to production? | `eng/design.md` §4 |
+| 8 | Cross-cutting Concerns | What properties hold across all components? | `eng/design.md` §5 |
+| 9 | ADR & Risk Review | Are all decisions recorded? What could go wrong? | `eng/decisions.md` |
 
-Use `AskUserQuestion` once to confirm audience. Do not infer — it affects DB region.
+**Stages 2 ↔ 3 ↔ 4 co-evolve** (Twin Peaks model): Domain modeling reveals new ASRs, pattern selection changes domain boundaries. One iteration is usually sufficient at solopreneur scale.
+
+**ADRs are written immediately** when decisions occur — not batched at the end.
+
+See `references/design-flow.md` for detailed methodology for each stage.
+
+---
+
+## Stage 0 — Intake
+
+Use `AskUserQuestion` once to confirm:
 
 - [ ] **Target audience**: Global / Region-specific (specify region — e.g., Korea-first, Japan-first, EU-first)
+- [ ] **System boundary scope**: What this system does vs. what's handled externally
 
 Then analyze the PRD and extract architecture-driving requirements:
 - Expected scale (users, requests/sec, data volume)
 - Latency requirements (real-time needs, p99 targets)
 - Consistency model (strong vs eventual, where)
 - Regulatory/compliance constraints
-- Quality attribute priorities (see `references/design-principles.md` § Quality Attribute Prioritization)
 
 If the PRD has clear gaps, ask. Otherwise proceed.
 
@@ -62,13 +98,29 @@ If the PRD has clear gaps, ask. Otherwise proceed.
 
 > **Escape hatch**: FastAPI (Python) only when Python-only ML libraries (PyTorch, transformers) are physically required. State as an ADR if used.
 
-### Step 1 — Write the Design Document
+---
 
-Read `references/template.md` and follow that template. Before writing, also read the relevant reference files listed in the Reference Files section below.
+## Output Structure
 
-### Step 2 — Self-Review
+The design flow produces three output files:
 
-Each template includes its own self-review checklist. Complete it before presenting the document.
+| File | Stages | Purpose | Template |
+|---|---|---|---|
+| `eng/context.md` | 0-3 | What and why — problem, ASRs, domain model | `references/templates/context.md` |
+| `eng/design.md` | 4-8 | How — patterns, components, data, deployment, cross-cutting | `references/templates/design.md` |
+| `eng/decisions.md` | All | Decisions and risks — ADRs, risk register, tech debt | `references/templates/decisions.md` |
+
+Read the template files before writing output. Follow their structure.
+
+---
+
+## Claude Session Guide
+
+For future Claude sessions working on this project:
+
+- **New session** → always load `eng/context.md` first
+- **Implementation work** → also load `eng/design.md`
+- **Decision point** → append to `eng/decisions.md` immediately
 
 ---
 
@@ -83,11 +135,36 @@ Each template includes its own self-review checklist. Complete it before present
 
 ---
 
+## Self-Review
+
+Before finalizing, verify:
+
+- [ ] Every [H,H] ASR from the utility tree has a corresponding pattern in the design
+- [ ] ATAM gate passed — all [H,H] items verified against chosen patterns
+- [ ] Ubiquitous language terms match code terms 1:1
+- [ ] Fitness functions defined for key architectural properties (3-5 CI checks)
+- [ ] Quality targets have numbers (not "fast" or "reliable" — actual thresholds)
+- [ ] Cost estimate exists for launch traffic
+- [ ] Every external dependency has a timeout, retry policy, and degradation strategy
+- [ ] Data flow is traceable for the main user journey
+- [ ] No section exists just because "a design doc should have it" — every section earns its place
+- [ ] AI: cost ceiling defined, guardrail layers specified, model versions pinned
+
+**The "6-Month Test"**: If you come back to this project after 6 months away, can you read these docs and understand the system well enough to start making changes within 10 minutes?
+
+---
+
 ## Reference Files
 
 Read the relevant references before making architecture decisions.
 
-**`references/template.md`** — Design doc template. 3-6 pages, focused on decisions and rationale. Includes migration section (if applicable) and one-way/two-way door decision framework.
+**`references/design-flow.md`** — Core 10-stage methodology. Detailed process for stages 1-9 including ASR extraction, utility tree, domain modeling, ATAM gate, pattern selection, and cross-cutting concerns. Read this first.
+
+**`references/templates/context.md`** — Template for `eng/context.md` output (stages 0-3): system boundary, problem, ASRs, utility tree, domain model.
+
+**`references/templates/design.md`** — Template for `eng/design.md` output (stages 4-8): patterns, components, data, deployment, cross-cutting concerns.
+
+**`references/templates/decisions.md`** — Template for `eng/decisions.md` output (all stages): ADR format, risk register, tech debt tracking.
 
 **`references/system-architecture.md`** — System architecture patterns (request-response, event-driven, CQRS, event sourcing, saga, modular monolith), composition flowchart, real-world examples, additional patterns (strangler fig, BFF, cell-based, event lakehouse), anti-patterns, and cross-cutting decisions (multi-tenancy, real-time, API versioning, event schema evolution, feature flags).
 
@@ -95,14 +172,12 @@ Read the relevant references before making architecture decisions.
 
 **`references/stack-templates.md`** — Cloudflare-first stack (Hono + Axum, TanStack Start, Neon/Supabase), language ecosystems (TS and Rust toolchains), shared services, auth patterns, region strategy, and evolution triggers.
 
-**`references/cloudflare-platform.md`** — Full Cloudflare tech stack catalog with ①② priority rankings, compute decision flow, observability implementation guide, and vendor lock-in assessment. Read when designing on the Cloudflare bundle.
+**`references/cloudflare-platform.md`** — Full Cloudflare tech stack catalog with priority rankings, compute decision flow, observability implementation guide, and vendor lock-in assessment. Read when designing on the Cloudflare bundle.
 
-**`references/design-principles.md`** — Core architecture principles, production incident patterns, security architecture, observability patterns, and quality attribute prioritization framework. Use during self-review to verify your design.
+**`references/ai-architecture.md`** — LLM integration tiers, RAG architecture, streaming, vector storage, multimodal, cost optimization, guardrails, and observability. Verify current pricing and model capabilities before committing.
 
-**`references/ai-architecture.md`** — Read if the PRD includes AI-powered features. Covers LLM integration tiers, RAG architecture, streaming, vector storage, multimodal, cost optimization, guardrails, and observability. Verify current pricing and model capabilities before committing.
+**`references/ai-agents.md`** — Agent patterns, protocols (MCP, A2A, AG-UI), context engineering, durable execution, multi-agent systems, safety, and Cloudflare implementation bridge. Read when the system includes autonomous agents or multi-step tool orchestration.
 
-**`references/ai-agents.md`** — Read if the system includes autonomous agents or multi-step tool orchestration. Covers agent patterns, protocols (MCP, A2A, AG-UI), context engineering, durable execution, multi-agent systems, safety, and Cloudflare implementation bridge.
-
-**`references/operational-patterns.md`** — Resilience, file uploads, background jobs, payments & webhooks, caching, rate limiting, and local development. Reference when writing the External Services & Resilience section.
+**`references/operational-patterns.md`** — Resilience, file uploads, background jobs, payments & webhooks, caching, rate limiting, and local development. Reference when writing cross-cutting concerns.
 
 **`references/cost-reference.md`** — Service pricing data (free tier + first paid tier), AI/LLM API cost tiers, and solopreneur cost scenarios. **Last verified March 2026** — verify current rates for cost-sensitive decisions.
