@@ -5,7 +5,7 @@
       "repo": "anthropics/claude-plugins-official"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/claude-plugins-official",
-    "lastUpdated": "2026-03-14T22:35:52.421Z",
+    "lastUpdated": "2026-03-15T10:16:34.155Z",
     "autoUpdate": true
   },
   "expo-plugins": {
@@ -41,7 +41,7 @@
       "repo": "pulumi/agent-skills"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/pulumi-agent-skills",
-    "lastUpdated": "2026-03-12T23:15:37.038Z",
+    "lastUpdated": "2026-03-15T03:52:41.559Z",
     "autoUpdate": true
   },
   "neon": {
