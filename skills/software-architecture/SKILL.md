@@ -75,9 +75,8 @@ See `references/design-flow.md` for detailed methodology for each stage.
 Use `AskUserQuestion` once to confirm:
 
 - [ ] **Target audience**: Global / Korea-first
-- [ ] **System boundary scope**: What this system does vs. what's handled externally
 
-Then analyze the PRD and extract architecture-driving requirements:
+Then analyze the PRD and extract architecture-driving requirements (including system boundary — what this system does vs. what's handled externally):
 - Expected scale (users, requests/sec, data volume)
 - Latency requirements (real-time needs, p99 targets)
 - Consistency model (strong vs eventual, where)
