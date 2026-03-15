@@ -99,9 +99,9 @@ Pricing varies dramatically across model tiers. **Always verify current pricing*
 
 | Tier | Input (per 1M tokens) | Output (per 1M tokens) | Examples | Use Case |
 |---|---|---|---|---|
-| **Frontier** | $10-20 | $30-80 | Claude Opus, GPT-4.5, Gemini Ultra | Complex reasoning, research, multi-step agents |
-| **Balanced** | $2-5 | $8-20 | Claude Sonnet, GPT-4o, Gemini Pro | Default for most production features |
-| **Fast/Cheap** | $0.10-1.00 | $0.25-5.00 | Claude Haiku, GPT-4o-mini, Gemini Flash | Classification, extraction, high-volume tasks |
+| **Frontier** | $10-20 | $30-80 | Top-tier reasoning models (verify current) | Complex reasoning, research, multi-step agents |
+| **Balanced** | $2-5 | $8-20 | Mid-tier models (verify current) | Default for most production features |
+| **Fast/Cheap** | $0.10-1.00 | $0.25-5.00 | Lightweight models (verify current) | Classification, extraction, high-volume tasks |
 | **Embedding** | $0.01-0.10 | N/A | text-embedding-3-small/large, Cohere embed | RAG, semantic search, similarity |
 | **Edge inference** | Per-neuron pricing | Varies | CF Workers AI | Low-latency edge inference, no external API call |
 

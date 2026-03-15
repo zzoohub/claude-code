@@ -41,7 +41,7 @@ This skill produces architecture-level decisions. It deliberately **excludes** t
 | Folder structure, code conventions, linting rules | Codebase concern — belongs in CLAUDE.md or project config |
 | Concrete UI component trees, page layouts | Implementation detail — derived from system context in the Design Doc |
 
-**Note**: API *design philosophy* (REST vs GraphQL, versioning strategy, pagination approach) is an architectural decision and IS covered. What's excluded is the concrete endpoint catalog.
+**Note**: API *design philosophy* and observability *setup patterns* (tool selection, integration approach) are architectural decisions and ARE covered. What's excluded is the concrete endpoint catalog and boilerplate implementation code.
 
 If the user asks for any of the excluded topics, explain that this skill focuses on architecture-level decisions and offer to note it as a requirement for the implementation phase.
 
@@ -96,7 +96,9 @@ If the PRD has clear gaps, ask. Otherwise proceed.
 | DB | Neon + Hyperdrive (global). Supabase via Hyperdrive (Korea-first / Seoul region). |
 | Mobile | React Native (Expo). Only when PRD explicitly requires native mobile. |
 
-> **Escape hatch**: FastAPI (Python) only when Python-only ML libraries (PyTorch, transformers) are physically required. State as an ADR if used.
+> **Escape hatch (language)**: FastAPI (Python) only when Python-only ML libraries (PyTorch, transformers) are physically required. State as an ADR if used.
+>
+> **Escape hatch (platform)**: GCP (Cloud Run + Cloud SQL/AlloyDB) when PRD requires GPU, GCP-locked services, or existing GCP infrastructure. Document as ADRs.
 
 ---
 
@@ -156,28 +158,30 @@ Before finalizing, verify:
 
 ## Reference Files
 
-Read the relevant references before making architecture decisions.
+### Reading Order
 
-**`references/design-flow.md`** — Core 10-stage methodology. Detailed process for stages 1-9 including ASR extraction, utility tree, domain modeling, ATAM gate, pattern selection, and cross-cutting concerns. Read this first.
+**Always read**: `design-flow.md` + all three templates.
 
-**`references/templates/context.md`** — Template for `eng/context.md` output (stages 0-3): system boundary, problem, ASRs, utility tree, domain model.
+**Read based on Stage 0 findings**:
+- Stack decisions → `stack-templates.md`, `cloudflare-platform.md`
+- Pattern selection → `system-architecture.md`, `service-architecture.md`
+- AI features in PRD → `ai-architecture.md` (+ `ai-agents.md` if agents needed)
+- Cross-cutting → `operational-patterns.md`
+- Cost estimation → `cost-reference.md`
 
-**`references/templates/design.md`** — Template for `eng/design.md` output (stages 4-8): patterns, components, data, deployment, cross-cutting concerns.
+**Skip if PRD has no AI/LLM features**: `ai-architecture.md`, `ai-agents.md`
 
-**`references/templates/decisions.md`** — Template for `eng/decisions.md` output (all stages): ADR format, risk register, tech debt tracking.
+### Index
 
-**`references/system-architecture.md`** — System architecture patterns (request-response, event-driven, CQRS, event sourcing, saga, modular monolith), composition flowchart, real-world examples, additional patterns (strangler fig, BFF, cell-based, event lakehouse), anti-patterns, and cross-cutting decisions (multi-tenancy, real-time, API versioning, event schema evolution, feature flags).
-
-**`references/service-architecture.md`** — Service architecture patterns for internal service structure: hexagonal (default), clean architecture, vertical slice, functional core/imperative shell. Includes decision guide, in-process domain events, DDD tactical patterns, and anti-patterns.
-
-**`references/stack-templates.md`** — Cloudflare-first stack (Hono + Axum, TanStack Start, Neon/Supabase), language ecosystems (TS and Rust toolchains), shared services, auth patterns, region strategy, and evolution triggers.
-
-**`references/cloudflare-platform.md`** — Full Cloudflare tech stack catalog with priority rankings, compute decision flow, observability implementation guide, and vendor lock-in assessment. Read when designing on the Cloudflare bundle.
-
-**`references/ai-architecture.md`** — LLM integration tiers, RAG architecture, streaming, vector storage, multimodal, cost optimization, guardrails, and observability. Verify current pricing and model capabilities before committing.
-
-**`references/ai-agents.md`** — Agent patterns, protocols (MCP, A2A, AG-UI), context engineering, durable execution, multi-agent systems, safety, and Cloudflare implementation bridge. Read when the system includes autonomous agents or multi-step tool orchestration.
-
-**`references/operational-patterns.md`** — Resilience, file uploads, background jobs, payments & webhooks, caching, rate limiting, and local development. Reference when writing cross-cutting concerns.
-
-**`references/cost-reference.md`** — Service pricing data (free tier + first paid tier), AI/LLM API cost tiers, and solopreneur cost scenarios. **Last verified March 2026** — verify current rates for cost-sensitive decisions.
+| File | Content |
+|---|---|
+| `references/design-flow.md` | 10-stage methodology (stages 1-9). **Read first.** |
+| `references/templates/*.md` | Output templates for `eng/context.md`, `eng/design.md`, `eng/decisions.md` |
+| `references/system-architecture.md` | System patterns, composition flowchart, real-world examples |
+| `references/service-architecture.md` | Internal service structure: hexagonal (default), clean, vertical slice, FC/IS |
+| `references/stack-templates.md` | Cloudflare-first stack, language ecosystems, auth, region strategy |
+| `references/cloudflare-platform.md` | CF tech stack catalog, compute decision flow, observability guide |
+| `references/ai-architecture.md` | LLM integration, RAG, streaming, vector storage, guardrails |
+| `references/ai-agents.md` | Agent patterns, protocols (MCP/A2A/AG-UI), durable execution, safety |
+| `references/operational-patterns.md` | Resilience, background jobs, payments, caching, rate limiting |
+| `references/cost-reference.md` | Pricing data, cost scenarios. **Last verified March 2026** |

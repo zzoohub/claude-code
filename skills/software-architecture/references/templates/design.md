@@ -50,6 +50,7 @@ D2 diagram (C4 Level 2) showing major runtime containers, communication protocol
 | ... | ... | ... |
 
 ### AI Components
+<!-- Include only if PRD involves AI/LLM features -->
 
 | Component | Responsibility | Key decisions |
 |---|---|---|
@@ -79,6 +80,7 @@ Trace 2-3 critical user journeys:
 What's cached, why, invalidation approach, stampede prevention.
 
 ### AI Data
+<!-- Include only if PRD involves AI/LLM features -->
 
 | Concern | Strategy |
 |---|---|
@@ -111,6 +113,7 @@ test → lint → security scan → build → smoke test → deploy
 Components that cost money while idle: [list or "none — all scale-to-zero"]
 
 ### AI Ops
+<!-- Include only if PRD involves AI/LLM features -->
 
 | Model | Version (pinned) | Cost per 1K tokens | Fallback |
 |---|---|---|---|
@@ -150,6 +153,7 @@ Cost alerting threshold: [80% of ceiling from ASR]
 | ... | ... | ... | ... |
 
 ### AI Security
+<!-- Include only if PRD involves AI/LLM features -->
 
 3-layer defense:
 1. **Input**: [classification, PII detection, injection detection]
@@ -157,6 +161,7 @@ Cost alerting threshold: [80% of ceiling from ASR]
 3. **Output**: [schema validation, content filtering, hallucination detection]
 
 ### AI Observability
+<!-- Include only if PRD involves AI/LLM features -->
 
 | Metric | Target | Alert |
 |---|---|---|

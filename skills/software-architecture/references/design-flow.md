@@ -70,7 +70,7 @@ Each scenario gets an **[Importance, Difficulty]** rating:
 
 ### AI ASR Questions
 
-Evaluate these AI-specific concerns:
+If the PRD involves AI/LLM features, evaluate these concerns:
 
 | Question | Why It Matters | Drives |
 |---|---|---|
@@ -167,8 +167,7 @@ Read `references/service-architecture.md` for internal service structure decisio
 | Multi-step task execution | Agent | Tool orchestration, durable execution, safety boundaries |
 | Domain-specific language understanding | Fine-tuning | Training pipeline, evaluation suite, version management |
 
-Read `references/ai-architecture.md` §10 for integration tier details.
-Read `references/ai-agents.md` for agent-specific patterns.
+Real AI systems often combine patterns — a copilot typically needs RAG + streaming + conversation memory. Read `references/ai-architecture.md` for integration tiers and composition, `references/ai-agents.md` for agent-specific patterns.
 
 ### ATAM Gate
 
@@ -186,7 +185,7 @@ For every **[H,H] ASR** from stage 2:
 If a [H,H] ASR has no satisfactory pattern:
 - Revisit the utility tree — is the importance/difficulty rating correct?
 - Consider hybrid patterns
-- Escalate as an open risk
+- If still unsatisfied: document the best-effort pattern and its gaps in `eng/design.md` §1, add to `eng/decisions.md` Risk Register as high-impact risk, and confirm with the user via `AskUserQuestion` before proceeding
 
 ### Output
 
@@ -201,6 +200,8 @@ These three stages co-evolve iteratively:
 - **Domain modeling (3) reveals new ASRs (2)**: "We need real-time sync across workspace members" emerges when modeling the collaboration domain.
 - **Pattern selection (4) changes domain boundaries (3)**: Choosing CQRS splits a bounded context into read and write sides.
 - **ASR refinement (2) constrains patterns (4)**: Tightening a latency requirement eliminates certain patterns.
+
+Example: modeling a collaboration domain (Stage 3) reveals "members must see edits within 2 seconds" — a new real-time ASR (Stage 2) that forces evaluating WebSocket vs SSE (Stage 4).
 
 At solopreneur scale, one iteration through stages 2→3→4→(back to 2 if needed) is usually sufficient. Don't over-iterate — move to stage 5 once the ATAM gate passes.
 

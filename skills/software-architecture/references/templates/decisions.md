@@ -38,6 +38,7 @@
 | ... | ... | ... | ... |
 
 ## AI Risks
+<!-- Include only if PRD involves AI/LLM features -->
 
 | Risk | Impact | Probability | Mitigation |
 |---|---|---|---|

@@ -196,7 +196,9 @@ Choose based on your scale and existing infrastructure:
 
 ## 4. Agent Architecture
 
-**See `references/ai-agents.md`** for the full agent architecture guide — pattern hierarchy (augmented LLM through autonomous agents), agent protocols (MCP, A2A, AG-UI), context engineering, durable execution, multi-agent systems, evaluation & observability, and safety & guardrails.
+When the system requires adaptive multi-step behavior — tool orchestration, autonomous decision-making, or long-running workflows — use agent patterns. Default to simpler patterns (augmented LLM, prompt chaining) and escalate only when needed.
+
+**Full guide**: `references/ai-agents.md` — pattern hierarchy, protocols (MCP, A2A, AG-UI), context engineering, durable execution, multi-agent systems, and safety.
 
 ---
 

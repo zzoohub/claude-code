@@ -63,6 +63,7 @@ System Utility
 2. ...
 
 ### AI ASR
+<!-- Include only if PRD involves AI/LLM features -->
 
 | Question | Answer | Drives |
 |---|---|---|
