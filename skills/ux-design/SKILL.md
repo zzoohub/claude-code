@@ -203,17 +203,17 @@ The single source of truth for app-wide UX decisions. Covers:
 - Accessibility standards applied globally
 - Phase Implementation Summary (if phases exist)
 
-Start with a **Table of Contents** linking to each section and to individual page files.
+Start with a **Table of Contents** linking to each section and to individual screen files.
 
-### `docs/ux/screens/<screen-name>.md` — Page-Level Design
+### `docs/ux/screens/<screen-name>.md` — Screen-Level Design
 
-One file per screen or distinct view. Each page file covers:
+One file per screen or distinct view. Each screen file covers:
 
-- Page purpose and user goal (JTBD)
+- Screen purpose and user goal (JTBD)
 - Screen layout and content hierarchy
 - All 7 states (empty, loading, loaded, error, partial, refreshing, offline)
-- User flows and decision points within the page
-- Interaction details specific to this page
+- User flows and decision points within the screen
+- Interaction details specific to this screen
 - UX copy (labels, errors, empty states, tooltips)
 - Phase tag (e.g., `[Phase 1]`) if phases exist
 
@@ -226,4 +226,4 @@ One file per screen or distinct view. Each page file covers:
 Before updating, check the file's line count. If it exceeds the limit, first consolidate — tighten wording, merge redundant content, collapse outdated details — then apply changes.
 
 - `docs/ux/ux-design.md`: **500 lines**
-- `docs/ux/screens/<screen-name>.md`: **300 lines** — if a page file exceeds this, split into child pages (e.g., `settings-profile.md`, `settings-billing.md`)
+- `docs/ux/screens/<screen-name>.md`: **300 lines** — if a screen file exceeds this, split into child screens (e.g., `settings-profile.md`, `settings-billing.md`)
