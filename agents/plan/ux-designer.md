@@ -106,16 +106,16 @@ Do not dump full designs into the conversation — save to file instead.
 
 Output is split into two levels:
 
-- **`docs/ux-design.md`** — Application-level: IA, navigation, global patterns, shared conventions
-- **`docs/ux/<page-name>.md`** — Page-level: one file per screen with detailed specs
+- **`docs/ux/ux-design.md`** — Application-level: IA, navigation, global patterns, shared conventions
+- **`docs/ux/screens/<screen-name>.md`** — Page-level: one file per screen with detailed specs
 
 If files already exist, **update in place**. Files should always reflect the latest design state.
 
 **Line limits:** Before updating, check the file's line count. If it exceeds the limit, first consolidate — tighten wording, merge redundant content, collapse outdated details — then apply changes.
-- `docs/ux-design.md`: **500 lines**
-- `docs/ux/<page-name>.md`: **300 lines**
+- `docs/ux/ux-design.md`: **500 lines**
+- `docs/ux/screens/<screen-name>.md`: **300 lines**
 
-### `docs/ux-design.md` — Application-Level
+### `docs/ux/ux-design.md` — Application-Level
 
 Contains app-wide UX decisions only:
 
@@ -125,9 +125,9 @@ Contains app-wide UX decisions only:
 4. **Shared Conventions** — Common interaction rules (toast, modal, error handling), global state patterns (auth, offline, loading)
 5. **Accessibility Standards** — App-wide contrast, focus management, keyboard nav, WCAG compliance
 6. **Design Rationale** — Key app-level decisions with principle citations
-7. **Page Index** — Links to all `docs/ux/<page-name>.md` files
+7. **Page Index** — Links to all `docs/ux/screens/<screen-name>.md` files
 
-### `docs/ux/<page-name>.md` — Page-Level
+### `docs/ux/screens/<screen-name>.md` — Page-Level
 
 One file per independently navigable screen. Each contains:
 
@@ -147,9 +147,9 @@ Modals, drawers, and sheets belong in their parent screen's file.
 
 ```
 ## Completed
-- Updated: docs/ux-design.md
-- Updated: docs/ux/page-name.md
-- Created: docs/ux/new-page.md
+- Updated: docs/ux/ux-design.md
+- Updated: docs/ux/screens/page-name.md
+- Created: docs/ux/screens/new-page.md
 
 ## Summary
 [2-3 sentences: what was designed, key UX decisions, any open questions]

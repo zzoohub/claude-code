@@ -191,7 +191,7 @@ Before finalizing any UX decision:
 
 Split output into two levels:
 
-### `docs/ux-design.md` — Application-Level Design
+### `docs/ux/ux-design.md` — Application-Level Design
 
 The single source of truth for app-wide UX decisions. Covers:
 
@@ -205,7 +205,7 @@ The single source of truth for app-wide UX decisions. Covers:
 
 Start with a **Table of Contents** linking to each section and to individual page files.
 
-### `docs/ux/<page-name>.md` — Page-Level Design
+### `docs/ux/screens/<screen-name>.md` — Page-Level Design
 
 One file per screen or distinct view. Each page file covers:
 
@@ -225,5 +225,5 @@ One file per screen or distinct view. Each page file covers:
 
 Before updating, check the file's line count. If it exceeds the limit, first consolidate — tighten wording, merge redundant content, collapse outdated details — then apply changes.
 
-- `docs/ux-design.md`: **500 lines**
-- `docs/ux/<page-name>.md`: **300 lines** — if a page file exceeds this, split into child pages (e.g., `settings-profile.md`, `settings-billing.md`)
+- `docs/ux/ux-design.md`: **500 lines**
+- `docs/ux/screens/<screen-name>.md`: **300 lines** — if a page file exceeds this, split into child pages (e.g., `settings-profile.md`, `settings-billing.md`)
