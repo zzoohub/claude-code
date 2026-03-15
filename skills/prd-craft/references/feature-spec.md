@@ -85,6 +85,63 @@ Step-by-step flows showing how users interact with this feature.
 
 ## Writing Guide
 
+### Requirements — Good vs Bad
+
+**Good granularity (independently testable):**
+
+> ```
+> REQ-001 User can connect their Jira workspace via OAuth, granting read-only
+>         access to project and issue data.
+> REQ-002 System syncs connected tool data at least every 15 minutes without
+>         manual intervention.
+> REQ-003 User can view a per-person summary showing: open tasks, completed
+>         tasks (last 7 days), and flagged blockers.
+> REQ-004 System automatically flags issues that have been in "In Progress"
+>         for more than 3x the team's average cycle time as potential blockers.
+> REQ-005 User can dismiss a flagged blocker with an optional note explaining
+>         why it's not actually blocked.
+> REQ-006 Product team can monitor: daily active users, tool connections per
+>         user, blocker flag accuracy (dismissed vs. resolved).
+> ```
+
+**Too coarse:**
+
+> "REQ-001 System integrates with project management tools."
+>
+> (Not testable. Which tools? What data? What access level?)
+
+**Too fine:**
+
+> "REQ-001 The Jira OAuth callback URL is /api/auth/jira/callback."
+>
+> (Implementation detail. This belongs in a technical spec, not a PRD.)
+
+### User Journeys — Good vs Bad
+
+**Good:**
+
+> **Journey: First-time setup**
+> 1. User signs up with work email
+> 2. System prompts: "Connect your first tool" → shows supported integrations
+> 3. User selects Jira → OAuth flow → grants read-only access
+> 4. System begins initial sync (shows progress indicator)
+>    - If sync fails → show specific error with retry option
+>    - If no projects found → suggest checking permissions
+> 5. Once synced, user sees team member list auto-populated from Jira
+> 6. User confirms team members (can remove/add manually)
+> 7. Dashboard populated with first data → guided tour highlights key areas
+>
+> **Drop-off risk:** Step 3 (OAuth). Users may hesitate to grant tool access.
+> Consider explaining exactly what data is accessed and displaying a "read-only"
+> trust signal.
+
+**Bad:**
+
+> "User signs up, connects tools, sees dashboard."
+>
+> (No decision points. No error states. No drop-off analysis. Not useful for
+> anyone building this.)
+
 ### Granularity
 
 Each requirement should be independently testable — a QA engineer could
