@@ -10,8 +10,7 @@ description: >
   "review a PRD", "improve my PRD", "audit my PRD", or "give feedback on my PRD".
   Even if the user doesn't say "PRD" explicitly, trigger this skill when they're
   describing what a product should do and need a structured requirements document.
-  Do NOT use for user stories, sprint tickets, technical specs, API documentation,
-  or architecture decision records.
+  Do NOT use for user stories, sprint tickets, API documentation, or architecture decision records.
 ---
 
 # PRD Craft — Framework for Writing World-Class PRDs
@@ -43,10 +42,7 @@ docs/prd/
  ├─ product-brief.md       # Upstream (product-brief skill owns this)
  ├─ prd.md                 # Vision + requirements + dev order (~300 lines)
  └─ features/
-     ├─ auth.md            # Feature spec: requirements, journeys, decisions
-     ├─ billing.md
-     └─ feed.md
-
+     └─ [feature].md       # Feature spec: requirements, journeys, decisions          
 TASKS.md                   # Root-level progress tracking (all features)
 ```
 
@@ -81,8 +77,7 @@ on the user's answer, follow the thread naturally:
 2. **Understand the user:** "Who experiences this problem most acutely? What are they trying to accomplish?"
 3. **Map the current state:** "How do they solve this today? What's painful about that?"
 4. **Define success:** "If we nail this, what changes? How would we measure it?"
-5. **Scope and constraints:** "What's explicitly out of scope? Any hard constraints — timeline, regulatory, budget?"
-6. **Technical constraints:** "Are there any technical constraints or existing systems this must integrate with?"
+5. **Scope and constraints:** "What's explicitly out of scope? Any hard constraints — regulatory, budget, technical? Existing systems this must integrate with?"
 
 Don't ask all of these if answers are already clear from context. Skip what you
 know, dig deeper on what's vague.
@@ -147,14 +142,7 @@ Define 1-3 primary personas with context, needs, and pain points.
 
 ---
 
-## 4. Technical Constraints
-
-Integration targets, regulatory/platform constraints, pre-decided boundaries.
-(Tech stack selection → software architecture design doc.)
-
----
-
-## 5. Success Metrics
+## 4. Success Metrics
 
 | Goal | Metric | Counter-metric | Target | Timeframe |
 |------|--------|----------------|--------|-----------|
@@ -162,7 +150,7 @@ Integration targets, regulatory/platform constraints, pre-decided boundaries.
 
 ---
 
-## 6. Feature Overview
+## 5. Feature Overview
 
 List all features with one-line descriptions. Each has a detailed spec
 in `docs/prd/features/`.
@@ -174,7 +162,7 @@ in `docs/prd/features/`.
 
 ---
 
-## 7. Dev Order
+## 6. Dev Order
 
 Features ordered by dependency and priority. This replaces phase documents.
 
@@ -193,22 +181,22 @@ Features ordered by dependency and priority. This replaces phase documents.
 
 ---
 
-## 8. Scope & Non-Goals
+## 7. Scope & Non-Goals
 
 - **In scope:** The full product vision (brief list)
 - **Out of scope:** What this product will NOT do, with reasoning
 
 ---
 
-## 9. Assumptions, Constraints & Risks
+## 8. Assumptions, Constraints & Risks
 
 - **Assumptions:** Things believed true but not yet validated
-- **Constraints:** Hard limits (timeline, budget, regulatory)
+- **Constraints:** Hard limits (budget, regulatory, technical)
 - **Risks:** What could go wrong, with severity and mitigation
 
 ---
 
-## 10. Appendix
+## 9. Appendix
 
 Links to supporting materials (don't inline them).
 ```
