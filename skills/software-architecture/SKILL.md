@@ -36,20 +36,18 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ### Step 0 — Intake
 
-Use `AskUserQuestion` once to confirm scope and audience. Do not infer these — they affect document depth and DB region.
+Use `AskUserQuestion` once to confirm audience. Do not infer — it affects DB region.
 
-- [ ] **Document scope**: Solo (3-6p decision journal) / Team (10-25p design doc)
 - [ ] **Target audience**: Global / Region-specific (specify region — e.g., Korea-first, Japan-first, EU-first)
 
 Then analyze the PRD and extract architecture-driving requirements:
 - Expected scale (users, requests/sec, data volume)
 - Latency requirements (real-time needs, p99 targets)
 - Consistency model (strong vs eventual, where)
-- Multi-tenancy needs
 - Regulatory/compliance constraints
 - Quality attribute priorities (see `references/design-principles.md` § Quality Attribute Prioritization)
 
-For Solo scope, focus on scale, real-time, and regulatory. For Team scope, cover all items above. If the PRD has clear gaps, ask. Otherwise proceed.
+If the PRD has clear gaps, ask. Otherwise proceed.
 
 **Stack is auto-decided** from the requirements. Apply these rules:
 
@@ -66,12 +64,7 @@ For Solo scope, focus on scale, real-time, and regulatory. For Team scope, cover
 
 ### Step 1 — Write the Design Document
 
-Based on the project context from Step 0:
-
-- **Solo** → Read `references/template-solo.md` and follow that template
-- **Team** → Read `references/template-team.md` and follow that template
-
-Before writing, also read the relevant reference files listed in the Reference Files section below.
+Read `references/template.md` and follow that template. Before writing, also read the relevant reference files listed in the Reference Files section below.
 
 ### Step 2 — Self-Review
 
@@ -94,9 +87,7 @@ Each template includes its own self-review checklist. Complete it before present
 
 Read the relevant references before making architecture decisions.
 
-**`references/template-solo.md`** — Solopreneur design doc template. Lightweight, 3-6 pages, focused on decisions and rationale.
-
-**`references/template-team.md`** — Team/enterprise design doc template. Comprehensive, 10-25 pages, with full cross-cutting concerns, ADRs, and compliance sections.
+**`references/template.md`** — Design doc template. 3-6 pages, focused on decisions and rationale. Includes migration section (if applicable) and one-way/two-way door decision framework.
 
 **`references/system-architecture.md`** — System architecture patterns (request-response, event-driven, CQRS, event sourcing, saga, modular monolith), composition flowchart, real-world examples, additional patterns (strangler fig, BFF, cell-based, event lakehouse), anti-patterns, and cross-cutting decisions (multi-tenancy, real-time, API versioning, event schema evolution, feature flags).
 

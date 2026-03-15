@@ -1,6 +1,6 @@
-# Solopreneur Architecture Template
+# Architecture Template
 
-A solopreneur architecture doc is a **decision journal** — it captures what you chose, why, and how things connect. The reader is your future self, 6 months from now, trying to remember why you picked Neon over Supabase or why the auth flow works the way it does.
+An architecture doc is a **decision journal** — it captures what you chose, why, and how things connect. The reader is your future self, 6 months from now, trying to remember why you picked Neon over Supabase or why the auth flow works the way it does.
 
 Target length: **3-6 pages**. If it's longer, you're probably over-documenting. Every section should earn its place — if you have nothing meaningful to say, skip it.
 
@@ -20,8 +20,9 @@ Target length: **3-6 pages**. If it's longer, you're probably over-documenting. 
 | 8 | External Services & Resilience | What dependencies, what if they break, how do I handle it? |
 | 9 | Testing Strategy | What's tested, how does it connect to the architecture? |
 | 10 | AI/LLM Architecture | How does AI integrate? *(only if applicable)* |
-| 11 | Risks & Open Questions | What could go wrong, what's undecided? |
-| 12 | Key Decisions | Why did I choose X over Y? |
+| 11 | Migration & Rollout | How to transition from existing system? *(only if applicable)* |
+| 12 | Risks & Open Questions | What could go wrong, what's undecided? |
+| 13 | Key Decisions | Why did I choose X over Y? |
 
 ---
 
@@ -192,7 +193,20 @@ Read `references/ai-architecture.md` for detailed patterns. If the system includ
 
 ---
 
-## 11. Risks & Open Questions
+## 11. Migration & Rollout (if applicable)
+
+Include only if replacing or evolving an existing system.
+
+- Migration strategy (strangler fig, parallel run, big bang)
+- Data migration approach
+- Feature flag strategy for gradual cutover
+- Rollback plan
+
+See `references/system-architecture.md` § Strangler Fig for the recommended incremental migration pattern.
+
+---
+
+## 12. Risks & Open Questions
 
 ### Risks
 | Risk | Impact | What I'll Do |
@@ -204,11 +218,12 @@ Things you haven't decided yet. For each: what are the options, what do you need
 
 ---
 
-## 12. Key Decisions
+## 13. Key Decisions
 
 For each significant choice, a brief record:
 
 ### Decision: {Title}
+- **Door type**: One-way (irreversible — analyze carefully) | Two-way (reversible — decide fast)
 - **Chose**: What you picked
 - **Over**: What you considered
 - **Because**: The reasoning (1-3 sentences)
