@@ -20,7 +20,7 @@ references:
 
 ## Context Check
 
-If `docs/prd.md` or `docs/prd-phase-*.md` exists, read it first. Use as input, not constraint.
+If `docs/prd/prd.md` or `docs/prd/features/*.md` exists, read it first. Use as input, not constraint.
 
 ---
 
@@ -130,31 +130,9 @@ Comfort zones, interaction models (gaze, hand, voice, controller), text input, p
 
 ---
 
-## Phase Tagging
+## Feature-Aware Design
 
-When the input PRD has companion Phase PRDs (`docs/prd-phase-*.md`):
-
-1. **Design all screens and flows for the complete vision** — do not limit the UX to a single phase
-2. **Tag screens and flows inline** — append `[Phase 1]`, `[Phase 2]`, `[Phase 3+]` etc. to screen names, user flows, and IA nodes to indicate when each becomes relevant
-3. **Add a Phase Implementation Summary** at the end of the output document:
-
-```
-## Phase Implementation Summary
-
-### Phase 1
-- Screens: ...
-- Key flows: ...
-
-### Phase 2
-- New screens: ...
-- Flow changes: ...
-
-### Phase 3+
-- New screens: ...
-- New flows: ...
-```
-
-If no Phase PRD exists, omit phase tags entirely.
+When feature specs exist in `docs/prd/features/*.md`, read the relevant feature spec for the current task. Design the full UX for that feature's requirements, user journeys, and edge cases. Reference the dev order in `docs/prd/prd.md` to understand dependencies between features.
 
 ---
 

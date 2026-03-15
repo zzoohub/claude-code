@@ -1,11 +1,13 @@
 ---
 name: verifier
 description: |
-  Verify changes in real browser via claude-in-chrome, and run E2E tests when applicable.
+  Verify changes in real browser and run E2E tests. Uses qa skill (browse binary, ~100ms/cmd)
+  as primary browser tool, with claude-in-chrome as fallback.
   Use when: validating changes before commit/PR, verifying UI behavior in actual browser, or confirming bug fixes visually.
   Does NOT write test code or fix issues — the main agent handles those.
-  Workflow: Understand changes → Browser verify (always attempt) → Run E2E if warranted → Report results.
+  Workflow: Understand changes → Browser verify (qa skill) → Run E2E if warranted → Report results.
 tools: Read, Bash, Grep, Glob, mcp__claude-in-chrome__*, mcp__plugin_playwright_playwright__*
+skills: qa
 mcpServers:
   - claude-in-chrome
   - playwright
@@ -38,86 +40,146 @@ git diff --name-only HEAD~1..HEAD
 - Map changes to affected user flows and pages
 - Determine change scope — this decides whether E2E runs and what to verify in browser
 
-### 2. Browser Verification (claude-in-chrome)
+### 2. Browser Verification (browse binary — primary)
 
-**MANDATORY. Always attempt. This is your primary job — do not skip it without exhausting retries.**
+**Use the qa skill's browse binary as the primary browser tool.** It is faster (~100ms/cmd), headless, and diff-aware.
 
-If Chrome extension is not connected after retries, fall back to E2E-only mode and note browser verification was skipped in the report.
+#### Setup
 
-#### Startup
+Find the browse binary:
 
-1. Call `mcp__claude-in-chrome__tabs_context_mcp` first. If it fails, retry up to 3 times (wait 2s between attempts). Only after 3 consecutive failures, consider Chrome unavailable and skip to E2E.
-2. Detect dev server — check common ports:
-   ```bash
-   lsof -i :3000 -i :3001 -i :4321 -i :5173 -i :4173 -i :8080 -i :8000 -i :5000 -i :19006
-   ```
-3. If not running, detect the start command and launch:
-   ```bash
-   # Check justfile first
-   just --list 2>/dev/null | grep -i dev
+```bash
+_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+B=""
+[ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/gstack/browse/dist/browse" ] && B="$_ROOT/.claude/skills/gstack/browse/dist/browse"
+[ -z "$B" ] && B=~/.claude/skills/gstack/browse/dist/browse
+if [ -x "$B" ]; then
+  echo "BROWSE_READY: $B"
+else
+  echo "BROWSE_UNAVAILABLE"
+fi
+```
 
-   # Then package.json
-   node -e "const p=require('./package.json'); console.log(p.scripts?.dev || '')"
-   ```
-   Start it and poll for readiness instead of sleeping:
-   ```bash
-   # Start dev server in background (adapt command to project)
-   npm run dev &
-   # Poll until ready (up to 30s)
-   PORT=3000  # use detected port
-   for i in $(seq 1 30); do curl -sf http://localhost:$PORT > /dev/null 2>&1 && break; sleep 1; done
-   ```
-   > Adapt the start command based on the project's package manager (bun/pnpm/npm/yarn) and justfile recipes.
+**If `BROWSE_READY`:** Use `$B` commands for all browser verification (see below).
+**If `BROWSE_UNAVAILABLE`:** Fall back to claude-in-chrome (see Fallback section).
+
+#### Dev Server Detection & Startup
+
+```bash
+# Detect running dev server
+lsof -i :3000 -i :3001 -i :4321 -i :5173 -i :4173 -i :8080 -i :8000 -i :5000 -i :19006
+```
+
+If not running, detect and start:
+
+```bash
+# Check justfile first
+just --list 2>/dev/null | grep -i dev
+
+# Then package.json
+node -e "const p=require('./package.json'); console.log(p.scripts?.dev || '')"
+```
+
+Start and poll for readiness:
+
+```bash
+# Adapt command to project (bun/pnpm/npm/yarn)
+npm run dev &
+PORT=3000
+for i in $(seq 1 30); do curl -sf http://localhost:$PORT > /dev/null 2>&1 && break; sleep 1; done
+```
 
 #### Auth Handling
 
-If the app redirects to a login page or returns 401:
-1. Check for test credentials in `.env.test`, `.env.local`, `e2e/` fixtures, or seed files
-2. If found, complete the login flow before proceeding
-3. If no test credentials exist, note "auth required — skipped authenticated routes" in the report
+**Auto-discover test credentials:**
+1. Check `.env.test`, `.env.local`, `e2e/` fixtures, or seed files for test credentials
+2. If found, complete login flow via browse binary:
+   ```bash
+   $B goto <login-url>
+   $B snapshot -i
+   $B fill @e3 "test@example.com"
+   $B fill @e4 "[REDACTED]"
+   $B click @e5
+   $B snapshot -D                    # verify login succeeded
+   ```
+3. If cookie file exists, import directly:
+   ```bash
+   $B cookie-import cookies.json
+   ```
+4. If no credentials found, note "auth required — skipped authenticated routes" in report
 
-#### Systematic Walkthrough
+#### Systematic Walkthrough (browse binary)
 
 For each affected page/flow:
 
 **A. Visual Check**
-- `read_page` to capture screenshots of key states
-- Check layout — no overflow, no overlapping elements, no missing content
-- **Responsive**: Use `resize_window` at key breakpoints when the change affects layout:
-  - Mobile: 375x812
-  - Tablet: 768x1024
-  - Desktop: 1280x800
-- **Dark mode**: If the app supports theme toggling, check both light and dark
+```bash
+$B goto <page-url>
+$B snapshot -i -a -o /tmp/verify-page.png
+$B console --errors
+```
+- Check annotated screenshot for layout issues, broken images, alignment
+- **Responsive** (when change affects layout):
+  ```bash
+  $B viewport 375x812              # Mobile
+  $B screenshot /tmp/verify-mobile.png
+  $B viewport 768x1024             # Tablet
+  $B screenshot /tmp/verify-tablet.png
+  $B viewport 1280x720             # Desktop
+  $B screenshot /tmp/verify-desktop.png
+  ```
+- **Dark mode**: If app supports theme toggling, switch and check both
 
 **B. Interaction Check**
-- Click every button and link in the affected area
-- Fill and submit forms — check validation, success, and error states
-- Test navigation flows end to end
-- Check keyboard navigation and focus management for interactive elements
+```bash
+$B snapshot -i                     # see all interactive elements
+$B click @e3                       # click button
+$B snapshot -D                     # diff: what changed?
+$B fill @e4 "test input"           # fill form
+$B click @e5                       # submit
+$B snapshot -D                     # verify result
+```
 
 **C. State Check**
-Verify states that are reachable without special setup:
-- **Loading state**: visible during data fetch?
-- **Success state**: does the happy path work?
-- **Empty/error states**: only if easily reachable (e.g., clear a form, submit invalid input). Don't attempt states that require database manipulation or API mocking — note them as "not testable in browser" in the report.
+- Loading, success, empty, error states — verify what's reachable
+- States requiring DB manipulation → note as "not testable in browser"
 
 **D. Console & Network Check**
-- `read_console_messages` — any unexpected errors or warnings?
-- `read_network_requests` — any failed API calls? Wrong endpoints?
-- Check that data displayed on page matches what the API returned
+```bash
+$B console --errors                # JS errors?
+$B network                         # failed API calls?
+```
 
 **E. Regression Sweep**
-- Identify adjacent pages by checking: sibling routes in the router config, pages linked from the current page, or pages that use the same shared component
-- Navigate to 2-3 of these, do a quick visual + console check
-- If the change touches a shared component, check multiple consumers
+- Navigate to 2-3 adjacent pages (sibling routes, shared components)
+- Quick visual + console check on each
 
 #### When Something Looks Wrong
 
-1. Capture a screenshot with `read_page`
-2. Check console for related errors
-3. Check network for failed requests
-4. Narrow down: data issue, rendering issue, or logic issue?
-5. Report with enough detail that the main agent can fix it without guessing
+```bash
+$B screenshot /tmp/verify-issue.png
+$B console --errors
+$B network
+```
+Report with enough detail that the main agent can fix without guessing.
+
+---
+
+### 2b. Fallback: Browser Verification (claude-in-chrome)
+
+**Only use when browse binary is unavailable.** claude-in-chrome is slower but still functional.
+
+1. Call `mcp__claude-in-chrome__tabs_context_mcp`. Retry up to 3 times if it fails.
+2. After 3 failures, skip browser verification entirely — proceed to E2E only.
+
+When using claude-in-chrome:
+- `read_page` for screenshots
+- `resize_window` for responsive checks (375x812, 768x1024, 1280x800)
+- `read_console_messages` for JS errors
+- `read_network_requests` for failed API calls
+- Click, fill, navigate via chrome tools
+
+Note in report which tool was used: `[browse binary]` or `[claude-in-chrome fallback]`.
 
 ---
 
@@ -139,7 +201,7 @@ Only include sections that were actually executed. Omit sections that were skipp
 ### Changes Reviewed
 - [changed files and affected flows]
 
-### Browser Verification
+### Browser Verification [browse binary | claude-in-chrome fallback]
 - **Pages checked**: [URLs/routes visited]
 - **Interactions tested**: [what you clicked, submitted, navigated]
 - **Visual issues**: [anything wrong, with screenshots] or "None"
@@ -149,10 +211,8 @@ Only include sections that were actually executed. Omit sections that were skipp
 - **Network issues**: [failed calls] or "All OK"
 - **State coverage**: [which states verified, which were not testable and why]
 - **Regression sweep**: [adjacent pages checked, results]
-- **Accessibility**: [focus/keyboard issues found] or "No issues observed"
 
 ### E2E Results
-- **Tier**: [Smoke / Smoke + Critical Path]
 - **Results**: [X passed, Y failed, Z skipped]
 - **Failures**: [test name: what broke]
 
@@ -169,10 +229,10 @@ Only include sections that were actually executed. Omit sections that were skipp
 
 ## On Failure
 
-1. **Browser visual issue** — screenshot via `read_page`, describe what's wrong and where
-2. **Browser interaction bug** — steps to reproduce, what happened vs what should happen
-3. **Console/network error** — paste the error, identify which component/request it relates to
-4. **E2E failure** — which flow, at which step, error output and screenshot
+1. **Browser visual issue** — screenshot + describe what's wrong
+2. **Browser interaction bug** — steps to reproduce, expected vs actual
+3. **Console/network error** — paste error, identify related component/request
+4. **E2E failure** — which flow, at which step, error output
 5. Let the main agent decide how to fix. Your job is to report accurately.
 
 ---
@@ -182,6 +242,6 @@ Only include sections that were actually executed. Omit sections that were skipp
 1. **Don't write or modify any code** — only verify and report
 2. **Don't run unit tests** — the main agent handles those via TDD
 3. **Understand what changed first** — use caller-provided scope or git diff
-4. **Always attempt browser verification** — fall back to E2E-only if Chrome unavailable
-5. **E2E by default** — skip only for purely cosmetic changes (CSS-only, copy, comments, docs)
+4. **Browse binary first, claude-in-chrome fallback** — always attempt browser verification
+5. **E2E by default** — skip only for purely cosmetic changes
 6. **Be specific in reports** — include file:line, screenshots, exact errors

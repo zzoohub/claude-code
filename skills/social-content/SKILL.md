@@ -24,7 +24,7 @@ description: |
 
 Social media content creation, strategy, and multi-platform publishing -- built on research from 50+ sources including academic papers on virality, platform algorithm documentation, and methods from top practitioners (Justin Welsh, Alex Hormozi, Naval Ravikant, Sahil Bloom).
 
-**Read product context first.** If `docs/product-brief.md` exists, read it for product and audience info. If `biz/marketing/strategy.md` exists, read it for brand voice and channel priorities. If neither exists, ask the user or infer from the request.
+**Read product context first.** If `docs/prd/product-brief.md` exists, read it for product and audience info. If `biz/marketing/strategy.md` exists, read it for brand voice and channel priorities. If neither exists, ask the user or infer from the request.
 
 ---
 

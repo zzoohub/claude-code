@@ -5,7 +5,7 @@ Architecture decisions happen on **two axes**: system architecture and language.
 | Axis | Question | Options |
 |---|---|---|
 | **System Architecture** | How do services/components communicate? | Request-Response, Event-Driven, CQRS, Event Sourcing, Hybrid |
-| **Language** | What language/framework? | Rust (Axum) default, Python (FastAPI) when Python-only libraries required |
+| **Language** | What language/framework? | TS (Hono) for edge, Rust (Axum) for containers |
 
 **Code structure is always Hexagonal (Ports & Adapters).** AI-assisted development eliminates the boilerplate cost that previously made hexagonal feel heavy for simple services. The benefits (testability, swappable adapters, clean domain isolation) apply universally.
 
@@ -196,9 +196,10 @@ Document your code structure choice as an ADR with rationale.
 
 | Priority | Language | When to Use |
 |---|---|---|
-| **Default** | **TypeScript (Hono)** | All Workers and general web services. <4kB, RPC with end-to-end type safety, Workers-first. Fullstack type consistency across Workers, Drizzle, TanStack Start. |
-| **CPU-intensive / Container** | **Rust (Axum)** | CF Containers or Cloud Run. CPU-heavy processing, memory safety critical, maximum performance. Sub-ms response times, 10-30MB memory, minimal cold starts. |
-| **ML-only** | **Python (FastAPI)** | Only when Python-only libraries are physically required: PyTorch, transformers, pandas/numpy heavy pipelines. LLM API calls and agent patterns do NOT require Python — use `fetch` in TS or `reqwest` in Rust. |
+| **Edge API** | **TypeScript (Hono)** | Workers and general web services. <4kB, RPC with end-to-end type safety, Workers-first. Fullstack type consistency across Workers, Drizzle, TanStack Start. |
+| **Container** | **Rust (Axum)** | CF Containers or Cloud Run. CPU-heavy processing, memory safety critical, maximum performance. Sub-ms response times, 10-30MB memory, minimal cold starts. |
+
+> **Escape hatch**: Python (FastAPI) on containers only when Python-only ML libraries are physically required (PyTorch, transformers). LLM API calls and agent patterns do NOT require Python — use `fetch` in TS or `reqwest` in Rust.
 
 ### TypeScript Ecosystem (Default)
 - **Web framework**: Hono (Workers-first, <4kB, middleware chaining)
@@ -214,12 +215,6 @@ Document your code structure choice as an ADR with rationale.
 - **Async runtime**: Tokio
 - **HTTP client**: reqwest
 - **Validation**: validator
-
-### Python (FastAPI) Ecosystem (ML workloads only)
-- **ORM**: SQLAlchemy 2.0 (async) + Alembic
-- **Validation**: Pydantic v2 (built into FastAPI)
-- **HTTP client**: httpx (async)
-- **Task queue**: Celery or ARQ (lightweight, Redis-based)
 
 ---
 
@@ -250,16 +245,8 @@ Step 2: Language (Code structure is always Hexagonal)
 ─────────────────────────────────────────────────────
 Running on Workers?
 ├── YES → TypeScript (Hono) + Hexagonal
-└── NO (Container) →
-    CPU-intensive or memory safety critical?
-    ├── YES → Rust (Axum) + Hexagonal
-    └── NO  → TypeScript (Hono on Node.js) or Rust (Axum)
-
-Python-only ML libraries required? (PyTorch, transformers, etc.)
-├── YES → Python (FastAPI) + Hexagonal (container only)
-└── NO  → Stay with TS or Rust
-
-Note: LLM API calls and agent patterns do NOT require Python.
+└── NO (Container) → Rust (Axum) + Hexagonal
+    (Escape hatch: Python/FastAPI only for PyTorch/transformers dependency)
 ```
 
 ---

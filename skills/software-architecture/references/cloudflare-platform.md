@@ -12,14 +12,12 @@ Read this when designing a system on the Cloudflare bundle. For bundle selection
 |---|---|---|---|
 | Language | ① | TypeScript | Default for all web services. Type consistency across Workers, Hono, Drizzle |
 | Language | ② | Rust | CPU-intensive or memory-safety-critical. workers-rs + Axum for Workers deploy |
-| Client (fullstack, default) | ① | TanStack Start + React (External) | Full-stack React, type-safe routing and server functions. Workers/Vercel/Node.js deploy |
+| Client (fullstack, default) | ① | TanStack Start + React (External) | Full-stack React, type-safe routing and server functions. Workers/Node.js deploy |
 | Client (fullstack, perf) | ② | TanStack Start + SolidJS (External) | Fine-grained reactivity, minimal bundles, same TanStack Start primitives |
-| Client (fullstack, alt) | ② | SvelteKit (External) | Compiler-first, minimal JS shipped, runes reactivity. Workers/Vercel/Node.js deploy |
-| Client (content-first) | ② | Astro (External) | Islands architecture, static-first. Blog/marketing pages. CF Workers adapter native |
 | Server (Workers) | ① | Hono TS (CF) | <4kB, middleware chaining, RPC, Workers-first |
 | Server (Workers) | ② | workers-rs + Axum (CF) | CPU-intensive API/parsing. Memory safety required |
 | Server (Container) | ① | Rust/Axum | Minimal cold start. Default for CF Containers |
-| Server (Container) | ② | FastAPI Python | Only when ML libraries (torch, transformers) required |
+| Server (Container) | ③ | FastAPI Python | Escape hatch: only when Python-only ML libraries (torch, transformers) required |
 
 ---
 
@@ -35,7 +33,7 @@ Read this when designing a system on the Cloudflare bundle. For bundle selection
 | Agent (complex graph) | ② | LangGraph.js on Workers (CF+External) | Declarative graph orchestration. Only when imperative Workflows become unmaintainable. Needs custom DO-backed checkpointer |
 | Agent (Python ML) | ③ | CF Containers + LangGraph Python | Escape hatch for torch/transformers |
 | Container (long-running) | ① | CF Containers + Rust/Axum (CF) | 16vCPU/64GB RAM, sleep/wake cycle. Minimal cold start |
-| Container (long-running) | ② | CF Containers + Python/FastAPI (CF) | ML library dependency only |
+| Container (long-running) | ③ | CF Containers + Python/FastAPI (CF) | Escape hatch: ML library dependency only |
 | Container (long-running) | ③ | Cloud Run (External) | Escape hatch: GPU, GCP-locked, CF Containers immaturity |
 
 ### Compute Decision Flow
@@ -93,7 +91,7 @@ Request type?
 
 | Role | Pri | Service | Notes |
 |---|---|---|---|
-| Auth | ① | Better Auth (External) | TS-native, D1/Neon as auth DB. No MAU billing. Runs on frontend server (TanStack Start / SvelteKit). Social providers (Google, Kakao, Naver, GitHub) via plugins |
+| Auth | ① | Better Auth (External) | TS-native, D1/Neon as auth DB. No MAU billing. Runs on frontend server (TanStack Start). Social providers (Google, Kakao, Naver, GitHub) via plugins |
 | Email (transactional) | ① | Resend (External) | Proven deliverability. Payment receipts, password resets, security alerts |
 | Email (notification) | ① | CF Email Service (CF) | Workers native binding, no API key. SPF/DKIM/DMARC auto. Deliverability unproven |
 | Email (notification) | ② | Resend (External) | When notification deliverability also needs guarantee |

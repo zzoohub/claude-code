@@ -1,0 +1,132 @@
+# Feature Spec — Template & Writing Guide
+
+After writing the PRD (`docs/prd/prd.md`), create a separate spec file for each
+feature in `docs/prd/features/`. Each file is a self-contained reference for
+implementing that feature.
+
+---
+
+## Why Separate Feature Files?
+
+- The PRD captures the full vision and serves as the long-term source of truth
+- Feature specs answer: "What exactly does this feature do, and how should it work?"
+- Separation keeps each file small enough for one Claude Code session to consume
+- Tasks live in `TASKS.md` (root level), not in feature files — clean separation of spec vs progress
+
+---
+
+## Feature Spec Template
+
+```markdown
+# [Feature Name]
+
+## Overview
+
+What this feature does and why it matters. 2-3 sentences connecting back to
+the product vision. Reference the PRD problem statement if relevant.
+
+---
+
+## Requirements
+
+Functional requirements specific to this feature. Each requirement should be
+independently testable.
+
+- REQ-001: User can sign in with Google OAuth
+- REQ-002: User can sign in with GitHub OAuth
+- REQ-003: Session expires after 7 days of inactivity
+- REQ-004: Protected routes redirect unauthenticated users to login
+
+---
+
+## User Journeys
+
+Step-by-step flows showing how users interact with this feature.
+
+### First-time login
+1. User clicks "Sign in with Google"
+2. Redirected to Google consent screen
+3. After consent, redirected back to app
+4. Account created, session started
+5. Redirected to onboarding
+
+### Returning user
+1. User visits app with expired session
+2. Redirected to login page
+3. Clicks provider → instant redirect (consent already granted)
+4. Session restored, lands on last page
+
+### Error states
+- OAuth denied → show message, stay on login
+- Provider unavailable → show fallback message
+- Account exists with different provider → show linking prompt
+
+---
+
+## Technical Decisions
+
+Decisions specific to this feature. Not the full tech stack (that's in prd.md),
+just what's relevant here.
+
+- **Auth provider:** Supabase Auth (already in stack, handles OAuth + sessions)
+- **Session storage:** Supabase manages JWT + refresh tokens
+- **Middleware:** Next.js middleware for route protection
+
+---
+
+## Edge Cases
+
+- User revokes OAuth access externally → next API call returns 401, redirect to login
+- Multiple tabs open → session refresh in one tab applies to all
+- User deletes account → cascade delete sessions, OAuth connections
+
+---
+
+## Dependencies
+
+- None (this is the first feature in dev order)
+
+## Depends On This
+
+- billing (needs authenticated user)
+- feed (needs user identity)
+```
+
+---
+
+## Writing Guide
+
+### Granularity
+
+Each requirement should be independently testable — a QA engineer could
+verify it passes or fails.
+
+- Too coarse: "User can manage authentication"
+- Too fine: "The login button has 8px border-radius"
+- Right level: "User can sign in with Google OAuth and receive a persistent session"
+
+### What Belongs Here vs Elsewhere
+
+| Content | Feature spec | PRD | tasks.md |
+|---------|-------------|-----|----------|
+| Requirements | Yes | Feature overview only | No |
+| User journeys | Yes | No | No |
+| Technical decisions | Feature-specific | Stack-level | No |
+| Task checklists | No | No | Yes |
+| Success metrics | No | Yes | No |
+| Dev order | No | Yes | No |
+
+### Length
+
+Target **100-200 lines** per feature. If a feature spec exceeds 200 lines,
+consider splitting the feature into sub-features with their own specs.
+
+### Naming Convention
+
+- `docs/prd/features/auth.md`
+- `docs/prd/features/billing.md`
+- `docs/prd/features/feed.md`
+
+Use short, descriptive names matching the feature name in the PRD's feature
+overview table. Filenames should be kebab-case for multi-word features
+(e.g., `user-settings.md`, `file-upload.md`).

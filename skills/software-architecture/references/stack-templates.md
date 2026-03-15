@@ -1,59 +1,40 @@
 # Stack Templates
 
-Platform bundles optimized for solopreneur development. Each bundle is a cohesive set of compute, storage, and services from the same ecosystem — unified billing, single CLI, one dashboard.
+Cloudflare-first stack for solopreneur development. Unified billing, single CLI, one dashboard.
 
 ---
 
-## Bundle Selection
+## Platform
 
-Choose one bundle per project. Backend framework choice is independent of bundle.
+All projects run on the **Cloudflare bundle**. No bundle selection needed.
 
-| Bundle | Compute | Frontend | DB | Choose When |
-|---|---|---|---|---|
-| **Cloudflare** (default) | Workers + CF Containers | TanStack Start (React) | Neon + Hyperdrive | Edge-first, global low-latency, TS fullstack, unified CF infra |
-| **Vercel** | Vercel Functions | TanStack Start (React) / SvelteKit | Supabase | Content-heavy, Korea-first (Supabase Seoul) |
+| Compute | Frontend | DB | Escape Hatch |
+|---|---|---|---|
+| Workers + CF Containers | TanStack Start (React or SolidJS) | Neon + Hyperdrive (global) / Supabase (Korea-first) | GCP Cloud Run (GPU, GCP-locked) |
 
-**GCP Cloud Run** = escape hatch when CF Containers can't do it (GPU, Vertex AI, GCP-only integrations).
+See **`references/cloudflare-platform.md`** for the full tech stack reference with ①② priority rankings per role.
 
-If the user doesn't specify, use the **Cloudflare bundle**.
-
-### Bundle Decision Flow
-
-```
-Project characteristics?
-├── Edge-first, API-heavy, TS fullstack     → Cloudflare bundle
-├── Content/SEO-heavy, Supabase needed       → Vercel bundle
-├── Korea-first + Kakao/Naver auth needed   → Vercel bundle (Supabase Seoul + Auth)
-├── Korea-first + edge API priority         → Cloudflare bundle + Supabase via Hyperdrive
-└── GPU / GCP-locked legacy                 → Cloudflare bundle + Cloud Run escape hatch
-```
+See **`references/cloudflare-platform.md`** for the full service catalog with ①② priority rankings, and **`references/operational-patterns.md`** for background jobs, retry, and async pipeline patterns.
 
 ---
 
-## Backend Framework Options
-
-Framework choice is independent of bundle. Pick based on workload, not platform.
+## Backend Framework
 
 | Framework | Runtime | Choose When |
 |---|---|---|
-| **Hono (TS)** (default) | Workers / CF Containers / Node.js | General web services, API, fullstack TS. <4kB, RPC built-in |
-| **Rust/Axum** | Workers (workers-rs) / CF Containers / Cloud Run | CPU-intensive, memory safety, maximum performance |
-| **FastAPI (Python)** | CF Containers / Cloud Run | Python-only ML libraries (PyTorch, transformers). LLM API calls alone do NOT justify Python |
+| **Hono (TS)** | Workers (edge API) | Default. All web services, API, fullstack TS. <4kB, RPC built-in |
+| **Rust/Axum** | CF Containers / Cloud Run | Compute containers. CPU-intensive, memory safety, maximum performance |
+
+> **Escape hatch**: FastAPI (Python) on CF Containers or Cloud Run — only when Python-only ML libraries (PyTorch, transformers) are physically required. LLM API calls alone do NOT justify Python.
 
 ---
 
-## Frontend Options
-
-Frontend choice is independent of backend bundle. Pick based on team expertise and project needs.
+## Frontend
 
 | Frontend | Deploy To | Choose When |
 |---|---|---|
-| **TanStack Start (React)** | CF Workers / Vercel / Node.js | Full-stack React framework with SSR/SSG, type-safe server functions, file-based routing. Default choice — React ecosystem + TanStack Router's type-safe navigation |
-| **TanStack Start (SolidJS)** | CF Workers / Vercel / Node.js | Fine-grained reactivity, minimal bundles, same TanStack Start primitives. Choose when bundle size and runtime performance are priorities |
-| **SvelteKit** | CF Workers / Vercel / Node.js | Compiler-first, minimal JS shipped, built-in SSR/SSG. Strong DX with runes reactivity. Choose when simplicity and performance are priorities |
-| **Astro** | CF Workers adapter | Content-first, Islands architecture. Blog/marketing/docs pages |
-
-**Default guidance**: If unsure, **TanStack Start (React)** is the default choice — React ecosystem benefits (component libraries, talent pool, tutorials) with type-safe routing and server functions. Choose **TanStack Start (SolidJS)** or **SvelteKit** when fine-grained reactivity and minimal bundle size are meaningful differentiators. Both deploy to Workers, Vercel, or Node.js without shims.
+| **TanStack Start (React)** | CF Workers / Node.js | Default. React ecosystem + TanStack Router's type-safe navigation + server functions |
+| **TanStack Start (SolidJS)** | CF Workers / Node.js | Fine-grained reactivity, minimal bundles, same TanStack Start primitives. Choose when bundle size and runtime performance are priorities |
 
 ---
 
@@ -82,7 +63,7 @@ project/
 │   │   ├── package.json
 │   │   ├── wrangler.jsonc
 │   │   └── src/
-│   ├── web/                  # TanStack Start (React/SolidJS) or SvelteKit
+│   ├── web/                  # TanStack Start (React or SolidJS)
 │   │   ├── package.json
 │   │   └── src/
 │   └── shared/               # Shared types, utils, validation schemas
@@ -142,76 +123,6 @@ const created = await client.users.$post({ json: { name: 'Alice' } });
 
 ---
 
-## Cloudflare Bundle
-
-Default bundle. All services from one platform.
-
-See **`references/cloudflare-platform.md`** for the full tech stack reference with ①② priority rankings per role.
-
-**Key characteristics**:
-- Workers: stateless edge compute, 330+ PoP, ~0ms cold start
-- CF Containers: long-running containers (16vCPU/64GB), sleep/wake cycle
-- Durable Objects: stateful coordination, WebSocket hub
-- Workflows + Queues: async processing with retry/checkpoint
-- R2, KV, D1, Vectorize: storage primitives
-- AI Gateway, Workers AI: LLM proxy and edge inference
-- Wrangler CLI: single tool for deploy and config
-
-**Compute decision flow**:
-```
-├── Stateless API, <30s             → Workers
-├── Stateful, WebSocket             → Durable Objects
-├── Async, multi-step               → Workflows + Queues
-├── Container, CPU/memory heavy     → CF Containers
-└── GPU, GCP-locked                 → Cloud Run (escape hatch)
-```
-
----
-
-## Vercel Bundle
-
-For Supabase projects. Korea-first or content-heavy products.
-
-### Why This Bundle Exists
-- Supabase Seoul region — lowest latency for Korean users
-- Supabase Realtime — chat, notifications, live updates bundled
-- Vercel Functions — simple serverless compute with good DX
-- Better Auth handles auth the same way as CF bundle — unified auth experience
-
-### Stack
-
-| Role | Service | Notes |
-|---|---|---|
-| Compute | Vercel Functions | Serverless (Node.js) + Edge Runtime |
-| Frontend | TanStack Start (React) / SvelteKit | SSR/SSG, type-safe routing, server functions |
-| DB | Supabase PostgreSQL | Seoul region available. Free tier: 2 projects, 500MB |
-| Auth | Better Auth | TS-native, stores in Supabase DB. Kakao, Naver, Google via plugins. No MAU billing |
-| Storage | Supabase Storage | S3-compatible. Direct client uploads via signed URLs |
-| Realtime | Supabase Realtime | WebSocket subscriptions. Presence, broadcast, DB changes |
-| Cache | Vercel KV | Upstash Redis under the hood. Session, rate limit |
-| Cron | Vercel Cron Jobs | Simple scheduled tasks via vercel.json |
-| Edge Config | Vercel Edge Config | Ultra-low latency reads. Feature flags, A/B config |
-| Error Tracking | Sentry | Same as Cloudflare bundle |
-| Analytics | PostHog | Same as Cloudflare bundle |
-| Email | Resend | Vercel has no native email service |
-| Payments | Stripe / Toss Payments | Same as Cloudflare bundle |
-| CI/CD | Vercel Git Integration | Auto-deploy on push. Preview deploys per PR |
-| DNS/CDN | Cloudflare → Vercel | Cloudflare DNS proxying to Vercel. Best of both |
-
-### Trade-offs vs Cloudflare
-
-| Aspect | Cloudflare | Vercel |
-|---|---|---|
-| Edge compute | Workers (global, ~0ms cold start) | Edge Functions (limited runtime) |
-| Container compute | CF Containers (native) | None — need Cloud Run escape hatch |
-| DB flexibility | Neon (any region) + Hyperdrive | Supabase (Seoul, Virginia, Frankfurt, etc.) |
-| Realtime | Durable Objects (custom build) | Supabase Realtime (batteries-included) |
-| Auth | Better Auth (unified across bundles) | Better Auth (same — unified) |
-| AI services | Workers AI, AI Gateway, Vectorize | None native — use external APIs |
-| Pricing model | Pay-per-request, predictable | Function invocations + bandwidth |
-
----
-
 ## Container Escape Hatch: GCP Cloud Run
 
 Use only when neither Workers nor CF Containers meet requirements.
@@ -246,32 +157,31 @@ Include only when the PRD specifies mobile app requirements.
 
 ---
 
-## Shared: Database
+## Database
 
-Choose based on target audience and bundle:
+Choose based on target audience:
 
-| Audience | Bundle | Default DB | Region |
-|---|---|---|---|
-| **Global** | Cloudflare | **Neon** + Hyperdrive | us-east-1 (Virginia) |
-| **Korea-first** | Vercel | **Supabase** | ap-northeast-2 (Seoul) |
-| **Korea-first** | Cloudflare | **Supabase** via Hyperdrive | ap-northeast-2 (Seoul) |
+| Audience | Default DB | Region |
+|---|---|---|
+| **Global** | **Neon** + Hyperdrive | us-east-1 (Virginia) |
+| **Korea-first** | **Supabase** (via Hyperdrive) | ap-northeast-2 (Seoul) |
 
-### Neon — Cloudflare bundle default
+### Neon — Global default
 
 - Scale-to-zero pricing, branching for dev/staging, full PostgreSQL (pgvector, extensions)
 - **Hyperdrive** handles connection pooling at the edge — no manual pooler config needed for Workers
 - For CF Containers or Cloud Run: use Neon pooler endpoint (`-pooler` URL) as TCP fallback
 
-### Supabase — Vercel bundle / Korea-first default
+### Supabase — Korea-first default
 
 - PostgreSQL on AWS ap-northeast-2 (Seoul) — lowest latency for Korean users
-- Bundled: Realtime, Storage (use Better Auth for auth — unified across bundles)
+- Bundled: Realtime, Storage (use Better Auth for auth)
 - Free tier: 2 active projects, 500MB DB, 1GB storage
 - Trade-off: no branching (use migrations), less granular scale-to-zero than Neon
 
 ---
 
-## Shared: Auth Pattern
+## Auth Pattern
 
 ### Authentication
 
@@ -284,7 +194,7 @@ Choose based on the product's audience:
 | **B2B / SaaS** | Email magic link | Keep it simple for solopreneur B2B |
 | **Internal tools** | Google Workspace OAuth2 | Single-click for team members |
 
-**Implementation**: **Better Auth** (TS-native) for all bundles and scenarios. Open-source, no MAU billing, stores auth data directly in your DB (Neon/D1). Supports social providers (Google, Kakao, Naver, GitHub, etc.) via plugins. Runs on the frontend server (TanStack Start / SvelteKit) — no separate auth service needed.
+**Implementation**: **Better Auth** (TS-native). Open-source, no MAU billing, stores auth data directly in your DB (Neon/D1). Supports social providers (Google, Kakao, Naver, GitHub, etc.) via plugins. Runs on the frontend server (TanStack Start) — no separate auth service needed.
 
 **Exception**: For Rust container backends without a TS frontend server, use **Clerk** (managed, HTTP API) or implement auth directly with the provider's OAuth2 flow + JWT verification.
 
@@ -301,17 +211,15 @@ Choose based on the product's audience:
 
 ---
 
-## Shared: CDN & DNS
+## CDN & DNS
 
-Cloudflare DNS + CDN regardless of bundle. Even Vercel bundle uses Cloudflare DNS proxying to Vercel for unified DNS management, DDoS protection, and WAF.
+Cloudflare DNS + CDN for all projects. Unified DNS management, DDoS protection, and WAF.
 
 **Edge caching**: Cache static assets aggressively (immutable hashes, 1yr TTL). Use `stale-while-revalidate` for API responses where eventual consistency is acceptable. Never cache authenticated responses at the edge.
 
 ---
 
-## Shared: Supporting Services
-
-Cross-bundle services — no native alternative in either platform:
+## Supporting Services
 
 | Service | Choice | Rationale |
 |---|---|---|
@@ -321,16 +229,16 @@ Cross-bundle services — no native alternative in either platform:
 | Product Analytics | PostHog | Feature flags, session replay, funnels. Privacy-friendly |
 | Payments (Global) | Stripe | Extensive API, webhook reliability |
 | Payments (Korea) | Toss Payments | Korean payment methods required |
-| CI/CD | GitHub Actions | Test/lint pipeline. Pairs with Workers Builds (CF) or Vercel Git Integration |
+| CI/CD | GitHub Actions + Workers Builds | Test/lint pipeline + auto-deploy |
 
 ---
 
-## Shared: Region Strategy
+## Region Strategy
 
-| Scenario | Cloudflare Bundle | Vercel Bundle |
-|---|---|---|
-| **Global** | Workers (global) + Neon (Virginia) | Vercel (auto) + Supabase (Virginia) |
-| **Korea-first** | Workers (global) + Supabase (Seoul) via Hyperdrive | Vercel (icn1) + Supabase (Seoul) |
+| Scenario | Strategy |
+|---|---|
+| **Global** | Workers (global) + Neon (Virginia) |
+| **Korea-first** | Workers (global) + Supabase (Seoul) via Hyperdrive |
 
 **Co-location rule**: Keep compute and database in the same geographic region. For Korea-first, co-locate DB in Seoul. Workers are inherently global — Hyperdrive optimizes the edge-to-DB connection.
 

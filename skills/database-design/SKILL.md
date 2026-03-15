@@ -172,32 +172,9 @@ Use this checklist:
 | Optimistic Locking | Low contention, user-facing workflows | `references/acid-transactions.md` |
 | Queue (SKIP LOCKED) | Task/job queue processing | `references/acid-transactions.md` |
 
-## Phase Tagging
+## Feature-Aware Schema Design
 
-When the input PRD has companion Phase PRDs (`docs/prd-phase-*.md`):
-
-1. **Design the full schema for the complete vision** — do not limit tables to a single phase
-2. **Tag entities inline** — append `[Phase 1]`, `[Phase 2]`, `[Phase 3+]` etc. to table names, indexes, and schema sections to indicate when each becomes relevant
-3. **Migration files cover Phase 1 only** — `001_initial_schema.sql` includes only `[Phase 1]` tables. Future phase tables are documented in the design doc but not yet in migration files
-4. **Add a Phase Implementation Summary** at the end of `docs/database-design.md`:
-
-```
-## Phase Implementation Summary
-
-### Phase 1
-- Tables: ...
-- Key indexes: ...
-
-### Phase 2
-- New tables: ...
-- Schema changes to existing tables: ...
-
-### Phase 3+
-- New tables: ...
-- External data integrations: ...
-```
-
-If no Phase PRD exists, omit phase tags entirely.
+When feature specs exist in `docs/prd/features/*.md`, read the relevant feature spec for the current task. Design the full schema for the complete vision, but tag tables and indexes with the feature they belong to (e.g., `[auth]`, `[billing]`). Reference the dev order in `docs/prd/prd.md` to understand which migrations to create first.
 
 ---
 

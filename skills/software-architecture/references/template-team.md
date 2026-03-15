@@ -339,9 +339,9 @@ The **"3 AM Test"**: If an on-call engineer gets paged at 3 AM for a production 
 
 If yes, the doc is good enough. If not, it needs more clarity.
 
-## Phase Tagging (optional)
+## Feature Tagging (optional)
 
-If the input PRD has companion Phase PRDs (`docs/prd-phase-*.md`), write the full architecture for the complete vision but tag sections inline with `[Phase 1]`, `[Phase 2]`, etc. to indicate when each component becomes relevant. Add a brief Phase Implementation Summary at the end. If no Phase PRD exists, omit phase tags entirely.
+If feature specs exist in `docs/prd/features/*.md`, write the full architecture for the complete vision but tag sections inline with the feature they belong to (e.g., `[auth]`, `[billing]`). Reference the dev order in `docs/prd/prd.md` to indicate implementation sequence.
 
 ## Output
 

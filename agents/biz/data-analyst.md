@@ -138,7 +138,7 @@ Only create a new file when the deliverable genuinely doesn't exist yet.
 
 ## Context Files (read if they exist)
 
-- `docs/product-brief.md` — what success looks like
+- `docs/prd/product-brief.md` — what success looks like
 - `biz/marketing/strategy.md` — channel strategy, viral loop design
 - `biz/ops/feedback-log.md` — qualitative data to cross-reference with metrics
 - `biz/growth/experiments.md` — experiment log (output by growth-optimizer)

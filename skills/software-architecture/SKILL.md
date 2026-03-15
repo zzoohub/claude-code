@@ -36,14 +36,12 @@ If the user asks for any of the excluded topics, explain that this skill focuses
 
 ### Step 0 — Intake
 
-Use `AskUserQuestion` for each phase. Do not infer or auto-fill.
+Use `AskUserQuestion` once to confirm scope and audience. Do not infer these — they affect document depth and DB region.
 
-**Phase 1 — Scope & Audience**
 - [ ] **Document scope**: Solo (3-6p decision journal) / Team (10-25p design doc)
 - [ ] **Target audience**: Global / Region-specific (specify region — e.g., Korea-first, Japan-first, EU-first)
 
-**Phase 2 — Requirements Extraction**
-Analyze the PRD and extract architecture-driving requirements:
+Then analyze the PRD and extract architecture-driving requirements:
 - Expected scale (users, requests/sec, data volume)
 - Latency requirements (real-time needs, p99 targets)
 - Consistency model (strong vs eventual, where)
@@ -51,18 +49,20 @@ Analyze the PRD and extract architecture-driving requirements:
 - Regulatory/compliance constraints
 - Quality attribute priorities (see `references/design-principles.md` § Quality Attribute Prioritization)
 
-Ask the user to confirm or fill gaps. For Solo scope, focus on scale, real-time, and regulatory. For Team scope, cover all items above.
+For Solo scope, focus on scale, real-time, and regulatory. For Team scope, cover all items above. If the PRD has clear gaps, ask. Otherwise proceed.
 
-**Phase 3 — Bundle & Stack Recommendation**
-Based on the requirements analysis, **recommend** a platform bundle with trade-off rationale:
-- **Cloudflare bundle** (default): Hono + Workers/CF Containers, TanStack Start (React), Neon + Hyperdrive
-- **Vercel bundle**: TanStack Start (React) or SvelteKit, Supabase (Korea-first, content-heavy)
-- **Backend framework**: Hono (TS) / Rust/Axum / FastAPI (Python) — independent of bundle
-- **Mobile** (if PRD includes mobile): React Native (Expo)
+**Stack is auto-decided** from the requirements — do not ask the user to choose. Apply these rules:
 
-Mark **(Recommended)** with 1-2 sentence rationale. The user confirms or overrides.
+| Decision | Rule |
+|---|---|
+| Platform | Cloudflare (Workers + CF Containers). Always. |
+| Frontend | TanStack Start (React). SolidJS only when PRD explicitly demands minimal bundle / fine-grained reactivity. |
+| Edge API | Hono (TS). Always for Workers. |
+| Container backend | Rust/Axum. Only when PRD requires CPU-intensive processing or long-running containers. |
+| DB | Neon + Hyperdrive (global). Supabase via Hyperdrive (Korea-first / Seoul region). |
+| Mobile | React Native (Expo). Only when PRD explicitly requires native mobile. |
 
-> **Note**: This skill is optimized for the platform bundles above. If the project uses a different stack, apply the same architectural patterns and principles — adjust specific tooling to match the target ecosystem.
+> **Escape hatch**: FastAPI (Python) only when Python-only ML libraries (PyTorch, transformers) are physically required. GCP Cloud Run for GPU or GCP-locked workloads. State as an ADR if used.
 
 ### Step 1 — Write the Design Document
 
@@ -100,7 +100,7 @@ Read the relevant references before making architecture decisions.
 
 **`references/architecture-patterns.md`** — System architecture decision framework: patterns (request-response, event-driven, CQRS, event sourcing, modular monolith), language selection, composition flowchart, real-world examples, anti-patterns, and cross-cutting decisions (multi-tenancy, real-time communication, API versioning, feature flags).
 
-**`references/stack-templates.md`** — Platform bundle selection (Cloudflare, Vercel), backend/frontend framework options, shared services, auth patterns, region strategy, and evolution triggers.
+**`references/stack-templates.md`** — Cloudflare-first stack (Hono + Axum, TanStack Start, Neon/Supabase), shared services, auth patterns, region strategy, and evolution triggers.
 
 **`references/cloudflare-platform.md`** — Detailed Cloudflare bundle tech stack reference with ①② priority rankings per role. Covers compute (Workers, DO, Containers, Agents SDK), storage (Neon+Hyperdrive, R2, KV, D1), AI services, platform services, security, and deploy tooling. Includes **Observability Implementation Guide** with Sentry on Workers (`withSentry`, `instrumentDurableObjectWithSentry`, `instrumentWorkflowWithSentry`), Workers Automatic Tracing + Axiom (OTLP export), structured logging (`workers-tagged-logger`), PostHog, BetterStack uptime, and alerting. Read when designing on the Cloudflare bundle.
 
