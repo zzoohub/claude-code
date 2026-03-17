@@ -170,4 +170,5 @@ Before finalizing, verify:
 | `references/service-architecture.md` | Internal service structure: hexagonal (default), clean, vertical slice, FC/IS |
 | `references/ai-architecture.md` | LLM integration, RAG, streaming, vector storage, guardrails |
 | `references/ai-agents.md` | Agent patterns, protocols (MCP/A2A/AG-UI), durable execution, safety |
+| `references/tech-stack.md` | Pre-vetted technology options — language, framework, infra, data, AI, services |
 | `references/operational-patterns.md` | Resilience, background jobs, caching, rate limiting |

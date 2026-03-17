@@ -209,6 +209,10 @@ One iteration through stages 2->3->4->(back to 2 if needed) is usually sufficien
 
 **What it answers**: What are the concrete components and how do they connect?
 
+### Tech Stack Selection
+
+Choose technologies that fit the ASRs and patterns from stages 2-4. Record each choice with rationale in the "Core Technology" table of `arch/system.md` §2. Use `references/tech-stack.md` as a reference — selections outside the list are fine if justified.
+
 ### Hexagonal Architecture (Default)
 
 Domain never depends on infrastructure. This is non-negotiable for testability and changeability.
