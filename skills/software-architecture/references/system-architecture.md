@@ -13,8 +13,8 @@ For internal service structure (layers, domain isolation, code organization), se
 The default. Service A calls Service B, waits for the answer, continues.
 
 ```
-Client → API Gateway → Service A → Service B → DB
-                                 ← response ←
+Client -> API Gateway -> Service A -> Service B -> DB
+                                    <- response <-
 ```
 
 **Strengths**: Simple to reason about, easy to debug, straightforward error handling, strong consistency natural.
@@ -23,46 +23,37 @@ Client → API Gateway → Service A → Service B → DB
 
 **Who uses it**: Most startups, early-stage products. Stripe's core payment flow is synchronous by design — money movement needs strong consistency.
 
-**Our stack**:
-- **CF bundle**: Workers (Hono) + Neon via Hyperdrive. No additional infra. This is the default.
-- **Container escape hatch**: CF Containers or Cloud Run + Neon pooler endpoint.
-
 ### Event-Driven Architecture (EDA)
 
 Services communicate by producing and consuming events asynchronously. No service waits for another.
 
 ```
-Service A ──publishes──▶ Event Broker ──delivers──▶ Service B
-                        (Kafka/NATS)  ──delivers──▶ Service C
+Service A --publishes--> Event Broker --delivers--> Service B
+                        (Kafka/NATS)  --delivers--> Service C
 ```
 
-**Strengths**: Loose coupling, services scale independently, natural fault isolation, excellent for fan-out (one event → many consumers), handles traffic spikes via buffering.
+**Strengths**: Loose coupling, services scale independently, natural fault isolation, excellent for fan-out (one event -> many consumers), handles traffic spikes via buffering.
 **Trade-offs**: Eventual consistency, harder to debug (distributed tracing essential), event ordering complexity, requires message broker infrastructure.
 **Choose when**: Multiple consumers need to react to the same event, traffic is spiky, you need async processing (notifications, analytics, ML pipelines), or services must evolve independently.
 
 **Who uses it**:
-- **Netflix**: Kafka processes trillions of events/day — playback telemetry, recommendations, A/B test results, analytics all flow as events. Individual services react asynchronously.
-- **Uber**: Real-time pricing, fraud detection, trip state management all event-driven via Kafka + Flink. Exactly-once semantics for financial accuracy.
-- **Slack**: Message delivery, indexing, and notifications propagated as events through Kafka. Events carry full metadata so consumers don't need to query the producer.
-
-**Our stack**:
-- **CF bundle**: Workers + Neon + **CF Queues** (fan-out, DLQ, schedule triggers). Queues are Workers-native, pay-per-message, no infra management. For high-throughput multi-consumer, add **Upstash Kafka**.
-- **Container escape hatch**: CF Containers or Cloud Run + **GCP Pub/Sub** (push subscriptions to Cloud Run).
-- For CDC from Neon, enable logical replication + wal2json.
+- **Netflix**: Kafka processes trillions of events/day — playback telemetry, recommendations, A/B test results, analytics all flow as events.
+- **Uber**: Real-time pricing, fraud detection, trip state management all event-driven via Kafka + Flink.
+- **Slack**: Message delivery, indexing, and notifications propagated as events through Kafka.
 
 ### CQRS (Command Query Responsibility Segregation)
 
 Separate the write model (commands that change state) from the read model (queries that return data). Each can be independently optimized.
 
 ```
-             ┌── Command Model ──▶ Write DB (normalized)
-User Input ──┤                         │
-             │                    sync/async projection
-             │                         ▼
-             └── Query Model  ◀── Read DB (denormalized, optimized)
+             +-- Command Model --> Write DB (normalized)
+User Input --+                         |
+             |                    sync/async projection
+             |                         v
+             +-- Query Model  <-- Read DB (denormalized, optimized)
 ```
 
-**Strengths**: Read and write sides scale independently, read models optimized per use case (different views of same data), natural fit for read-heavy systems.
+**Strengths**: Read and write sides scale independently, read models optimized per use case, natural fit for read-heavy systems.
 **Trade-offs**: Increased complexity (two models to maintain), eventual consistency between read and write sides, more infrastructure.
 **Choose when**: Read/write ratio is heavily skewed (10:1+), different consumers need different views of the same data, or you need to optimize read performance without compromising write consistency.
 
@@ -70,17 +61,12 @@ User Input ──┤                         │
 - **Netflix**: Personalization system — writes capture viewing events, reads serve pre-computed recommendation lists optimized per device type.
 - Financial systems where audit trails (write side) and reporting dashboards (read side) have completely different performance characteristics.
 
-**Our stack**:
-- **CF bundle**: Workers + Neon (write) + **Neon read replica** (read, denormalized views) via Hyperdrive. Workers KV for edge-cached read models (eventual consistency OK).
-- **Container escape hatch**: CF Containers or Cloud Run + Neon read replica via pooler endpoint.
-- Upgrade path: Neon logical replication to a separate read-optimized store if read replicas become insufficient.
-
 ### Event Sourcing
 
 Instead of storing current state, store the sequence of events that led to the current state. State is derived by replaying events.
 
 ```
-Event Store: [OrderCreated] → [ItemAdded] → [PaymentProcessed] → [Shipped]
+Event Store: [OrderCreated] -> [ItemAdded] -> [PaymentProcessed] -> [Shipped]
 Current state = replay all events (or read from snapshot + recent events)
 ```
 
@@ -89,25 +75,19 @@ Current state = replay all events (or read from snapshot + recent events)
 **Choose when**: Audit trail is a regulatory requirement, the domain is inherently event-based (finance, logistics, collaborative editing), or you need time-travel/undo capabilities.
 
 **Who uses it**:
-- **Stripe**: Payment state transitions stored as events — enables dispute resolution, audit compliance, and exact state reconstruction for debugging.
+- **Stripe**: Payment state transitions stored as events — enables dispute resolution, audit compliance, and exact state reconstruction.
 - Banking and fintech where every state change must be auditable and reversible.
 
 **Warning**: Event sourcing is powerful but adds substantial complexity. Don't adopt it just because it sounds elegant. Most applications are better served by EDA + a good audit log table.
-
-**Our stack**:
-- **CF bundle**: Workers + Neon (append-only event tables + snapshot tables) + **CF Queues** (event projection/fan-out). For "event sourcing lite" (audit trail + state reconstruction), Neon alone is sufficient.
-- **Container escape hatch**: CF Containers or Cloud Run + Neon + **GCP Pub/Sub** for projection/fan-out.
-- Neon's logical replication supports CDC to stream events to downstream consumers.
-- Upgrade path: Upstash Kafka if you need long-term event retention with replay and complex stream processing.
 
 ### Saga Pattern (Distributed Transactions)
 
 Coordinates multi-service transactions through a sequence of local transactions, each publishing events for the next step. If a step fails, compensating transactions undo previous steps.
 
 ```
-Order Service ──▶ Payment Service ──▶ Inventory Service
-    │                  │                     │
-    ◀── compensate ◀── compensate ◀─── (on failure)
+Order Service --> Payment Service --> Inventory Service
+    |                  |                     |
+    <-- compensate <-- compensate <--- (on failure)
 ```
 
 **Two variants**:
@@ -117,27 +97,23 @@ Order Service ──▶ Payment Service ──▶ Inventory Service
 **Choose when**: You have distributed transactions across multiple services that need to be eventually consistent. Alternative: if you can avoid distributed transactions by keeping data in one service, always prefer that.
 
 **Who uses it**:
-- **Uber**: Trip lifecycle (match rider → assign driver → process payment → rate) is an orchestrated saga.
+- **Uber**: Trip lifecycle (match rider -> assign driver -> process payment -> rate) is an orchestrated saga.
 - Any e-commerce checkout flow that spans order, payment, and inventory services.
-
-**Our stack**:
-- **CF bundle**: Workers + **CF Workflows** (orchestration with auto-retry, checkpoint, sleep) or **CF Queues** (choreography). Workflows are the natural fit — they provide durable execution with step-level checkpointing.
-- **Container escape hatch**: Cloud Run + **GCP Pub/Sub** (choreography) or **Cloud Tasks** (orchestration with retries/delays).
 
 ### Modular Monolith
 
 One deployable unit, but internally organized into strictly isolated modules with clear boundaries. Modules communicate through well-defined interfaces (function calls, internal events), not direct database access.
 
 ```
-┌─────────────────────────────────────────┐
-│              Single Deployment           │
-│  ┌──────┐  ┌──────┐  ┌──────┐          │
-│  │ Auth │  │Orders│  │Notify│          │
-│  │Module│  │Module│  │Module│          │
-│  └──┬───┘  └──┬───┘  └──┬───┘          │
-│     └────internal API────┘               │
-│              Shared DB (schema-separated) │
-└─────────────────────────────────────────┘
++------------------------------------------+
+|              Single Deployment            |
+|  +------+  +------+  +------+           |
+|  | Auth |  |Orders|  |Notify|           |
+|  |Module|  |Module|  |Module|           |
+|  +--+---+  +--+---+  +--+---+           |
+|     +----internal API----+               |
+|              Shared DB (schema-separated) |
++------------------------------------------+
 ```
 
 **Strengths**: Simple deployment and ops, no network overhead between modules, easy local development, can extract to microservices later if needed.
@@ -145,12 +121,8 @@ One deployable unit, but internally organized into strictly isolated modules wit
 **Choose when**: Small team (1-5 engineers), you want domain separation without microservice overhead, or you're at a stage where operational simplicity matters more than independent scaling.
 
 **Who uses it**:
-- **Toss** (Korean fintech): Modular monolith with clear module boundaries — team autonomy without microservice operational overhead. Proven at massive scale in Korean market.
+- **Toss** (Korean fintech): Modular monolith with clear module boundaries — team autonomy without microservice overhead. Proven at massive scale.
 - **Shopify**: Started as a monolith, evolved to modular monolith before selective extraction to services.
-
-**Our stack**:
-- **CF bundle**: Workers (single Hono app) + Neon via Hyperdrive. No additional infra. Internal module communication is in-process function calls or in-app event bus. Simplest and cheapest configuration.
-- **Container escape hatch**: CF Containers (single Rust/Axum service) or Cloud Run + Neon pooler endpoint. Same module pattern, different runtime.
 
 ---
 
@@ -158,22 +130,22 @@ One deployable unit, but internally organized into strictly isolated modules wit
 
 ```
 Is this a single-purpose service or product?
-├── YES → Modular Monolith or Single Service
-│         Does it need async processing (notifications, analytics, ML)?
-│         ├── YES → Add event-driven for those flows (Hybrid)
-│         └── NO  → Request-Response is fine
-└── NO (multiple services) →
++-- YES -> Modular Monolith or Single Service
+|         Does it need async processing (notifications, analytics, ML)?
+|         +-- YES -> Add event-driven for those flows (Hybrid)
+|         +-- NO  -> Request-Response is fine
++-- NO (multiple services) ->
     Do services need to react to shared events?
-    ├── YES → Event-Driven (with Saga for distributed transactions)
-    └── NO  → Request-Response between services
+    +-- YES -> Event-Driven (with Saga for distributed transactions)
+    +-- NO  -> Request-Response between services
 
     Is read/write ratio heavily skewed (10:1+)?
-    ├── YES → Consider CQRS for read-heavy paths
-    └── NO  → Standard data access
+    +-- YES -> Consider CQRS for read-heavy paths
+    +-- NO  -> Standard data access
 
     Is full audit trail / state history a hard requirement?
-    ├── YES → Event Sourcing for that domain
-    └── NO  → Don't add it
+    +-- YES -> Event Sourcing for that domain
+    +-- NO  -> Don't add it
 ```
 
 ---
@@ -182,13 +154,13 @@ Is this a single-purpose service or product?
 
 | Company | System Architecture | Code Structure | Key Insight |
 |---|---|---|---|
-| **Netflix** | Microservices + Event-Driven (Kafka, trillions of events/day) + CQRS (personalization) | Hexagonal internally per service (DGS pattern) | Not one pattern — different patterns per domain. Playback is sync; analytics is event-driven; recommendations use CQRS. |
-| **Uber** | Microservices organized by domain (DOMA) + Event-Driven (Kafka + Flink) + Saga (trip lifecycle) | Domain-driven internally | Organize services by business domain, not technical layer. Orchestrated sagas for multi-service transactions. |
+| **Netflix** | Microservices + Event-Driven (Kafka) + CQRS (personalization) | Hexagonal internally per service | Different patterns per domain. Playback is sync; analytics is event-driven; recommendations use CQRS. |
+| **Uber** | Microservices organized by domain (DOMA) + Event-Driven + Saga (trip lifecycle) | Domain-driven internally | Organize services by business domain, not technical layer. Orchestrated sagas for multi-service transactions. |
 | **Stripe** | SOA + Event Sourcing (payment state) + Request-Response (API surface) | Clean/hexagonal per service | Synchronous API surface, event-sourced internals for audit. Design docs before code. |
-| **Toss** | Modular Monolith + Event-Driven (inter-module) | Clean Architecture per module | Massive Korean fintech — modular monolith proven at scale. Team autonomy without microservice overhead. |
-| **Discord** | Microservices + hybrid sync/async | Rust for hot paths (Read States), Elixir for real-time | Migrated Go → Rust for 10x perf. Choose language per service based on performance profile. |
-| **Shopify** | Modular Monolith → selective extraction | Rails conventions | Start monolithic, extract only when data proves the boundary. Premature decomposition = distributed monolith. |
-| **Airbnb** | Monolith → SOA by domain boundary | Service-specific | Split only when natural domain boundaries are clear. |
+| **Toss** | Modular Monolith + Event-Driven (inter-module) | Clean Architecture per module | Modular monolith proven at massive scale. Team autonomy without microservice overhead. |
+| **Discord** | Microservices + hybrid sync/async | Rust for hot paths, Elixir for real-time | Choose language per service based on performance profile. |
+| **Shopify** | Modular Monolith -> selective extraction | Rails conventions | Start monolithic, extract only when data proves the boundary. |
+| **Airbnb** | Monolith -> SOA by domain boundary | Service-specific | Split only when natural domain boundaries are clear. |
 
 ---
 
@@ -196,7 +168,7 @@ Is this a single-purpose service or product?
 
 ### Strangler Fig (Legacy Migration)
 
-Incrementally replace a legacy system by routing traffic through a facade that delegates to either old or new code per feature. Over time, the new system takes over completely.
+Incrementally replace a legacy system by routing traffic through a facade that delegates to either old or new code per feature.
 
 ```
 Client --> Facade/Router
@@ -206,14 +178,10 @@ Client --> Facade/Router
 ```
 
 **Strengths**: Zero big-bang risk, ship incremental value, old system keeps running during migration.
-**Trade-offs**: Facade adds complexity and latency, two systems to maintain in parallel, data synchronization between old and new can be tricky.
-**Choose when**: Replacing an existing system that can't be rewritten from scratch. This is almost always the right approach for legacy migration — big-bang rewrites have a high failure rate.
+**Trade-offs**: Facade adds complexity and latency, two systems to maintain in parallel.
+**Choose when**: Replacing an existing system that can't be rewritten from scratch. This is almost always the right approach for legacy migration.
 
-**Who uses it**: Shopify (monolith extraction), Amazon (from monolith to SOA), Airbnb (SOA migration by domain boundary).
-
-**Our stack**:
-- **CF bundle**: Workers as the routing facade (path-based routing to Workers or CF Containers). Within a modular monolith, use feature flags (PostHog + KV) to switch between old and new module implementations.
-- **Container escape hatch**: Workers routing facade → Cloud Run services for backend migration.
+**Who uses it**: Shopify (monolith extraction), Amazon (from monolith to SOA), Airbnb (SOA migration).
 
 ### Backend-for-Frontend (BFF)
 
@@ -224,50 +192,42 @@ Web App    --> Web BFF    --> Backend Services
 Mobile App --> Mobile BFF --> Backend Services
 ```
 
-**Strengths**: Each client gets an API tailored to its needs (different payload sizes, different data requirements), frontend teams can iterate independently.
+**Strengths**: Each client gets an API tailored to its needs, frontend teams can iterate independently.
 **Trade-offs**: Code duplication across BFFs, more services to maintain.
 **Choose when**: Web and mobile clients have significantly different data needs, or you want to decouple frontend release cycles from backend.
 
 **Who uses it**: Netflix (per-device BFFs), SoundCloud (pioneered the pattern), Spotify.
 
-**Our stack**: For solopreneur products, a single API (Hono on Workers) with response field selection is simpler than maintaining separate BFFs. Consider BFF only when web and mobile clients have substantially different data needs.
-
 ### Cell-based Architecture
 
-Partition the system into independent, self-contained cells. Each cell serves a subset of users/tenants and contains a full copy of the service stack. A failure in one cell doesn't affect others.
+Partition the system into independent, self-contained cells. Each cell serves a subset of users/tenants and contains a full copy of the service stack.
 
 ```
-┌─── Cell A (users 1-1000) ───┐  ┌─── Cell B (users 1001-2000) ──┐
-│  API → Service → DB          │  │  API → Service → DB            │
-└──────────────────────────────┘  └────────────────────────────────┘
++--- Cell A (users 1-1000) ---+  +--- Cell B (users 1001-2000) --+
+|  API -> Service -> DB        |  |  API -> Service -> DB          |
++------------------------------+  +--------------------------------+
          Router / Cell Gateway
 ```
 
-**Strengths**: Blast radius limited to one cell, scales horizontally by adding cells, each cell can be independently deployed and version-tested.
-**Trade-offs**: Data isolation means cross-cell queries are hard, cell routing adds complexity, operational overhead of managing many cells.
+**Strengths**: Blast radius limited to one cell, scales horizontally by adding cells.
+**Trade-offs**: Data isolation means cross-cell queries are hard, operational overhead of managing many cells.
 **Choose when**: You need to limit blast radius (regulatory or high-availability requirements), or you're at a scale where a single deployment unit is a risk.
 
 **Who uses it**: AWS (all major services are cell-based internally), DoorDash, Slack.
 
-**Our stack**: Overkill for solopreneur products. Consider when your system grows to multi-tenant with strict isolation requirements or SLA commitments that demand blast radius containment. Workers for Platforms provides a lightweight form of cell-based isolation for B2B use cases.
-
 ### Event Lakehouse
 
-Replace traditional data warehouses with an object-storage-native analytics pipeline. Events flow through a queue, are transformed into columnar format (Parquet/Iceberg), and queried in-place with a serverless SQL engine.
+Replace traditional data warehouses with an object-storage-native analytics pipeline.
 
 ```
-App events → Queue/Stream → Transform → Object Storage (Parquet/Iceberg) → SQL Engine
-                                              ↓
-                                        Dashboard / BI tool
+App events -> Queue/Stream -> Transform -> Object Storage (Parquet/Iceberg) -> SQL Engine
+                                                 |
+                                           Dashboard / BI tool
 ```
 
-**Strengths**: Pay-per-query (no always-on warehouse), storage and compute scale independently, open formats (no vendor lock-in), same pipeline handles both operational analytics and data science.
+**Strengths**: Pay-per-query, storage and compute scale independently, open formats (no vendor lock-in).
 **Trade-offs**: Query latency higher than a dedicated warehouse (seconds, not milliseconds). Not for real-time dashboards.
-**Choose when**: You need analytics beyond what PostHog provides, data volume grows past what a Postgres materialized view handles comfortably, or you want a unified data lake for multiple consumers.
-
-**Our stack**:
-- **CF bundle**: Pipelines + R2 (Parquet/Iceberg via R2 Data Catalog) + R2 SQL for petabyte-scale analytics. Zero egress. The key insight is that object storage is the new data warehouse — Parquet on R2 is durable, cheap, and queryable.
-- **Container escape hatch**: Cloud Storage + BigQuery on GCP.
+**Choose when**: You need analytics beyond what simple aggregation queries provide, or data volume grows past what a single database handles comfortably.
 
 ---
 
@@ -292,12 +252,10 @@ How to isolate data and compute between tenants (customers, organizations, works
 | Model | Isolation Level | Complexity | Cost | Choose When |
 |---|---|---|---|---|
 | **Shared everything** (tenant_id column) | Logical | Low | Lowest | Early stage, < 100 tenants, no compliance requirements |
-| **Schema-per-tenant** | Schema | Medium | Medium | Stronger isolation needed without separate databases, moderate tenant count |
+| **Schema-per-tenant** | Schema | Medium | Medium | Stronger isolation needed without separate databases |
 | **Database-per-tenant** | Physical | High | Highest | Regulatory requirements (data residency), enterprise customers demanding full isolation |
 
-**Default**: Shared everything with `tenant_id` on every table + Row-Level Security (RLS) in PostgreSQL. This covers 90% of SaaS products. RLS enforces isolation at the database level — application bugs can't leak data across tenants.
-
-**Scaling pattern**: Start shared, extract high-value or regulated tenants to dedicated schemas/databases as needed. The tenant routing layer should be an architectural boundary from day one, even if the implementation is just a `WHERE tenant_id = ?`.
+**Default**: Shared everything with `tenant_id` on every table + Row-Level Security (RLS). This covers 90% of SaaS products. RLS enforces isolation at the database level — application bugs can't leak data across tenants.
 
 **Who uses it**: Slack (workspace-per-tenant, shared infrastructure), Salesforce (shared database with org isolation), Neon (database-per-tenant for their own product).
 
@@ -307,16 +265,11 @@ Patterns for bidirectional or push-based communication beyond LLM streaming (for
 
 | Protocol | Direction | Use Case | Complexity |
 |---|---|---|---|
-| **SSE (Server-Sent Events)** | Server → Client | Notifications, live feeds, status updates | Low |
+| **SSE (Server-Sent Events)** | Server -> Client | Notifications, live feeds, status updates | Low |
 | **WebSocket** | Bidirectional | Chat, collaborative editing, gaming, live dashboards | Medium |
 | **WebTransport** | Bidirectional | Low-latency, multiplexed streams (next-gen WebSocket) | High |
 
-**Architecture decision**: SSE handles most "real-time" needs (notifications, feeds, progress). Use WebSocket only when the client needs to send frequent messages to the server (chat, collaboration). Don't use WebSocket just because "it's real-time."
-
-**Our stack**:
-- **Cloud Run**: Supports WebSocket with session affinity. Set timeout to match max connection duration.
-- **Cloudflare Workers**: Use Durable Objects for WebSocket state management. Each Durable Object holds connections for a room/channel.
-- **Scaling**: For presence and pub/sub across instances, use Redis (Upstash) or Neon `LISTEN/NOTIFY` for low-scale, Pub/Sub for high-scale.
+**Architecture decision**: SSE handles most "real-time" needs. Use WebSocket only when the client needs to send frequent messages to the server. Don't use WebSocket just because "it's real-time."
 
 **Connection management**: WebSocket connections are stateful. Plan for: reconnection with message replay, heartbeat/ping-pong for dead connection detection, graceful connection draining during deployments, and connection limits per instance.
 
@@ -326,20 +279,18 @@ How to evolve APIs without breaking existing clients.
 
 | Strategy | Mechanism | Trade-off |
 |---|---|---|
-| **URL path versioning** (`/v1/users`) | Version in URL | Simple and explicit. But proliferates endpoints and pollutes routing. |
-| **Header versioning** (`Accept: application/vnd.api+json;version=2`) | Version in header | Cleaner URLs. But less visible, harder to test in browser. |
-| **Query parameter** (`/users?version=2`) | Version in query | Easy to default. But mixes concerns in query string. |
-| **No versioning (additive only)** | Never break, only add | Zero overhead. Requires discipline — no field removal, no type changes. |
+| **URL path versioning** (`/v1/users`) | Version in URL | Simple and explicit. But proliferates endpoints. |
+| **Header versioning** (`Accept: application/vnd.api+json;version=2`) | Version in header | Cleaner URLs. But less visible, harder to test. |
+| **Query parameter** (`/users?version=2`) | Version in query | Easy to default. But mixes concerns. |
+| **No versioning (additive only)** | Never break, only add | Zero overhead. Requires discipline. |
 
-**Default for most products**: **Additive changes only**. Add new fields, never remove or rename existing ones. This eliminates versioning complexity entirely and works until you need a fundamental API redesign.
+**Default for most products**: **Additive changes only**. Add new fields, never remove or rename existing ones. This eliminates versioning complexity entirely.
 
 **When to version**: Breaking changes to core resources, fundamental data model changes, or when supporting enterprise clients with long upgrade cycles.
 
-**Our stack**: For internal APIs (backend ↔ frontend you control), additive changes are sufficient. For public APIs, URL path versioning (`/v1/`) — it's the most explicit and debuggable option.
-
 ### Event Schema Evolution
 
-When using event-driven architecture, event schemas will change over time. Without a strategy, schema changes break consumers silently.
+When using event-driven architecture, event schemas will change over time.
 
 | Strategy | How It Works | When |
 |---|---|---|
@@ -352,14 +303,12 @@ When using event-driven architecture, event schemas will change over time. Witho
 - **Consumers** must be forward compatible — ignore unknown fields
 - **Never delete fields** that consumers might depend on. Deprecate first, remove after all consumers are updated.
 
-For solo/small team: additive-only is almost always sufficient. If you find yourself needing versioned events, that's a signal the domain boundary might be wrong.
-
 ### Feature Flag Architecture
 
 Decouple deployment from release. Ship code to production without exposing it to users until ready.
 
 **Use cases**:
-- **Gradual rollout**: Release to 1% → 10% → 50% → 100% of users
+- **Gradual rollout**: Release to 1% -> 10% -> 50% -> 100% of users
 - **Kill switch**: Instantly disable a broken feature without redeployment
 - **A/B testing**: Route users to different feature variants
 - **Entitlements**: Gate features by plan tier (free, pro, enterprise)
@@ -367,12 +316,9 @@ Decouple deployment from release. Ship code to production without exposing it to
 **Architecture**:
 ```
 Client/Server --> Flag evaluation (local SDK) --> Flag configuration store
-                                                  (PostHog / LaunchDarkly)
 ```
 
 **Key decisions**:
-- **Server-side vs client-side evaluation**: Server-side for security-sensitive flags (plan gating, beta access). Client-side for UI experiments where latency matters.
+- **Server-side vs client-side evaluation**: Server-side for security-sensitive flags. Client-side for UI experiments where latency matters.
 - **Flag lifecycle**: Every flag should have an owner and an expiration date. Permanent flags (entitlements) are fine; temporary flags (rollouts) that linger become tech debt.
 - **Default values**: Always define a safe default (typically `false` / control variant) for when the flag service is unreachable.
-
-**Our stack**: PostHog (already in stack) provides feature flags with targeting rules, percentage rollouts, and A/B testing. No additional infrastructure needed.

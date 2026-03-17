@@ -44,7 +44,7 @@ Before reviewing anything, answer these questions:
 1. **What existing code already partially or fully solves each sub-problem?** Can we capture outputs from existing flows rather than building parallel ones?
 2. **What is the minimum set of changes that achieves the stated goal?** Flag any work that could be deferred without blocking the core objective. Be ruthless about scope creep.
 3. **Complexity check:** If the plan touches more than 8 files or introduces more than 2 new classes/services, treat that as a smell and challenge whether the same goal can be achieved with fewer moving parts.
-4. **TASKS cross-reference:** Read `tasks/backlog.md` and `tasks/active.md` if they exist. Are any deferred items blocking this plan? Can any deferred items be bundled into this PR without expanding scope? Does this plan create new work that should be captured as a TODO? <!-- # LOCAL: tasks/ instead of TODOS.md -->
+4. **TASKS cross-reference:** Read `tasks/board.md` and `tasks/features/*.md` if they exist. Are any deferred items blocking this plan? Can any deferred items be bundled into this PR without expanding scope? Does this plan create new work that should be captured as a task? <!-- # LOCAL: tasks/ instead of TODOS.md -->
 
 Then ask if I want one of three options:
 1. **SCOPE REDUCTION:** The plan is overbuilt. Propose a minimal version that achieves the core goal, then review that.
@@ -116,11 +116,11 @@ Every plan review MUST produce a "NOT in scope" section listing work that was co
 ### "What already exists" section
 List existing code/flows that already partially solve sub-problems in this plan, and whether the plan reuses them or unnecessarily rebuilds them.
 
-### tasks/backlog.md updates <!-- # LOCAL: tasks/ instead of TODOS.md -->
-After all review sections are complete, present each potential TODO as its own individual AskUserQuestion. Never batch TODOs — one per question. Never silently skip this step.
+### tasks/board.md updates <!-- # LOCAL: tasks/ instead of TODOS.md -->
+After all review sections are complete, present each potential task as its own individual AskUserQuestion. Never batch tasks — one per question. Never silently skip this step.
 
 <!-- # LOCAL: inlined TASKS format instead of external TODOS-format.md reference -->
-Use this format for each `tasks/backlog.md` item:
+Use this format for each new `tasks/board.md` row + `tasks/features/*.md` detail:
 
 ```markdown
 ### <Title>
@@ -148,7 +148,7 @@ For each TODO, describe:
 * **Context:** Enough detail that someone picking this up in 3 months understands the motivation, the current state, and where to start.
 * **Depends on / blocked by:** Any prerequisites or ordering constraints.
 
-Then present options: **A)** Add to `tasks/backlog.md` **B)** Skip — not valuable enough **C)** Build it now in this PR instead of deferring. <!-- # LOCAL: tasks/ instead of TODOS.md -->
+Then present options: **A)** Add to `tasks/board.md` **B)** Skip — not valuable enough **C)** Build it now in this PR instead of deferring. <!-- # LOCAL: tasks/ instead of TODOS.md -->
 
 Do NOT just append vague bullet points. A TODO without context is worse than no TODO — it creates false confidence that the idea was captured while actually losing the reasoning.
 

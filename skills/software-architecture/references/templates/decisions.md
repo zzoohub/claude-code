@@ -21,13 +21,19 @@
 
 ## Minimum ADRs to record:
 
+**Always (all software types):**
 1. System architecture pattern
 2. Service architecture pattern
-3. Backend stack
-4. Frontend stack
-5. Database
-6. Auth approach
-7. AI integration approach
+3. Primary data storage approach
+4. Communication style (sync/async/event-driven)
+
+**When applicable:**
+- AI integration approach — when AI features exist
+- Authentication/authorization — when users exist
+- API design philosophy — when external consumers exist
+- Offline/sync strategy — when offline capability is needed
+- Distribution/packaging — for libraries, CLIs, desktop apps
+- Concurrency model — for high-throughput or real-time systems
 
 ---
 

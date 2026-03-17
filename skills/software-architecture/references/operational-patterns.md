@@ -24,13 +24,13 @@ Document your pagination choice per endpoint in the design doc.
 
 Every external call needs a timeout. Without one, a single slow dependency freezes the entire request.
 
-| Dependency Type | Timeout | Rationale |
+| Dependency Type | Typical Timeout | Rationale |
 |---|---|---|
 | Database | 5s | Longer means something is wrong |
-| Payment API (Stripe/Toss) | 10-15s | Processing can be slow; users will wait for payments |
+| Payment API | 10-15s | Processing can be slow; users will wait for payments |
 | LLM API | 60-120s | Long generations; use streaming to mask wait |
-| Email (Resend) | 5s | Fire-and-forget; queue if slow |
-| Object Storage (R2) | 10s | Large file operations |
+| Email / notification | 5s | Fire-and-forget; queue if slow |
+| Object storage | 10s | Large file operations |
 
 **Rule**: Total request timeout = sum of sequential dependency timeouts + processing. If the chain exceeds your SLO, make some calls async.
 
@@ -42,7 +42,7 @@ Only retry **idempotent** operations.
 |---|---|
 | **No retry** | Non-idempotent writes without idempotency keys |
 | **Retry with backoff** | Reads, idempotent writes |
-| **Retry with idempotency key** | Critical writes (Stripe `Idempotency-Key`, etc.) |
+| **Retry with idempotency key** | Critical writes (payment APIs, etc.) |
 
 Formula: `min(base * 2^attempt + jitter, max_delay)`. Base=100ms, max=5s, max 3 attempts.
 
@@ -55,7 +55,7 @@ Decide at design time, not at 3 AM:
 | LLM API | "AI features temporarily unavailable" + cached responses if possible |
 | Payments | "Payments temporarily unavailable", user continues browsing |
 | Email | Queue for later, never block user action |
-| Analytics (PostHog) | Silent fail — never block for analytics |
+| Analytics | Silent fail — never block for analytics |
 | Database | System offline — no degradation for primary data store |
 
 ---
@@ -67,9 +67,9 @@ Decide at design time, not at 3 AM:
 Server-proxied uploads waste bandwidth and compute. Use presigned URLs for direct client-to-storage uploads.
 
 ```
-1. Client → POST /api/uploads (file metadata)     → Server generates presigned URL
-2. Client → PUT presigned URL (file bytes)         → Direct to R2/S3
-3. Client → POST /api/uploads/{fileId}/complete    → Server validates & processes
+1. Client -> POST /api/uploads (file metadata)     -> Server generates presigned URL
+2. Client -> PUT presigned URL (file bytes)         -> Direct to object storage
+3. Client -> POST /api/uploads/{fileId}/complete    -> Server validates & processes
 ```
 
 ### Key Decisions
@@ -79,8 +79,6 @@ Server-proxied uploads waste bandwidth and compute. Use presigned URLs for direc
 - **Processing**: Thumbnails, text extraction — always async via background job
 - **Cleanup**: Orphaned uploads (step 2 done, step 3 never called) need scheduled cleanup
 
-**Our stack**: R2 presigned URLs via S3-compatible API. Zero egress fees for serving uploaded content.
-
 ---
 
 ## Background Jobs
@@ -89,37 +87,19 @@ Server-proxied uploads waste bandwidth and compute. Use presigned URLs for direc
 
 ```
 Triggered by user action?
-├── YES → User can wait < 2s? → Do it inline
-│         User can't wait?    → Async job
-└── NO  → Scheduled job
++-- YES -> User can wait < 2s? -> Do it inline
+|         User can't wait?    -> Async job
++-- NO  -> Scheduled job
 
-Async (CF bundle):
-├── Simple fire-and-forget      → Queues → Worker handler
-├── Fan-out (one event, many)   → Queues (fan-out) or Pub/Sub
-└── Complex multi-step          → Workflows (auto-retry, checkpoint)
-
-Async (Container / Cloud Run):
-├── Simple fire-and-forget      → Cloud Tasks (HTTP callback)
-├── Fan-out (one event, many)   → Pub/Sub
-└── Complex multi-step          → Pub/Sub + Cloud Tasks
+Async job complexity:
++-- Simple fire-and-forget      -> Message queue -> worker handler
++-- Fan-out (one event, many)   -> Pub/sub or fan-out queue
++-- Complex multi-step          -> Durable execution (see below)
 
 Scheduled:
-├── CF bundle                    → Cron Triggers (simple) or Workflows (complex)
-├── Cloud Run                    → Cloud Scheduler → HTTP trigger
-└── Database-level               → pg_cron on Neon
++-- Simple recurring            -> Cron scheduler -> HTTP trigger / function
++-- Database-level              -> Database-native scheduling (e.g., pg_cron)
 ```
-
-### Common Jobs
-
-| Job | Trigger | CF Bundle | Container (Cloud Run) |
-|---|---|---|---|
-| Send email | User action | Queues → Worker handler | Cloud Tasks → POST /jobs/send-email |
-| Process upload | Upload complete | Queues → Worker handler | Cloud Tasks → POST /jobs/process-upload |
-| Sync Stripe state | Stripe webhook | Worker handler | Pub/Sub handler |
-| Daily metrics | Cron | Cron Trigger → Worker | Cloud Scheduler → POST /jobs/daily-metrics |
-| Cleanup orphaned files | Cron | Cron Trigger → Worker | Cloud Scheduler → POST /jobs/cleanup |
-
-**Key insight**: At solo scale, your Workers (or Cloud Run service) handle both user requests AND job callbacks — same service, different routes, different auth. No separate worker service needed.
 
 ---
 
@@ -130,9 +110,9 @@ When async work involves multiple steps, any of which can fail, simple queues ar
 ### When to Use
 
 ```
-Simple fire-and-forget (send email, resize image)  → Queue is enough
-Multi-step with side effects (payment → provision → notify)  → Durable execution
-Long-running with waits (human approval, external callback)  → Durable execution
+Simple fire-and-forget (send email, resize image)  -> Queue is enough
+Multi-step with side effects (payment -> provision -> notify)  -> Durable execution
+Long-running with waits (human approval, external callback)  -> Durable execution
 ```
 
 ### Core Primitives
@@ -144,31 +124,13 @@ Long-running with waits (human approval, external callback)  → Durable executi
 | **step.waitForEvent()** | Pause until an external signal arrives (webhook, user action) |
 | **checkpoint** | State persisted after each step — crash-safe resume |
 
-### Platform Options
-
-| Platform | Model | Our Stack Fit |
-|---|---|---|
-| **CF Workflows** | Worker-native, auto-retry, sleep/checkpoint | CF bundle default |
-| **Temporal** | Event-history replay, exactly-once, polyglot | Container / Cloud Run |
-| **Inngest** | Event-driven harness, step functions, any runtime | Platform-agnostic |
-
-**Architecture implication**: Durable execution replaces ad-hoc retry logic, manual state machines, and "check if already processed" patterns. If you find yourself writing status columns (`pending → processing → done → failed`) with polling loops, you likely need durable execution instead.
+**Architecture implication**: Durable execution replaces ad-hoc retry logic, manual state machines, and "check if already processed" patterns. If you find yourself writing status columns (`pending -> processing -> done -> failed`) with polling loops, you likely need durable execution instead.
 
 ---
 
-## Payments & Webhooks
+## Webhook Reliability
 
-### Core Pattern
-
-```
-User → Your API → Stripe/Toss API (create session)
-                         ↓
-Provider → Webhook → Your API → Update DB
-```
-
-**The webhook is the source of truth** for payment state. Don't rely on API responses for state.
-
-### Webhook Reliability
+When integrating with external services that send webhooks (payment providers, SaaS platforms, etc.):
 
 | Concern | Solution |
 |---|---|
@@ -178,64 +140,22 @@ Provider → Webhook → Your API → Update DB
 | Slow processing | Return 200 immediately, process async if heavy |
 | Missed events | Reconcile DB against provider API on startup / periodically |
 
-### Subscription State
-
-```
-active → past_due → canceled
-  │         │
-  │         └─ payment retry succeeds → active
-  └─ user cancels → canceling → canceled (at period end)
-```
-
-Map provider statuses to your entitlement model. Gate features via PostHog feature flags by plan tier.
-
 ### Webhook Fan-out + Durable Wait
 
-When a single webhook triggers multiple downstream actions (provision, notify, sync analytics), combine queue fan-out with durable execution's `waitForEvent`:
+When a single webhook triggers multiple downstream actions:
 
 ```
-Provider → Webhook endpoint → return 200 immediately
-                ↓
-            Queue fan-out → Handler A (provision account)
-                          → Handler B (send welcome email)
-                          → Handler C (sync to analytics)
-
-For multi-step flows:
-Workflow.step("charge")    → Stripe API
-Workflow.waitForEvent("stripe.charge.succeeded", timeout: 10m)
-Workflow.step("provision") → Create user resources
-Workflow.step("notify")    → Send confirmation
+Provider -> Webhook endpoint -> return 200 immediately
+                |
+            Queue fan-out -> Handler A (provision account)
+                          -> Handler B (send welcome email)
+                          -> Handler C (sync to analytics)
 ```
 
 **Key decisions**:
 - **Immediate 200**: Never do heavy processing in the webhook handler. Return 200, enqueue, process async.
 - **Fan-out via queue**: Each downstream action is an independent consumer. One failure doesn't block others.
-- **waitForEvent for async providers**: Virtual accounts (가상계좌), bank transfers, and manual approval flows — the workflow sleeps until the confirmation webhook arrives.
-
-### Toss Payments (Korea-specific)
-
-- Two-step: authorize → confirm (다른 결제 플로우)
-- Virtual account (가상계좌): async — user transfers later, webhook confirms via `waitForEvent`
-- Same webhook reliability patterns apply
-
----
-
-## Local Development
-
-| Component | Production | Local |
-|---|---|---|
-| Database | Neon (production branch) | Neon dev branch (`neon branches create`) |
-| Object Storage | R2 | R2 same bucket `/dev` prefix, or MinIO for offline |
-| Email | Resend | Resend test mode or mailpit (local SMTP) |
-| Payments | Stripe / Toss | Test mode + CLI webhook forwarding |
-
-### Essentials
-
-- **Neon branching**: Instant dev branch from production schema. Same engine, free. No Docker Postgres needed.
-- **`.env.local`** for local overrides. Never commit `.env`. Maintain `.env.example` as template.
-- **Stripe CLI**: `stripe listen --forward-to localhost:PORT/webhooks` for local webhook testing.
-- **Hot reload**: Vite dev server (frontend), `wrangler dev` (Workers). Optimize for sub-second feedback.
-- **Wrangler dev**: `wrangler dev` for Workers local development with bindings (KV, R2, D1, DO). Use `--remote` flag to test against real services.
+- **waitForEvent for async flows**: For flows where confirmation arrives later (bank transfers, manual approvals), the workflow sleeps until the confirmation webhook arrives.
 
 ---
 
@@ -245,7 +165,7 @@ Workflow.step("notify")    → Send confirmation
 
 | Pattern | How It Works | When to Use |
 |---|---|---|
-| **Cache-Aside (Lazy Loading)** | App checks cache → miss → read from DB → write to cache → return | Default. Read-heavy workloads. App controls cache population |
+| **Cache-Aside (Lazy Loading)** | App checks cache -> miss -> read from DB -> write to cache -> return | Default. Read-heavy workloads. App controls cache population |
 | **Write-Through** | App writes to cache AND DB on every write. Reads always hit cache | When cache consistency matters more than write latency |
 | **Write-Behind (Write-Back)** | App writes to cache, cache asynchronously syncs to DB | High write throughput. Risk: data loss if cache crashes before sync |
 | **Read-Through** | Cache itself loads from DB on miss (cache acts as proxy) | When you want the cache layer to own data loading logic |
@@ -265,33 +185,11 @@ Workflow.step("notify")    → Send confirmation
 
 When a popular cache entry expires, many concurrent requests hit the DB simultaneously (thundering herd). Solutions:
 
-- **Lock-based recomputation**: First request acquires a lock, recomputes, others wait. Use distributed lock (Redis `SET NX`) for multi-instance
+- **Lock-based recomputation**: First request acquires a lock, recomputes, others wait. Use distributed lock for multi-instance
 - **Stale-while-revalidate**: Serve stale data while one request refreshes in the background. Best UX — users never see a cache miss
 - **Probabilistic early expiration**: Each request has a small random chance of refreshing before TTL. Spreads recomputation over time
 
-### Our Stack (CF Bundle)
-
-| Layer | Service | Consistency | Best For |
-|---|---|---|---|
-| **Edge (global)** | KV | Eventually consistent (~60s propagation) | Config, feature flags, static data, public content |
-| **Edge (per-request)** | Workers Cache API | Per-PoP, no global sync | HTML fragments, API response caching, CDN-like behavior |
-| **Connection-level** | Hyperdrive query cache | Automatic, connection-scoped | Repeated identical DB queries within request lifecycle |
-| **Application-level** | Upstash Redis | Strongly consistent | Sessions, rate limiting, counters, leaderboards, real-time data |
-
-**Decision flow**:
-```
-Is the data public or rarely changes?
-├── YES → KV (60s eventual consistency OK)
-└── NO  →
-    Is strong consistency required?
-    ├── YES → Upstash Redis
-    └── NO  →
-        Is it per-request/per-page caching?
-        ├── YES → Workers Cache API (per-PoP)
-        └── NO  → Upstash Redis (shared state)
-```
-
-**What NOT to cache**: Auth tokens/sessions in KV (eventual consistency = security risk), data that changes per-request, anything where stale data causes financial or safety issues.
+**What NOT to cache**: Auth tokens/sessions in eventually-consistent stores (security risk), data that changes per-request, anything where stale data causes financial or safety issues.
 
 ---
 
@@ -307,7 +205,7 @@ Is the data public or rarely changes?
 | **Token Bucket** | Bucket fills at steady rate, each request consumes a token | Allows controlled bursts. Natural rate smoothing |
 | **Leaky Bucket** | Requests queue and process at fixed rate | Strict enforcement, no bursts. Good for downstream protection |
 
-**Default**: Sliding window counter — good balance of precision and resource usage. Use token bucket when you want to allow controlled bursts (API rate limits for external consumers).
+**Default**: Sliding window counter — good balance of precision and resource usage. Use token bucket when you want to allow controlled bursts.
 
 ### Rate Limit Dimensions
 
@@ -333,27 +231,3 @@ Retry-After: 30          (only on 429 responses)
 ```
 
 Return `429 Too Many Requests` with a clear error message and `Retry-After` header.
-
-### Our Stack (CF Bundle)
-
-| Layer | Service | Scope | Notes |
-|---|---|---|---|
-| **Edge (DDoS/WAF)** | CF WAF Rate Limiting Rules | Per IP, path, headers | Built-in, no code. First line of defense |
-| **Application (simple)** | Hono rate-limit middleware + KV | Per user/key | KV for distributed counter. Eventually consistent — OK for rate limiting |
-| **Application (precise)** | Upstash Redis + `@upstash/ratelimit` | Per user/key/endpoint | Strongly consistent. Sliding window built-in. Best for paid API tiers |
-| **AI-specific** | AI Gateway rate limiting | Per model, per user | Built-in per-provider rate limiting and quota management |
-
-**Decision flow**:
-```
-Is it DDoS / bot protection?
-├── YES → CF WAF Rate Limiting Rules (no code, edge-level)
-└── NO  →
-    Is it API tier enforcement (free: 100/hr, pro: 10K/hr)?
-    ├── YES → Upstash Redis (precise, per-user tracking)
-    └── NO  →
-        Is it basic abuse prevention?
-        ├── YES → Hono middleware + KV (simple, low cost)
-        └── NO  → Combine layers as needed
-```
-
-**Cost-aware tip**: At solopreneur scale, CF WAF rate limiting + a simple KV counter covers most needs. Add Upstash Redis only when you need precise per-user enforcement for paid API tiers.

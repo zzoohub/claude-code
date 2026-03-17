@@ -21,20 +21,20 @@ D2 system context diagram (C4 Level 1) — the system as a black box showing act
 
 **What problem, for whom, why now** (one paragraph).
 
-### Core User Behaviors
+### Core Behaviors
 
 Verb-centric list extracted from the PRD:
-- [User] **searches** for [thing]
-- [User] **creates** [thing]
-- [User] **subscribes** to [thing]
+- [Actor] **searches** for [thing]
+- [Actor] **creates** [thing]
+- [System] **processes** [thing]
 
 ### Success Criteria
 
 | Path | Target | Drives |
 |---|---|---|
-| e.g., API response (main flow) | p99 < 500ms | Caching? DB query optimization? |
+| e.g., API response (main flow) | p99 < 200ms | Caching? Query optimization? |
 | e.g., Uptime | 99.5% (3.6h downtime/month) | Health checks, alerting, redundancy |
-| e.g., Monthly cost at 1K DAU | < $50 | Stack selection, scale-to-zero |
+| e.g., Memory usage | < 50MB resident | Data structure choices, streaming |
 
 ---
 
@@ -51,11 +51,11 @@ Verb-centric list extracted from the PRD:
 
 ```
 System Utility
-├── [Quality Attribute]
-│   ├── "[Scenario]" [Importance, Difficulty]
-│   └── "[Scenario]" [Importance, Difficulty]
-└── [Quality Attribute]
-    └── "[Scenario]" [Importance, Difficulty]
++-- [Quality Attribute]
+|   +-- "[Scenario]" [Importance, Difficulty]
+|   +-- "[Scenario]" [Importance, Difficulty]
++-- [Quality Attribute]
+    +-- "[Scenario]" [Importance, Difficulty]
 ```
 
 **Architecture drivers** ([H,H] items):
@@ -103,9 +103,10 @@ D2 context map showing bounded contexts and their relationships.
 
 ## 5. Constraints
 
-- **Monthly cost ceiling**: ...
-- **Regulatory requirements**: ...
-- **Platform constraints**: ...
+- **Resource constraints**: [budget, infrastructure limits, team size]
+- **Regulatory requirements**: [compliance, data residency]
+- **Integration constraints**: [must integrate with X, must support protocol Y]
+- **Deployment constraints**: [target platform, distribution method]
 
 ---
 

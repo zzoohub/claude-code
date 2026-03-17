@@ -29,15 +29,16 @@ ATAM verification against [H,H] ASRs:
 
 ## 2. Components
 
-### Stack
+### Core Technology
 
-| Layer | Choice | Why | Rejected |
+<!-- Adapt rows based on software type. Not all systems have all layers. -->
+
+| Concern | Choice | Why | Rejected |
 |---|---|---|---|
-| Platform | ... | ... | ... |
-| Backend | ... | ... | ... |
-| Frontend | ... | ... | ... |
-| Database | ... | ... | ... |
-| Auth | ... | ... | ... |
+| Core runtime | ... | ... | ... |
+| Data store | ... | ... | ... |
+| Communication | ... | ... | ... |
+<!-- conditional: add rows as needed for the specific system type -->
 
 ### Container Diagram
 
@@ -66,8 +67,7 @@ D2 diagram (C4 Level 2) showing major runtime containers, communication protocol
 
 | Store | Holds | Why This Type | Consistency |
 |---|---|---|---|
-| e.g., Neon (PostgreSQL) | Core domain data | Relational, ACID transactions | Strong |
-| e.g., R2 | User uploads | Blob storage, zero egress | Eventual |
+| ... | ... | ... | ... |
 
 ### Key Data Flows
 
@@ -94,15 +94,17 @@ What's cached, why, invalidation approach, stampede prevention.
 
 ### CI/CD Pipeline
 
-test → lint → security scan → build → smoke test → deploy
+test -> lint -> security scan -> build -> smoke test -> deploy
 
 ### Scaling Model
 
-[Scale-to-zero / auto-scale / always-on] — [rationale]
+[Scale-to-zero / auto-scale / always-on / single-instance] — [rationale]
 
 ### Cost Estimate
 
-| Component | Launch (~100 DAU) | Growth (~1K DAU) |
+<!-- Use two traffic levels relevant to the system -->
+
+| Component | Baseline | Growth |
 |---|---|---|
 | Compute | ... | ... |
 | Database | ... | ... |
@@ -110,7 +112,7 @@ test → lint → security scan → build → smoke test → deploy
 | Third-party APIs | ... | ... |
 | **Total** | ... | ... |
 
-Components that cost money while idle: [list or "none — all scale-to-zero"]
+Components that cost money while idle: [list or "none"]
 
 ### AI Ops
 <!-- Include only if PRD involves AI/LLM features -->
@@ -134,17 +136,18 @@ Cost alerting threshold: [80% of ceiling from ASR]
 | Response time | Performance test | Post-deploy |
 
 ### Auth & Security
+<!-- Include if users exist -->
 
 - Auth flow: [how users authenticate]
 - Authorization: [RBAC / ABAC / etc.]
-- Security layers: Edge → Transport → Auth → AuthZ → Data → Audit
+- Security layers: Edge -> Transport -> Auth -> AuthZ -> Data -> Audit
 
 ### Observability — Day 1
 
-- **Error tracking**: Sentry
+- **Error tracking**: [tool choice]
 - **Structured logging**: JSON to stdout with correlation IDs
-- **Health checks**: `GET /health`
-- **Uptime monitoring**: BetterStack
+- **Health checks**: [endpoint or mechanism]
+- **Uptime monitoring**: [tool choice]
 
 ### Resilience
 

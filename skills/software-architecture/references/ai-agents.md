@@ -18,7 +18,6 @@ Architecture patterns, protocols, and infrastructure for LLM-powered autonomous 
 8. [Safety & Guardrails](#8-safety--guardrails)
 9. [Decision Flowchart](#9-decision-flowchart)
 10. [Anti-Patterns](#10-anti-patterns)
-11. [Cloudflare Implementation Bridge](#11-cloudflare-implementation-bridge)
 
 ---
 
@@ -41,7 +40,7 @@ Architecture patterns, protocols, and infrastructure for LLM-powered autonomous 
 
 ## 2. Agent Patterns
 
-### Pattern Hierarchy (Simple → Complex)
+### Pattern Hierarchy (Simple -> Complex)
 
 Start at the top. Move down only when a simpler pattern can't meet requirements.
 
@@ -49,32 +48,32 @@ Start at the top. Move down only when a simpler pattern can't meet requirements.
 Single LLM enhanced with tools, retrieval, and memory. No loop — one-shot or few-turn. This handles the majority of "AI-powered features."
 
 **2. Prompt Chaining**
-Break tasks into sequential LLM calls with fixed handoff points. Each step is deterministic. Output of step N feeds into step N+1. Good for structured transformations.
+Break tasks into sequential LLM calls with fixed handoff points. Each step is deterministic. Output of step N feeds into step N+1.
 
 **3. Routing**
-Classify input and direct to specialized handlers. A central router analyzes the task and delegates to the right tool chain or sub-agent. Scales well — adding new capabilities means adding new routes, not modifying the core.
+Classify input and direct to specialized handlers. A central router analyzes the task and delegates to the right tool chain or sub-agent.
 
 **4. Parallelization (Scatter-Gather)**
-Run multiple LLM calls simultaneously, aggregate results. For embarrassingly parallel tasks (analyzing multiple documents, searching multiple sources).
+Run multiple LLM calls simultaneously, aggregate results. For embarrassingly parallel tasks.
 
 **5. Orchestrator-Workers**
-Central LLM delegates to specialized worker LLMs. The orchestrator decomposes the task, assigns sub-tasks, and consolidates results. More flexible than routing because the orchestrator can dynamically decide task decomposition.
+Central LLM delegates to specialized worker LLMs. The orchestrator decomposes the task, assigns sub-tasks, and consolidates results.
 
 **6. Evaluator-Optimizer (Reflection)**
-One LLM generates output, another evaluates it, loop until quality threshold met. Self-evaluation reduces hallucinations and increases reliability. Can be single-agent (self-reflection) or multi-agent (separate critic).
+One LLM generates output, another evaluates it, loop until quality threshold met.
 
 **7. Autonomous Agent (ReAct Loop)**
-The full agent loop: reason → act (use tool) → observe result → reason again. Use only when the task genuinely requires adaptive, multi-step tool orchestration where steps can't be predetermined.
+The full agent loop: reason -> act (use tool) -> observe result -> reason again. Use only when the task genuinely requires adaptive, multi-step tool orchestration where steps can't be predetermined.
 
 ### Specialized Patterns
 
-**Plan-and-Execute**: Agent creates a full plan first, then executes step-by-step, re-planning if a step fails. Better coherence for complex multi-step tasks. Key evolution: plans are now treated as mutable — agents re-plan based on new observations.
+**Plan-and-Execute**: Agent creates a full plan first, then executes step-by-step, re-planning if a step fails. Plans are treated as mutable — agents re-plan based on new observations.
 
-**Tool-Use-First**: Agent defaults to tool invocation rather than open-ended reasoning. The LLM's role is selecting which tool to call and interpreting results. Dominant in production where deterministic tool behavior is preferred.
+**Tool-Use-First**: Agent defaults to tool invocation rather than open-ended reasoning. Dominant in production where deterministic tool behavior is preferred.
 
-**Agentic RAG**: Extends classic RAG with autonomous planning, iterative multi-step retrieval, and verification. The agent decides what to retrieve, evaluates relevance, and reformulates queries — unlike basic RAG which does a single retrieval pass.
+**Agentic RAG**: Extends classic RAG with autonomous planning, iterative multi-step retrieval, and verification.
 
-**Sub-Agents (Context Isolation)**: Orchestrator spawns isolated sub-agents with their own context windows. Sub-agents don't pollute the main agent's context. Anthropic's Claude Code uses this pattern — internal tests showed 90%+ performance improvement on complex tasks vs. single-agent.
+**Sub-Agents (Context Isolation)**: Orchestrator spawns isolated sub-agents with their own context windows. Sub-agents don't pollute the main agent's context.
 
 *References: Anthropic, "Building Effective Agents"; OpenAI, "A Practical Guide to Building Agents" (2025)*
 
@@ -88,18 +87,18 @@ Three complementary protocols are converging as the standard stack for agent sys
 
 ```
            MCP
-      (Agent ↔ Tools)
+      (Agent <-> Tools)
           /        \
          /          \
-      A2A    ←→    AG-UI
-(Agent ↔ Agent)  (Agent ↔ User)
+      A2A    <->    AG-UI
+(Agent <-> Agent)  (Agent <-> User)
 ```
 
-All three are governed under the **Agentic AI Foundation (AAIF)** at the Linux Foundation. Verify current membership and governance status.
+All three are governed under the **Agentic AI Foundation (AAIF)** at the Linux Foundation.
 
 ### MCP (Model Context Protocol)
 
-**Scope**: Agent ↔ Tools/Resources. "USB-C for AI."
+**Scope**: Agent <-> Tools/Resources. "USB-C for AI."
 
 **Core primitives**:
 - **Tools** — Functions the agent can invoke (with JSON Schema input/output). Supports structured output via `outputSchema`.
@@ -109,66 +108,47 @@ All three are governed under the **Agentic AI Foundation (AAIF)** at the Linux F
 - **Elicitation** — Server can request information from the user
 
 **Transport**:
-- **stdio** — Local transport via JSON-RPC over stdin/stdout. For local tools where credentials stay on-device.
-- **Streamable HTTP** — Remote transport over HTTP with SSE for streaming, supporting reconnects and session management. Replaced the older dual-endpoint HTTP+SSE transport.
+- **stdio** — Local transport via JSON-RPC over stdin/stdout. For local tools.
+- **Streamable HTTP** — Remote transport over HTTP with SSE for streaming.
 
-**Auth**: OAuth 2.1 for HTTP transports. MCP servers act as OAuth Resource Servers. Supports dynamic client registration.
-
-**Adoption**: Widely adopted across major AI platforms and IDEs. Verify current adoption metrics.
+**Auth**: OAuth 2.1 for HTTP transports. MCP servers act as OAuth Resource Servers.
 
 ### MCP as Product API
 
-MCP is not just a tool integration protocol — it's becoming a **product distribution channel**. By exposing your product's capabilities as an MCP server, AI agents can discover, authenticate, and use your product without custom integration code.
+MCP is becoming a **product distribution channel**. By exposing your product's capabilities as an MCP server, AI agents can discover and use your product without custom integration code.
 
 **Architecture implication**: Design your API surface with two consumers in mind:
 1. **Human users** via your web/mobile UI
 2. **AI agents** via MCP server
 
-**What changes**:
-- **Tool naming and descriptions** become part of your product's developer experience — agents choose tools based on these
-- **Structured input/output schemas** must be self-documenting (JSON Schema with descriptions)
-- **OAuth 2.1** for agent authentication — scoped tokens per capability
-- **Idempotency** is critical — agents retry aggressively
-
-**Decision**: Expose MCP alongside (not instead of) your REST/GraphQL API. MCP is optimized for agent consumption; your existing API serves human-facing clients. Both can share the same backend service layer.
+**Decision**: Expose MCP alongside (not instead of) your REST/GraphQL API. Both can share the same backend service layer.
 
 ### A2A (Agent-to-Agent Protocol)
 
-**Scope**: Agent ↔ Agent. Enables agents built by different vendors to discover, communicate, and collaborate.
+**Scope**: Agent <-> Agent. Enables agents built by different vendors to discover, communicate, and collaborate.
 
 **Key concepts**:
-- **Agent Cards** — JSON metadata describing an agent's capabilities, skills, endpoints, and auth. Enable dynamic discovery.
-- **Task lifecycle** — Structured states: submitted → working → completed/failed. Supports long-running async tasks with human-in-the-loop.
-- **Messages and Parts** — Agents exchange Messages containing typed Parts (text, files, structured data). Multimodal.
-- **Streaming** — Real-time updates via SSE during task execution.
-- **Push notifications** — For long-running tasks.
-
-**Transport**: HTTP + JSON-RPC 2.0, with SSE for streaming and WebSocket for bidirectional.
-
-**Auth**: OAuth 2.0, mTLS, signed Agent Cards.
-
-**Adoption**: Growing enterprise adoption (Atlassian, Salesforce, SAP, PayPal, etc.). Verify current spec version and partner ecosystem.
+- **Agent Cards** — JSON metadata describing capabilities, skills, endpoints, and auth
+- **Task lifecycle** — submitted -> working -> completed/failed. Supports long-running async tasks
+- **Messages and Parts** — Agents exchange typed parts (text, files, structured data). Multimodal.
 
 ### AG-UI (Agent-User Interaction Protocol)
 
-**Scope**: Agent ↔ User. Defines how agents communicate with humans in real time.
+**Scope**: Agent <-> User. Defines how agents communicate with humans in real time.
 
 **Key concepts**:
 - Streams JSON events over standard HTTP
 - Event types: text messages, tool calls, state snapshots/deltas, lifecycle signals
-- Enables real-time sync between agent backend and frontend UI
 
 ### How They Relate
 
 | Protocol | Direction | Creator | Status |
 |---|---|---|---|
-| **MCP** | Agent ↔ Tools (vertical) | Anthropic → AAIF | Production — verify current adoption |
-| **A2A** | Agent ↔ Agent (horizontal) | Google → AAIF | Maturing — verify current spec version |
-| **AG-UI** | Agent ↔ User (presentation) | CopilotKit | Emerging — verify current status |
+| **MCP** | Agent <-> Tools (vertical) | Anthropic -> AAIF | Production |
+| **A2A** | Agent <-> Agent (horizontal) | Google -> AAIF | Maturing |
+| **AG-UI** | Agent <-> User (presentation) | CopilotKit | Emerging |
 
 An agent uses MCP to access its tools, A2A to collaborate with peer agents, and AG-UI to communicate with users.
-
-*References: [MCP Spec](https://modelcontextprotocol.io/specification/2025-06-18), [A2A Spec](https://a2a-protocol.org/latest/specification/), [AG-UI](https://copilotkit.ai/blog/introducing-ag-ui-the-protocol-where-agents-meet-users)*
 
 ---
 
@@ -176,7 +156,7 @@ An agent uses MCP to access its tools, A2A to collaborate with peer agents, and 
 
 Context engineering is the discipline of designing the full information environment an agent operates in — not just the prompt, but the schemas, retrieved data, memory, tool definitions, and conversation history that shape behavior.
 
-**Key insight**: A well-structured context window has more impact on agent reliability than clever prompt phrasing. The model's attention is a budget — every token competes for it.
+**Key insight**: A well-structured context window has more impact on agent reliability than clever prompt phrasing.
 
 *Reference: Anthropic, "Effective Context Engineering for AI Agents" (Sep 2025)*
 
@@ -191,20 +171,18 @@ Context engineering is the discipline of designing the full information environm
 | **Procedural Memory** | Learned workflows, reusable strategies | Persistent | Stored procedures, code modules |
 
 **Design decisions**:
-- What persists across turns (conversation memory) vs. across sessions (long-term) vs. across users (shared knowledge)?
+- What persists across turns vs. across sessions vs. across users?
 - When to summarize vs. when to retrieve verbatim?
 - How to handle contradictions between stored memory and new information?
-- What to intentionally forget (stale data, corrected errors)?
 
 ### Context Window Management
 
 | Strategy | When to Use |
 |---|---|
-| **Summarization** | Long conversations. Incremental (as you go) beats retroactive. |
+| **Summarization** | Long conversations. Incremental beats retroactive. |
 | **Sliding Window** | Fixed-size recent history. Simple but loses important context. |
 | **RAG-Based** | Large knowledge bases. Dynamically fetch relevant chunks. |
 | **Priority-Based** | Score context elements by relevance, include only high-signal items. |
-| **Context Layering** | Separate layers: working context, session logs, memory, artifacts. |
 | **Sub-Agent Delegation** | Offload sub-tasks to isolated agents to keep main context clean. |
 
 ### Tool Schema Design
@@ -213,9 +191,6 @@ Context engineering is the discipline of designing the full information environm
 - **Structured schemas** (JSON Schema) for input and output with validation
 - **Minimal surface area** — each tool does one thing well
 - **Descriptive error messages** — when a tool fails, the error should help the agent self-correct
-- **Versioning** for evolving tool APIs
-
-*Reference: Anthropic, "Writing Effective Tools for AI Agents"*
 
 ---
 
@@ -230,19 +205,16 @@ Agents can run for minutes to hours. Without state management, a crash means los
 | Pattern | How It Works | When to Use |
 |---|---|---|
 | **Database checkpointing** | Serialize state to DB after each step. Resume from last checkpoint on failure. | Default. Simple, no new infrastructure. |
-| **Node-level (graph-based)** | State saved before/after each graph node. Explicit, deterministic checkpoint points. | When using graph-based orchestration (LangGraph). |
-| **Event-history replay** | Record all events in durable log. Reconstruct state by replaying events. | Complex workflows with exactly-once requirements (Temporal). |
-| **State snapshot + delta** | Capture snapshots with incremental deltas. Lightweight. | When you need automatic retries and crash-safe execution (Restate). |
+| **Node-level (graph-based)** | State saved before/after each graph node. | When using graph-based orchestration. |
+| **Event-history replay** | Record all events in durable log. Reconstruct state by replaying. | Complex workflows with exactly-once requirements. |
+| **State snapshot + delta** | Capture snapshots with incremental deltas. | When you need automatic retries and crash-safe execution. |
 
 ### Durable Execution Platforms
 
-For agents that run long enough to need crash recovery:
-
-- **Temporal** — Deterministic workflow execution with event sourcing. `continue-as-new` for unbounded loops. Exactly-once guarantees.
-- **Inngest** — Event-driven harness decoupled from agent logic. "Your agent needs a harness, not a framework."
-- **Restate** — Lightweight, multi-language runtime. Composable AI patterns with automatic recoverability.
-
-Search for current platform capabilities and integrations before choosing — this space evolves quickly.
+For agents that run long enough to need crash recovery, search for current platform capabilities and integrations — this space evolves quickly. Common approaches:
+- Deterministic workflow execution with event sourcing
+- Event-driven harnesses decoupled from agent logic
+- Lightweight runtimes with composable AI patterns and automatic recoverability
 
 ### Long-Running Agent Patterns
 
@@ -254,7 +226,7 @@ Search for current platform capabilities and integrations before choosing — th
 ### Error Recovery
 
 - **Exponential backoff with jitter** for transient failures
-- **Granularity matters**: tool-level retries → step-level retries → workflow-level restarts
+- **Granularity matters**: tool-level retries -> step-level retries -> workflow-level restarts
 - **Error context injection** — include the error in the next prompt so the agent adapts
 - **Human escalation** — after N retries, hand off to a human
 
@@ -269,7 +241,7 @@ Search for current platform capabilities and integrations before choosing — th
 | **Supervisor** | Central orchestrator delegates to workers, consolidates results | Complex task decomposition |
 | **Scatter-Gather** | Distribute independent sub-tasks in parallel, aggregate | Embarrassingly parallel work |
 | **Pipeline** | Agents chained sequentially, output feeds into next | Ordered, dependent steps |
-| **Hierarchical** | Multiple layers: strategic → planning → execution agents | Multi-dimensional problems |
+| **Hierarchical** | Multiple layers: strategic -> planning -> execution agents | Multi-dimensional problems |
 | **Handoff** | Agent transfers control to specialized agent (no return) | Domain-specific expertise |
 
 ### Communication Patterns
@@ -277,7 +249,7 @@ Search for current platform capabilities and integrations before choosing — th
 | Pattern | How It Works | Trade-offs |
 |---|---|---|
 | **Shared State (Blackboard)** | Agents read/write to common knowledge base | Fast iteration, but contention risk |
-| **Message Passing** | Explicit messages, sync or async, via broker or peer-to-peer | Flexible, but requires schema design |
+| **Message Passing** | Explicit messages, sync or async | Flexible, but requires schema design |
 | **A2A Protocol** | Standardized agent-to-agent via HTTP/JSON-RPC | Interoperable, but adds protocol overhead |
 
 ### When Multi-Agent vs. Single Agent?
@@ -287,14 +259,12 @@ Search for current platform capabilities and integrations before choosing — th
 - Low latency is critical
 - Debugging simplicity matters
 - Cost sensitivity is high (multi-agent multiplies token costs)
-- Context window can hold all needed information
 
 **Favor multi-agent**:
 - Task requires diverse expertise that would bloat a single context
-- Context isolation is needed (different agents shouldn't see each other's data)
+- Context isolation is needed
 - Parallel execution would significantly speed things up
-- Security boundaries require separation (different permissions per agent)
-- The task naturally decomposes into independent sub-problems
+- Security boundaries require separation
 
 ### The 17x Error Trap
 
@@ -303,8 +273,6 @@ Naive multi-agent systems amplify errors. An agent with 90% accuracy across 17 s
 - Verification steps after critical actions
 - Feedback loops for self-correction
 - Reduce serial dependencies — parallelize where possible
-
-**Hybrid approach**: Start with a single agent. Add multi-agent only when you hit concrete limits (context overflow, latency, security boundaries). Most production systems use a single orchestrator with sub-agents — technically multi-agent but functionally simpler.
 
 ---
 
@@ -326,10 +294,10 @@ Naive multi-agent systems amplify errors. An agent with 90% accuracy across 17 s
 
 | Approach | When to Use |
 |---|---|
-| **Offline (curated test sets)** | Repeatable regression testing. Run agent on known-correct tasks, compare results. |
-| **LLM-as-Judge** | Scalable quality scoring. Strong LLM evaluates agent output against rubrics. Must calibrate against human judgment. |
-| **Trajectory evaluation** | Evaluate the full sequence of tool calls and reasoning, not just the final answer. Critical for understanding agent behavior. |
-| **Online A/B testing** | Real-world performance. Measure business outcomes (conversion, task completion), not just model quality. |
+| **Offline (curated test sets)** | Repeatable regression testing |
+| **LLM-as-Judge** | Scalable quality scoring. Must calibrate against human judgment. |
+| **Trajectory evaluation** | Evaluate the full sequence of tool calls and reasoning |
+| **Online A/B testing** | Measure business outcomes, not just model quality |
 
 ### What to Trace
 
@@ -338,15 +306,13 @@ Naive multi-agent systems amplify errors. An agent with 90% accuracy across 17 s
 - Agent decision points (why this tool? what was the reasoning?)
 - State transitions (what changed in working memory?)
 - Human interventions (when and why did a human step in?)
-- End-to-end trace across the full agent run
 
 ### Production Monitoring
 
 - Token usage and cost dashboards with budget alerts
 - Quality metrics tracked over time for regression detection
 - Safety violation alerts
-- Automated root cause analysis for failures
-- OpenTelemetry with GenAI semantic conventions for unified tracing across LLM and non-LLM services
+- OpenTelemetry with GenAI semantic conventions for unified tracing
 
 ---
 
@@ -362,7 +328,7 @@ Naive multi-agent systems amplify errors. An agent with 90% accuracy across 17 s
 | **Autonomous with audit** | Agent acts freely, actions logged for review | Low-risk, established trust |
 | **Full autonomy** | Agent operates independently | Only after extensive validation |
 
-**Key principle**: Irreversible actions require human approval until trust is established. Reversible actions can be automated earlier. The approval step should be **asynchronous** — persist agent state, notify human, resume via callback.
+**Key principle**: Irreversible actions require human approval until trust is established. The approval step should be **asynchronous** — persist agent state, notify human, resume via callback.
 
 ### Sandboxing & Isolation
 
@@ -372,8 +338,6 @@ From lightest to heaviest:
 3. **gVisor** — Syscall interception layer
 4. **Micro-VMs (Firecracker/E2B)** — Lightweight hardware virtualization
 5. **Confidential computing** — Hardware-level memory encryption
-
-Choice depends on trust level, session duration, and compliance requirements.
 
 ### Permission Models
 
@@ -385,11 +349,11 @@ Choice depends on trust level, session duration, and compliance requirements.
 
 ### Input/Output Guardrails
 
-Same layered defense pattern as general LLM systems — see `references/ai-architecture.md` § Guardrails & Safety for the full diagram and implementation details. Agent-specific additions:
+Same layered defense pattern as general LLM systems — see `references/ai-architecture.md` § Guardrails & Safety. Agent-specific additions:
 
 - **Tool call validation**: Verify tool parameters against schemas before execution. Reject calls that exceed the agent's permission scope.
-- **Action audit trail**: Log every tool invocation with input, output, and the agent's reasoning for choosing that tool.
-- **Escalation triggers**: Define conditions that halt autonomous execution and require human review (e.g., financial transactions above threshold, irreversible deletions).
+- **Action audit trail**: Log every tool invocation with input, output, and the agent's reasoning.
+- **Escalation triggers**: Define conditions that halt autonomous execution and require human review.
 
 ---
 
@@ -397,108 +361,42 @@ Same layered defense pattern as general LLM systems — see `references/ai-archi
 
 ```
 Does the task need adaptive, multi-step behavior?
-├── NO → Pipeline or prompt chaining (Section 2, patterns 1-4)
-└── YES → Continue below
++-- NO -> Pipeline or prompt chaining (Section 2, patterns 1-4)
++-- YES -> Continue below
 
 Can the steps be predetermined?
-├── YES → Workflow orchestration (routing, parallel, chain)
-└── NO → Agent with tool loop (ReAct or Plan-and-Execute)
++-- YES -> Workflow orchestration (routing, parallel, chain)
++-- NO -> Agent with tool loop (ReAct or Plan-and-Execute)
 
 Does the agent need to collaborate with other agents?
-├── YES → Multi-agent with A2A protocol (Section 6)
-└── NO → Single agent with MCP tools
++-- YES -> Multi-agent with A2A protocol (Section 6)
++-- NO -> Single agent with MCP tools
 
 Is the agent long-running (minutes+)?
-├── YES → Add durable execution + checkpointing (Section 5)
-└── NO → Stateless agent loop is fine
++-- YES -> Add durable execution + checkpointing (Section 5)
++-- NO -> Stateless agent loop is fine
 
 Does the agent take irreversible actions?
-├── YES → Human-in-the-loop + sandboxing (Section 8)
-└── NO → Autonomous with audit logging
++-- YES -> Human-in-the-loop + sandboxing (Section 8)
++-- NO -> Autonomous with audit logging
 
 Is this going to production?
-├── YES → Add evaluation + observability + guardrails (Sections 7-8)
-└── NO → Prototype freely, but plan for the above
++-- YES -> Add evaluation + observability + guardrails (Sections 7-8)
++-- NO -> Prototype freely, but plan for the above
 ```
 
 ---
 
 ## 10. Anti-Patterns
 
-See also the general AI anti-patterns in `references/ai-architecture.md` § Anti-Patterns — covers shared concerns like "Agent When a Pipeline Will Do" and "Prompt Engineering as Architecture."
+See also the general AI anti-patterns in `references/ai-architecture.md` § Anti-Patterns.
 
-**Bag of Agents**: Throwing multiple agents at a problem without structured orchestration. Error amplification makes this worse than a single agent. Every agent added multiplies failure probability.
+**Bag of Agents**: Throwing multiple agents at a problem without structured orchestration. Error amplification makes this worse than a single agent.
 
-**Ignoring State Management**: Running long agent workflows without checkpointing. A crash 2 hours in means starting over — wasting time, money, and user patience.
+**Ignoring State Management**: Running long agent workflows without checkpointing. A crash 2 hours in means starting over.
 
-**Autonomous Everything**: Granting agents full autonomy from day one. Start with human approval for high-risk actions, progressively automate as trust builds from measured accuracy.
+**Autonomous Everything**: Granting agents full autonomy from day one. Start with human approval for high-risk actions, progressively automate as trust builds.
 
-**Framework Lock-In**: Choosing an agent framework before understanding the architecture. The harness (infrastructure) matters more than the framework. Evaluate durable execution, observability, and tool integration independently.
+**Framework Lock-In**: Choosing an agent framework before understanding the architecture. The harness (infrastructure) matters more than the framework.
 
-**Monolithic Context**: Stuffing everything into a single agent's context window instead of using sub-agents, RAG, or memory tiers. Context overflow degrades all capabilities simultaneously.
-
----
-
-## 11. Cloudflare Implementation Bridge
-
-This section maps the abstract agent patterns above to concrete Cloudflare platform primitives. Read `references/cloudflare-platform.md` for full tech stack details.
-
-### Pattern → CF Service Mapping
-
-| Abstract Pattern (Section 2) | CF Implementation | When |
-|---|---|---|
-| Augmented LLM, Prompt Chaining | Workers + AI Gateway | Stateless, single-request AI features. Most "AI-powered" products start here |
-| Routing, Tool-Use-First | Agents SDK (DO-based) | Stateful tool orchestration with memory, MCP server, scheduling. Zero idle cost via hibernation |
-| Orchestrator-Workers, Plan-and-Execute | Agents SDK + Workflows | Durable multi-step pipelines. Per-step checkpoint, auto-retry, sleep, `waitForEvent`. Long-running agent tasks |
-| Evaluator-Optimizer, Autonomous Agent | LangGraph.js on Workers | Complex graph orchestration where imperative Workflows become unmaintainable. Needs custom DO-backed checkpointer |
-| Multi-Agent (Section 6) | Multiple Agents SDK instances | Each agent is a DO — natural isolation, independent state, communicate via RPC or Queues |
-
-### CF Agents SDK — Core Capabilities
-
-The Agents SDK builds on Durable Objects. Each agent instance is a globally unique DO with:
-
-- **Persistent state**: Built-in KV storage via `this.ctx.storage`. State survives across requests and hibernation
-- **Memory**: Conversation history, learned context — stored in DO storage or Vectorize for semantic retrieval
-- **MCP server**: Expose agent as an MCP server — other agents or tools can discover and invoke it
-- **Scheduling**: `this.schedule()` for deferred actions. Agent can schedule itself to wake up later
-- **Real-time**: WebSocket support for streaming responses to clients. Voice and email triggers
-- **Hibernation**: Zero compute cost when idle. Wakes on incoming request — perfect for agents that wait for user input
-
-### Durable Execution on CF
-
-The abstract durable execution patterns from Section 5 map to CF primitives:
-
-| Abstract Pattern | CF Implementation | Notes |
-|---|---|---|
-| Database checkpointing | Agents SDK DO storage | `this.ctx.storage.put()` — transactional, survives crashes |
-| Node-level (graph-based) | LangGraph.js + custom DO checkpointer | LangGraph expects a checkpointer — implement via DO storage or D1 |
-| Workflow steps | Workflows `step.do()` | Each step is a checkpoint. Auto-retry on failure. `step.sleep()`, `step.waitForEvent()` |
-| Event-history replay | Not available on CF | Use Temporal on Cloud Run if you need exactly-once event sourcing |
-
-### Decision Flow (CF-Specific)
-
-```
-Does the agent need persistent state or memory?
-├── NO → Workers + AI Gateway (stateless AI features)
-└── YES → Continue
-
-Is the task a single conversation / tool-calling session?
-├── YES → Agents SDK (DO-based)
-└── NO → Continue (multi-step pipeline)
-
-Can steps be expressed as a linear pipeline with retry?
-├── YES → Agents SDK + Workflows
-└── NO → Continue (complex orchestration)
-
-Does the orchestration need conditional branching, cycles, or parallel fan-out?
-├── YES → LangGraph.js on Workers (graph-based)
-└── NO → Agents SDK + Workflows is sufficient
-
-Does the agent need Python ML libraries (torch, transformers)?
-├── YES → CF Containers + LangGraph Python (escape hatch)
-└── NO → Stay on Workers
-```
-
-### Vendor Lock-in Note
-
-Agents SDK is CF-only with no portable equivalent. If portability matters, keep agent logic in plain TS functions and use Agents SDK only as the hosting harness. The migration path out is: rewrite DO state management to Redis/PostgreSQL + deploy agent logic on any Node.js runtime.
+**Monolithic Context**: Stuffing everything into a single agent's context window instead of using sub-agents, RAG, or memory tiers.

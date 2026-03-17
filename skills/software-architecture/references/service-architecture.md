@@ -4,7 +4,7 @@ Service architecture defines **how each service is internally structured** — c
 
 For how services communicate *with each other* (event-driven, CQRS, saga, etc.), see `system-architecture.md`.
 
-**Default: Hexagonal Architecture (Ports & Adapters).** AI-assisted development eliminates the boilerplate cost that previously made hexagonal feel heavy. Choose an alternative only with clear rationale documented as an ADR.
+**Default: Hexagonal Architecture (Ports & Adapters).** Choose an alternative only with clear rationale documented as an ADR.
 
 ---
 
@@ -13,17 +13,17 @@ For how services communicate *with each other* (event-driven, CQRS, saga, etc.),
 Organize code around a pure domain core. External concerns (HTTP, database, queues) connect through **ports** (interfaces) and **adapters** (implementations). Dependencies always point inward — domain code never imports framework or infrastructure code.
 
 ```
-         ┌─────────────────────────────────────┐
-         │            Application               │
-         │  ┌───────────────────────────────┐   │
-Driving  │  │                               │   │  Driven
-Adapters │  │     Domain / Business Logic    │   │  Adapters
-(HTTP,   │──│                               │──▶│  (DB, Queue,
-CLI,     │  │     (Pure, no dependencies)    │   │   External
-Events)  │  │                               │   │   APIs)
-         │  └───────────────────────────────┘   │
-         │         Ports (Interfaces)           │
-         └─────────────────────────────────────┘
+         +-------------------------------------+
+         |            Application               |
+         |  +-------------------------------+   |
+Driving  |  |                               |   |  Driven
+Adapters |  |     Domain / Business Logic    |   |  Adapters
+(HTTP,   |--|                               |-->|  (DB, Queue,
+CLI,     |  |     (Pure, no dependencies)    |   |   External
+Events)  |  |                               |   |   APIs)
+         |  +-------------------------------+   |
+         |         Ports (Interfaces)           |
+         +-------------------------------------+
 ```
 
 **Strengths**: Domain logic testable in isolation (no mocks for infrastructure), adapters are swappable (swap Postgres for SQLite in tests, swap email provider without touching domain), clear boundaries prevent accidental coupling, scales with complexity.
@@ -32,21 +32,21 @@ Events)  │  │                               │   │   APIs)
 
 **Choose when**: This is the default. Business logic exists beyond simple CRUD. You anticipate adapter changes (provider migrations, testing strategies). Team size > 1 where clear boundaries prevent stepping on each other's code.
 
-**Structure in our stack**:
+**Structure** (framework-neutral):
 
 ```
 src/
-├── domain/           # Pure business logic — no imports from outside
-│   ├── models/       # Entities, value objects, domain errors
-│   ├── services/     # Domain services (orchestrate domain logic)
-│   └── ports/        # Interfaces (driven ports)
-├── application/      # Use cases — orchestrate domain + ports
-│   └── use-cases/
-├── adapters/         # Infrastructure implementations
-│   ├── http/         # Driving adapter: Hono routes / Axum handlers
-│   ├── persistence/  # Driven adapter: Drizzle / SQLx repositories
-│   └── external/     # Driven adapter: third-party API clients
-└── config/           # Wiring: dependency injection, app bootstrap
++-- domain/           # Pure business logic — no imports from outside
+|   +-- models/       # Entities, value objects, domain errors
+|   +-- services/     # Domain services (orchestrate domain logic)
+|   +-- ports/        # Interfaces (driven ports)
++-- application/      # Use cases — orchestrate domain + ports
+|   +-- use-cases/
++-- adapters/         # Infrastructure implementations
+|   +-- http/         # Driving adapter: HTTP handlers
+|   +-- persistence/  # Driven adapter: repositories
+|   +-- external/     # Driven adapter: third-party API clients
++-- config/           # Wiring: dependency injection, app bootstrap
 ```
 
 **Who uses it**: Stripe (per-service hexagonal with clean domain boundaries), Netflix DGS framework (GraphQL services with hexagonal internals), most mature backend systems with complex domain logic.
@@ -58,24 +58,24 @@ src/
 Uncle Bob's concentric circles model. Shares hexagonal's core principle (dependency inversion, domain at center) but introduces explicit **Use Case** and **Interface Adapter** layers.
 
 ```
-┌─────────────────────────────────────────────┐
-│  Frameworks & Drivers                        │
-│  ┌────────────────────────────────────────┐  │
-│  │  Interface Adapters                     │  │
-│  │  ┌─────────────────────────────────┐   │  │
-│  │  │  Use Cases                       │   │  │
-│  │  │  ┌──────────────────────────┐   │   │  │
-│  │  │  │  Entities (Domain)       │   │   │  │
-│  │  │  └──────────────────────────┘   │   │  │
-│  │  └─────────────────────────────────┘   │  │
-│  └────────────────────────────────────────┘  │
-└─────────────────────────────────────────────┘
++---------------------------------------------+
+|  Frameworks & Drivers                        |
+|  +----------------------------------------+  |
+|  |  Interface Adapters                     |  |
+|  |  +---------------------------------+   |  |
+|  |  |  Use Cases                       |   |  |
+|  |  |  +--------------------------+   |   |  |
+|  |  |  |  Entities (Domain)       |   |   |  |
+|  |  |  +--------------------------+   |   |  |
+|  |  +---------------------------------+   |  |
+|  +----------------------------------------+  |
++---------------------------------------------+
 ```
 
 **How it differs from Hexagonal**:
 - Hexagonal distinguishes *driving* (input) vs *driven* (output) adapters. Clean Architecture doesn't — it has "Interface Adapters" as one layer.
 - Clean Architecture explicitly names the **Use Case** layer (application services that orchestrate domain entities). In hexagonal, this is implicit or folded into "application layer."
-- **Onion Architecture** is a close relative — same concentric dependency rule, slightly different layer naming. If your team uses Onion, the principles are identical.
+- **Onion Architecture** is a close relative — same concentric dependency rule, slightly different layer naming.
 
 **Strengths**: Explicit Use Case layer makes application workflows visible. Well-documented (books, talks, large community). Clear dependency rule: source code dependencies point inward only.
 
@@ -89,53 +89,37 @@ Uncle Bob's concentric circles model. Shares hexagonal's core principle (depende
 
 ## Vertical Slice Architecture
 
-Organize by **feature**, not by layer. Each feature (or use case) owns its complete stack: handler → business logic → data access. No shared service or repository layers — each slice is independent.
+Organize by **feature**, not by layer. Each feature (or use case) owns its complete stack: handler -> business logic -> data access. No shared service or repository layers — each slice is independent.
 
 ```
 src/
-├── features/
-│   ├── create-order/
-│   │   ├── handler.ts        # HTTP endpoint
-│   │   ├── command.ts        # Input validation
-│   │   ├── logic.ts          # Business rules
-│   │   └── repository.ts     # Data access
-│   ├── get-order/
-│   │   ├── handler.ts
-│   │   ├── query.ts
-│   │   └── repository.ts     # Can use different DB/cache
-│   └── cancel-order/
-│       ├── handler.ts
-│       ├── command.ts
-│       ├── logic.ts
-│       └── repository.ts
-└── shared/                    # Only truly cross-cutting code
-    ├── auth/
-    └── middleware/
++-- features/
+|   +-- create-order/
+|   |   +-- handler          # HTTP endpoint
+|   |   +-- command          # Input validation
+|   |   +-- logic            # Business rules
+|   |   +-- repository       # Data access
+|   +-- get-order/
+|   |   +-- handler
+|   |   +-- query
+|   |   +-- repository       # Can use different DB/cache
+|   +-- cancel-order/
+|       +-- handler
+|       +-- command
+|       +-- logic
+|       +-- repository
++-- shared/                   # Only truly cross-cutting code
+    +-- auth/
+    +-- middleware/
 ```
 
-**Strengths**: Each feature is self-contained — easy to understand, modify, and delete without affecting others. No "god service" or "god repository" classes. Natural fit with CQRS (each command/query is its own slice). Low coupling between features. New team members can understand one feature without learning the whole codebase.
+**Strengths**: Each feature is self-contained — easy to understand, modify, and delete without affecting others. No "god service" or "god repository" classes. Natural fit with CQRS. Low coupling between features.
 
-**Trade-offs**: Code duplication between slices (intentional — independence over DRY). Shared concerns (auth, logging, validation) still need a cross-cutting solution. Can feel scattered when the domain has deep cross-feature interactions.
+**Trade-offs**: Code duplication between slices (intentional — independence over DRY). Shared concerns still need a cross-cutting solution. Can feel scattered when the domain has deep cross-feature interactions.
 
-**Choose when**: CQRS architecture (each command/query maps to a slice). Features are genuinely independent. You value feature isolation over code reuse. The system has many distinct use cases with minimal overlap. Team works on features independently.
+**Choose when**: CQRS architecture (each command/query maps to a slice). Features are genuinely independent. You value feature isolation over code reuse. Team works on features independently.
 
 **Who uses it**: Many .NET teams (Jimmy Bogard's MediatR pattern popularized this). Works well in event-driven systems where each event handler is a natural slice.
-
-**Implementation in Hono**:
-```typescript
-// features/create-order/handler.ts
-export const createOrderRoute = new Hono()
-  .post('/', zValidator('json', createOrderSchema), async (c) => {
-    const data = c.req.valid('json');
-    const order = await createOrder(data);
-    return c.json(order, 201);
-  });
-
-// app.ts — mount slices
-app.route('/orders', createOrderRoute);
-app.route('/orders', getOrderRoute);
-app.route('/orders', cancelOrderRoute);
-```
 
 ---
 
@@ -144,50 +128,25 @@ app.route('/orders', cancelOrderRoute);
 Separate **pure business logic** (functional core) from **side effects** (imperative shell). The core is a collection of pure functions: given input, return output, no I/O. The shell handles all I/O (HTTP, database, file system) and feeds data into the core.
 
 ```
-┌─────────────────────────────────────┐
-│         Imperative Shell             │
-│  (HTTP handlers, DB queries, I/O)    │
-│                                      │
-│    input ──▶ ┌──────────────┐       │
-│              │ Functional   │       │
-│              │   Core       │       │
-│              │ (pure logic) │       │
-│    output ◀──└──────────────┘       │
-│                                      │
-│  (write results, send responses)     │
-└─────────────────────────────────────┘
++-------------------------------------+
+|         Imperative Shell             |
+|  (HTTP handlers, DB queries, I/O)    |
+|                                      |
+|    input --> +----------------+      |
+|              | Functional     |      |
+|              |   Core         |      |
+|              | (pure logic)   |      |
+|    output <--+----------------+      |
+|                                      |
+|  (write results, send responses)     |
++-------------------------------------+
 ```
 
 **Strengths**: Core logic is trivially testable (pure functions — no mocks, no setup, just input/output assertions). Side effects are contained and explicit. Reasoning about business logic is easier when it can't secretly talk to a database.
 
-**Trade-offs**: Requires rethinking workflows that naturally interleave I/O and logic. Can lead to "data shuttle" patterns where the shell fetches everything upfront. Not idiomatic in every language/framework.
+**Trade-offs**: Requires rethinking workflows that naturally interleave I/O and logic. Can lead to "data shuttle" patterns where the shell fetches everything upfront.
 
-**Choose when**: Rust (ownership model naturally separates data from I/O — this pattern is idiomatic). Complex business rules that benefit from pure-function testing. The domain can be modeled as "gather data → compute → persist results" without mid-computation I/O.
-
-**Example (Rust/Axum)**:
-```rust
-// Functional core — pure, no async, no I/O
-fn calculate_order_total(
-    items: &[OrderItem],
-    discount: Option<&Discount>,
-) -> OrderTotal {
-    let subtotal = items.iter().map(|i| i.price * i.quantity).sum();
-    let discount_amount = discount.map_or(0, |d| d.apply(subtotal));
-    OrderTotal { subtotal, discount_amount, total: subtotal - discount_amount }
-}
-
-// Imperative shell — handles all I/O
-async fn create_order(
-    State(db): State<PgPool>,
-    Json(req): Json<CreateOrderReq>,
-) -> Result<Json<Order>> {
-    let items = db::get_items(&db, &req.item_ids).await?;
-    let discount = db::get_active_discount(&db, &req.promo_code).await?;
-    let total = calculate_order_total(&items, discount.as_ref()); // pure
-    let order = db::insert_order(&db, &req, &total).await?;
-    Ok(Json(order))
-}
-```
+**Choose when**: Rust (ownership model naturally separates data from I/O — this pattern is idiomatic). Complex business rules that benefit from pure-function testing. The domain can be modeled as "gather data -> compute -> persist results" without mid-computation I/O.
 
 **Who uses it**: Elm (the language enforces this pattern), many Rust and Haskell projects. Gary Bernhardt's "Boundaries" talk (2012) codified the pattern. Discord's Rust services use this style for hot paths.
 
@@ -197,18 +156,18 @@ async fn create_order(
 
 ```
 Do you have significant business logic beyond CRUD?
-├── NO  → Hexagonal (still default — keeps structure clean for when logic grows)
-│         or Vertical Slice (if it's many independent endpoints)
-└── YES →
++-- NO  -> Hexagonal (still default — keeps structure clean for when logic grows)
+|         or Vertical Slice (if it's many independent endpoints)
++-- YES ->
     Is the team already using Clean Architecture conventions?
-    ├── YES → Clean Architecture (don't force a migration — same principles)
-    └── NO  →
+    +-- YES -> Clean Architecture (don't force a migration — same principles)
+    +-- NO  ->
         Are features genuinely independent (minimal cross-feature logic)?
-        ├── YES → Vertical Slice (especially with CQRS)
-        └── NO  →
-            Is the language Rust, or is the domain modeled as pure computation?
-            ├── YES → Functional Core, Imperative Shell
-            └── NO  → Hexagonal (default)
+        +-- YES -> Vertical Slice (especially with CQRS)
+        +-- NO  ->
+            Is the domain modeled as pure computation?
+            +-- YES -> Functional Core, Imperative Shell
+            +-- NO  -> Hexagonal (default)
 ```
 
 **Combining patterns** — these are not mutually exclusive:
@@ -224,23 +183,6 @@ Do you have significant business logic beyond CRUD?
 ### In-Process Domain Events
 
 When side effects grow within a service, direct calls raise coupling. Refactor so the service emits domain events and independent handlers react — adding side effects no longer touches the originating service.
-
-```typescript
-// Instead of:
-async function createAuthor(data: AuthorInput) {
-  const author = await repo.save(data);
-  await emailService.sendWelcome(author);                  // coupling
-  await analyticsService.track('author_created', author);  // more coupling
-  return author;
-}
-
-// Emit domain event:
-async function createAuthor(data: AuthorInput) {
-  const author = await repo.save(data);
-  eventBus.emit('AuthorCreated', { author }); // handlers react independently
-  return author;
-}
-```
 
 **Trade-off**: Flow spreads across files (harder to trace). Use sparingly — direct calls are fine for 1-2 side effects. Switch to events when adding a side effect requires modifying the originating service.
 
@@ -268,8 +210,8 @@ Domain-Driven Design tactical patterns can be applied **with any service archite
 
 **Big Ball of Mud**: No discernible architecture. Everything imports everything. Starts as "move fast," ends as "can't change anything without breaking something else."
 
-**Leaky Abstractions**: Domain layer imports infrastructure types (e.g., domain service takes `PgPool` directly instead of a repository port). Defeats the purpose of architecture boundaries.
+**Leaky Abstractions**: Domain layer imports infrastructure types (e.g., domain service takes a DB pool directly instead of a repository port). Defeats the purpose of architecture boundaries.
 
-**Premature Abstraction**: Creating ports/adapters for things that will never change (e.g., abstracting your only email provider behind three interfaces). YAGNI applies to architecture too.
+**Premature Abstraction**: Creating ports/adapters for things that will never change. YAGNI applies to architecture too.
 
 **Shared Kernel Bloat**: The `shared/` or `common/` package grows to contain half the codebase. If everything is shared, nothing is isolated.

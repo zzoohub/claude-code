@@ -1,8 +1,8 @@
 # Architecture Design Flow
 
-10-stage methodology for solopreneur architecture. Stage 0 (Intake) lives in SKILL.md because it uses `AskUserQuestion`. This file covers stages 1-9.
+10-stage methodology for software architecture. Stage 0 (Auto-Classification) lives in SKILL.md. This file covers stages 1-9.
 
-Stages 2, 3, and 4 co-evolve (Twin Peaks model) — domain modeling reveals new ASRs, pattern selection changes domain boundaries. One iteration is usually sufficient at solopreneur scale.
+Stages 2, 3, and 4 co-evolve (Twin Peaks model) — domain modeling reveals new ASRs, pattern selection changes domain boundaries. One iteration is usually sufficient.
 
 ADRs are written immediately when decisions occur, not batched at the end.
 
@@ -15,8 +15,8 @@ ADRs are written immediately when decisions occur, not batched at the end.
 ### Process
 
 1. **Validate the PRD**: Does it describe problems or solutions? If solutions, push back to the underlying problem.
-2. **Extract core user behaviors** as verbs (e.g., "searches", "uploads", "subscribes", "collaborates"). These become the action vocabulary for the domain model.
-3. **Quantify success criteria**: Every goal needs a number. "Fast" → "p99 < 500ms". "Reliable" → "99.5% uptime". "Affordable" → "< $50/month at 1K DAU".
+2. **Extract core behaviors** as verbs (e.g., "searches", "uploads", "subscribes", "processes", "compiles"). These become the action vocabulary for the domain model.
+3. **Quantify success criteria**: Every goal needs a number. "Fast" -> "p99 < 500ms". "Reliable" -> "99.5% uptime". "Lightweight" -> "< 50MB memory".
 4. **Identify system boundary**: What this system does / does not do / what external systems it connects to.
 
 ### Output
@@ -51,15 +51,15 @@ Organize ASRs into a utility tree that makes priorities explicit:
 
 ```
 System Utility
-├── Performance
-│   ├── "API response < 500ms p99" [H, M]
-│   └── "Search results < 1s" [M, H]
-├── Availability
-│   └── "99.5% uptime" [H, L]
-├── Security
-│   └── "No PII in logs" [H, L]
-└── Cost Efficiency
-    └── "< $50/month at 1K DAU" [H, M]
++-- Performance
+|   +-- "API response < 500ms p99" [H, M]
+|   +-- "Search results < 1s" [M, H]
++-- Availability
+|   +-- "99.5% uptime" [H, L]
++-- Security
+|   +-- "No PII in logs" [H, L]
++-- Cost Efficiency
+    +-- "< $X/month at target load" [H, M]
 ```
 
 Each scenario gets an **[Importance, Difficulty]** rating:
@@ -107,9 +107,9 @@ Write to `arch/context.md` §3 (ASR & Utility Tree).
 
 **What it answers**: What are the core domain concepts and their boundaries?
 
-### Solo Event Storming
+### Event Storming (Solo)
 
-Without a team workshop, extract domain events from the PRD:
+Extract domain events from the PRD:
 
 1. **Read the PRD and list domain events** as past-tense verbs: "UserRegistered", "OrderPlaced", "PaymentProcessed", "ContentPublished".
 2. **Group events by aggregate** — which entity's state changed?
@@ -147,7 +147,7 @@ Write to `arch/context.md` §4 (Domain Model).
 
 ### System Pattern Selection
 
-Default: **Modular Monolith** — gives domain separation without deployment overhead. Solo developer maintaining three microservices pays overhead for organizational isolation that doesn't exist.
+Default: **Modular Monolith** — gives domain separation without deployment overhead.
 
 Escalate when:
 - **CQRS**: Read/write ratio > 10:1 or fundamentally different read/write models
@@ -161,7 +161,7 @@ Read `references/service-architecture.md` for internal service structure decisio
 
 | If PRD requires... | Pattern | Key characteristics |
 |---|---|---|
-| Simple LLM call with structured output | Direct API | Zod/Pydantic schema validation, retry logic |
+| Simple LLM call with structured output | Direct API | Schema validation, retry logic |
 | Knowledge base Q&A | RAG | Chunking pipeline, vector store, retrieval strategy |
 | User-facing AI assistant | Copilot | Streaming, conversation history, context window management |
 | Multi-step task execution | Agent | Tool orchestration, durable execution, safety boundaries |
@@ -171,7 +171,7 @@ Real AI systems often combine patterns — a copilot typically needs RAG + strea
 
 ### ATAM Gate
 
-**Architecture Tradeoff Analysis Method** — simplified for solo use.
+**Architecture Tradeoff Analysis Method** — simplified.
 
 For every **[H,H] ASR** from stage 2:
 
@@ -185,7 +185,7 @@ For every **[H,H] ASR** from stage 2:
 If a [H,H] ASR has no satisfactory pattern:
 - Revisit the utility tree — is the importance/difficulty rating correct?
 - Consider hybrid patterns
-- If still unsatisfied: document the best-effort pattern and its gaps in `arch/design.md` §1, add to `arch/decisions.md` Risk Register as high-impact risk, and confirm with the user via `AskUserQuestion` before proceeding
+- If still unsatisfied: document the best-effort pattern and its gaps in `arch/design.md` §1, add to `arch/decisions.md` Risk Register as high-impact risk
 
 ### Output
 
@@ -193,7 +193,7 @@ Write to `arch/design.md` §1 (Patterns). Write ADRs for pattern decisions to `a
 
 ---
 
-## Twin Peaks: Stages 2 ↔ 3 ↔ 4
+## Twin Peaks: Stages 2 <-> 3 <-> 4
 
 These three stages co-evolve iteratively:
 
@@ -201,13 +201,11 @@ These three stages co-evolve iteratively:
 - **Pattern selection (4) changes domain boundaries (3)**: Choosing CQRS splits a bounded context into read and write sides.
 - **ASR refinement (2) constrains patterns (4)**: Tightening a latency requirement eliminates certain patterns.
 
-Example: modeling a collaboration domain (Stage 3) reveals "members must see edits within 2 seconds" — a new real-time ASR (Stage 2) that forces evaluating WebSocket vs SSE (Stage 4).
-
-At solopreneur scale, one iteration through stages 2→3→4→(back to 2 if needed) is usually sufficient. Don't over-iterate — move to stage 5 once the ATAM gate passes.
+One iteration through stages 2->3->4->(back to 2 if needed) is usually sufficient. Don't over-iterate — move to stage 5 once the ATAM gate passes.
 
 ---
 
-## Stage 5 — Component Design & Stack
+## Stage 5 — Component Design
 
 **What it answers**: What are the concrete components and how do they connect?
 
@@ -216,7 +214,7 @@ At solopreneur scale, one iteration through stages 2→3→4→(back to 2 if nee
 Domain never depends on infrastructure. This is non-negotiable for testability and changeability.
 
 ```
-[Driving Adapters] → [Ports] → [Domain] ← [Ports] ← [Driven Adapters]
+[Driving Adapters] -> [Ports] -> [Domain] <- [Ports] <- [Driven Adapters]
    (HTTP, CLI)                                        (DB, APIs, Queue)
 ```
 
@@ -224,6 +222,23 @@ For each bounded context:
 1. **Define ports** (interfaces the domain exposes/requires)
 2. **Define adapters** (concrete implementations of ports)
 3. **Verify domain independence** — domain module imports nothing from infrastructure
+
+Framework-neutral structure:
+
+```
+src/
++-- domain/           # Pure business logic — no imports from outside
+|   +-- models/       # Entities, value objects, domain errors
+|   +-- services/     # Domain services (orchestrate domain logic)
+|   +-- ports/        # Interfaces (driven ports)
++-- application/      # Use cases — orchestrate domain + ports
+|   +-- use-cases/
++-- adapters/         # Infrastructure implementations
+|   +-- http/         # Driving adapter: HTTP handlers
+|   +-- persistence/  # Driven adapter: repositories
+|   +-- external/     # Driven adapter: third-party API clients
++-- config/           # Wiring: dependency injection, app bootstrap
+```
 
 ### AI Components
 
@@ -233,17 +248,10 @@ For each bounded context:
 | Embedding Pipeline | Chunking, embedding, vector store writes | Heavy I/O, different scaling profile |
 | Eval Pipeline | Quality measurement, regression detection | Runs offline, different lifecycle |
 
-### Stack Validation
-
-Confirm the auto-decided stack from stage 0 fits the chosen patterns. If a pattern requires capabilities the default stack doesn't provide, override as an ADR.
-
-Read `references/stack-templates.md` for full stack details.
-Read `references/cloudflare-platform.md` for platform capabilities.
-
 ### Container Diagram
 
 Produce a C4 Level 2 container diagram in D2. Show:
-- Runtime containers (Workers, containers, databases)
+- Runtime containers (services, databases, queues)
 - Communication protocols between them
 - External system integrations
 
@@ -259,12 +267,24 @@ Write to `arch/design.md` §2 (Components).
 
 ### Storage Strategy
 
-PostgreSQL (Neon) is the default. For each data store, document:
+Choose storage type based on data characteristics, not convention:
+
+| Data Characteristic | Storage Type | Examples |
+|---|---|---|
+| Structured, relational, ACID needed | Relational DB (PostgreSQL, MySQL) | Core domain data, transactions |
+| High-volume key-value access | Key-value store (Redis, DynamoDB) | Sessions, caches, counters |
+| Document-oriented, schema-flexible | Document DB (MongoDB, CouchDB) | Content, configurations |
+| Time-series, append-heavy | Time-series DB (InfluxDB, TimescaleDB) | Metrics, logs, IoT sensor data |
+| Unstructured binary | Object/blob storage (S3, GCS) | Files, media, backups |
+| Vector similarity search | Vector store (pgvector, dedicated) | Embeddings, semantic search |
+| Graph relationships | Graph DB (Neo4j, DGraph) | Social networks, knowledge graphs |
+
+For each data store, document:
 - What it holds
-- Why this storage type (relational, document, vector, KV, blob)
+- Why this storage type
 - Consistency model (strong, eventual, session)
 
-**Versioned migrations are mandatory** — no manual schema changes in production.
+**Versioned migrations are mandatory** for relational databases — no manual schema changes in production.
 
 ### AI Data
 
@@ -296,15 +316,15 @@ Write to `arch/design.md` §3 (Data).
 
 ### CI/CD Pipeline
 
-Minimum gates: **test → lint → security scan → build → smoke test → deploy**.
+Minimum gates: **test -> lint -> security scan -> build -> smoke test -> deploy**.
 
 No manual deployment steps. Everything in the pipeline is reproducible.
 
 ### Cost Estimation
 
-Estimate at two traffic levels:
+Estimate at two traffic levels relevant to the system:
 
-| Component | Launch (~100 DAU) | Growth (~1K DAU) |
+| Component | Baseline (lower load) | Growth (higher load) |
 |---|---|---|
 | Compute | ... | ... |
 | Database | ... | ... |
@@ -312,16 +332,13 @@ Estimate at two traffic levels:
 | Third-party APIs | ... | ... |
 | **Total** | ... | ... |
 
-Flag anything that costs money while idle. Prefer scale-to-zero.
+Flag anything that costs money while idle.
 
 ### AI Ops
 
 - **Model version date-pinning**: Never use "latest" — pin to specific model version dates
 - **Cost alerting**: Alert at 80% of the cost ceiling from stage 2 ASRs
 - **Fallback models**: Define cheaper fallback when primary model is unavailable or over budget
-
-Read `references/cloudflare-platform.md` for platform deployment patterns.
-Read `references/cost-reference.md` for pricing data.
 
 ### Output
 
@@ -364,15 +381,13 @@ These are the immune system of your architecture — they prevent silent erosion
 - "p99 latency > 500ms over 10 minutes" (latency SLO)
 - "Successful login rate < 95% over 15 minutes" (business SLO)
 
-Day 1 priorities: error tracking (Sentry), structured logging (JSON to stdout), health checks, uptime monitoring.
-
-Read `references/cloudflare-platform.md` § Observability Guide for platform-specific implementation.
+Day 1 priorities: error tracking, structured logging (JSON to stdout), health checks, uptime monitoring.
 
 ### Security
 
 Defense in depth — never rely on a single security control:
 
-1. **Edge**: Rate limiting, WAF, DDoS protection (Cloudflare)
+1. **Edge**: Rate limiting, WAF, DDoS protection
 2. **Transport**: TLS 1.3
 3. **Authentication**: Token validation at gateway/middleware
 4. **Authorization**: Permission check at service/handler level
@@ -412,13 +427,11 @@ Verify your design doesn't contain these known failure modes:
 
 - **N+1 queries**: ORM loads list then lazily loads relations one-by-one. Specify eager loading or dataloader patterns in the design.
 - **Thundering herd**: Cache expires, all requests hit DB simultaneously. Specify stampede prevention (lock-based recomputation, stale-while-revalidate).
-- **Distributed monolith**: "Microservices" that must be deployed together or share databases. If services can't deploy independently, they're a distributed monolith.
-- **Retry storm**: Nested retry logic causes exponential amplification. Define retry budgets at architecture level — outermost caller retries, inner services fail fast.
+- **Distributed monolith**: "Microservices" that must be deployed together or share databases. Worse than a monolith.
+- **Retry storm**: Nested retry logic causes exponential amplification. Define retry budgets at architecture level.
 - **Cold start cascade**: All serverless instances scale to zero, traffic burst requires simultaneous cold starts. Document minimum instances and warm-up strategy.
 
 ### Design Principles as Evaluation Criteria
-
-Use these principles to evaluate the design, not as prescriptions to follow blindly:
 
 - **Design for failure**: Every integration point has a documented failure mode and recovery path
 - **Make the wrong thing hard**: Type systems, schema validation, compile-time safety over runtime checks
@@ -459,14 +472,19 @@ Use the Y-statement format for consistency:
 
 ### Minimum ADRs
 
-Every design must record decisions for at least:
+**Always record (all software types):**
 1. System architecture pattern
 2. Service architecture pattern
-3. Backend stack
-4. Frontend stack
-5. Database
-6. Auth approach
-7. AI integration approach
+3. Primary data storage approach
+4. Communication style (sync/async/event-driven)
+
+**Record when applicable:**
+- AI integration approach — when AI features exist
+- Authentication/authorization — when users exist
+- API design philosophy — when external consumers exist
+- Offline/sync strategy — when offline capability is needed
+- Distribution/packaging — for libraries, CLIs, desktop apps
+- Concurrency model — for high-throughput or real-time systems
 
 ### Risk Register
 
@@ -492,7 +510,7 @@ Every design must record decisions for at least:
 
 ### Conway's Law as Growth Risk
 
-Architecture built by a solo developer mirrors solo communication structure — which is optimal for one person. If the team grows, the architecture may need to evolve to match team boundaries. Document which module boundaries could become service boundaries if team structure demands it.
+Architecture built by a small team mirrors that team's communication structure — which is optimal for the current team size. If the team grows, the architecture may need to evolve to match team boundaries. Document which module boundaries could become service boundaries if team structure demands it.
 
 ### Output
 
