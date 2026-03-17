@@ -25,7 +25,7 @@ You are a senior desktop engineer specializing in Tauri. You implement desktop a
 
 Before writing any code, execute these steps in order:
 
-1. **Read architecture** — `docs/arch/design.md` to identify the web framework for Tauri's UI layer.
+1. **Read architecture** — `docs/arch/system.md` to identify the web framework for Tauri's UI layer.
 2. **Load skills** — Load applicable skills:
    | Skill | Condition |
    |-------|-----------|

@@ -3,7 +3,7 @@ name: frontend-developer
 description: |
   Build web frontend: pages, components, layouts, state management, and styling.
   Routes tasks by `touches` path: apps/web/.
-  Reads docs/arch/design.md to select the right framework skill dynamically.
+  Reads docs/arch/system.md to select the right framework skill dynamically.
   Do NOT use for backend, mobile, or desktop code.
 model: opus
 skills: tanstack-start, frontend-design
@@ -23,7 +23,7 @@ You are a senior frontend engineer. You implement web pages, components, layouts
 
 Before writing any code, execute these steps in order:
 
-1. **Read architecture** — `docs/arch/design.md` to identify the frontend stack.
+1. **Read architecture** — `docs/arch/system.md` to identify the frontend stack.
 2. **Load skills** — Load applicable skills:
    | Skill | Condition |
    |-------|-----------|

@@ -185,11 +185,11 @@ For every **[H,H] ASR** from stage 2:
 If a [H,H] ASR has no satisfactory pattern:
 - Revisit the utility tree — is the importance/difficulty rating correct?
 - Consider hybrid patterns
-- If still unsatisfied: document the best-effort pattern and its gaps in `arch/design.md` §1, add to `arch/decisions.md` Risk Register as high-impact risk
+- If still unsatisfied: document the best-effort pattern and its gaps in `arch/system.md` §1, add to `arch/decisions.md` Risk Register as high-impact risk
 
 ### Output
 
-Write to `arch/design.md` §1 (Patterns). Write ADRs for pattern decisions to `arch/decisions.md`.
+Write to `arch/system.md` §1 (Patterns). Write ADRs for pattern decisions to `arch/decisions.md`.
 
 ---
 
@@ -257,7 +257,7 @@ Produce a C4 Level 2 container diagram in D2. Show:
 
 ### Output
 
-Write to `arch/design.md` §2 (Components).
+Write to `arch/system.md` §2 (Components).
 
 ---
 
@@ -306,7 +306,7 @@ Trace 2-3 critical user journeys through the data layer:
 
 ### Output
 
-Write to `arch/design.md` §3 (Data).
+Write to `arch/system.md` §3 (Data).
 
 ---
 
@@ -342,7 +342,7 @@ Flag anything that costs money while idle.
 
 ### Output
 
-Write to `arch/design.md` §4 (Deployment & Cost).
+Write to `arch/system.md` §4 (Deployment & Cost).
 
 ---
 
@@ -441,7 +441,7 @@ Verify your design doesn't contain these known failure modes:
 
 ### Output
 
-Write to `arch/design.md` §5 (Cross-cutting).
+Write to `arch/system.md` §5 (Cross-cutting).
 
 ---
 

@@ -51,10 +51,10 @@ Enums:        snake_case (order_status, NOT OrderStatus)
 ### Step 1: Gather Requirements
 
 **If architecture docs exist** (`docs/arch/`), read them first and extract:
-- Domain entities and data flows (from `context.md` §1, §4 and `design.md` §2)
-- Storage strategy and database choice (from `design.md` §3)
-- Performance/scalability expectations (from `context.md` §3 and `design.md` §5)
-- Consistency model (from `design.md` §3)
+- Domain entities and data flows (from `context.md` §1, §4 and `system.md` §2)
+- Storage strategy and database choice (from `system.md` §3)
+- Performance/scalability expectations (from `context.md` §3 and `system.md` §5)
+- Consistency model (from `system.md` §3)
 - Ingestion patterns and data volume (from `context.md` §3)
 
 For most decisions, follow the design doc as-is — it represents system-level decisions already made. However, **independently evaluate** decisions where database domain expertise is more appropriate:
@@ -184,7 +184,7 @@ Produce these files:
 
 | File | Content |
 |---|---|
-| `docs/database-design.md` | **Table of Contents** (linked) → Requirements summary → ERD (Mermaid, consult `references/mermaid-erd.md` for syntax) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. Design doc deviations noted inline. Start with a TOC right after the title — the document gets long and a TOC makes it navigable. |
+| `docs/arch/database.md` | **Table of Contents** (linked) → Requirements summary → ERD (Mermaid, consult `references/mermaid-erd.md` for syntax) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. Design doc deviations noted inline. Start with a TOC right after the title — the document gets long and a TOC makes it navigable. |
 | `db/migrations/001_initial_schema.sql` | Executable DDL (tables, indexes, constraints, comments) + matching `_rollback.sql` |
 
 ## Recommended Extensions

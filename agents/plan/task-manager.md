@@ -21,7 +21,7 @@ Read these before generating tasks:
 - `docs/prd/prd.md` — dev order, feature overview, scope
 - `docs/prd/features/*.md` — detailed requirements per feature
 - `docs/arch/` — architecture decisions (stack, component boundaries, patterns)
-- `docs/database-design.md` — data model (if exists)
+- `docs/arch/database.md` — data model (if exists)
 - `docs/ux/` — user flows, wireframes, screen specs (if exists)
 - `docs/api/` — OpenAPI specs, API contracts (if exists)
 

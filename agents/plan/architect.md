@@ -74,7 +74,7 @@ When the user explicitly asks for database design only:
 
 When the user wants to update an existing architecture for new features or changed requirements:
 
-1. Read existing `docs/arch/` and `docs/database-design.md`.
+1. Read existing `docs/arch/` (includes `database.md`).
 2. Read the new/changed requirements.
 3. Apply changes incrementally — update affected sections, add new ADRs.
 4. If schema changes are needed, create new migration files (never modify existing ones).
@@ -85,7 +85,7 @@ When the user wants to update an existing architecture for new features or chang
 
 When the user asks to review an architecture:
 
-1. Read all `docs/arch/` files and `docs/database-design.md`.
+1. Read all `docs/arch/` files (includes `database.md`).
 2. Evaluate against:
    - ASR coverage (are all quality attributes addressed?)
    - Component cohesion and coupling
@@ -106,9 +106,9 @@ All documents are saved as files. Never dump full documents into the conversatio
 
 ```
 docs/arch/context.md          # Problem, ASRs, domain model
-docs/arch/design.md           # Patterns, components, data, deployment
+docs/arch/system.md            # Patterns, components, data, deployment
 docs/arch/decisions.md         # ADRs, risk register, tech debt
-docs/database-design.md       # DB schema design (tables, indexes, constraints)
+docs/arch/database.md          # DB schema design (tables, indexes, constraints)
 db/migrations/                 # Migration files (numbered, timestamped)
 ```
 
@@ -116,9 +116,9 @@ db/migrations/                 # Migration files (numbered, timestamped)
 - The file should always reflect the latest state.
 - **Line limits:** Before updating, check the file's line count. If it exceeds the limit, first consolidate — merge redundant sections, tighten wording, remove resolved items — then apply changes.
   - `context.md`: **400 lines**
-  - `design.md`: **600 lines**
+  - `system.md`: **600 lines**
   - `decisions.md`: **400 lines**
-  - `database-design.md`: **500 lines**
+  - `database.md`: **500 lines**
 
 ### What You Return to the Main Agent
 

@@ -3,7 +3,7 @@ name: backend-developer
 description: |
   Build backend services: API endpoints, domain logic, database queries, and background workers.
   Routes tasks by `touches` path: apps/api/, apps/worker/, db/.
-  Reads docs/arch/design.md to select the right framework skill dynamically.
+  Reads docs/arch/system.md to select the right framework skill dynamically.
   Do NOT use for frontend, mobile, or desktop code.
 model: opus
 skills: postgresql
@@ -23,7 +23,7 @@ You are a senior backend engineer. You implement API endpoints, domain logic, da
 
 Before writing any code, execute these steps in order:
 
-1. **Read architecture** — `docs/arch/design.md` to identify the backend stack.
+1. **Read architecture** — `docs/arch/system.md` to identify the backend stack.
 2. **Load skills** — Load applicable skills:
    | Skill | Condition |
    |-------|-----------|
@@ -32,7 +32,7 @@ Before writing any code, execute these steps in order:
    | `hono-hexagonal` | TypeScript (Hono) stack |
 3. **Read CLAUDE.md** — Follow API Workflow and API Conventions.
 4. **Read task context** — `tasks/features/{feature}.md` for acceptance criteria.
-5. **Read database design** — If the task touches `db/`, read `docs/database-design.md`.
+5. **Read database design** — If the task touches `db/`, read `docs/arch/database.md`.
 
 ## Your Domain
 

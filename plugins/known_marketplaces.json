@@ -41,7 +41,7 @@
       "repo": "pulumi/agent-skills"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/pulumi-agent-skills",
-    "lastUpdated": "2026-03-17T16:36:49.462Z",
+    "lastUpdated": "2026-03-17T17:17:28.325Z",
     "autoUpdate": true
   },
   "neon": {
@@ -50,7 +50,7 @@
       "repo": "neondatabase-labs/ai-rules"
     },
     "installLocation": "/Users/zzoo/.claude/plugins/marketplaces/neon",
-    "lastUpdated": "2026-03-17T16:30:11.161Z",
+    "lastUpdated": "2026-03-17T17:11:22.492Z",
     "autoUpdate": true
   }
 }
