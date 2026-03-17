@@ -6,7 +6,7 @@ description: |
   Tauri is the fixed stack. UI layer dynamically loads the same web framework skill as frontend-developer.
   Do NOT use for backend, web, or mobile code.
 model: opus
-skills: design-system
+skills:
 color: teal
 metadata:
   author: engineering
@@ -27,11 +27,12 @@ Before writing any code, execute these steps in order:
 2. **Load UI framework skill** — Based on the web framework in `docs/arch/design.md`, load the appropriate skill for the webview UI:
    - **SolidJS (TanStack Start)** → Load `solidjs` skill
    - **Next.js / React** → Load `vercel-composition-patterns` skill + `vercel-react-best-practices` skill
-3. **Read UX specs** — Read `docs/ux/ux-design.md` for global patterns, then `docs/ux/screens/{screen}.md` for the specific screen being implemented.
-4. **Read CLAUDE.md** — Follow any Desktop-specific conventions. Also reference Web Conventions for the UI layer.
-5. **Read task context** — Read the task's feature file (`tasks/features/{feature}.md`) for acceptance criteria.
+3. **Load supporting skills** — Load `design-system` (tokens, theming) skill. Load `i18n` skill if the project requires internationalization.
+4. **Read UX specs** — Read `docs/ux/ux-design.md` for global patterns, then `docs/ux/screens/{screen}.md` for the specific screen being implemented.
+5. **Read CLAUDE.md** — Follow any Desktop-specific conventions. Also reference Web Conventions for the UI layer.
+6. **Read task context** — Read the task's feature file (`tasks/features/{feature}.md`) for acceptance criteria.
 
-The `design-system` skill is always available. The web framework skill provides patterns for the Tauri webview layer.
+All skills are loaded dynamically in the boot sequence. The web framework skill provides patterns for the Tauri webview layer.
 
 ## Your Domain
 

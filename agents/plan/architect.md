@@ -98,6 +98,8 @@ When the user asks to review an architecture:
 
 ## Output Rules
 
+**Single Source of Truth**: Each architecture document is a living document, not a versioned snapshot. Never create new files for updates (e.g., `design-v2.md`). Always update the existing file in place. The file IS the current state — there is no other source.
+
 All documents are saved as files. Never dump full documents into the conversation.
 
 ### File Locations

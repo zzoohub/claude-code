@@ -6,7 +6,7 @@ description: |
   Reads docs/arch/design.md to select the right framework skill dynamically.
   Do NOT use for backend, mobile, or desktop code.
 model: opus
-skills: design-system, frontend-design, i18n
+skills: frontend-design
 color: purple
 metadata:
   author: engineering
@@ -27,11 +27,12 @@ Before writing any code, execute these steps in order:
 2. **Load framework skill** — Based on the stack, load the appropriate skill:
    - **SolidJS (TanStack Start)** → Load `solidjs` skill
    - **Next.js** → Load `vercel-composition-patterns` skill + `vercel-react-best-practices` skill
-3. **Read UX specs** — Read `docs/ux/ux-design.md` for global patterns, then `docs/ux/screens/{screen}.md` for the specific screen being implemented.
-4. **Read CLAUDE.md** — Follow the project's Web Workflow, FSD Import Rules, and Web Conventions sections.
-5. **Read task context** — Read the task's feature file (`tasks/features/{feature}.md`) for acceptance criteria.
+3. **Load supporting skills** — Load `design-system` (tokens, theming) and `i18n` (internationalization patterns) skills.
+4. **Read UX specs** — Read `docs/ux/ux-design.md` for global patterns, then `docs/ux/screens/{screen}.md` for the specific screen being implemented.
+5. **Read CLAUDE.md** — Follow the project's Web Workflow, FSD Import Rules, and Web Conventions sections.
+6. **Read task context** — Read the task's feature file (`tasks/features/{feature}.md`) for acceptance criteria.
 
-The `design-system`, `frontend-design`, and `i18n` skills are always available. The framework skill provides framework-specific patterns.
+The `frontend-design` skill is always available. Framework, design-system, and i18n skills are loaded in the boot sequence above.
 
 ## Your Domain
 

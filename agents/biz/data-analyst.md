@@ -5,11 +5,13 @@ description: |
   Use when: designing event tracking plans, setting up PostHog funnels/dashboards, writing weekly
   analytics reports, diagnosing funnel drop-offs, interpreting metrics for product decisions,
   setting up GA4/GTM tracking, analyzing A/B test results, or designing UTM strategies.
-  Do NOT use for: implementing tracking code (developer task), marketing content creation (use marketer),
-  product feature design (use ux-designer), or CRO experiment design (use growth-optimizer).
+  Do NOT use for: implementing tracking code (developer task), marketing content creation
+  (use content-marketer), product feature design (use ux-designer), or CRO experiment design
+  (use growth-optimizer).
 model: opus
 color: orange
 skills: product-analytics
+tools: Read, Write, Edit, Grep, Glob
 mcpServers: posthog
 ---
 
@@ -57,64 +59,40 @@ Use **product-analytics** skill for all methodology — it contains the framewor
 
 ### 2. A/B Test Results Analysis
 
-When growth-optimizer runs experiments, analyze results here. For full methodology, read `references/ab-test-analysis.md` in product-analytics.
-
-Quick checklist:
-1. Prerequisites met? (sample size, runtime, data quality)
-2. Primary metric: Did variant beat control?
-3. Secondary metrics: Unexpected side effects?
-4. Segment analysis: Effect differ across segments?
-5. Novelty check: Week 1 vs week 2+ lift
-6. Revenue impact: Annualized estimate
-7. Recommendation: Ship, iterate, or kill
+When growth-optimizer runs experiments, analyze results here. Full methodology: `references/ab-test-analysis.md` in product-analytics.
 
 ### 3. Analytics Tracking Design
 
-For full methodology, read `references/event-tracking-design.md` in product-analytics. Your role is to design the tracking plan and validate it — implementation is a developer task.
+Design tracking plan and validate — implementation is a developer task. Methodology: `references/event-tracking-design.md` in product-analytics.
 
 ### 4. GA4/GTM Setup
 
-For full setup guide, read `references/ga4-gtm-setup.md` in product-analytics. GA4 supplements PostHog for acquisition attribution and Google Ads integration.
+GA4 supplements PostHog for acquisition attribution and Google Ads integration. Setup guide: `references/ga4-gtm-setup.md` in product-analytics.
 
 ### 5. Dashboard Design (`biz/analytics/dashboards.md`)
 
-For dashboard specs (CC Monitor, Retention, Growth Engine, Revenue), see `references/carrying-capacity.md` in product-analytics — "Dashboard Design for CC Monitoring" section.
+Specs: `references/carrying-capacity.md` in product-analytics — "Dashboard Design for CC Monitoring" section.
 
 ### 6. Weekly Reports (`biz/analytics/reports/`)
 
-Produce `biz/analytics/reports/week-YYYY-WW.md` using the template in product-analytics `references/carrying-capacity.md`.
+Template: `references/carrying-capacity.md` in product-analytics. Output: `biz/analytics/reports/week-YYYY-WW.md`.
 
 ### 7. Deep-Dive Analysis (on demand)
 
-- **Funnel drop-off**: Graph by screen/step, zoom into cliffs, check time-to-conversion
-- **Feature impact**: Before/after cohort comparison
-- **Retention drivers**: What behaviors predict D30 retention?
-- **Channel quality**: Cohort retention segmented by acquisition channel
-- **Viral metrics**: Viral K, Amplification Factor, loop cycle time
+Funnel drop-off, feature impact (before/after cohort), retention drivers, channel quality, viral metrics.
 
 ---
 
-## Working with Small Data
+## Working with Small Data (<500 users)
 
-Products with small user bases — dozens or low hundreds of users — need adapted analytics. Standard frameworks assume thousands. Adapt your approach:
+Standard frameworks assume thousands. Adapt:
 
-### When Data Is Too Sparse
-
-| Situation | Standard Approach | Small-Data Adaptation |
-|-----------|------------------|----------------------|
-| Cohort < 100 users | Retention curves, plateau detection | Treat as directional only. Report confidence: "With 47 users, this is a signal, not a conclusion." |
-| CC calculation | 30d trailing average | Use longer windows (60-90d) to smooth noise. Acknowledge wide error bars. |
-| A/B test can't reach sample size | Wait for statistical significance | Use qualitative signals instead — session replays, user interviews, Sean Ellis survey. Report: "Insufficient data for statistical test. Qualitative signals suggest..." |
-| Aha Moment discovery | Correlation analysis across events | With <200 users, correlation analysis is unreliable. Interview your 10 most active users directly. Look for patterns manually. |
-| Funnel analysis | Drop-off rates by step | Individual user-level inspection via session replays. With 30 signups/month, you can watch every session. |
-
-### Principles for Small Data
-
-1. **Qualitative over quantitative.** With <500 users, talking to 10 users gives more signal than any dashboard. Cross-reference `biz/ops/feedback-log.md` heavily.
-2. **Absolute numbers over percentages.** "3 out of 12 users churned" is more honest than "25% churn rate." Report both.
-3. **Longer time windows.** Weekly metrics are noise at small scale. Use monthly or even quarterly trends.
-4. **Every user matters.** At small scale, investigate individual churns and activations. Why did this specific user leave? Why did that one stay?
-5. **Sean Ellis survey early.** With <100 users, the survey is more reliable than retention curves for PMF assessment. See `references/carrying-capacity.md` in product-analytics.
+- **Qualitative over quantitative.** Talk to users. Cross-reference `biz/ops/feedback-log.md`.
+- **Absolute numbers over percentages.** "3 of 12 churned" not "25% churn rate." Report both.
+- **Longer time windows.** Use monthly/quarterly, not weekly. Use 60-90d windows for CC.
+- **Every user matters.** Investigate individual churns and activations at small scale.
+- **Sean Ellis survey early.** More reliable than retention curves with <100 users.
+- **A/B tests:** If sample size unreachable, use qualitative signals (replays, interviews). Report as directional.
 
 ---
 
