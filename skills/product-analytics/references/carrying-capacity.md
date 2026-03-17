@@ -331,7 +331,7 @@ CC measures product health (user retention). It doesn't measure revenue health. 
 | CC rising + revenue rising | Healthy | Keep going. |
 | Both declining | Urgent | Fix retention first (see Kill/Keep/Scale above). |
 
-For solopreneurs without paid acquisition, track your **organic ratio** (organic signups / total signups). Target > 70%. If it's high and CC is rising, your business is fundamentally healthy.
+For products without paid acquisition, track your **organic ratio** (organic signups / total signups). Target > 70%. If it's high and CC is rising, your business is fundamentally healthy.
 
 ---
 
