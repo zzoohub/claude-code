@@ -11,7 +11,7 @@ implementing that feature.
 - The PRD captures the full vision and serves as the long-term source of truth
 - Feature specs answer: "What exactly does this feature do, and how should it work?"
 - Separation keeps each file small enough for one Claude Code session to consume
-- Tasks live in `TASKS.md` (root level), not in feature files — clean separation of spec vs progress
+- Tasks live in `tasks/` directory (root level), not in feature files — clean separation of spec vs progress
 
 ---
 

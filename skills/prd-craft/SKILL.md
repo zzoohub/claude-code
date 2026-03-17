@@ -43,7 +43,10 @@ docs/prd/
  ├─ prd.md                 # Vision + requirements + dev order (~300 lines)
  └─ features/
      └─ [feature].md       # Feature spec: requirements, journeys, decisions          
-TASKS.md                   # Root-level progress tracking (all features)
+tasks/
+│ ├─ backlog.md            # All planned tasks by priority/feature
+│ ├─ active.md             # Currently in progress
+│ └─ done.md               # Completed tasks
 ```
 
 ### Role of Each File
@@ -52,7 +55,9 @@ TASKS.md                   # Root-level progress tracking (all features)
 |------|----------|-----------|---------------|
 | `prd.md` | Vision, constraints, dev order, success metrics, scope | Every session start | Rarely after initial creation |
 | `features/*.md` | Feature-level requirements, user journeys, technical decisions | When working on that feature | When requirements change |
-| `TASKS.md` | Task checklists grouped by feature, progress state | Every session start | Every task completion |
+| `tasks/backlog.md` | Planned tasks grouped by priority and feature | Every session start | When tasks are added or reprioritized |
+| `tasks/active.md` | Currently in-progress tasks | Every session start | When starting/finishing tasks |
+| `tasks/done.md` | Completed tasks with dates | When reviewing progress | When tasks are completed |
 
 ## Step-by-Step PRD Creation Process
 
@@ -214,37 +219,56 @@ Each feature file contains:
 - Technical decisions specific to this feature
 - Edge cases and error states
 
-### Phase 4: Generate `TASKS.md`
+### Phase 4: Generate `tasks/`
 
-Create `TASKS.md` at the project root. This is the single source of truth for
-progress tracking across all features.
+Create the `tasks/` directory at the project root with three files.
+
+**tasks/backlog.md** — all planned tasks, organized by priority and feature:
 
 ```markdown
-# Tasks
+# Backlog
 
-## auth
+## 🔴 High Priority
+
+### auth
 - [ ] Supabase project setup
 - [ ] Google OAuth integration
 - [ ] GitHub OAuth integration
 - [ ] Session expiry handling
 - [ ] Protected route middleware
 
-## billing
+### billing
 - [ ] Stripe integration
 - [ ] Subscription plan setup
 - [ ] Webhook handling
 
-## feed
+## 🟡 Medium Priority
+
+### feed
 - [ ] Feed API
 - [ ] Infinite scroll
 ```
 
-**Rules for TASKS.md:**
-- One section per feature, matching `docs/prd/features/` filenames
+**tasks/active.md** — empty initially:
+
+```markdown
+# Active
+```
+
+**tasks/done.md** — empty initially:
+
+```markdown
+# Done
+```
+
+**Rules for `tasks/`:**
+- `backlog.md`: one subsection (`###`) per feature, matching `docs/prd/features/` filenames
+- Group features under priority headings (`## 🔴 High` / `## 🟡 Medium` / `## 🟢 Low`)
 - Tasks ordered by dependency (do top-to-bottom)
 - Each task = PR-sized unit (completable in one Claude Code session)
-- Check off (`- [x]`) after each task is verified and committed
 - Feature sections ordered by dev order from `prd.md`
+- When starting a task: move from `backlog.md` → `active.md`
+- When completing a task: mark `[x]`, add completion date, move to `done.md`
 
 ---
 
@@ -267,7 +291,7 @@ questions — then apply changes.
 
 - `prd.md`: **400 lines**
 - `features/*.md`: **200 lines** per feature
-- `TASKS.md`: no hard limit (grows with project)
+- `tasks/*.md`: no hard limit per file (grows with project)
 
 ## Iteration & Feedback
 
@@ -277,4 +301,4 @@ After presenting the initial draft:
 - When the user provides feedback, update the specific section and confirm
 - If feedback reveals a gap in discovery, update Problem and Target Users
   first — then cascade through downstream sections
-- When requirements change, update both the feature spec AND TASKS.md
+- When requirements change, update both the feature spec AND `tasks/backlog.md`

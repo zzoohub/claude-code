@@ -35,7 +35,7 @@ Do NOT make any code changes. Do NOT start implementation. Your only job right n
 4. Interactions have edge cases. Every user-visible interaction has edge cases: double-click, navigate-away-mid-action, slow connection, stale state, back button. Map them.
 5. Observability is scope, not afterthought. New dashboards, alerts, and runbooks are first-class deliverables, not post-launch cleanup items.
 6. Diagrams are mandatory. No non-trivial flow goes undiagrammed. ASCII art for every new data flow, state machine, processing pipeline, dependency graph, and decision tree.
-7. Everything deferred must be written down. Vague intentions are lies. TASKS.md or it doesn't exist. <!-- # LOCAL: was TODOS.md -->
+7. Everything deferred must be written down. Vague intentions are lies. `tasks/backlog.md` or it doesn't exist. <!-- # LOCAL: was TODOS.md -->
 8. Optimize for the 6-month future, not just today. If this plan solves today's problem but creates next quarter's nightmare, say so explicitly.
 9. You have permission to say "scrap it and do this instead." If there's a fundamentally better approach, table it. I'd rather hear it now.
 
@@ -66,11 +66,11 @@ git stash list                                 # Any stashed work
 grep -r "TODO\|FIXME\|HACK\|XXX" --include="*.ts" --include="*.tsx" --include="*.rs" --include="*.py" -l  # LOCAL: was --include="*.rb" --include="*.js"
 find . -name "*.ts" -o -name "*.tsx" -o -name "*.rs" -o -name "*.py" | head -20  # Recently touched files  # LOCAL: was find . -name "*.rb"
 ```
-Then read CLAUDE.md, TASKS.md, and any existing architecture docs. When reading TASKS.md, specifically: <!-- # LOCAL: was TODOS.md -->
+Then read CLAUDE.md, `tasks/backlog.md`, `tasks/active.md`, and any existing architecture docs. When reading `tasks/`, specifically: <!-- # LOCAL: was TODOS.md -->
 * Note any TODOs this plan touches, blocks, or unlocks
 * Check if deferred work from prior reviews relates to this plan
 * Flag dependencies: does this plan enable or depend on deferred items?
-* Map known pain points (from TASKS.md) to this plan's scope <!-- # LOCAL: was TODOS.md -->
+* Map known pain points (from `tasks/`) to this plan's scope <!-- # LOCAL: was TODOS.md -->
 
 Map:
 * What is the current system state?
@@ -391,8 +391,8 @@ Complete table of every method that can fail, every exception class, rescued sta
 ```
 Any row with RESCUED=N, TEST=N, USER SEES=Silent → **CRITICAL GAP**.
 
-### TASKS.md updates <!-- # LOCAL: was TODOS.md -->
-Present each potential TODO as its own individual AskUserQuestion. Never batch TODOs — one per question. Never silently skip this step. Use the following inline format for each TASKS.md entry: <!-- # LOCAL: was "Follow the format in .claude/skills/review/TODOS-format.md" -->
+### tasks/backlog.md updates <!-- # LOCAL: was TODOS.md -->
+Present each potential TODO as its own individual AskUserQuestion. Never batch TODOs — one per question. Never silently skip this step. Use the following inline format for each `tasks/backlog.md` entry: <!-- # LOCAL: was "Follow the format in .claude/skills/review/TODOS-format.md" -->
 
 ```
 ## [TASK_ID] One-line description
@@ -414,10 +414,10 @@ For each TODO, describe:
 * **Priority:** P1/P2/P3
 * **Depends on / blocked by:** Any prerequisites or ordering constraints.
 
-Then present options: **A)** Add to TASKS.md **B)** Skip — not valuable enough **C)** Build it now in this PR instead of deferring. <!-- # LOCAL: was TODOS.md -->
+Then present options: **A)** Add to `tasks/backlog.md` **B)** Skip — not valuable enough **C)** Build it now in this PR instead of deferring. <!-- # LOCAL: was TODOS.md -->
 
 ### Delight Opportunities (EXPANSION mode only)
-Identify at least 5 "bonus chunk" opportunities (<30 min each) that would make users think "oh nice, they thought of that." Present each delight opportunity as its own individual AskUserQuestion. Never batch them. For each one, describe what it is, why it would delight users, and effort estimate. Then present options: **A)** Add to TASKS.md as a vision item **B)** Skip **C)** Build it now in this PR. <!-- # LOCAL: was TODOS.md -->
+Identify at least 5 "bonus chunk" opportunities (<30 min each) that would make users think "oh nice, they thought of that." Present each delight opportunity as its own individual AskUserQuestion. Never batch them. For each one, describe what it is, why it would delight users, and effort estimate. Then present options: **A)** Add to `tasks/backlog.md` as a vision item **B)** Skip **C)** Build it now in this PR. <!-- # LOCAL: was TODOS.md -->
 
 ### Diagrams (mandatory, produce all that apply)
 1. System architecture
@@ -454,7 +454,7 @@ List every ASCII diagram in files this plan touches. Still accurate?
   | Dream state delta    | written                                     |
   | Error/rescue registry| ___ methods, ___ CRITICAL GAPS              |
   | Failure modes        | ___ total, ___ CRITICAL GAPS                |
-  | TASKS.md updates     | ___ items proposed                          |
+  | tasks/ updates       | ___ items proposed                          |
   | Delight opportunities| ___ identified (EXPANSION only)             |
   | Diagrams produced    | ___ (list types)                            |
   | Stale diagrams found | ___                                         |
