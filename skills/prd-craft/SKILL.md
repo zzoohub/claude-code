@@ -15,58 +15,57 @@ description: >
 
 # PRD Craft — Framework for Writing World-Class PRDs
 
-This skill codifies PRD writing principles from senior PMs at companies like
-Airbnb, Stripe, Linear, and Spotify — adapted for solopreneur workflows with
-Claude Code.
+A PRD defines what to build and why. It works for any product — tools, apps, games, libraries, services.
 
 ## Core Philosophy
 
 A PRD answers **WHAT are we building** and **WHY**. It does NOT answer HOW
-(that belongs in technical specs and design docs). A great PRD excites the team
-while maintaining rigor.
+(that belongs in technical specs and design docs).
 
 ### The 5 Qualities of an Excellent PRD
 
-1. **Problem-obsessed, not solution-obsessed** — The problem drives everything. A missing feature is never the problem; the pain caused by its absence is.
-2. **Quantified** — Every problem and goal has numbers. "Many users churn" → "23% of users churn within 7 days, costing ~$140K/month."
-3. **User-centered** — Every requirement maps back to a real user need. Requirements that exist "because stakeholder X asked" get challenged.
+1. **Problem-obsessed** — The problem drives everything. A missing feature is never the problem; the pain caused by its absence is.
+2. **Quantified** — Every problem and goal has numbers. "Slow" → "takes 10 minutes of manual work per run."
+3. **User-centered** — Every requirement maps back to a real need. Requirements without evidence get challenged.
 4. **Complete yet focused** — Covers the full vision with explicit scope boundaries.
-5. **Stands the test of time** — Focused on user problems and functional needs, not implementation. Requires minimal updates as design and engineering iterate.
+5. **Stands the test of time** — Focused on problems and functional needs, not implementation.
 
 ## Output Structure
-
-This skill produces three types of documents:
 
 ```
 docs/prd/
  ├─ product-brief.md       # Upstream (product-brief skill owns this)
  ├─ prd.md                 # Vision + requirements + dev order (~300 lines)
  └─ features/
-     └─ [feature].md       # Feature spec: requirements, journeys, decisions          
-tasks/
-│ ├─ backlog.md            # All planned tasks by priority/feature
-│ ├─ active.md             # Currently in progress
-│ └─ done.md               # Completed tasks
+     └─ [feature].md       # Feature spec: requirements, journeys, decisions
 ```
+
+**Every file is a single source of truth (SSOT).** If a file already exists, update it in place — never create duplicates. The file should always reflect the latest state.
 
 ### Role of Each File
 
 | File | Contains | When Read | When Modified |
 |------|----------|-----------|---------------|
-| `prd.md` | Vision, constraints, dev order, success metrics, scope | Every session start | Rarely after initial creation |
+| `prd.md` | Vision, constraints, dev order, success metrics, scope | Every session start | When direction, scope, or priorities change |
 | `features/*.md` | Feature-level requirements, user journeys, technical decisions | When working on that feature | When requirements change |
-| `tasks/backlog.md` | Planned tasks grouped by priority and feature | Every session start | When tasks are added or reprioritized |
-| `tasks/active.md` | Currently in-progress tasks | Every session start | When starting/finishing tasks |
-| `tasks/done.md` | Completed tasks with dates | When reviewing progress | When tasks are completed |
+
+## Complexity Calibration
+
+Scale document depth to your product's complexity.
+
+**Signals:** users (yourself / team / external), scope (single feature / multi-feature), state (local / distributed), longevity (experiment / long-term)
+
+- **Lightweight** (personal tool, single-purpose CLI, experiment): prd.md 100-150 lines, feature specs optional, success signal 1-2 sentences
+- **Moderate** (team tool, multi-feature app): prd.md 200-300 lines, feature specs per feature, bullet-point metrics
+- **Large** (external users, complex state, many features): prd.md ~300 lines, full feature specs, metrics table with targets and timeframes
 
 ## Step-by-Step PRD Creation Process
 
 ### Phase 0: Check for Existing Context
 
 Before discovery, check if a product brief already exists (look for
-`docs/prd/product-brief.md` or ask the user). The brief is a lightweight alignment
-document — it captures the problem summary, direction, and success signal.
-If a brief exists, use it as a starting point to accelerate discovery.
+`docs/prd/product-brief.md` or ask the user). If a brief exists, use it as a
+starting point to accelerate discovery.
 
 ### Phase 1: Discovery Interview
 
@@ -78,11 +77,11 @@ already known.
 Start with the problem — it's the foundation everything else builds on. Based
 on the user's answer, follow the thread naturally:
 
-1. **Open with the problem:** "What's the specific user or business problem here? What evidence do you have?" If they describe a solution instead of a problem, gently redirect: "That sounds like a potential solution — what's the underlying pain point driving it?"
+1. **Open with the problem:** "What's the specific problem here? What evidence do you have?" If they describe a solution instead of a problem, gently redirect: "That sounds like a potential solution — what's the underlying pain point driving it?"
 2. **Understand the user:** "Who experiences this problem most acutely? What are they trying to accomplish?"
-3. **Map the current state:** "How do they solve this today? What's painful about that?"
-4. **Define success:** "If we nail this, what changes? How would we measure it?"
-5. **Scope and constraints:** "What's explicitly out of scope? Any hard constraints — regulatory, budget, technical? Existing systems this must integrate with?"
+3. **Map the current state:** "How is this handled today? What's painful about that?"
+4. **Define success:** "If we nail this, what changes? How would we know it's working?"
+5. **Scope and constraints:** "What's explicitly out of scope? Any hard constraints — regulatory, performance, compatibility? Existing systems this must work with?"
 
 Don't ask all of these if answers are already clear from context. Skip what you
 know, dig deeper on what's vague.
@@ -92,13 +91,14 @@ know, dig deeper on what's vague.
 Offer the **Problem-User-Success** rapid discovery — just 3 questions:
 
 1. What specific problem are we solving, and for whom?
-2. How do users handle this today?
-3. What does success look like in numbers?
+2. How is this handled today?
+3. What does success look like?
 
 ### Phase 2: Write the PRD (`prd.md`)
 
 The PRD is the **vision document** — concise enough to read every session,
-comprehensive enough to guide all feature work. Target ~300 lines.
+comprehensive enough to guide all feature work. Target ~300 lines (scale down
+for lightweight products per Complexity Calibration).
 
 Read `references/examples.md` for concrete good/bad examples.
 
@@ -123,16 +123,20 @@ Read `references/examples.md` for concrete good/bad examples.
 ## 1. Problem / Opportunity
 
 **The Problem** — State from the USER's perspective. Quantify impact.
-Show evidence: user research, support data, analytics, competitive gaps.
+Show evidence: observed pain, time wasted, errors encountered, existing
+tool limitations.
 
-**Why Now** — What has changed? Market shift, data threshold crossed,
-technical enabler, strategic window.
+**Why Now** — What has changed? New capability, pain threshold crossed,
+dependency unblocked, opportunity window.
 
 ---
 
 ## 2. Target Users
 
-Define 1-3 primary personas with context, needs, and pain points.
+Who has this problem, and in what situation?
+
+For personal/team tools, a sentence or two is enough.
+For products with multiple user types, define personas with context and needs.
 
 **Jobs-to-be-Done:**
 > "When [situation], I want to [motivation], so I can [expected outcome]."
@@ -149,6 +153,17 @@ Define 1-3 primary personas with context, needs, and pain points.
 
 ## 4. Success Metrics
 
+Scale to complexity:
+
+Lightweight — a sentence or two:
+> "I reach for this instead of the manual process at least 3x/week."
+
+Moderate — bullet points:
+> - Processes files in under 5 seconds for typical inputs
+> - Zero silent data loss — every error reported with location
+> - Adopted by 3+ team members within first month
+
+Large — full table:
 | Goal | Metric | Counter-metric | Target | Timeframe |
 |------|--------|----------------|--------|-----------|
 | ... | ... | ... | ... | ... |
@@ -162,27 +177,26 @@ in `docs/prd/features/`.
 
 | Feature | Description | Spec |
 |---------|-------------|------|
-| Auth | Social login + session management | [features/auth.md](features/auth.md) |
-| Billing | Stripe subscription management | [features/billing.md](features/billing.md) |
+| file-parser | Read and validate input files | [features/file-parser.md](features/file-parser.md) |
+| transform-engine | Apply transformation rules to parsed data | [features/transform-engine.md](features/transform-engine.md) |
 
 ---
 
 ## 6. Dev Order
 
-Features ordered by dependency and priority. This replaces phase documents.
+Features ordered by dependency and priority.
 
-### v0.1 — Core (usable state)
-1. auth — prerequisite for everything
-2. core-feature — without this, not a product
-3. landing — user acquisition
+### v0.1 — Core (minimum usable state)
+1. file-parser — everything depends on parsed input
+2. transform-engine — core value of the tool
 
-### v0.2 — Revenue
-4. billing
-5. usage-limits
+### v0.2 — Workflow
+3. config-loader — user-defined rules
+4. output-formatter — multiple output formats
 
-### v0.3 — Growth
-6. feed
-7. notifications
+### v0.3 — Polish
+5. error-reporting — detailed diagnostics
+6. watch-mode — re-run on file changes
 
 ---
 
@@ -196,7 +210,7 @@ Features ordered by dependency and priority. This replaces phase documents.
 ## 8. Assumptions, Constraints & Risks
 
 - **Assumptions:** Things believed true but not yet validated
-- **Constraints:** Hard limits (budget, regulatory, technical)
+- **Constraints:** Hard limits (performance, compatibility, platform)
 - **Risks:** What could go wrong, with severity and mitigation
 
 ---
@@ -219,57 +233,6 @@ Each feature file contains:
 - Technical decisions specific to this feature
 - Edge cases and error states
 
-### Phase 4: Generate `tasks/`
-
-Create the `tasks/` directory at the project root with three files.
-
-**tasks/backlog.md** — all planned tasks, organized by priority and feature:
-
-```markdown
-# Backlog
-
-## 🔴 High Priority
-
-### auth
-- [ ] Supabase project setup
-- [ ] Google OAuth integration
-- [ ] GitHub OAuth integration
-- [ ] Session expiry handling
-- [ ] Protected route middleware
-
-### billing
-- [ ] Stripe integration
-- [ ] Subscription plan setup
-- [ ] Webhook handling
-
-## 🟡 Medium Priority
-
-### feed
-- [ ] Feed API
-- [ ] Infinite scroll
-```
-
-**tasks/active.md** — empty initially:
-
-```markdown
-# Active
-```
-
-**tasks/done.md** — empty initially:
-
-```markdown
-# Done
-```
-
-**Rules for `tasks/`:**
-- `backlog.md`: one subsection (`###`) per feature, matching `docs/prd/features/` filenames
-- Group features under priority headings (`## 🔴 High` / `## 🟡 Medium` / `## 🟢 Low`)
-- Tasks ordered by dependency (do top-to-bottom)
-- Each task = PR-sized unit (completable in one Claude Code session)
-- Feature sections ordered by dev order from `prd.md`
-- When starting a task: move from `backlog.md` → `active.md`
-- When completing a task: mark `[x]`, add completion date, move to `done.md`
-
 ---
 
 ## Anti-Patterns
@@ -291,7 +254,6 @@ questions — then apply changes.
 
 - `prd.md`: **400 lines**
 - `features/*.md`: **200 lines** per feature
-- `tasks/*.md`: no hard limit per file (grows with project)
 
 ## Iteration & Feedback
 
@@ -301,4 +263,4 @@ After presenting the initial draft:
 - When the user provides feedback, update the specific section and confirm
 - If feedback reveals a gap in discovery, update Problem and Target Users
   first — then cascade through downstream sections
-- When requirements change, update both the feature spec AND `tasks/backlog.md`
+- When requirements change, update the feature spec

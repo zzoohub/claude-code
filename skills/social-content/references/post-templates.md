@@ -512,7 +512,7 @@ Feedback welcome. What should I add?
 
 ## Content Calendar Templates
 
-### Weekly Calendar (B2B SaaS / Solopreneur)
+### Weekly Calendar (B2B SaaS / Solo Creator)
 
 | Day | LinkedIn | Twitter/X |
 |-----|----------|-----------|

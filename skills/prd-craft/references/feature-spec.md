@@ -11,7 +11,7 @@ implementing that feature.
 - The PRD captures the full vision and serves as the long-term source of truth
 - Feature specs answer: "What exactly does this feature do, and how should it work?"
 - Separation keeps each file small enough for one Claude Code session to consume
-- Tasks live in `tasks/` directory (root level), not in feature files — clean separation of spec vs progress
+- **Every file is a single source of truth (SSOT).** If a file already exists, update it in place — never create duplicates. The file should always reflect the latest state.
 
 ---
 
@@ -32,10 +32,10 @@ the product vision. Reference the PRD problem statement if relevant.
 Functional requirements specific to this feature. Each requirement should be
 independently testable.
 
-- REQ-001: User can sign in with Google OAuth
-- REQ-002: User can sign in with GitHub OAuth
-- REQ-003: Session expires after 7 days of inactivity
-- REQ-004: Protected routes redirect unauthenticated users to login
+- REQ-001: Tool reads CSV files and validates against a user-defined schema
+- REQ-002: Malformed rows are reported with line and column numbers
+- REQ-003: Files over 100MB are processed via streaming (not loaded into memory)
+- REQ-004: Exit code is non-zero when any validation error is found
 
 ---
 
@@ -43,31 +43,32 @@ independently testable.
 
 Step-by-step flows showing how users interact with this feature.
 
-### First-time login
-1. User clicks "Sign in with Google"
-2. Redirected to Google consent screen
-3. After consent, redirected back to app
-4. Account created, session started
-5. Redirected to onboarding
+### First run
+1. User runs the tool with an input file
+2. Tool reads the file and applies default validation
+3. Output shows a summary: rows processed, errors found
+4. If errors exist, each is listed with file, line, and description
 
-### Returning user
-1. User visits app with expired session
-2. Redirected to login page
-3. Clicks provider → instant redirect (consent already granted)
-4. Session restored, lands on last page
+### With custom schema
+1. User creates a schema config file
+2. Runs the tool with --schema flag pointing to config
+3. Tool validates each row against the schema
+4. Errors include which schema rule was violated
 
 ### Error states
-- OAuth denied → show message, stay on login
-- Provider unavailable → show fallback message
-- Account exists with different provider → show linking prompt
+- File not found → clear message with the path that was tried
+- Permission denied → suggest checking file permissions
+- Malformed input (not valid CSV) → report the line where parsing failed
+- Schema config invalid → report which field in the config is wrong
 
 ---
 
 ## Edge Cases
 
-- User revokes OAuth access externally → next API call returns 401, redirect to login
-- Multiple tabs open → session refresh in one tab applies to all
-- User deletes account → cascade delete sessions, OAuth connections
+- Empty file → report "0 rows processed" (not an error)
+- File with only headers → report "0 data rows" with a note
+- Mixed line endings (CRLF/LF) → handle transparently
+- Very long lines (>1MB per row) → process normally up to a configurable limit
 
 ---
 
@@ -77,8 +78,8 @@ Step-by-step flows showing how users interact with this feature.
 
 ## Depends On This
 
-- billing (needs authenticated user)
-- feed (needs user identity)
+- transform-engine (needs parsed and validated data as input)
+- output-formatter (needs parsed data to format)
 ```
 
 ---
@@ -90,76 +91,69 @@ Step-by-step flows showing how users interact with this feature.
 **Good granularity (independently testable):**
 
 > ```
-> REQ-001 User can connect their Jira workspace via OAuth, granting read-only
->         access to project and issue data.
-> REQ-002 System syncs connected tool data at least every 15 minutes without
->         manual intervention.
-> REQ-003 User can view a per-person summary showing: open tasks, completed
->         tasks (last 7 days), and flagged blockers.
-> REQ-004 System automatically flags issues that have been in "In Progress"
->         for more than 3x the team's average cycle time as potential blockers.
-> REQ-005 User can dismiss a flagged blocker with an optional note explaining
->         why it's not actually blocked.
-> REQ-006 Product team can monitor: daily active users, tool connections per
->         user, blocker flag accuracy (dismissed vs. resolved).
+> REQ-001 Tool reads CSV files up to 1GB within 512MB memory using streaming.
+> REQ-002 Each row is validated against a user-defined schema (field types,
+>         required fields, value constraints).
+> REQ-003 Validation errors include row number, column name, expected type,
+>         and actual value.
+> REQ-004 Tool supports --quiet flag that outputs only error count and exit code.
+> REQ-005 When no errors are found, tool outputs summary and exits with code 0.
 > ```
 
 **Too coarse:**
 
-> "REQ-001 System integrates with project management tools."
+> "REQ-001 Tool processes files."
 >
-> (Not testable. Which tools? What data? What access level?)
+> (Not testable. Which files? What processing? What output?)
 
 **Too fine:**
 
-> "REQ-001 The Jira OAuth callback URL is /api/auth/jira/callback."
+> "REQ-001 CSV parser uses RFC 4180 strict mode with LF line terminator."
 >
 > (Implementation detail. This belongs in a technical spec, not a PRD.)
+
+**Right level:** "Tool processes CSV files and reports malformed rows with line numbers."
 
 ### User Journeys — Good vs Bad
 
 **Good:**
 
-> **Journey: First-time setup**
-> 1. User signs up with work email
-> 2. System prompts: "Connect your first tool" → shows supported integrations
-> 3. User selects Jira → OAuth flow → grants read-only access
-> 4. System begins initial sync (shows progress indicator)
->    - If sync fails → show specific error with retry option
->    - If no projects found → suggest checking permissions
-> 5. Once synced, user sees team member list auto-populated from Jira
-> 6. User confirms team members (can remove/add manually)
-> 7. Dashboard populated with first data → guided tour highlights key areas
+> **Journey: First use**
+> 1. User installs the tool
+> 2. Runs `tool check data.csv` with no config
+> 3. Tool applies default rules (type detection, required fields from header)
+> 4. Output shows: 1,247 rows checked, 3 errors found
+>    - If errors → each listed with line number and description
+>    - If clean → "All rows valid" and exit code 0
+> 5. User sees a hint: "Add --schema config.yaml for custom validation rules"
 >
-> **Drop-off risk:** Step 3 (OAuth). Users may hesitate to grant tool access.
-> Consider explaining exactly what data is accessed and displaying a "read-only"
-> trust signal.
+> **Drop-off risk:** Step 3 (default rules). If defaults produce too many
+> false positives, users won't trust the tool. Consider conservative defaults
+> with an opt-in strict mode.
 
 **Bad:**
 
-> "User signs up, connects tools, sees dashboard."
+> "User runs the tool, it processes the file, shows results."
 >
-> (No decision points. No error states. No drop-off analysis. Not useful for
-> anyone building this.)
+> (No decision points. No error states. No drop-off analysis.)
 
 ### Granularity
 
 Each requirement should be independently testable — a QA engineer could
 verify it passes or fails.
 
-- Too coarse: "User can manage authentication"
-- Too fine: "The login button has 8px border-radius"
-- Right level: "User can sign in with Google OAuth and receive a persistent session"
+- Too coarse: "Tool processes files"
+- Too fine: "CSV parser allocates a 64KB read buffer"
+- Right level: "Tool processes CSV files up to 1GB within 512MB memory"
 
 ### What Belongs Here vs Elsewhere
 
-| Content | Feature spec | PRD | tasks.md |
-|---------|-------------|-----|----------|
-| Requirements | Yes | Feature overview only | No |
-| User journeys | Yes | No | No |
-| Task checklists | No | No | Yes |
-| Success metrics | No | Yes | No |
-| Dev order | No | Yes | No |
+| Content | Feature spec | PRD |
+|---------|-------------|-----|
+| Requirements | Yes | Feature overview only |
+| User journeys | Yes | No |
+| Success metrics | No | Yes |
+| Dev order | No | Yes |
 
 ### Length
 
@@ -168,10 +162,9 @@ consider splitting the feature into sub-features with their own specs.
 
 ### Naming Convention
 
-- `docs/prd/features/auth.md`
-- `docs/prd/features/billing.md`
-- `docs/prd/features/feed.md`
+- `docs/prd/features/file-parser.md`
+- `docs/prd/features/transform-engine.md`
+- `docs/prd/features/output-formatter.md`
 
 Use short, descriptive names matching the feature name in the PRD's feature
-overview table. Filenames should be kebab-case for multi-word features
-(e.g., `user-settings.md`, `file-upload.md`).
+overview table. Filenames should be kebab-case for multi-word features.

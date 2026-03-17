@@ -3,7 +3,7 @@ name: product-brief
 description: Creates lean product briefs — strategic one-pagers that define the problem, direction, and success signal. Use when the user asks to "write a product brief", "create a product one-pager", "product pitch", "product concept", or needs help organizing product goals and direction. Also trigger when a user says "I have an idea for a product", "help me think through this feature", "I want to build X", or describes a product concept without naming a specific document type. Also use when reviewing or improving existing product briefs. This skill produces a concise strategic alignment document — it focuses on the "what" and "why", not features, detailed metrics, or scope boundaries (those belong in the PRD).
 metadata:
   author: custom
-  version: 4.0.0
+  version: 5.0.0
   category: product-management
 ---
 
@@ -64,19 +64,17 @@ Use this template. All four sections are always present.
 # [Product Name] — Product Brief
 
 **Date:** [Date] | **Status:** [Discovery / In Progress / Approved]
-**Tagline:** One sentence a customer would understand.
+**Tagline:** One sentence that captures what this does.
 
 ---
 
 ## Problem
 
-**What:** [2-4 sentences. Ground in observed user pain, not business desire.]
+**What:** [2-4 sentences. Ground in observed pain — your own, your team's, or your users'. Include how it's handled today and why that's inadequate.]
 
-**Who:** [Specific persona. Role, context, behaviors.]
+**Who and when:** [Who has this problem, in what situation? Yourself, a team, or a user group.]
 
-**How they cope today:** [Current workarounds.]
-
-**Why now:** [What changed? Market shift, new capability, pain threshold crossed.]
+**Why now:** [What changed? New capability, pain threshold crossed, opportunity window.]
 
 ---
 
@@ -84,7 +82,7 @@ Use this template. All four sections are always present.
 
 [1-2 paragraphs. The direction, not the detailed solution. "What experience we want to create" not "what features we will build".]
 
-**Core bet:** [What do we believe that others don't, or what advantage do we have?]
+**Core bet:** [What insight makes this worth building?]
 
 ---
 
@@ -96,7 +94,7 @@ Use this template. All four sections are always present.
 
 ## Open Questions
 
-- [ ] [e.g., Which customer segment to target first?]
+- [ ] [e.g., Which input format to support first?]
 - [ ] [e.g., Build or buy for X component?]
 ```
 
@@ -109,11 +107,6 @@ Before presenting, verify:
 - [ ] The whole brief fits on one page
 - [ ] Open questions are honest — gaps flagged, not papered over
 
-### Step 4: Next Steps
-
-After presenting the brief, suggest proceeding to the PRD to define
-requirements, feature specs, and development order.
-
 ## Calibration: Weak vs. Strong
 
 **Weak:**
@@ -122,9 +115,9 @@ requirements, feature specs, and development order.
 A solution masquerading as a problem. "Better visibility" is vague.
 
 **Strong:**
-> Solopreneurs spend 2-3 hours per week manually pulling data from three tools to understand if their product is growing. Most give up and just check Stripe revenue once a week.
+> Engineers spend 10-15 minutes after every deploy manually checking three separate dashboards to confirm nothing broke. Most skip it when rushed, and problems get caught hours later by users.
 
-Grounded in evidence, names a specific persona, quantifies the pain.
+Grounded in evidence, names a specific situation, quantifies the pain.
 
 ## When Reviewing an Existing Brief
 

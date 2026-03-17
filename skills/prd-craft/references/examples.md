@@ -9,22 +9,20 @@ Reference this when writing a PRD to calibrate quality and depth.
 
 **Good:**
 
-> "28% of new users abandon onboarding at the payment step (analytics, Jan-Mar
-> 2025). User interviews (n=15) reveal the primary friction: users don't trust
-> entering card details before experiencing the product. Competitors (Notion,
-> Linear) offer 14-day free trials with no payment required. Our current
-> 'pay first' model costs us an estimated $340K/month in lost conversions.
+> "Engineers run a 3-step manual process after every deploy: check the metrics
+> dashboard, scan error logs, and verify key user flows in staging. This takes
+> 10-15 minutes and is skipped under time pressure — roughly 40% of deploys
+> go unchecked. Unchecked deploys account for 70% of production incidents
+> discovered by users rather than the team.
 >
-> **Why Now:** Notion launched a free tier in Q4 2024, and our competitor
-> analysis shows a 15% increase in users citing 'free trial availability' as
-> their primary reason for choosing alternatives. Support tickets about pricing
-> have doubled since January. Our payment infrastructure upgrade (completed
-> last month) now makes trial billing technically feasible for the first time."
+> **Why Now:** The team has grown from 3 to 8 engineers in the last quarter.
+> Deploy frequency doubled, but the manual verification process didn't scale.
+> Last month, two P1 incidents were caught by customers hours after deploy."
 
 **Bad:**
 
-> "Users don't like paying upfront. We should add a free trial to improve
-> conversions."
+> "Deploys sometimes cause problems. We should add monitoring to catch issues
+> faster."
 >
 > (No numbers. No evidence. Solution stated as fact. No "why now.")
 
@@ -34,23 +32,22 @@ Reference this when writing a PRD to calibrate quality and depth.
 
 **Good:**
 
-> **Primary persona: Team Lead (Sarah)**
-> Mid-level manager at a 50-200 person company. Manages 5-12 direct reports.
-> Spends ~4 hours/week on performance tracking using spreadsheets and email.
-> Pain: No single view of team progress; context-switching between 3-4 tools.
+> **Who and when:** Backend engineers deploying 2-5 times per day to a shared
+> staging/production environment. They need confidence that each deploy didn't
+> break anything, but can't afford 15 minutes of manual checks every time.
 >
-> **Use case 1: Weekly team check-in** (highest priority)
-> Current journey: Opens spreadsheet → cross-references Jira → writes individual
-> Slack messages → logs notes in Google Doc.
-> What's broken: Takes 45 minutes; information is stale by the time she finishes.
->
-> **JTBD:** "When I'm preparing for my weekly 1:1s, I want to see each
-> person's recent work and blockers in one place, so I can have focused
-> conversations instead of status updates."
+> **JTBD:** "When I've just deployed, I want to know within 30 seconds if
+> anything broke, so I can fix it immediately instead of context-switching
+> back hours later."
+
+**Good (lightweight, personal tool):**
+
+> Me — I maintain 12 git repos across 3 machines and lose track of which
+> have uncommitted changes or unpushed branches.
 
 **Bad:**
 
-> "Target users: managers. Use case: manage their teams better."
+> "Target users: developers. Use case: deploy better."
 >
 > (No specificity. No pain point. No current journey. "Better" means nothing.)
 
@@ -60,24 +57,23 @@ Reference this when writing a PRD to calibrate quality and depth.
 
 **Good:**
 
-> **Elevator pitch:** A unified team dashboard that pulls work status from
-> existing tools (project management, git, communication) and surfaces what
-> matters for each team member — without requiring anyone to manually update
-> status.
+> **Elevator pitch:** A post-deploy verification tool that automatically runs
+> health checks, scans error rates, and reports pass/fail within 30 seconds
+> of deploy completion.
 >
 > **Value propositions:**
-> 1. See each person's week at a glance → solves the 45-minute prep problem (Section 2)
-> 2. Auto-detects blockers from tool signals → no more "any blockers?" in standup (Section 2)
-> 3. Trends over time surface coaching opportunities → replaces quarterly scramble (Section 2)
+> 1. Instant deploy confidence → eliminates the 15-minute manual check (Section 1)
+> 2. Catches regressions before users do → reduces user-reported incidents (Section 1)
+> 3. Runs automatically → no more skipped verifications under time pressure (Section 1)
 >
-> **Mental model:** Think of it as a "team health dashboard" — like a fitness
-> tracker, but for your team's work. It observes passively and highlights what
-> needs attention.
+> **Mental model:** Think of it as a "post-deploy smoke test" — like CI, but
+> for production. It watches the first few minutes after deploy and tells you
+> if anything looks wrong.
 
 **Bad:**
 
-> "We will build a React dashboard using GraphQL to aggregate data from
-> multiple APIs with real-time WebSocket updates."
+> "We will build a Node.js service using WebSockets to monitor Datadog metrics
+> and send Slack alerts via their API."
 >
 > (This is a technical spec. Names specific technologies. Doesn't describe the
 > user experience or connect to problems.)
@@ -86,19 +82,24 @@ Reference this when writing a PRD to calibrate quality and depth.
 
 ## Section 4: Success Metrics
 
-**Good:**
+**Good (lightweight):**
+
+> I use this after every deploy instead of doing manual checks. Deploy
+> verification time drops from 10-15 minutes to under 30 seconds.
+
+**Good (full table):**
 
 > | Goal | Metric | Counter-metric | Target | Timeframe |
 > |------|--------|----------------|--------|-----------|
-> | Reduce 1:1 prep time | Avg prep minutes/week | Manager satisfaction score | 45min→15min | 3 months |
-> | Improve blocker detection | Avg hours-to-resolution | False positive rate | 48h→12h | 6 months |
-> | Increase team engagement | Weekly active managers | Feature adoption breadth | 40%→70% | 6 months |
+> | Eliminate manual checks | % deploys auto-verified | False positive rate | 95% auto-verified | 3 months |
+> | Faster incident detection | Time-to-detection after deploy | Alert fatigue (ignored alerts) | <2 min avg | 3 months |
+> | Reduce user-reported incidents | User-reported bugs from deploys | Total bug detection rate | 70%→20% | 6 months |
 
 **Bad:**
 
-> "Goals: Improve manager productivity. Increase engagement. Make teams happier."
+> "Goals: Improve deploy quality. Increase confidence. Make deploys safer."
 >
-> (No metrics. No targets. No timeframe. Not measurable. "Happier" is not a KPI.)
+> (No metrics. No targets. No timeframe. Not measurable. "Safer" is not a KPI.)
 
 ---
 
@@ -107,16 +108,16 @@ Reference this when writing a PRD to calibrate quality and depth.
 **Good:**
 
 > **In scope:**
-> - Dashboard for engineering and product team leads
-> - Integrations: Jira, GitHub, Linear, Slack
-> - Individual and team-level views
-> - Automated blocker detection
+> - Post-deploy health checks for web services
+> - Error rate monitoring against baseline
+> - Pass/fail reporting via CLI and notifications
+> - Configuration per project
 >
 > **Out of scope:**
-> - Performance review workflows (adjacent problem, would require separate discovery and different buyer persona — HR)
-> - HR-facing analytics (different user with different privacy requirements; revisit after core PMF)
-> - Custom integrations / API (premature until core value validated; Phase 2 candidate)
-> - Mobile app (web-first; mobile usage data will inform whether to build native vs responsive)
+> - Pre-deploy checks (different problem — belongs in CI, not post-deploy)
+> - Performance profiling (adjacent but separate tool; would require different instrumentation)
+> - Multi-cloud support (start with single provider; abstract later if demand exists)
+> - Mobile app monitoring (different signals; revisit after core tool proves value)
 
 **Bad:**
 
@@ -132,28 +133,25 @@ Reference this when writing a PRD to calibrate quality and depth.
 **Good:**
 
 > **Assumptions:**
-> - Team leads will connect at least one project management tool within the
->   first session (based on onboarding research showing 85% do so for similar
->   products). If this doesn't hold, the empty-state experience needs rethinking.
-> - Users are willing to grant read-only tool access. Not yet validated — plan
->   to test in beta with n=20 users.
+> - Services expose a health endpoint or have observable error metrics.
+>   If not, the tool degrades to log-based detection only.
+> - Deploy events are programmatically detectable (webhook, CI event, or CLI
+>   trigger). If manual deploys exist, users must trigger verification manually.
 >
 > **Constraints:**
-> - Must ship before Q3 planning cycle (July 1) to influence budget allocation.
-> - GDPR compliance required for EU users from day one — cannot do a
->   "compliance later" phased approach.
+> - Must work with existing CI pipeline — cannot require migration.
+> - Verification must complete within 60 seconds to avoid blocking the next deploy.
 >
 > **Risks:**
 > | Risk | Severity | Likelihood | Mitigation |
 > |------|----------|------------|------------|
-> | Third-party API rate limits cause stale data | High | Medium | Implement caching layer; degrade gracefully with "last synced" timestamp |
-> | Users perceive blocker detection as surveillance | High | Low | Frame as "team health" not "individual tracking"; make flagging opt-out per person |
-> | Jira OAuth changes break integration | Medium | Low | Abstract integration layer; monitor Jira changelog |
+> | High false positive rate erodes trust | High | Medium | Tune thresholds per-project; allow snooze; show confidence score |
+> | Format changes in input data break parsing | Medium | Medium | Validate schema on read; report specific location of malformed data |
+> | Tool adds latency to deploy pipeline | Medium | Low | Run async; never block deploy completion |
 
 **Bad:**
 
 > "Risks: There might be some technical challenges. We'll handle them as they
 > come up."
 >
-> (No specifics. No severity. No mitigation. This adds zero information for
-> decision-makers.)
+> (No specifics. No severity. No mitigation. This adds zero information.)

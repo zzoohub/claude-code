@@ -55,9 +55,9 @@ Not every platform matters. Pick 2-3 based on your audience and goal.
 | Product launch | Twitter/X | LinkedIn | Product Hunt, HN, Reddit |
 | Community building | Twitter/X | Reddit | Discord |
 | E-commerce / visual | Instagram | TikTok | - |
-| Indie hacker / solopreneur | Twitter/X | LinkedIn | PH, HN, Reddit |
+| Indie maker / solo creator | Twitter/X | LinkedIn | PH, HN, Reddit |
 
-### The Solopreneur Content Stack
+### Lean Content Stack
 
 **Primary Hub** (choose one): Newsletter, YouTube, or Blog
 **Distribution** (choose 2-3): Twitter/X, LinkedIn, Instagram

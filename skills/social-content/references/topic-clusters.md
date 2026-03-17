@@ -290,7 +290,7 @@ A focused 2-3 hour session can produce an entire week of content:
 - Schedule using native scheduling or tool (Buffer, Hootsuite, etc.)
 - Prepare engagement prompts and CTA variants
 
-### Solopreneur Weekly Rhythm
+### Lean Weekly Rhythm
 
 | Day | Content | Time |
 |-----|---------|------|

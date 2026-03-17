@@ -17,7 +17,7 @@ Use when deciding whether to add GA4/GTM to your analytics stack, designing UTM 
 | Feature flags / experiments | No | Yes |
 | Privacy-first (EU, no cookie banner) | No | Yes (cookieless mode) |
 
-For solopreneur SaaS: **PostHog is the primary analytics tool.** GA4 supplements it for acquisition channel attribution and Google ecosystem integration.
+For most products: **PostHog is the primary analytics tool.** GA4 supplements it for acquisition channel attribution and Google ecosystem integration.
 
 ### Do You Even Need GA4?
 

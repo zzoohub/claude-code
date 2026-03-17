@@ -9,7 +9,7 @@ Platform engagement benchmarks, what to track, engagement behavior shifts, and a
 1. [Platform Engagement Benchmarks](#platform-engagement-benchmarks)
 2. [Engagement Behavior Shifts (2025-2026)](#engagement-behavior-shifts)
 3. [Key Metrics by Platform](#key-metrics-by-platform)
-4. [Solopreneur Benchmark Targets](#solopreneur-benchmark-targets)
+4. [Early-Stage Benchmark Targets](#early-stage-benchmark-targets)
 5. [Engagement Rate Calculation](#engagement-rate-calculation)
 6. [Content Performance Tiers](#content-performance-tiers)
 7. [Analytics Review Cadence](#analytics-review-cadence)
@@ -142,9 +142,9 @@ The way people engage is changing rapidly. Key shifts:
 
 ---
 
-## Solopreneur Benchmark Targets
+## Early-Stage Benchmark Targets
 
-Realistic targets for solo founders building in public:
+Realistic targets for early-stage creators building in public:
 
 ### Early Stage (0-6 months)
 | Platform | Followers | Engagement Rate | Posts/Week |
