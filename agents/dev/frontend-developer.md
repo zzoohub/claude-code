@@ -6,7 +6,7 @@ description: |
   Reads docs/arch/design.md to select the right framework skill dynamically.
   Do NOT use for backend, mobile, or desktop code.
 model: opus
-skills: tanstack-start, frontend-design, design-system, i18n
+skills: tanstack-start, frontend-design
 color: purple
 metadata:
   author: engineering
@@ -29,6 +29,8 @@ Before writing any code, execute these steps in order:
    |-------|-----------|
    | `vercel-composition-patterns` | Next.js stack |
    | `vercel-react-best-practices` | Next.js stack |
+   | `design-system` | UI components, styling, theming |
+   | `i18n` | User-facing text, internationalization |
    | `motion` | Animation, transitions, scroll effects |
    | `web3d` | 3D, WebGL, WebGPU, WebXR |
 3. **Read UX specs** — `docs/ux/ux-design.md` for global patterns, `docs/ux/screens/{screen}.md` for the target screen.

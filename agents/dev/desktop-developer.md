@@ -6,7 +6,7 @@ description: |
   Tauri is the fixed stack. UI layer dynamically loads the same web framework skill as frontend-developer.
   Do NOT use for backend, web, or mobile code.
 model: opus
-skills: design-system
+skills:
 color: teal
 metadata:
   author: engineering
@@ -32,6 +32,7 @@ Before writing any code, execute these steps in order:
    | `tanstack-start` | SolidJS (TanStack Start) UI layer |
    | `vercel-composition-patterns` | Next.js / React UI layer |
    | `vercel-react-best-practices` | Next.js / React UI layer |
+   | `design-system` | UI layer work (components, styling, theming) |
    | `i18n` | Project requires internationalization |
    | `motion` | Animation, transitions, scroll effects |
    | `web3d` | 3D, WebGL, WebGPU in webview |

@@ -6,7 +6,7 @@ description: |
   Expo is the fixed stack — no dynamic skill selection needed.
   Do NOT use for backend, web, or desktop code.
 model: opus
-skills: expo-app-design:building-native-ui, vercel-react-native-skills, design-system, i18n
+skills: expo-app-design:building-native-ui, vercel-react-native-skills
 color: yellow
 metadata:
   author: engineering
@@ -26,6 +26,8 @@ Before writing any code, execute these steps in order:
 1. **Load skills** — Load applicable skills:
    | Skill | Condition |
    |-------|-----------|
+   | `design-system` | UI components, styling, theming |
+   | `i18n` | User-facing text, internationalization |
    | `motion` | Complex animation, transitions, gestures |
 2. **Read UX specs** — `docs/ux/ux-design.md` for global patterns, `docs/ux/screens/{screen}.md` for the target screen.
 3. **Read CLAUDE.md** — Follow Mobile Workflow and Mobile Conventions.
