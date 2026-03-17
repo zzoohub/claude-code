@@ -12,6 +12,8 @@ metadata:
   author: engineering
   version: 1.0.0
   category: development
+mcpServers:
+  - @hypothesi/tauri-mcp-server
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
