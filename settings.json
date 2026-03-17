@@ -1,4 +1,10 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "preferences": {
+    "teammateMode": "tmux"
+  },
   "enabledPlugins": {
     "context7@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
@@ -22,7 +28,5 @@
     "skill-creator@claude-plugins-official": true
   },
   "voiceEnabled": true,
-  "env": {
-    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
-  }
+  "skipDangerousModePermissionPrompt": true
 }
