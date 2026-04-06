@@ -9,6 +9,8 @@ references:
   - references/examples-domain.md
   - references/examples-adapters.md
   - references/examples-bootstrap.md
+  - references/api-design.md
+  - references/api-patterns.md
 ---
 
 # FastAPI + Hexagonal Architecture
@@ -84,8 +86,7 @@ tests/
 
 ### Errors
 - Exhaustive hierarchy: one class per business rule violation + generic `UnknownAuthorError`.
-- **Never raise `HTTPException` in domain** — that leaks transport concerns.
-- **Domain ports return `Result[T, E]` instead of raising** — errors become visible in the type signature. Adapters use try/except internally and convert to `Result` before returning. Value objects may still raise on construction.
+- **Never raise `HTTPException` in domain** — that leaks transport concerns. Use domain error classes; map to HTTP responses in the inbound layer.
 
 ### Ports (Protocols)
 

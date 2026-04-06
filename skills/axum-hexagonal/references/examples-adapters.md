@@ -58,25 +58,30 @@ impl AuthorRepository for Sqlite {
         }
     }
 
-    async fn list_authors(&self, pagination: &Pagination) -> Result<Page<Author>, anyhow::Error> {
-        let offset = pagination.offset() as i64;
-        let limit = pagination.per_page() as i64;
+    async fn list_authors(&self, cursor: Option<&str>, limit: usize) -> Result<CursorPage<Author>, anyhow::Error> {
+        let fetch_limit = (limit + 1) as i64;
 
-        let rows = sqlx::query!("SELECT id, name FROM authors ORDER BY name LIMIT $1 OFFSET $2",
-            limit, offset)
-            .fetch_all(&self.pool).await.context("failed to list authors")?;
+        let rows = if let Some(cursor_id) = cursor {
+            sqlx::query!("SELECT id, name FROM authors WHERE id > $1 ORDER BY id ASC LIMIT $2",
+                cursor_id, fetch_limit)
+                .fetch_all(&self.pool).await.context("failed to list authors")?
+        } else {
+            sqlx::query!("SELECT id, name FROM authors ORDER BY id ASC LIMIT $1",
+                fetch_limit)
+                .fetch_all(&self.pool).await.context("failed to list authors")?
+        };
 
-        let total = sqlx::query_scalar!("SELECT COUNT(*) FROM authors")
-            .fetch_one(&self.pool).await.context("failed to count authors")?;
-
-        let items = rows.into_iter()
+        let has_more = rows.len() > limit;
+        let items: Vec<Author> = rows.into_iter()
+            .take(limit)
             .map(|r| Ok(Author::new(
                 Uuid::parse_str(&r.id)?,
                 AuthorName::new(&r.name).map_err(|e| anyhow!(e))?,
             )))
             .collect::<Result<Vec<_>, anyhow::Error>>()?;
 
-        Ok(Page { items, total: total as u64, page: pagination.page(), per_page: pagination.per_page() })
+        let next_cursor = if has_more { items.last().map(|a| a.id().to_string()) } else { None };
+        Ok(CursorPage { items, next_cursor, has_more })
     }
 }
 ```
@@ -342,20 +347,17 @@ impl CreateAuthorHttpRequestBody {
     }
 }
 
-// Pagination query params — maps to domain Pagination
 #[derive(Debug, Deserialize)]
-pub struct PaginationParams {
-    #[serde(default = "default_page")]
-    pub page: u32,
-    #[serde(default = "default_per_page")]
-    pub per_page: u32,
+pub struct ListParams {
+    pub cursor: Option<String>,
+    #[serde(default = "default_limit")]
+    pub limit: usize,
 }
-fn default_page() -> u32 { 1 }
-fn default_per_page() -> u32 { 20 }
+fn default_limit() -> usize { 20 }
 
-impl PaginationParams {
-    pub fn into_domain(self) -> Pagination {
-        Pagination::new(self.page, self.per_page)
+impl ListParams {
+    pub fn validated(self) -> (Option<String>, usize) {
+        (self.cursor, self.limit.clamp(1, 100))
     }
 }
 
@@ -370,26 +372,10 @@ impl From<&Author> for AuthorResponseData {
 }
 
 #[derive(Debug, Serialize)]
-pub struct PageResponse<T: Serialize> {
-    pub items: Vec<T>,
-    pub total: u64,
-    pub page: u32,
-    pub per_page: u32,
-    pub total_pages: u32,
-}
-
-impl<T: Serialize, D> From<&Page<D>> for PageResponse<T>
-where T: for<'a> From<&'a D>
-{
-    fn from(page: &Page<D>) -> Self {
-        Self {
-            items: page.items.iter().map(T::from).collect(),
-            total: page.total,
-            page: page.page,
-            per_page: page.per_page,
-            total_pages: page.total_pages(),
-        }
-    }
+pub struct CursorPageResponse<T: Serialize> {
+    pub data: Vec<T>,
+    pub next_cursor: Option<String>,
+    pub has_more: bool,
 }
 ```
 
@@ -407,14 +393,28 @@ pub async fn create_author<AS: AuthorService>(
         .map(|ref author| ApiSuccess::new(StatusCode::CREATED, author.into()))
 }
 
+pub async fn get_author<AS: AuthorService>(
+    State(state): State<AppState<AS>>,
+    Path(id): Path<Uuid>,
+) -> Result<ApiSuccess<AuthorResponseData>, ApiError> {
+    state.author_service.find_author(&id).await
+        .map_err(ApiError::from)?
+        .map(|ref author| ApiSuccess::new(StatusCode::OK, author.into()))
+        .ok_or(ApiError::NotFound)
+}
+
 pub async fn list_authors<AS: AuthorService>(
     State(state): State<AppState<AS>>,
-    Query(params): Query<PaginationParams>,
-) -> Result<ApiSuccess<PageResponse<AuthorResponseData>>, ApiError> {
-    let pagination = params.into_domain();
-    state.author_service.list_authors(&pagination).await
-        .map_err(|e| ApiError::from(e))
-        .map(|ref page| ApiSuccess::new(StatusCode::OK, PageResponse::from(page)))
+    Query(params): Query<ListParams>,
+) -> Result<ApiSuccess<CursorPageResponse<AuthorResponseData>>, ApiError> {
+    let (cursor, limit) = params.validated();
+    state.author_service.list_authors(cursor.as_deref(), limit).await
+        .map_err(ApiError::from)
+        .map(|page| ApiSuccess::new(StatusCode::OK, CursorPageResponse {
+            data: page.items.iter().map(AuthorResponseData::from).collect(),
+            next_cursor: page.next_cursor,
+            has_more: page.has_more,
+        }))
 }
 ```
 
@@ -426,6 +426,7 @@ pub async fn list_authors<AS: AuthorService>(
 pub enum ApiError {
     InternalServerError(String),
     UnprocessableEntity(String),
+    Conflict(String),
     NotFound,
     Unauthorized,
 }
@@ -435,6 +436,7 @@ impl fmt::Display for ApiError {
         match self {
             Self::InternalServerError(msg) => write!(f, "{}", msg),
             Self::UnprocessableEntity(msg) => write!(f, "{}", msg),
+            Self::Conflict(msg) => write!(f, "{}", msg),
             Self::NotFound => write!(f, "Not Found"),
             Self::Unauthorized => write!(f, "Unauthorized"),
         }
@@ -445,7 +447,7 @@ impl From<CreateAuthorError> for ApiError {
     fn from(e: CreateAuthorError) -> Self {
         match e {
             CreateAuthorError::Duplicate { name } =>
-                Self::UnprocessableEntity(format!("author with name {} already exists", name)),
+                Self::Conflict(format!("author with name {} already exists", name)),
             CreateAuthorError::Unknown(cause) => {
                 tracing::error!("{:?}\n{}", cause, cause.backtrace());
                 Self::InternalServerError("An unexpected error occurred".into())
@@ -478,6 +480,8 @@ impl IntoResponse for ApiError {
             Self::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized", "Unauthorized"),
             Self::UnprocessableEntity(_) =>
                 (StatusCode::UNPROCESSABLE_ENTITY, "unprocessable-entity", "Unprocessable Entity"),
+            Self::Conflict(_) =>
+                (StatusCode::CONFLICT, "conflict", "Conflict"),
             Self::InternalServerError(_) =>
                 (StatusCode::INTERNAL_SERVER_ERROR, "internal-error", "Internal Server Error"),
         };

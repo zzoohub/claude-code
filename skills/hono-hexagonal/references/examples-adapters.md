@@ -55,7 +55,7 @@ export class AuthorMapper {
 
 ```typescript
 // src/outbound/drizzle/repository.ts
-import { eq, count, asc } from "drizzle-orm";
+import { eq, asc, gt } from "drizzle-orm";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { authors } from "./schema";
 import { AuthorMapper } from "./mapper";
@@ -102,23 +102,20 @@ export class DrizzleAuthorRepository implements AuthorRepository {
   }
 
   async listAuthors(
-    page: number,
-    pageSize: number,
-  ): Promise<{ items: Author[]; total: number }> {
-    const [rows, totalResult] = await Promise.all([
-      this.db
-        .select()
-        .from(authors)
-        .orderBy(asc(authors.name))
-        .limit(pageSize)
-        .offset((page - 1) * pageSize),
-      this.db.select({ count: count() }).from(authors),
-    ]);
+    cursor: string | null,
+    limit: number,
+  ): Promise<CursorPage<Author>> {
+    const fetchLimit = limit + 1;
 
-    return {
-      items: rows.map(AuthorMapper.toDomain),
-      total: totalResult[0].count,
-    };
+    const rows = cursor
+      ? await this.db.select().from(authors).where(gt(authors.id, cursor)).orderBy(asc(authors.id)).limit(fetchLimit)
+      : await this.db.select().from(authors).orderBy(asc(authors.id)).limit(fetchLimit);
+
+    const hasMore = rows.length > limit;
+    const items = rows.slice(0, limit).map(AuthorMapper.toDomain);
+    const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
+
+    return { items, nextCursor, hasMore };
   }
 
   private isUniqueConstraintError(error: unknown): boolean {
@@ -139,7 +136,7 @@ export class DrizzleAuthorRepository implements AuthorRepository {
 
 ```typescript
 // src/outbound/drizzle/postgres-repository.ts
-import { eq, count, asc } from "drizzle-orm";
+import { eq, asc, gt } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { authors } from "./schema";
 import { AuthorMapper } from "./mapper";
@@ -186,23 +183,20 @@ export class PostgresAuthorRepository implements AuthorRepository {
   }
 
   async listAuthors(
-    page: number,
-    pageSize: number,
-  ): Promise<{ items: Author[]; total: number }> {
-    const [rows, totalResult] = await Promise.all([
-      this.db
-        .select()
-        .from(authors)
-        .orderBy(asc(authors.name))
-        .limit(pageSize)
-        .offset((page - 1) * pageSize),
-      this.db.select({ count: count() }).from(authors),
-    ]);
+    cursor: string | null,
+    limit: number,
+  ): Promise<CursorPage<Author>> {
+    const fetchLimit = limit + 1;
 
-    return {
-      items: rows.map(AuthorMapper.toDomain),
-      total: totalResult[0].count,
-    };
+    const rows = cursor
+      ? await this.db.select().from(authors).where(gt(authors.id, cursor)).orderBy(asc(authors.id)).limit(fetchLimit)
+      : await this.db.select().from(authors).orderBy(asc(authors.id)).limit(fetchLimit);
+
+    const hasMore = rows.length > limit;
+    const items = rows.slice(0, limit).map(AuthorMapper.toDomain);
+    const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
+
+    return { items, nextCursor, hasMore };
   }
 
   private isUniqueConstraintError(error: unknown): boolean {
@@ -264,24 +258,26 @@ export class SqliteAuthorRepository implements AuthorRepository {
   }
 
   async listAuthors(
-    page: number,
-    pageSize: number,
-  ): Promise<{ items: Author[]; total: number }> {
-    const offset = (page - 1) * pageSize;
-    const rows = this.db
-      .prepare("SELECT id, name FROM authors ORDER BY name LIMIT ? OFFSET ?")
-      .all(pageSize, offset) as { id: string; name: string }[];
-    const totalRow = this.db
-      .prepare("SELECT COUNT(*) as count FROM authors")
-      .get() as { count: number };
+    cursor: string | null,
+    limit: number,
+  ): Promise<CursorPage<Author>> {
+    const fetchLimit = limit + 1;
+    const rows = cursor
+      ? (this.db
+          .prepare("SELECT id, name FROM authors WHERE id > ? ORDER BY id ASC LIMIT ?")
+          .all(cursor, fetchLimit) as { id: string; name: string }[])
+      : (this.db
+          .prepare("SELECT id, name FROM authors ORDER BY id ASC LIMIT ?")
+          .all(fetchLimit) as { id: string; name: string }[]);
 
-    return {
-      items: rows.map((r) => ({
-        id: r.id,
-        name: AuthorName.create(r.name),
-      })),
-      total: totalRow.count,
-    };
+    const hasMore = rows.length > limit;
+    const items = rows.slice(0, limit).map((r) => ({
+      id: r.id,
+      name: AuthorName.create(r.name),
+    }));
+    const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
+
+    return { items, nextCursor, hasMore };
   }
 }
 ```
@@ -437,8 +433,8 @@ export function toDomain(body: CreateAuthorBody): CreateAuthorRequest {
  * Pagination query params schema — maps to domain pagination.
  */
 export const paginationSchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  page_size: z.coerce.number().int().min(1).max(100).default(20),
+  cursor: z.string().nullish().transform(v => v ?? null),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 ```
 
@@ -497,14 +493,12 @@ export function authorRoutes() {
     "/",
     zValidator("query", paginationSchema),
     async (c) => {
-      const { page, page_size } = c.req.valid("query");
-      const result = await c.var.authorService.listAuthors(page, page_size);
+      const { cursor, limit } = c.req.valid("query");
+      const page = await c.var.authorService.listAuthors(cursor, limit);
       return c.json({
-        data: result.items.map(fromDomain),
-        total: result.total,
-        page,
-        page_size,
-        has_next: page * page_size < result.total,
+        data: page.items.map(fromDomain),
+        next_cursor: page.nextCursor,
+        has_more: page.hasMore,
       });
     },
   );
@@ -585,11 +579,11 @@ export function registerErrorHandler(app: Hono<AppEnv>): void {
       return c.json(
         problem(
           "duplicate-author",
-          "Unprocessable Entity",
-          422,
+          "Conflict",
+          409,
           err.message,
         ),
-        422,
+        409,
       );
     }
 
@@ -638,12 +632,10 @@ export interface ApiSuccess<T> {
   data: T;
 }
 
-export interface PaginatedList<T> {
+export interface CursorPageResponse<T> {
   data: T[];
-  total: number;
-  page: number;
-  page_size: number;
-  has_next: boolean;
+  next_cursor: string | null;
+  has_more: boolean;
 }
 ```
 

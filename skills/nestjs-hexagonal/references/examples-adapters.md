@@ -86,7 +86,7 @@ export class AuthorMapper {
 ```typescript
 // src/outbound/drizzle/author.repository.ts
 import { Inject, Injectable } from "@nestjs/common";
-import { eq, count, asc } from "drizzle-orm";
+import { eq, asc, gt } from "drizzle-orm";
 import { DRIZZLE, type DrizzleDB } from "./drizzle.provider";
 import { authors } from "./schema";
 import { AuthorMapper } from "./mapper";
@@ -128,22 +128,20 @@ export class DrizzleAuthorRepository extends AuthorRepository {
   }
 
   async listAuthors(
-    page: number,
-    pageSize: number,
-  ): Promise<{ items: Author[]; total: number }> {
-    const [rows, totalResult] = await Promise.all([
-      this.db
-        .select()
-        .from(authors)
-        .orderBy(asc(authors.name))
-        .limit(pageSize)
-        .offset((page - 1) * pageSize),
-      this.db.select({ count: count() }).from(authors),
-    ]);
-    return {
-      items: rows.map(AuthorMapper.toDomain),
-      total: totalResult[0].count,
-    };
+    cursor: string | null,
+    limit: number,
+  ): Promise<CursorPage<Author>> {
+    const fetchLimit = limit + 1;
+
+    const rows = cursor
+      ? await this.db.select().from(authors).where(gt(authors.id, cursor)).orderBy(asc(authors.id)).limit(fetchLimit)
+      : await this.db.select().from(authors).orderBy(asc(authors.id)).limit(fetchLimit);
+
+    const hasMore = rows.length > limit;
+    const items = rows.slice(0, limit).map(AuthorMapper.toDomain);
+    const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
+
+    return { items, nextCursor, hasMore };
   }
 
   private isUniqueConstraintError(error: unknown): boolean {
@@ -278,8 +276,8 @@ export class MongooseAuthorRepository extends AuthorRepository {
     try {
       const doc = await this.model.create({ name: req.name.value });
       return AuthorMapper.toDomain(doc as AuthorDoc);
-    } catch (error: any) {
-      if (error?.code === 11000) {
+    } catch (error: unknown) {
+      if (error instanceof Error && 'code' in error && (error as any).code === 11000) {
         throw new DuplicateAuthorError(req.name.value);
       }
       throw new UnknownAuthorError(error);
@@ -293,22 +291,23 @@ export class MongooseAuthorRepository extends AuthorRepository {
   }
 
   async listAuthors(
-    page: number,
-    pageSize: number,
-  ): Promise<{ items: Author[]; total: number }> {
-    const [docs, total] = await Promise.all([
-      this.model
-        .find()
-        .sort({ name: 1 })
-        .skip((page - 1) * pageSize)
-        .limit(pageSize)
-        .exec(),
-      this.model.countDocuments().exec(),
-    ]);
-    return {
-      items: docs.map(AuthorMapper.toDomain),
-      total,
-    };
+    cursor: string | null,
+    limit: number,
+  ): Promise<CursorPage<Author>> {
+    const query = cursor
+      ? this.model.find({ _id: { $gt: cursor } })
+      : this.model.find();
+
+    const docs = await query
+      .sort({ _id: 1 })
+      .limit(limit + 1)
+      .exec();
+
+    const hasMore = docs.length > limit;
+    const items = docs.slice(0, limit).map(AuthorMapper.toDomain);
+    const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
+
+    return { items, nextCursor, hasMore };
   }
 }
 ```
@@ -326,8 +325,8 @@ async createAuthorWithProfile(req: CreateAuthorWithProfileRequest): Promise<Auth
       await this.profileModel.create([{ authorId: doc.id, bio: req.bio }], { session });
     });
     return AuthorMapper.toDomain(doc!);
-  } catch (error: any) {
-    if (error?.code === 11000) throw new DuplicateAuthorError(req.name.value);
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && (error as any).code === 11000) throw new DuplicateAuthorError(req.name.value);
     throw new UnknownAuthorError(error);
   } finally {
     await session.endSession();
@@ -392,8 +391,8 @@ export function toDomain(body: CreateAuthorBody): CreateAuthorRequest {
 }
 
 export const paginationSchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  page_size: z.coerce.number().int().min(1).max(100).default(20),
+  cursor: z.string().nullish().transform(v => v ?? null),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 export type PaginationQuery = z.infer<typeof paginationSchema>;
 ```
@@ -420,14 +419,15 @@ export class AuthorResponse {
   }
 }
 
-export class PaginatedAuthorsResponse {
+export class CursorPageResponse {
   @ApiProperty({ type: [AuthorResponse] })
   data: AuthorResponse[];
 
-  @ApiProperty() total: number;
-  @ApiProperty() page: number;
-  @ApiProperty() page_size: number;
-  @ApiProperty() has_next: boolean;
+  @ApiProperty({ nullable: true })
+  next_cursor: string | null;
+
+  @ApiProperty()
+  has_more: boolean;
 }
 ```
 
@@ -437,7 +437,7 @@ export class PaginatedAuthorsResponse {
 // src/inbound/http/authors/authors.controller.ts
 import {
   Controller, Get, Post, Param, Body, Query,
-  HttpCode, HttpStatus, NotFoundException,
+  HttpCode, HttpStatus,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { AuthorService } from "../../../domain/authors/ports";
@@ -446,7 +446,8 @@ import {
   createAuthorSchema, paginationSchema, toDomain,
   type CreateAuthorBody, type PaginationQuery,
 } from "./request.dto";
-import { AuthorResponse, PaginatedAuthorsResponse } from "./response.dto";
+import { AuthorResponse, CursorPageResponse } from "./response.dto";
+import { AuthorNotFoundError } from "../../../domain/authors/errors";
 
 @ApiTags("authors")
 @Controller("v1/authors")
@@ -468,14 +469,12 @@ export class AuthorsController {
   @ApiOperation({ summary: "List authors" })
   async list(
     @Query(new ZodValidationPipe(paginationSchema)) query: PaginationQuery,
-  ): Promise<PaginatedAuthorsResponse> {
-    const result = await this.authorService.listAuthors(query.page, query.page_size);
+  ): Promise<CursorPageResponse> {
+    const page = await this.authorService.listAuthors(query.cursor, query.limit);
     return {
-      data: result.items.map(AuthorResponse.fromDomain),
-      total: result.total,
-      page: query.page,
-      page_size: query.page_size,
-      has_next: query.page * query.page_size < result.total,
+      data: page.items.map(AuthorResponse.fromDomain),
+      next_cursor: page.nextCursor,
+      has_more: page.hasMore,
     };
   }
 
@@ -484,12 +483,7 @@ export class AuthorsController {
   async findOne(@Param("id") id: string): Promise<{ data: AuthorResponse }> {
     const author = await this.authorService.findAuthor(id);
     if (!author) {
-      throw new NotFoundException({
-        type: "https://api.example.com/errors/not-found",
-        title: "Not Found",
-        status: 404,
-        detail: `author with id "${id}" not found`,
-      });
+      throw new AuthorNotFoundError(id);
     }
     return { data: AuthorResponse.fromDomain(author) };
   }
@@ -532,8 +526,8 @@ export class DomainExceptionFilter implements ExceptionFilter {
       const tagged = exception as Error & { tag: string };
       switch (tagged.tag) {
         case "DuplicateAuthorError":
-          response.status(422).header("Content-Type", "application/problem+json")
-            .json(problem("duplicate-author", "Unprocessable Entity", 422, exception.message));
+          response.status(409).header("Content-Type", "application/problem+json")
+            .json(problem("duplicate-author", "Conflict", 409, exception.message));
           return;
         case "AuthorNameEmptyError":
           response.status(422).header("Content-Type", "application/problem+json")

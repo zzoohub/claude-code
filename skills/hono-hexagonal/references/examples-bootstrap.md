@@ -312,10 +312,10 @@ export class MockAuthorRepository implements AuthorRepository {
   }
 
   async listAuthors(
-    _page: number,
-    _pageSize: number,
-  ): Promise<{ items: Author[]; total: number }> {
-    return { items: [], total: 0 };
+    _cursor: string | null,
+    _limit: number,
+  ): Promise<CursorPage<Author>> {
+    return { items: [], nextCursor: null, hasMore: false };
   }
 }
 
@@ -334,9 +334,9 @@ export class SaboteurRepository implements AuthorRepository {
   }
 
   async listAuthors(
-    _page: number,
-    _pageSize: number,
-  ): Promise<{ items: Author[]; total: number }> {
+    _cursor: string | null,
+    _limit: number,
+  ): Promise<CursorPage<Author>> {
     throw this.error ?? new UnknownAuthorError(new Error("db on fire"));
   }
 }
@@ -432,7 +432,7 @@ describe("POST /authors", () => {
     expect(repo.createCalls).toHaveLength(1);
   });
 
-  it("returns 422 for duplicate author", async () => {
+  it("returns 409 for duplicate author", async () => {
     const repo = new MockAuthorRepository(
       new DuplicateAuthorError("Alice"),
     );
@@ -444,7 +444,7 @@ describe("POST /authors", () => {
       body: JSON.stringify({ name: "Alice" }),
     });
 
-    expect(res.status).toBe(422);
+    expect(res.status).toBe(409);
     const body = await res.json();
     expect(body.type).toContain("duplicate-author");
   });
@@ -469,12 +469,12 @@ describe("GET /authors", () => {
     const repo = new MockAuthorRepository();
     const app = buildTestApp(repo);
 
-    const res = await app.request("/authors?page=1&page_size=10");
+    const res = await app.request("/authors?limit=10");
 
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toEqual([]);
-    expect(body.total).toBe(0);
+    expect(body.has_more).toBe(false);
   });
 });
 ```
@@ -585,17 +585,19 @@ describe("DrizzleAuthorRepository", () => {
     }
   });
 
-  it("lists authors with pagination", async () => {
+  it("lists authors with cursor pagination", async () => {
     await repo.createAuthor({ name: AuthorName.create("Alice") });
     await repo.createAuthor({ name: AuthorName.create("Bob") });
     await repo.createAuthor({ name: AuthorName.create("Charlie") });
 
-    const page1 = await repo.listAuthors(1, 2);
+    const page1 = await repo.listAuthors(null, 2);
     expect(page1.items).toHaveLength(2);
-    expect(page1.total).toBe(3);
+    expect(page1.hasMore).toBe(true);
+    expect(page1.nextCursor).not.toBeNull();
 
-    const page2 = await repo.listAuthors(2, 2);
+    const page2 = await repo.listAuthors(page1.nextCursor, 2);
     expect(page2.items).toHaveLength(1);
+    expect(page2.hasMore).toBe(false);
   });
 });
 ```

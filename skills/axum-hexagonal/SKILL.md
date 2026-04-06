@@ -9,6 +9,8 @@ references:
   - references/examples-domain.md
   - references/examples-adapters.md
   - references/examples-bootstrap.md
+  - references/api-design.md
+  - references/api-patterns.md
 ---
 
 # Axum + Hexagonal Architecture

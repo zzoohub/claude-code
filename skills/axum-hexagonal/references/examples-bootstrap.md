@@ -89,6 +89,12 @@ impl AuthorService for MockAuthorService {
         mem::swap(guard.deref_mut(), &mut result);
         result
     }
+    async fn find_author(&self, _: &Uuid) -> Result<Option<Author>, anyhow::Error> {
+        Ok(None)
+    }
+    async fn list_authors(&self, _: Option<&str>, _: usize) -> Result<CursorPage<Author>, anyhow::Error> {
+        Ok(CursorPage { items: vec![], next_cursor: None, has_more: false })
+    }
 }
 ```
 
@@ -103,6 +109,9 @@ impl AuthorRepository for SaboteurRepository {
         Err(anyhow!("db on fire").into())
     }
     async fn find_author(&self, _: &Uuid) -> Result<Option<Author>, anyhow::Error> {
+        Err(anyhow!("db on fire"))
+    }
+    async fn list_authors(&self, _: Option<&str>, _: usize) -> Result<CursorPage<Author>, anyhow::Error> {
         Err(anyhow!("db on fire"))
     }
 }

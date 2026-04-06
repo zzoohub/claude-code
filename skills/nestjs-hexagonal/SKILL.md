@@ -9,6 +9,8 @@ references:
   - references/examples-domain.md
   - references/examples-adapters.md
   - references/examples-bootstrap.md
+  - references/api-design.md
+  - references/api-patterns.md
 ---
 
 # NestJS + Hexagonal Architecture
@@ -266,7 +268,7 @@ NestJS has a built-in `Logger` class. For structured logging, use `nestjs-pino`.
 | Item | Value |
 |------|-------|
 | Password hashing | `@node-rs/argon2` (default), `bcrypt` (fallback) |
-| JWT library | `@nestjs/passport` + `passport-jwt` |
+| JWT library | `jsonwebtoken` (simple), `@nestjs/passport` + `passport-jwt` (full-featured) |
 | JWT access token | 15 min |
 | JWT refresh (web) | 90 days |
 | JWT refresh (mobile) | 1 year |

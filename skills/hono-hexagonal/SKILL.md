@@ -9,6 +9,8 @@ references:
   - references/examples-domain.md
   - references/examples-adapters.md
   - references/examples-bootstrap.md
+  - references/api-design.md
+  - references/api-patterns.md
 ---
 
 # Hono + Hexagonal Architecture
@@ -78,11 +80,10 @@ tests/
 - Domain models are plain TypeScript. No decorators, no framework dependencies.
 - Separate `CreateAuthorRequest` from `Author` — they WILL diverge as app grows.
 
-### Errors & Result Type
+### Errors
 - Exhaustive hierarchy: one class per business rule violation + generic `UnknownAuthorError`.
 - **Never throw `HTTPException` in domain** — that leaks transport concerns.
 - Use custom error classes extending `Error` with a `readonly tag` discriminant for exhaustive matching.
-- **Domain ports return `Result<T, E>` instead of throwing** — errors become visible in the type signature. Adapters use try/catch internally and convert to `Result` before returning. Value objects may still throw on construction.
 
 ### Ports (Interfaces)
 

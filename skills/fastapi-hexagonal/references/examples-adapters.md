@@ -303,22 +303,24 @@ def with_author_service(request: Request) -> AuthorService:
 """Auth lives entirely in the inbound layer. Domain never handles tokens."""
 from datetime import UTC, datetime, timedelta
 
-import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from pwdlib import PasswordHash
+from pwdlib.hashers.argon2 import Argon2Hasher
 
 from app.config import AppConfig
 
 _settings = AppConfig()
 _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+_hasher = PasswordHash((Argon2Hasher(),))
 
 
 def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+    return _hasher.hash(password)
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return bcrypt.checkpw(plain.encode(), hashed.encode())
+    return _hasher.verify(password=plain, hash=hashed)
 
 def create_access_token(user_id: int, expires_minutes: int = 30) -> str:
     expire = datetime.now(UTC) + timedelta(minutes=expires_minutes)
@@ -437,7 +439,7 @@ def _problem(type_slug: str, title: str, status: int, detail: str) -> JSONRespon
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(DuplicateAuthorError)
     async def handle_duplicate(request: Request, exc: DuplicateAuthorError):
-        return _problem("duplicate-author", "Unprocessable Entity", 422,
+        return _problem("duplicate-author", "Conflict", 409,
                         f"author with name {exc.name.value} already exists")
 
     @app.exception_handler(AuthorNameEmptyError)
@@ -484,48 +486,44 @@ class Ok(ApiSuccess[T], Generic[T]):
 class NoContent(BaseModel):
     pass
 
-class PaginatedList(BaseModel, Generic[T]):
+class CursorPageResponse(BaseModel, Generic[T]):
     data: list[T]
-    total: int
-    page: int
-    page_size: int
-    has_next: bool
+    next_cursor: str | None
+    has_more: bool
 ```
 
-## Inbound: Pagination (cursor and offset)
+## Inbound: Pagination (cursor-based)
 
 ```python
 # src/domain/authors/ports.py — add to AuthorRepository
 class AuthorRepository(Protocol):
-    async def list_authors(self, page: int, page_size: int) -> tuple[list[Author], int]: ...
+    async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]: ...
 
-# src/outbound/postgres/repository.py — offset pagination
-async def list_authors(self, page: int, page_size: int) -> tuple[list[Author], int]:
+# src/outbound/postgres/repository.py — cursor pagination
+async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]:
     async with self._session_factory() as session:
-        count = await session.scalar(select(func.count()).select_from(AuthorModel))
-        result = await session.execute(
-            select(AuthorModel)
-            .order_by(AuthorModel.name)
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        )
+        query = select(AuthorModel).order_by(AuthorModel.id.asc())
+        if cursor:
+            query = query.where(AuthorModel.id > uuid.UUID(cursor))
+        result = await session.execute(query.limit(limit + 1))
         rows = result.scalars().all()
-        return [AuthorMapper.to_domain(r) for r in rows], count or 0
+        has_more = len(rows) > limit
+        items = [AuthorMapper.to_domain(r) for r in rows[:limit]]
+        next_cursor = str(items[-1].id) if has_more and items else None
+        return CursorPage(items=items, next_cursor=next_cursor, has_more=has_more)
 
 # src/inbound/http/authors/router.py — handler
 @router.get("")
 async def list_authors(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    cursor: str | None = Query(None),
+    limit: int = Query(20, ge=1, le=100),
     service: AuthorService = Depends(with_author_service),
-) -> PaginatedList[AuthorResponseData]:
-    authors, total = await service.list_authors(page, page_size)
-    return PaginatedList(
-        data=[AuthorResponseData.from_domain(a) for a in authors],
-        total=total,
-        page=page,
-        page_size=page_size,
-        has_next=(page * page_size) < total,
+) -> CursorPageResponse[AuthorResponseData]:
+    page = await service.list_authors(cursor, limit)
+    return CursorPageResponse(
+        data=[AuthorResponseData.from_domain(a) for a in page.items],
+        next_cursor=page.next_cursor,
+        has_more=page.has_more,
     )
 ```
 

@@ -49,6 +49,15 @@ export interface Author {
 export interface CreateAuthorRequest {
   readonly name: AuthorName;
 }
+
+/**
+ * Cursor-based pagination result.
+ */
+export interface CursorPage<T> {
+  readonly items: T[];
+  readonly nextCursor: string | null;
+  readonly hasMore: boolean;
+}
 ```
 
 ## Domain Errors
@@ -123,9 +132,9 @@ export abstract class AuthorRepository {
   abstract createAuthor(req: CreateAuthorRequest): Promise<Author>;
   abstract findAuthor(authorId: string): Promise<Author | null>;
   abstract listAuthors(
-    page: number,
-    pageSize: number,
-  ): Promise<{ items: Author[]; total: number }>;
+    cursor: string | null,
+    limit: number,
+  ): Promise<CursorPage<Author>>;
 }
 
 export abstract class AuthorMetrics {
@@ -144,9 +153,9 @@ export abstract class AuthorService {
   abstract createAuthor(req: CreateAuthorRequest): Promise<Author>;
   abstract findAuthor(authorId: string): Promise<Author | null>;
   abstract listAuthors(
-    page: number,
-    pageSize: number,
-  ): Promise<{ items: Author[]; total: number }>;
+    cursor: string | null,
+    limit: number,
+  ): Promise<CursorPage<Author>>;
 }
 ```
 
@@ -195,10 +204,10 @@ export class AuthorServiceImpl extends AuthorService {
   }
 
   async listAuthors(
-    page: number,
-    pageSize: number,
-  ): Promise<{ items: Author[]; total: number }> {
-    return this.repo.listAuthors(page, pageSize);
+    cursor: string | null,
+    limit: number,
+  ): Promise<CursorPage<Author>> {
+    return this.repo.listAuthors(cursor, limit);
   }
 }
 ```

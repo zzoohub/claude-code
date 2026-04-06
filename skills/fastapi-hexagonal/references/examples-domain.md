@@ -10,9 +10,12 @@ Models, errors, ports, and service implementation.
 # src/domain/authors/models.py
 from __future__ import annotations
 from dataclasses import dataclass
+from typing import Generic, TypeVar
 from uuid import UUID
 
 from domain.authors.errors import AuthorNameEmptyError
+
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)
@@ -41,6 +44,14 @@ class Author:
 class CreateAuthorRequest:
     """Fields required to create an Author. Separate from Author — they WILL diverge."""
     name: AuthorName
+
+
+@dataclass(frozen=True)
+class CursorPage(Generic[T]):
+    """Cursor-based pagination result."""
+    items: list[T]
+    next_cursor: str | None
+    has_more: bool
 ```
 
 ## Domain Errors
@@ -91,6 +102,7 @@ class AuthorRepository(Protocol):
     """Port shaped by use cases. MUST raise DuplicateAuthorError if name exists."""
     async def create_author(self, req: CreateAuthorRequest) -> Author: ...
     async def find_author(self, author_id: UUID) -> Author | None: ...
+    async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]: ...
 
 
 class AuthorMetrics(Protocol):
@@ -105,6 +117,8 @@ class AuthorNotifier(Protocol):
 class AuthorService(Protocol):
     """Business API consumed by inbound adapters."""
     async def create_author(self, req: CreateAuthorRequest) -> Author: ...
+    async def find_author(self, author_id: UUID) -> Author | None: ...
+    async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]: ...
 ```
 
 ## Service Implementation
@@ -146,4 +160,10 @@ class AuthorServiceImpl:
         await self._metrics.record_creation_success()
         await self._notifier.author_created(author)
         return author
+
+    async def find_author(self, author_id: UUID) -> Author | None:
+        return await self._repo.find_author(author_id)
+
+    async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]:
+        return await self._repo.list_authors(cursor, limit)
 ```

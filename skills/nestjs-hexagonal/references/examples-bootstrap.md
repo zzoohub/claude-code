@@ -38,6 +38,7 @@ export function validateConfig(config: Record<string, unknown>): AppConfig {
 ```typescript
 // src/main.ts
 import { NestFactory } from "@nestjs/core";
+import { ConfigService } from "@nestjs/config";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
@@ -48,7 +49,8 @@ async function bootstrap() {
 
   // Security
   app.use(helmet());
-  app.enableCors({ origin: [process.env.CORS_ORIGIN ?? "http://localhost:3000"] });
+  const configService = app.get(ConfigService);
+  app.enableCors({ origin: [configService.get("CORS_ORIGIN")] });
 
   // Global exception filter — maps domain errors to RFC 9457
   app.useGlobalFilters(new DomainExceptionFilter());
@@ -65,7 +67,7 @@ async function bootstrap() {
   // Graceful shutdown — triggers onModuleDestroy
   app.enableShutdownHooks();
 
-  const port = process.env.PORT ?? 3000;
+  const port = configService.get("PORT");
   await app.listen(port);
 }
 bootstrap();
@@ -198,13 +200,16 @@ bunx drizzle-kit studio      # Visual DB browser
     "db:studio": "bunx drizzle-kit studio"
   },
   "dependencies": {
-    "@nestjs/common": "^10.0",
-    "@nestjs/core": "^10.0",
-    "@nestjs/platform-express": "^10.0",
-    "@nestjs/config": "^3.0",
-    "@nestjs/swagger": "^7.0",
-    "@nestjs/terminus": "^10.0",
-    "@nestjs/passport": "^10.0",
+    "@nestjs/common": "^11.0",
+    "@nestjs/core": "^11.0",
+    "@nestjs/platform-express": "^11.0",
+    "@nestjs/config": "^11.0",
+    "@nestjs/swagger": "^11.0",
+    "@nestjs/terminus": "^11.0",
+    "@nestjs/passport": "^11.0",
+    "@nestjs/throttler": "^6.0",
+    "@node-rs/argon2": "^2.0",
+    "jsonwebtoken": "^9.0",
     "drizzle-orm": "^0.39",
     "pg": "^8.13",
     "passport": "^0.7",
@@ -215,8 +220,8 @@ bunx drizzle-kit studio      # Visual DB browser
     "rxjs": "^7.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.0",
-    "@nestjs/testing": "^10.0",
+    "@nestjs/cli": "^11.0",
+    "@nestjs/testing": "^11.0",
     "drizzle-kit": "^0.30",
     "typescript": "^5.7",
     "jest": "^29.0",
@@ -316,8 +321,8 @@ export class MockAuthorRepository extends AuthorRepository {
     return this.createResult!;
   }
   async findAuthor(_id: string): Promise<Author | null> { return null; }
-  async listAuthors(_p: number, _ps: number): Promise<{ items: Author[]; total: number }> {
-    return { items: [], total: 0 };
+  async listAuthors(_cursor: string | null, _limit: number): Promise<CursorPage<Author>> {
+    return { items: [], nextCursor: null, hasMore: false };
   }
 }
 
@@ -330,7 +335,7 @@ export class SaboteurRepository extends AuthorRepository {
   async findAuthor(_id: string): Promise<Author | null> {
     throw this.error ?? new UnknownAuthorError(new Error("db on fire"));
   }
-  async listAuthors(_p: number, _ps: number): Promise<{ items: Author[]; total: number }> {
+  async listAuthors(_cursor: string | null, _limit: number): Promise<CursorPage<Author>> {
     throw this.error ?? new UnknownAuthorError(new Error("db on fire"));
   }
 }
@@ -417,12 +422,12 @@ describe("AuthorsController", () => {
       expect(repo.createCalls).toHaveLength(1);
     });
 
-    it("returns 422 for duplicate author", async () => {
+    it("returns 409 for duplicate author", async () => {
       const repo = new MockAuthorRepository(new DuplicateAuthorError("Alice"));
       ({ app } = await createTestApp({ repo }));
 
       const res = await request(app.getHttpServer())
-        .post("/v1/authors").send({ name: "Alice" }).expect(422);
+        .post("/v1/authors").send({ name: "Alice" }).expect(409);
       expect(res.body.type).toContain("duplicate-author");
     });
 
@@ -440,9 +445,9 @@ describe("AuthorsController", () => {
       ({ app } = await createTestApp({ repo }));
 
       const res = await request(app.getHttpServer())
-        .get("/v1/authors?page=1&page_size=10").expect(200);
+        .get("/v1/authors?limit=10").expect(200);
       expect(res.body.data).toEqual([]);
-      expect(res.body.total).toBe(0);
+      expect(res.body.has_more).toBe(false);
     });
   });
 });

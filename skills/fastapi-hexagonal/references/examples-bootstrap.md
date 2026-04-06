@@ -128,7 +128,7 @@ dependencies = [
     "aiosqlite>=0.20",
     "pydantic-settings>=2.7",
     "PyJWT>=2.9",
-    "bcrypt>=4.2",
+    "pwdlib[argon2]>=0.2",
     "httpx>=0.28",
 ]
 
@@ -188,6 +188,9 @@ class MockAuthorRepository:
     async def find_author(self, author_id: UUID) -> Author | None:
         return None
 
+    async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]:
+        return CursorPage(items=[], next_cursor=None, has_more=False)
+
 
 class SaboteurRepository:
     """Saboteur — always raises to test error paths."""
@@ -198,6 +201,9 @@ class SaboteurRepository:
         raise self._error
 
     async def find_author(self, author_id: UUID) -> Author | None:
+        raise self._error
+
+    async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]:
         raise self._error
 
 

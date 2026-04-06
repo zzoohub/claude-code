@@ -9,6 +9,7 @@ Models, errors, ports, and service implementation.
 ```rust
 // src/domain/authors/models.rs
 use std::fmt;
+use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Author {
@@ -86,8 +87,8 @@ pub trait AuthorRepository: Clone + Send + Sync + 'static {
     ) -> impl Future<Output = Result<Option<Author>, anyhow::Error>> + Send;
 
     fn list_authors(
-        &self, pagination: &Pagination,
-    ) -> impl Future<Output = Result<Page<Author>, anyhow::Error>> + Send;
+        &self, cursor: Option<&str>, limit: usize,
+    ) -> impl Future<Output = Result<CursorPage<Author>, anyhow::Error>> + Send;
 }
 
 pub trait AuthorMetrics: Clone + Send + Sync + 'static {
@@ -104,9 +105,13 @@ pub trait AuthorService: Clone + Send + Sync + 'static {
         &self, req: &CreateAuthorRequest,
     ) -> impl Future<Output = Result<Author, CreateAuthorError>> + Send;
 
+    fn find_author(
+        &self, id: &Uuid,
+    ) -> impl Future<Output = Result<Option<Author>, anyhow::Error>> + Send;
+
     fn list_authors(
-        &self, pagination: &Pagination,
-    ) -> impl Future<Output = Result<Page<Author>, anyhow::Error>> + Send;
+        &self, cursor: Option<&str>, limit: usize,
+    ) -> impl Future<Output = Result<CursorPage<Author>, anyhow::Error>> + Send;
 }
 ```
 
@@ -115,39 +120,10 @@ pub trait AuthorService: Clone + Send + Sync + 'static {
 ```rust
 // src/domain/pagination.rs — shared across all domains
 #[derive(Clone, Debug)]
-pub struct Pagination {
-    page: u32,
-    per_page: u32,
-}
-
-impl Pagination {
-    pub fn new(page: u32, per_page: u32) -> Self {
-        Self {
-            page: page.max(1),
-            per_page: per_page.clamp(1, 100),
-        }
-    }
-    pub fn page(&self) -> u32 { self.page }
-    pub fn per_page(&self) -> u32 { self.per_page }
-    pub fn offset(&self) -> u32 { (self.page - 1) * self.per_page }
-}
-
-impl Default for Pagination {
-    fn default() -> Self { Self { page: 1, per_page: 20 } }
-}
-
-#[derive(Clone, Debug)]
-pub struct Page<T> {
+pub struct CursorPage<T> {
     pub items: Vec<T>,
-    pub total: u64,
-    pub page: u32,
-    pub per_page: u32,
-}
-
-impl<T> Page<T> {
-    pub fn total_pages(&self) -> u32 {
-        ((self.total as f64) / (self.per_page as f64)).ceil() as u32
-    }
+    pub next_cursor: Option<String>,
+    pub has_more: bool,
 }
 ```
 
@@ -183,8 +159,12 @@ impl<R: AuthorRepository, M: AuthorMetrics, N: AuthorNotifier>
         result
     }
 
-    async fn list_authors(&self, pagination: &Pagination) -> Result<Page<Author>, anyhow::Error> {
-        self.repo.list_authors(pagination).await
+    async fn find_author(&self, id: &Uuid) -> Result<Option<Author>, anyhow::Error> {
+        self.repo.find_author(id).await
+    }
+
+    async fn list_authors(&self, cursor: Option<&str>, limit: usize) -> Result<CursorPage<Author>, anyhow::Error> {
+        self.repo.list_authors(cursor, limit).await
     }
 }
 ```
