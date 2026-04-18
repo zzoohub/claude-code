@@ -4,10 +4,10 @@
     "context7@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/context7/61d837e00336",
-        "version": "61d837e00336",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/context7/fa1bedb96851",
+        "version": "fa1bedb96851",
         "installedAt": "2026-01-21T08:55:42.497Z",
-        "lastUpdated": "2026-03-29T05:16:49.073Z",
+        "lastUpdated": "2026-04-06T11:45:43.368Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -44,20 +44,20 @@
     "security-guidance@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/security-guidance/61d837e00336",
-        "version": "61d837e00336",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/security-guidance/fa1bedb96851",
+        "version": "fa1bedb96851",
         "installedAt": "2026-01-21T10:25:11.303Z",
-        "lastUpdated": "2026-03-29T05:16:49.074Z",
+        "lastUpdated": "2026-04-06T11:45:43.369Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
     "frontend-design@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/frontend-design/61d837e00336",
-        "version": "61d837e00336",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/frontend-design/fa1bedb96851",
+        "version": "fa1bedb96851",
         "installedAt": "2026-01-21T10:25:53.719Z",
-        "lastUpdated": "2026-03-29T05:16:49.073Z",
+        "lastUpdated": "2026-04-06T11:45:43.370Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -104,10 +104,10 @@
     "playwright@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/playwright/61d837e00336",
-        "version": "61d837e00336",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/playwright/fa1bedb96851",
+        "version": "fa1bedb96851",
         "installedAt": "2026-01-28T07:57:59.969Z",
-        "lastUpdated": "2026-03-29T05:16:49.072Z",
+        "lastUpdated": "2026-04-06T11:45:43.369Z",
         "gitCommitSha": "e30768372b4150ca1bc0839d93283e8edc30d60d"
       }
     ],
@@ -117,7 +117,7 @@
         "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/sentry/1.0.0",
         "version": "1.0.0",
         "installedAt": "2026-01-30T06:16:52.864Z",
-        "lastUpdated": "2026-01-30T06:16:52.864Z",
+        "lastUpdated": "2026-04-12T13:13:04.957Z",
         "gitCommitSha": "d237d4c314e9066689c401a3d61dd3bbfbb7a209"
       }
     ],
@@ -154,20 +154,20 @@
     "posthog@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/posthog/1.0.3",
-        "version": "1.0.3",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/posthog/1.1.4",
+        "version": "1.1.4",
         "installedAt": "2026-02-17T19:52:48.435Z",
-        "lastUpdated": "2026-04-05T14:17:40.613Z",
+        "lastUpdated": "2026-04-17T18:58:37.974Z",
         "gitCommitSha": "e565d8a53ee57a4a76ca68323b20c3daea205a19"
       }
     ],
     "vercel@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/vercel/eb3b6f19e9ca",
-        "version": "eb3b6f19e9ca",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/vercel/0.40.0",
+        "version": "0.40.0",
         "installedAt": "2026-02-20T16:41:03.651Z",
-        "lastUpdated": "2026-04-03T13:58:49.874Z",
+        "lastUpdated": "2026-04-14T08:47:29.925Z",
         "gitCommitSha": "ae067751b4f42c97d13054211657275029ca8b6d"
       }
     ],
@@ -184,11 +184,22 @@
     "skill-creator@claude-plugins-official": [
       {
         "scope": "user",
-        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/skill-creator/61d837e00336",
-        "version": "61d837e00336",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/claude-plugins-official/skill-creator/fa1bedb96851",
+        "version": "fa1bedb96851",
         "installedAt": "2026-02-23T04:08:49.808Z",
-        "lastUpdated": "2026-03-29T05:16:49.074Z",
+        "lastUpdated": "2026-04-06T11:45:43.368Z",
         "gitCommitSha": "aa296ec81e8ccb49c9784f167c2c0aa625a86cec"
+      }
+    ],
+    "claude-harness@zzoohub-plugins": [
+      {
+        "scope": "local",
+        "projectPath": "/Users/zzoo/apps/sexy-todo",
+        "installPath": "/Users/zzoo/.claude/plugins/cache/zzoohub-plugins/claude-harness/0.8.1",
+        "version": "0.8.1",
+        "installedAt": "2026-04-06T15:36:56.720Z",
+        "lastUpdated": "2026-04-06T15:36:56.720Z",
+        "gitCommitSha": "c5587e7184c6ef1a96104e1b95af5facea857035"
       }
     ]
   }

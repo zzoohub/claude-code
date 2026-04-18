@@ -23,6 +23,15 @@
     "code-simplifier@claude-plugins-official": true,
     "skill-creator@claude-plugins-official": true
   },
+  "extraKnownMarketplaces": {
+    "zzoohub-plugins": {
+      "source": {
+        "source": "github",
+        "repo": "zzoohub/claude-plugins"
+      },
+      "autoUpdate": true
+    }
+  },
   "voiceEnabled": true,
   "skipDangerousModePermissionPrompt": true,
   "preferences": {
