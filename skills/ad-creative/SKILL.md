@@ -1,8 +1,5 @@
 ---
 name: ad-creative
-metadata:
-  version: 2.1.0
-  category: marketing
 description: |
   Ad creative development, copy generation, and batch creative production across platforms.
   Use when: creating ad copy, designing ad campaigns, generating ad variations, writing

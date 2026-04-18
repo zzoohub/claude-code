@@ -8,10 +8,10 @@ description: |
   Do NOT use for: marketing strategy or launch execution (use marketer), ad creative (use marketer),
   pricing strategy (use marketer), competitor analysis (use marketer),
   conversion optimization (use growth-optimizer), or analytics (use data-analyst).
-model: opus
-color: green
-skills: social-content, email-marketing, search-visibility, copywriting
 tools: Read, Write, Edit, Grep, Glob
+model: opus
+skills: [social-content, email-marketing, search-visibility, copywriting]
+color: green
 ---
 
 # Content Marketer

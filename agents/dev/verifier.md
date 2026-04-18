@@ -7,12 +7,10 @@ description: |
   Does NOT write test code or fix issues — the main agent handles those.
   Workflow: Understand changes → Classify (web/API/both) → E2E first → API fallback if uncovered → Report results.
 tools: Read, Bash, Grep, Glob, mcp__claude-in-chrome__*, mcp__plugin_playwright_playwright__*
-skills: qa
-mcpServers:
-  - claude-in-chrome
-  - playwright
-color: green
 model: sonnet
+skills: [qa]
+mcpServers: [claude-in-chrome, playwright]
+color: green
 ---
 
 # Verifier

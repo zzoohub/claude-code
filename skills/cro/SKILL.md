@@ -11,9 +11,6 @@ description: |
   "checkout optimization", "not converting", "low conversion", "funnel optimization".
   Do NOT use for: writing copy (use copywriting skill), psychological principles (use marketing-psychology skill),
   or email optimization (use email-marketing skill).
-metadata:
-  version: 1.1.0
-  category: growth
 ---
 
 # Conversion Rate Optimization

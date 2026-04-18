@@ -1,8 +1,5 @@
 ---
 name: social-content
-metadata:
-  version: 2.0.0
-  category: marketing
 description: |
   Social media content creation, content strategy, and multi-platform publishing.
   Use when: creating social posts, planning content calendars, developing content pillars,

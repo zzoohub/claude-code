@@ -8,11 +8,11 @@ description: |
   Do NOT use for: implementing tracking code (developer task), marketing content creation
   (use content-marketer), product feature design (use ux-designer), or CRO experiment design
   (use growth-optimizer).
-model: opus
-color: orange
-skills: product-analytics
 tools: Read, Write, Edit, Grep, Glob
-mcpServers: posthog
+model: opus
+skills: [product-analytics]
+mcpServers: [posthog]
+color: orange
 ---
 
 # Data Analyst

@@ -5,16 +5,12 @@ description: |
   Routes tasks by `touches` path: apps/desktop/.
   Tauri is the fixed stack. UI layer dynamically loads the same web framework skill as frontend-developer.
   Do NOT use for backend, web, or mobile code.
-model: opus
-skills:
-color: teal
-metadata:
-  author: engineering
-  version: 1.0.0
-  category: development
-mcpServers:
-  - @hypothesi/tauri-mcp-server
 tools: Read, Write, Edit, Bash, Grep, Glob
+model: opus
+skills: []
+mcpServers:
+  - "@hypothesi/tauri-mcp-server"
+color: teal
 ---
 
 # Desktop Developer

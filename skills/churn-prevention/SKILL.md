@@ -10,9 +10,6 @@ description: |
   "churn analysis", "why are users leaving", "customer at risk".
   Do NOT use for: onboarding optimization (use cro skill), email sequences including
   win-back campaigns (use email-marketing skill), or pricing changes (use pricing skill).
-metadata:
-  version: 1.1.0
-  category: growth
 ---
 
 # Churn Prevention

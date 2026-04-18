@@ -9,9 +9,6 @@ description: |
   Do NOT use for: writing copy (use copywriting skill), page-level CRO (use cro skill),
   or pricing tier design and strategy (use pricing skill — this skill covers the psychology
   behind why pricing works; pricing covers what to charge and how to structure tiers).
-metadata:
-  version: 1.1.0
-  category: marketing
 ---
 
 # Marketing Psychology & Mental Models

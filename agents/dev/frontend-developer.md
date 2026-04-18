@@ -5,14 +5,10 @@ description: |
   Routes tasks by `touches` path: apps/web/.
   Reads docs/arch/system.md to select the right framework skill dynamically.
   Do NOT use for backend, mobile, or desktop code.
-model: opus
-skills: tanstack-start, frontend-design
-color: purple
-metadata:
-  author: engineering
-  version: 1.0.0
-  category: development
 tools: Read, Write, Edit, Bash, Grep, Glob
+model: opus
+skills: [tanstack-start, "frontend-design:frontend-design"]
+color: purple
 ---
 
 # Frontend Developer

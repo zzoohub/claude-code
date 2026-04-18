@@ -1,6 +1,6 @@
 ---
 name: prd-craft
-description: >
+description: |
   Write world-class Product Requirements Documents (PRDs) using proven frameworks
   from top product leaders. Use when user asks to "write a PRD", "create a product
   requirements document", "draft product specs", "define product requirements",

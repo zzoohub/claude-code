@@ -1,14 +1,13 @@
 ---
 name: ux-designer
-description: Design user experiences at senior level — information architecture, user flows, interaction design, UX copy, and usability validation. Invoke when designing new features, redesigning existing flows, structuring navigation, writing UX copy, planning user journeys, or diagnosing UX problems. Also covers 3D viewport and XR spatial UX when needed. Do NOT use for quick UX questions or principle lookups (skill handles those). Do NOT use for visual design, design tokens, or component implementation (use design-system). Do NOT use for frontend code.
-model: opus
-skills: ux-design
-color: pink
-metadata:
-  author: product-team
-  version: 5.0.0
-  category: design
+description: |
+  Design user experiences at senior level — information architecture, user flows, interaction design, UX copy, and usability validation.
+  Invoke when designing new features, redesigning existing flows, structuring navigation, writing UX copy, planning user journeys, or diagnosing UX problems. Also covers 3D viewport and XR spatial UX when needed.
+  Do NOT use for quick UX questions or principle lookups (skill handles those). Do NOT use for visual design, design tokens, or component implementation (use design-system). Do NOT use for frontend code.
 tools: Read, Write, Edit, Bash, Grep, Glob
+model: opus
+skills: [ux-design]
+color: pink
 ---
 
 # UX Designer

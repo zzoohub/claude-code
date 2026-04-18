@@ -1,13 +1,12 @@
 ---
 name: task-manager
-description: Generates and manages implementation tasks from PRD and architecture docs. Invoke when the user asks to "create tasks", "generate tasks", "break down into tasks", "update tasks", or manage task progress. Outputs a phase-based board and feature task files designed for multi-agent parallel execution. Do NOT use for product planning or PRD writing — use product-manager instead.
+description: |
+  Generates and manages implementation tasks from PRD and architecture docs. Invoke when the user asks to "create tasks", "generate tasks", "break down into tasks", "update tasks", or manage task progress.
+  Outputs a phase-based board and feature task files designed for multi-agent parallel execution.
+  Do NOT use for product planning or PRD writing — use product-manager instead.
+tools: Read, Write, Edit, Grep, Glob
 model: sonnet
 color: green
-metadata:
-  author: product-team
-  version: 2.0.0
-  category: project-management
-tools: Read, Write, Edit, Grep, Glob
 ---
 
 # Task Manager

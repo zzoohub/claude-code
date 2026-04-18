@@ -1,8 +1,5 @@
 ---
 name: pricing
-metadata:
-  version: 2.0.0
-  category: marketing
 description: |
   SaaS pricing strategy, tier design, packaging, pricing model selection, and pricing page optimization.
   Use when: setting prices, designing tiers, choosing pricing models (seat/usage/outcome/hybrid/credits),

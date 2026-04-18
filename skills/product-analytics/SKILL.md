@@ -13,9 +13,6 @@ description: |
   "Sean Ellis survey", "GRR", "NRR", "revenue retention".
   Do NOT use for: tracking code implementation (developer task),
   CRO experiment design (use cro skill), marketing content (use copywriting skill).
-metadata:
-  version: 1.1.0
-  category: analytics
 ---
 
 # Product Analytics Methodology

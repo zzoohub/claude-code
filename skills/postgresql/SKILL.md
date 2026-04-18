@@ -1,6 +1,6 @@
 ---
 name: postgresql
-description: >
+description: |
   PostgreSQL query writing, optimization, and production problem-solving patterns.
   Implements schemas designed by database-design skill with correct query patterns.
   Use when: writing SELECT/INSERT/UPDATE/DELETE queries, optimizing slow queries,
@@ -11,10 +11,6 @@ description: >
   Do NOT use for: schema design or data modeling (use database-design skill first),
   basic SQL syntax lookup (use context7).
   Workflow: database-design (design) → this skill (implement queries).
-metadata:
-  author: custom
-  version: 2.1.0
-  database: postgresql
 ---
 
 # PostgreSQL Query & Optimization Skill

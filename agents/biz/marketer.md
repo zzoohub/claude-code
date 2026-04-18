@@ -9,10 +9,10 @@ description: |
   (use content-marketer), email sequences (use content-marketer), SEO/blog optimization
   (use content-marketer), conversion optimization (use growth-optimizer),
   analytics/data analysis (use data-analyst), or churn prevention (use growth-optimizer).
-model: opus
-color: purple
-skills: copywriting, competitor-pages, pricing, ad-creative
 tools: Read, Write, Edit, Grep, Glob
+model: opus
+skills: [copywriting, competitor-pages, pricing, ad-creative]
+color: purple
 ---
 
 # Growth Marketer

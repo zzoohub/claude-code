@@ -1,14 +1,12 @@
 ---
 name: product-manager
-description: Drives product planning. Invoke when the user wants to plan a new product or feature, create a product brief, or write a PRD. Do NOT use for quick one-off questions about product strategy. Do NOT use for task generation or task management — use task-manager instead.
-model: opus
-skills: product-brief, prd-craft
-color: blue
-metadata:
-  author: product-team
-  version: 4.0.0
-  category: product-management
+description: |
+  Drives product planning. Invoke when the user wants to plan a new product or feature, create a product brief, or write a PRD.
+  Do NOT use for quick one-off questions about product strategy. Do NOT use for task generation or task management — use task-manager instead.
 tools: Read, Write, Edit, Grep, Glob
+model: opus
+skills: [product-brief, prd-craft]
+color: blue
 ---
 
 # Product Manager

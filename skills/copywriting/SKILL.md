@@ -1,10 +1,6 @@
 ---
 name: copywriting
 description: Create, refine, or optimize written content for digital products including marketing copy, UX microcopy, brand messaging, and user-facing text. Use when user asks to write feature announcements, improve onboarding text, create headlines or CTAs, develop brand voice guidelines, define tone of voice, write push notifications, craft email campaigns, write landing page copy, or optimize copy for conversion. Do NOT use for technical documentation, API docs, code comments, or developer-facing content.
-metadata:
-  version: 3.1.0
-  category: marketing
-  author: product-team
 ---
 
 # Copywriting & Content Strategy Guide

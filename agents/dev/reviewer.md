@@ -6,8 +6,8 @@ description: |
   Do NOT use for: infrastructure/DevOps security, compliance documentation, or implementing fixes (developer task).
 tools: Read, Grep, Glob, Bash
 model: sonnet
+skills: [security-checklists]
 color: red
-skills: security-checklists
 ---
 
 # Reviewer

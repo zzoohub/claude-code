@@ -8,10 +8,10 @@ description: |
   "viral loop", "churn", "cancel flow", "A/B test design", "paywall optimization".
   Do NOT use for: marketing strategy/launches (use marketer), ongoing content marketing
   (use content-marketer), analytics/data analysis (use data-analyst), or ad creative (use marketer).
-model: opus
-color: cyan
-skills: cro, marketing-psychology, copywriting, churn-prevention, pricing
 tools: Read, Write, Edit, Grep, Glob
+model: opus
+skills: [cro, marketing-psychology, copywriting, churn-prevention, pricing]
+color: cyan
 ---
 
 # Growth Optimizer

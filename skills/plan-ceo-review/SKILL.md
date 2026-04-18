@@ -1,9 +1,5 @@
-<!-- Ported from gstack plan-ceo-review skill. -->
-<!-- MERGE STRATEGY: When updating from gstack, diff gstack/plan-ceo-review/SKILL.md against this file. -->
-<!-- Local modifications marked with "# LOCAL" comments. -->
 ---
 name: plan-ceo-review
-version: 1.0.0
 description: |
   CEO/founder-mode plan review. Rethink the problem, find the 10-star product,
   challenge premises, expand scope when it creates a better product. Three modes:
@@ -16,6 +12,10 @@ allowed-tools:
   - Bash
   - AskUserQuestion
 ---
+
+<!-- Ported from gstack plan-ceo-review skill. -->
+<!-- MERGE STRATEGY: When updating from gstack, diff gstack/plan-ceo-review/SKILL.md against this file. -->
+<!-- Local modifications marked with "# LOCAL" comments. -->
 
 # Mega Plan Review Mode
 

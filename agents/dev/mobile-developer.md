@@ -5,14 +5,10 @@ description: |
   Routes tasks by `touches` path: apps/mobile/.
   Expo is the fixed stack — no dynamic skill selection needed.
   Do NOT use for backend, web, or desktop code.
-model: opus
-skills: expo-app-design:building-native-ui, vercel-react-native-skills
-color: yellow
-metadata:
-  author: engineering
-  version: 1.0.0
-  category: development
 tools: Read, Write, Edit, Bash, Grep, Glob
+model: opus
+skills: ["expo-app-design:building-native-ui", vercel-react-native-skills]
+color: yellow
 ---
 
 # Mobile Developer

@@ -1,6 +1,6 @@
 ---
 name: database-design
-description: >
+description: |
   Expert guide for PostgreSQL database design, modeling, and optimization.
   Covers table design, schema modeling, index strategy, normalization/denormalization
   decisions, ACID transaction design, migration planning, and performance tuning.
@@ -10,10 +10,6 @@ description: >
   or discusses database architecture, data modeling, or PostgreSQL performance.
   Do NOT use for simple SELECT queries, one-off SQL syntax questions,
   or non-database application logic.
-metadata:
-  author: custom
-  version: 1.3.0
-  database: postgresql
 ---
 
 # PostgreSQL Database Design Skill

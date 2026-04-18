@@ -4,14 +4,10 @@ description: |
   Produce software architecture and database design from PRD and UX docs. Invoke when the user wants to
   "design the architecture", "create a design doc", "design the database", or "review the architecture".
   Do NOT use for product planning (use product-manager) or task generation (use task-manager).
-model: opus
-skills: software-architecture, database-design
-color: cyan
-metadata:
-  author: engineering
-  version: 1.0.0
-  category: architecture
 tools: Read, Write, Edit, Bash, Grep, Glob
+model: opus
+skills: [software-architecture, database-design]
+color: cyan
 ---
 
 # Architect
