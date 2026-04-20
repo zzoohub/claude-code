@@ -1,6 +1,6 @@
 # Decision Log
 
-**Context**: See `arch/context.md` for problem definition and ASRs. See `arch/system.md` for architecture.
+**Context**: See `docs/arch/context.md` for problem definition and ASRs. See `docs/arch/system.md` for architecture.
 
 <!-- Newest first. ADRs are written immediately when decisions occur, not batched at end. -->
 

@@ -75,6 +75,14 @@ If a DB-domain decision differs from what the design doc implies, **state the de
 - Transaction requirements (ACID strictness)
 - Scaling plans (single server vs distributed)
 
+**Feature-aware schema** (critical — read before writing any DDL):
+
+When feature specs exist in `docs/prd/features/*.md`, read the relevant spec for the current task. Design the **full schema for the complete product vision** (so you don't paint yourself into a corner), but **tag tables and indexes with the feature they belong to** using comments — e.g., `[auth]`, `[billing]`, `[workspace]`. This tagging drives which migration file each table lives in.
+
+Reference the dev order in `docs/prd/prd.md` to decide which domain migrations come first. Migrations are split per-domain (see Output section below), so the order here determines file numbering (`001_create_user_account.sql` → `002_create_workspace.sql` → ...).
+
+Don't collapse all of MVP into one mega-migration. Don't also over-split into per-table files — one migration per **domain/bounded context**, holding the related tables together.
+
 ### Step 2: Schema Design
 1. Identify core entities and relationships
 2. Normalize to at least 3NF
@@ -135,6 +143,44 @@ COMMENT ON COLUMN schema_name.table_name.column IS 'Column description';
 - Rollback scripts are mandatory
 - Zero-downtime migration strategies
 
+### Step 8: Pre-Output Quality Gate
+
+Before writing `docs/arch/database.md` or any migration file, every item below must be true. A failing item either blocks output or gets explicitly called out in the document with rationale.
+
+**Structural integrity**
+- [ ] Every table has a PRIMARY KEY
+- [ ] Every FK column has a matching index (PostgreSQL does not auto-create them)
+- [ ] Every table has `created_at` (and `updated_at` unless append-only)
+- [ ] No FLOAT/REAL used for money — NUMERIC(p,s) only
+- [ ] All timestamps are TIMESTAMPTZ, not TIMESTAMP
+- [ ] ENUMs used only where value set is stable; otherwise lookup table
+
+**Constraints and safety**
+- [ ] NOT NULL on every column that logically cannot be null
+- [ ] CHECK constraints on domain values (email format, positive amounts, status whitelist)
+- [ ] UNIQUE constraints on every business-identity column (email, slug, external_id)
+- [ ] ON DELETE behavior explicit on every FK (CASCADE / RESTRICT / SET NULL)
+
+**Multi-tenancy (if applicable)**
+- [ ] Every tenant-scoped table has `tenant_id` column AND RLS policy — or schema/database-per-tenant is chosen with ADR
+- [ ] Composite indexes lead with `tenant_id` where tenant-scoped queries dominate
+
+**Indexes**
+- [ ] Partial indexes used for low-selectivity boolean/status columns (don't index `WHERE is_deleted = false` globally)
+- [ ] Composite index column order follows equality → range → sort rule
+- [ ] No obvious unused redundancy (e.g., `(a)` + `(a, b)` — drop `(a)`)
+
+**Migrations**
+- [ ] Every migration file has a matching `*.rollback.sql`
+- [ ] Files are split per-domain (no single `001_initial_schema.sql`)
+- [ ] `CREATE INDEX CONCURRENTLY` used for indexes on any table that will see production traffic before the index finishes
+- [ ] Destructive operations (DROP COLUMN, RENAME) follow expand-contract pattern, not direct
+
+**Deviations**
+- [ ] Any decision that deviates from the design doc (`docs/arch/system.md`) is noted inline with reason
+
+If any item fails and isn't justified in-document, revise before saving. Do not save substandard work.
+
 ## When Reviewing an Existing Schema
 
 Use this checklist:
@@ -168,12 +214,6 @@ Use this checklist:
 | Optimistic Locking | Low contention, user-facing workflows | `references/acid-transactions.md` |
 | Queue (SKIP LOCKED) | Task/job queue processing | `references/acid-transactions.md` |
 
-## Feature-Aware Schema Design
-
-When feature specs exist in `docs/prd/features/*.md`, read the relevant feature spec for the current task. Design the full schema for the complete vision, but tag tables and indexes with the feature they belong to (e.g., `[auth]`, `[billing]`). Reference the dev order in `docs/prd/prd.md` to understand which migrations to create first.
-
----
-
 ## Output
 
 Produce these files:
@@ -181,7 +221,32 @@ Produce these files:
 | File | Content |
 |---|---|
 | `docs/arch/database.md` | **Table of Contents** (linked) → Requirements summary → ERD (Mermaid, consult `references/mermaid-erd.md` for syntax) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. Design doc deviations noted inline. Start with a TOC right after the title — the document gets long and a TOC makes it navigable. |
-| `db/migrations/001_initial_schema.sql` | Executable DDL (tables, indexes, constraints, comments) + matching `_rollback.sql` |
+| `db/migrations/NNN_<verb>_<domain>.sql` | Executable DDL split **per domain** (never a single "initial schema" file). Each file pairs with `NNN_<verb>_<domain>.rollback.sql`. See naming convention below. |
+
+### Migration File Naming
+
+Split the initial schema into **per-domain migration files** — one file per bounded context or aggregate. Never produce a single `001_initial_schema.sql` containing everything.
+
+```
+db/migrations/
+├── 001_create_user_account.sql
+├── 001_create_user_account.rollback.sql
+├── 002_create_workspace.sql
+├── 002_create_workspace.rollback.sql
+├── 003_create_billing.sql
+├── 003_create_billing.rollback.sql
+└── ...
+```
+
+**Why per-domain**:
+- Rollback is atomic — revert one domain without touching others
+- `git blame` attributes each domain's schema history to the right PR
+- PR review unit matches the feature unit
+- Aligns with the architect agent's Mode C rule: "create new migration files, never modify existing ones"
+
+**Numbering**: Zero-padded sequential (`001`, `002`, ...). Follow the dev order from `docs/prd/prd.md` when deciding which domains migrate first.
+
+**Verbs**: `create_` for new tables, `add_` for columns/indexes, `alter_` for type changes, `backfill_` for data migrations, `drop_` for removals (use expand-contract — see `references/migration-patterns.md`).
 
 ## Recommended Extensions
 
@@ -195,6 +260,7 @@ Enable these when the design requires their capabilities:
 | `pg_stat_statements` | Query performance tracking | Production monitoring (enable always) |
 | `pg_partman` | Automated partition management | Time-series partitioning in production |
 | `uuid-ossp` | UUID generation functions | UUID v1/v3/v5 (use `gen_random_uuid()` for v4, built-in since PG13) |
+| `vector` (pgvector) | Vector similarity search (HNSW, IVFFlat) | Embeddings, semantic search, RAG — up to ~100M vectors co-located with relational data |
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS btree_gist;   -- needed for EXCLUDE constraints
@@ -208,8 +274,25 @@ CREATE EXTENSION IF NOT EXISTS pg_stat_statements;  -- query performance trackin
 - **Prefer TEXT over VARCHAR** (no performance difference in PostgreSQL; enforce length via CHECK)
 - **Use ENUM only when values rarely change** (ALTER TYPE is expensive)
 - **Always use TIMESTAMPTZ** for timestamps (timezone-aware)
-- **Include created_at and updated_at on every table**
-- **Default to surrogate keys** (BIGINT GENERATED ALWAYS AS IDENTITY); use natural keys only when clearly appropriate
+- **Include created_at and updated_at on every table** (exceptions: append-only event/audit logs only need `created_at`)
+- **Default to BIGINT IDENTITY surrogate keys** — see "Primary Key Type Decision" below for when UUID v7 is justified
 - **Always create indexes on FK columns** — PostgreSQL does not do this automatically
+- **Multi-tenant default is `tenant_id` column + Row-Level Security (RLS)** — enforce isolation at the database, not in application code. Only deviate (schema-per-tenant, database-per-tenant) when regulatory or enterprise isolation requirements demand it — and record as an ADR.
 - **Design around your query patterns** — ensure indexes support WHERE/JOIN, keep resultsets reasonable, cache computed data
 - **Choose isolation levels deliberately** — default Read Committed is fine for most OLTP; use Repeatable Read or Serializable only where correctness demands it, with retry logic
+
+## Primary Key Type Decision
+
+PK type is a **one-way door** — changing it later requires rewriting every FK reference and external consumer. Record the choice as an ADR.
+
+| Situation | Choose | Why |
+|---|---|---|
+| Default — internal IDs, single-region writes, no external exposure | **BIGINT IDENTITY** | Sequential, tight B-tree packing, 8 bytes, human-readable in logs |
+| ID exposed in public URLs and enumeration is a concern | **UUID v7** | Unguessable + time-ordered (preserves index locality, unlike v4) |
+| Distributed ID generation across regions/clients (no central DB assignment) | **UUID v7** | No coordination needed; clients can mint IDs |
+| Offline-first clients that generate IDs before sync | **UUID v7** | Collision-safe without server round-trip |
+| Merging data from multiple systems later | **UUID v7** | No renumbering at merge time |
+
+**Do not use UUID v4** for PKs on hot tables — random ordering fragments B-tree indexes and hurts write performance. If only v4 is available, accept the cost only for low-volume tables.
+
+**Mixed strategy is fine**: BIGINT for most tables, UUID v7 for the handful of entities that need it (e.g., public share links, offline-created documents). Just don't flip a whole schema's convention later.

@@ -42,21 +42,24 @@ If PRD doesn't exist, ask the user for product context. If UX docs don't exist, 
 When the user asks to "design the architecture", "architect this", or gives a broad technical direction:
 
 1. **Gather Context** — Read all input documents. Ask essential clarifying questions about non-functional requirements, scale expectations, and constraints. Be conversational, not interrogative. Skip questions already answered in the PRD.
-2. **Software Architecture** — Apply the software-architecture skill through all stages (0-9):
-   - System context, ASRs, domain model
-   - Pattern selection, component design
-   - Data architecture, deployment topology
-   - Cross-cutting concerns, ADRs
-3. **Database Design** — Apply the database-design skill:
+2. **Software Architecture — Stages 0-4 (ATAM Gate)** — Apply the software-architecture skill through:
+   - Stage 0-2: System context, ASRs, utility tree
+   - Stage 3: Domain model
+   - Stage 4: Pattern selection + **ATAM Gate**
+   - **HALT condition**: Do NOT proceed to Stage 5 until every [H,H] ASR has a verified pattern. If the gate fails: revisit the utility tree, explore hybrid patterns, or document the gap in the Risk Register as a high-impact risk. Gate failure is a blocker — surface it to the user before continuing.
+3. **Software Architecture — Stages 5-9** — After ATAM gate passes:
+   - Component design, data architecture, deployment topology
+   - Cross-cutting concerns, ADRs, risk register
+4. **Database Design** — Apply the database-design skill:
    - Schema modeling from domain model
    - Index strategy, normalization decisions
-   - Migration plan with initial migration files
-4. **Self-Review** — Review the architecture against:
+   - Per-domain migration files (see database-design SKILL.md — never a single `001_initial_schema.sql`)
+5. **Self-Review** — Review the architecture against:
    - ASRs (are all addressed?)
    - PRD constraints (tech stack, budget, timeline)
    - UX requirements (does the architecture support all specified interactions?)
    - Database design (does the schema support all queries implied by the features?)
-5. **Save** — Write all output files and return summary.
+6. **Save** — Write all output files and return summary.
 
 ### Mode B: Database Only
 
@@ -89,8 +92,22 @@ When the user asks to review an architecture:
    - Migration safety (are migrations reversible? idempotent?)
    - Deployment feasibility
    - Security boundaries
-3. Write specific, actionable feedback with severity levels.
-4. Save feedback and return summary.
+3. Route findings by severity — **do not create a separate review file**. Review outputs are short-lived; a dated review file pollutes future sessions with already-resolved issues.
+4. Return the summary (with severity rubric) in chat.
+
+**Severity rubric** (applies in-conversation and to routing):
+- 🔴 **Critical** — correctness/security/data-loss bugs, ATAM gate failure, missing [H,H] ASR coverage
+- 🟠 **High** — deviates from ADRs without justification; missing rollback/timeout/retry; N+1 or thundering-herd baked in
+- 🟡 **Medium** — structural improvements (cohesion, naming, modularity); documentation gaps that fail the 6-Month Test
+- 🟢 **Low** — nits, wording, optional consistency fixes
+
+**Where findings go** (pick per item, don't write a review file):
+- Fixable now → update the affected `docs/arch/*.md` directly
+- Accepted risk / won't fix now → append to Risk Register in `decisions.md`
+- Needs user input → append to Open Questions in `decisions.md`
+- New decision implied → new ADR in `decisions.md`
+
+The chat summary should list findings grouped by severity so the user can confirm routing before changes land.
 
 ## Output Rules
 
@@ -110,7 +127,13 @@ db/migrations/                 # Migration files (numbered, timestamped)
 
 - If a file already exists, **update it in place**.
 - The file should always reflect the latest state.
-- **Line limits:** Before updating, check the file's line count. If it exceeds the limit, first consolidate — merge redundant sections, tighten wording, remove resolved items — then apply changes.
+- **Line limits:** Before updating, check the file's line count. If it exceeds the limit, **consolidate** — merge redundant sections, tighten wording, remove items already resolved and reflected elsewhere. Trust git history to preserve what was removed; archive files only fragment context for future sessions.
+
+  Exception for `decisions.md`: ADRs are append-only history — "why we chose X" keeps learning value even after the decision flips. If `decisions.md` hits the limit, **summarize resolved/superseded ADRs to one-line form** rather than deleting them. Mark them `[superseded by ADR-NNN]` so the trail survives.
+
+  For `database.md`: when a single file has genuinely outgrown its scope (many bounded contexts, each substantial), split by context (`database-{context}.md`, e.g., `database-billing.md`) and keep `database.md` as an index. Do this only when context-specific files each stand alone — not as a line-limit escape hatch.
+
+  Limits:
   - `context.md`: **400 lines**
   - `system.md`: **600 lines**
   - `decisions.md`: **400 lines**

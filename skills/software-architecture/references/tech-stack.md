@@ -1,4 +1,15 @@
-# Tech Stack
+# Pre-vetted House Stack
+
+This is not a neutral catalog of technology options — it is a **curated house stack** built around Cloudflare Workers/Containers, GCP (Cloud Run, Cloud SQL, BigQuery), Neon/Supabase for Postgres, and a short list of proven external services. Choices reflect operational familiarity, regional constraints (Korea), and cost discipline.
+
+**When to use these**: Default to the options below. They require no additional justification.
+
+**When to deviate**: A choice outside this list requires an ADR in `docs/arch/decisions.md` that explicitly documents:
+1. Why the house option was insufficient (specific capability gap, not "I prefer X")
+2. What the deviation costs — operational burden, new runtime, extra billing surface
+3. Revisit condition — when should we reconsider going back to the house option?
+
+Deviation is fine when justified. Unjustified deviation is tech debt.
 
 ## Language
 

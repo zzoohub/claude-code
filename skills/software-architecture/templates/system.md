@@ -1,7 +1,7 @@
 # Architecture
 
 **Date**: {date}
-**Context**: See `arch/context.md` for problem definition, ASRs, and domain model.
+**Context**: See `docs/arch/context.md` for problem definition, ASRs, and domain model.
 
 ---
 
