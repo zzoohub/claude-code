@@ -1,6 +1,18 @@
 ---
 name: copywriting
-description: Create, refine, or optimize written content for digital products including marketing copy, UX microcopy, brand messaging, and user-facing text. Use when user asks to write feature announcements, improve onboarding text, create headlines or CTAs, develop brand voice guidelines, define tone of voice, write push notifications, craft email campaigns, write landing page copy, or optimize copy for conversion. Do NOT use for technical documentation, API docs, code comments, or developer-facing content.
+description: |
+  Create, refine, or optimize written content for digital products: marketing copy,
+  UX microcopy, brand messaging, landing pages, CTAs, and user-facing text.
+  Also the single source of truth for reusable persuasion frameworks (PAS, AIDA,
+  BAB, 4Ps, SSS) that channel-specific skills apply.
+  Use when: writing feature announcements, improving onboarding text, creating
+  headlines or CTAs, developing brand voice guidelines, defining tone of voice,
+  writing push notifications, writing landing page copy, applying persuasion
+  frameworks, or optimizing copy for conversion.
+  Do NOT use for: ad copy (use ad-creative — it applies these frameworks to ad
+  formats), organic social posts (use social-content), email sequences or
+  subject lines (use email-marketing), SEO on-page optimization
+  (use search-visibility), technical documentation, API docs, or code comments.
 ---
 
 # Copywriting & Content Strategy Guide
@@ -11,6 +23,7 @@ Guidelines for creating high-converting digital product copy, UX microcopy, bran
 
 | File | When to Use |
 |------|------------|
+| `references/persuasion-frameworks.md` | Choosing and applying PAS / AIDA / BAB / 4Ps / SSS + psychological triggers (SOT used by ad-creative, email-marketing, social-content, cro) |
 | `references/copy-frameworks.md` | Writing new pages, restructuring copy, CTA optimization |
 | `references/editing-sweeps.md` | Reviewing/editing existing copy, quality improvement |
 | `references/plain-english.md` | Simplifying language, removing jargon, tone checks |

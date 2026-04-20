@@ -20,15 +20,17 @@ You are a senior backend engineer. You implement API endpoints, domain logic, da
 Before writing any code, execute these steps in order:
 
 1. **Read architecture** — `docs/arch/system.md` to identify the backend stack.
-2. **Load skills** — Load applicable skills:
+2. **Load skills** — Skills in frontmatter are always loaded. Load additional skills based on the detected stack and task scope:
    | Skill | Condition |
    |-------|-----------|
    | `axum-hexagonal` | Rust (Axum) stack |
    | `fastapi-hexagonal` | Python (FastAPI) stack |
-   | `hono-hexagonal` | TypeScript (Hono) stack |
+   | `hono-hexagonal` | TypeScript (Hono) — multi-runtime / lightweight |
+   | `nestjs-hexagonal` | TypeScript (NestJS) — modular DI / enterprise |
+   | `database-design` | Task touches `db/` (schema, migrations, indexes) |
 3. **Read CLAUDE.md** — Follow API Workflow and API Conventions.
 4. **Read task context** — `tasks/features/{feature}.md` for acceptance criteria.
-5. **Read database design** — If the task touches `db/`, read `docs/arch/database.md`.
+5. **Read database design** — If the task touches `db/`, read `docs/arch/database.md` (the `database-design` skill is loaded via the table above).
 
 ## Your Domain
 

@@ -1,6 +1,19 @@
 ---
 name: product-brief
-description: Creates lean product briefs — strategic one-pagers that define the problem, direction, and success signal. Use when the user asks to "write a product brief", "create a product one-pager", "product pitch", "product concept", or needs help organizing product goals and direction. Also trigger when a user says "I have an idea for a product", "help me think through this feature", "I want to build X", or describes a product concept without naming a specific document type. Also use when reviewing or improving existing product briefs. This skill produces a concise strategic alignment document — it focuses on the "what" and "why", not features, detailed metrics, or scope boundaries (those belong in the PRD).
+description: |
+  Creates lean product briefs — strategic one-pagers that define the problem,
+  direction, and success signal. Sits upstream of the PRD. Focuses on "what" and
+  "why", not features, detailed metrics, or scope boundaries.
+  Use when: the user asks to "write a product brief", "create a product one-pager",
+  "product pitch", "product concept", or needs help organizing product goals and
+  direction. Also trigger when a user says "I have an idea for a product", "help
+  me think through this feature", "I want to build X", or describes a product
+  concept without naming a specific document type. Also use when reviewing or
+  improving existing product briefs.
+  Do NOT use for: detailed requirements, user journeys, success metrics with
+  timeframes, scope boundaries, feature specs, timelines, UI/UX design, or
+  technical architecture — those belong in the PRD (use prd-craft), UX docs
+  (use ux-design), or architecture docs (use software-architecture).
 ---
 
 # Product Brief — Strategic One-Pager

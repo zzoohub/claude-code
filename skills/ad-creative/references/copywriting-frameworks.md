@@ -1,5 +1,9 @@
 # Copywriting Frameworks for Ad Creative
 
+Ad-specific applications of the core persuasion frameworks.
+
+> **Canonical framework definitions (PAS, AIDA, BAB, 4Ps, SSS, psychological triggers, Schwartz's awareness levels) live in `copywriting/references/persuasion-frameworks.md`.** This file focuses on *how to apply them to paid media formats* (search, feed, video, carousel). Read the canonical file first, then use the templates below for channel-specific execution.
+
 Proven frameworks from direct-response advertising legends — Hopkins, Schwartz,
 Ogilvy, Halbert — adapted for modern paid media. Each framework is a thinking tool,
 not a rigid template. The best ads often blend elements from multiple frameworks.

@@ -63,6 +63,7 @@ Structure output as:
 | Popups/modals/overlays/banners | `references/popup-cro.md` |
 | In-app upgrade/paywall/upsell | `references/paywall-upgrade-cro.md` |
 | Checkout/cart/purchase flow | `references/checkout-cro.md` |
+| Referral programs, viral loops, K Factor | `references/growth-loops.md` |
 | A/B test design and analysis | `references/experiments.md` |
 
 **Multi-area requests** (e.g., "optimize my SaaS funnel"): Read the most relevant reference first, then pull in additional references as needed. For full-funnel work, read in order: page → signup → onboarding → paywall. Synthesize into a single cohesive analysis — don't produce separate reports per area.

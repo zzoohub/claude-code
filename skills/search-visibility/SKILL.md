@@ -1,6 +1,24 @@
 ---
 name: search-visibility
-description: Comprehensive search visibility strategy skill covering SEO, AEO (Answer Engine Optimization), and GEO (Generative Engine Optimization). Covers traditional SEO (keyword research, on-page optimization, technical SEO, link building, content strategy), AEO (featured snippets, voice search, People Also Ask, zero-click optimization, FAQ schema, direct answer formatting), and GEO (AI search visibility, content extractability, entity clarity, multi-platform presence). Use when user asks about SEO, AEO, GEO, search optimization, AI visibility, keyword research, on-page SEO, technical SEO, backlinks, content strategy, AI citations, content extractability, featured snippets, voice search, answer engine, zero-click search, People Also Ask, FAQ optimization, direct answers, or mentions "SEO", "AEO", "GEO", "AI search", "search optimization", "ranking", "organic traffic", "AI visibility", "generative engine", "answer engine", "featured snippet", "voice search".
+description: |
+  Comprehensive search visibility strategy covering SEO (Search Engine
+  Optimization), AEO (Answer Engine Optimization), and GEO (Generative Engine
+  Optimization). Includes keyword research, on-page/technical SEO, link building,
+  content strategy, featured snippets, voice search, People Also Ask, zero-click
+  optimization, FAQ schema, direct answer formatting, AI search visibility,
+  content extractability, entity clarity, and multi-platform presence.
+  Use when: user asks about SEO, AEO, GEO, search optimization, AI visibility,
+  keyword research, on-page SEO, technical SEO, backlinks, content strategy,
+  AI citations, content extractability, featured snippets, voice search, answer
+  engine, zero-click search, People Also Ask, FAQ optimization, direct answers,
+  or mentions "SEO", "AEO", "GEO", "AI search", "search optimization", "ranking",
+  "organic traffic", "AI visibility", "generative engine", "answer engine",
+  "featured snippet", "voice search".
+  Do NOT use for: social media content strategy (use social-content), email
+  content (use email-marketing), ad copy (use ad-creative), UX copy or microcopy
+  (use copywriting for voice and structure — this skill only supplies the
+  SEO/AEO/GEO optimization layer on top), or competitor comparison page formats
+  (use competitor-pages; this skill provides the SEO layer for those pages).
 ---
 
 # Search Visibility Skill

@@ -7,7 +7,7 @@ description: |
   Do NOT use for backend, mobile, or desktop code.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
-skills: [tanstack-start, "frontend-design:frontend-design"]
+skills: ["frontend-design:frontend-design"]
 color: purple
 ---
 
@@ -20,14 +20,15 @@ You are a senior frontend engineer. You implement web pages, components, layouts
 Before writing any code, execute these steps in order:
 
 1. **Read architecture** — `docs/arch/system.md` to identify the frontend stack.
-2. **Load skills** — Load applicable skills:
+2. **Load skills** — Skills in frontmatter are always loaded. Load additional skills based on the detected stack:
    | Skill | Condition |
    |-------|-----------|
-   | `vercel-composition-patterns` | Next.js stack |
-   | `vercel-react-best-practices` | Next.js stack |
+   | `tanstack-start` | TanStack Start stack (React or Solid) |
+   | `vercel-composition-patterns` | React stack (Next.js / TanStack Start / Vite) |
+   | `vercel-react-best-practices` | React stack (Next.js / TanStack Start / Vite) |
    | `design-system` | UI components, styling, theming |
    | `i18n` | User-facing text, internationalization |
-   | `motion` | Animation, transitions, scroll effects |
+   | `motion` | Animation, transitions, scroll, gestures |
    | `web3d` | 3D, WebGL, WebGPU, WebXR |
 3. **Read UX specs** — `docs/ux/ux-design.md` for global patterns, `docs/ux/screens/{screen}.md` for the target screen.
 4. **Read CLAUDE.md** — Follow Web Workflow, FSD Import Rules, and Web Conventions.

@@ -10,7 +10,7 @@ description: |
   (use content-marketer), analytics/data analysis (use data-analyst), or ad creative (use marketer).
 tools: Read, Write, Edit, Grep, Glob
 model: opus
-skills: [cro, marketing-psychology, copywriting, churn-prevention, pricing]
+skills: [cro, copywriting, churn-prevention, pricing]
 color: cyan
 ---
 
@@ -34,12 +34,14 @@ Growth is a system, not a collection of tactics. Every optimization must be meas
 |------|-------|
 | Page/flow conversion (landing, signup, onboarding, form, popup, paywall) | cro |
 | A/B test / experiment design | cro |
+| Referral / viral loop design | cro (`references/growth-loops.md`) |
 | Pricing strategy for paywall/upgrade | pricing |
-| Persuasion principles for growth | marketing-psychology |
 | Conversion copy quality | copywriting |
 | Cancel flow / dunning / churn / payment recovery | churn-prevention |
 
-**Not this agent:** Aha Moment & activation metrics → data-analyst (`biz/analytics/tracking-plan.md`)
+**Not this agent:**
+- Aha Moment & activation metrics → data-analyst (`biz/analytics/tracking-plan.md`)
+- Broad persuasion principles → invoke marketing-psychology directly (core triggers already baked into cro/churn-prevention/pricing)
 
 ---
 
@@ -47,9 +49,7 @@ Growth is a system, not a collection of tactics. Every optimization must be meas
 
 ### 1. Referral & Viral Loop Design
 
-Design referral programs that create compounding growth loops. Framework: Trigger (when to prompt) → Incentive (two-sided > one-sided, match to product model) → Mechanism (link, email, in-app) → Landing (personalized) → Activation (fast path to Aha Moment).
-
-Key metrics: Viral K Factor (K > 1 = viral), Amplification Factor, Loop Cycle Time, Referral Conversion Rate.
+Use **cro skill → `references/growth-loops.md`** for the canonical framework (loop types, 5-stage design, K Factor, amplification, cycle time, anti-patterns, and output format). Your job is to apply it to the specific product using context from `docs/prd/product-brief.md` and `biz/analytics/tracking-plan.md`.
 
 ### 2. Growth Strategy & Prioritization
 
@@ -81,7 +81,10 @@ Only create a new file when the deliverable genuinely doesn't exist yet.
 | Referral + viral loop design | `biz/growth/referral-program.md` |
 | Churn prevention strategy | `biz/growth/churn-prevention.md` |
 | Dunning / payment recovery | `biz/growth/dunning.md` |
+| Paywall / upgrade pricing | `biz/growth/paywall-pricing.md` |
 | CRO analyses | `biz/growth/cro/{page-or-flow}-analysis.md` |
+
+**Pricing scope split:** `biz/marketing/pricing.md` (marketer) = public-facing tier/packaging strategy. `biz/growth/paywall-pricing.md` (this agent) = in-app paywall/upgrade/checkout pricing tactics.
 
 ---
 

@@ -96,5 +96,5 @@ Usage frequency matters: products used <3x/month rarely develop a retention plat
 
 - **data-analyst** (agent) — Executes these frameworks against live data via PostHog MCP
 - **cro** (skill) — For experiment design to improve activation flows
-- **growth-optimizer** (skill) — For referral loops and growth experiments
+- **growth-optimizer** (agent) — For referral loops and growth experiments
 - **churn-prevention** (skill) — For post-retention churn interventions

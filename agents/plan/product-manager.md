@@ -70,7 +70,7 @@ docs/prd/features/{feature}.md   # Feature specs (requirements, journeys)
 - If a file already exists, **update it in place**.
 - The file should always reflect the latest state.
 - **Line limits:** Before updating, check the file's line count. If it exceeds the limit, first consolidate — merge redundant sections, tighten wording, remove resolved open questions — then apply changes.
-  - `product-brief.md`: **200 lines**
+  - `product-brief.md`: **150 lines** (SOT: `product-brief` skill)
   - `prd.md`: **400 lines**
   - `features/*.md`: **200 lines** per feature
 

@@ -1,6 +1,22 @@
 ---
 name: software-architecture
-description: Produce a Software Architecture Design Document from a PRD. Use when the user says "design doc", "software architecture", "system design", "architect this", "architecture design", "tech spec", "how should I build this", "what's the right architecture for", "help me plan the backend", "design the system", "ASR", "utility tree", "domain model", "ATAM", "event storming", or provides a PRD and asks for technical architecture. Also use when the system involves AI/LLM features (RAG, agents, chat, copilot, semantic search). Produces architecture documents covering system context, ASRs, domain model, pattern selection, component design, data architecture, deployment, cross-cutting concerns, and decision records. Produces D2 architecture diagrams. Make sure to use this skill whenever the user wants to plan or structure a new project, even if they don't explicitly say "architecture."
+description: |
+  Produce a Software Architecture Design Document from a PRD: system context, ASRs,
+  domain model, pattern selection, component design, data architecture, deployment,
+  cross-cutting concerns, and decision records. Produces D2 architecture diagrams.
+  Use when: user says "design doc", "software architecture", "system design",
+  "architect this", "architecture design", "tech spec", "how should I build this",
+  "what's the right architecture for", "help me plan the backend", "design the
+  system", "ASR", "utility tree", "domain model", "ATAM", "event storming", or
+  provides a PRD and asks for technical architecture. Also trigger when the system
+  involves AI/LLM features (RAG, agents, chat, copilot, semantic search). Use this
+  skill whenever the user wants to plan or structure a new project, even if they
+  don't explicitly say "architecture".
+  Do NOT use for: table schemas, column types, indexes, or migrations (use
+  database-design); folder structure, code conventions, or linting rules (CLAUDE.md
+  concern); concrete UI component trees or page layouts (use ux-design +
+  design-system); implementation-level LLM app details like prompts, tool schemas,
+  or eval harnesses (use llm-app-design after architecture is set).
 ---
 
 # Software Architect Skill

@@ -6,7 +6,7 @@ description: |
   Do NOT use for product planning (use product-manager) or task generation (use task-manager).
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
-skills: [software-architecture, database-design]
+skills: [software-architecture, database-design, llm-app-design]
 color: cyan
 ---
 
@@ -20,6 +20,7 @@ You MUST load and follow these skills for domain expertise:
 
 - **software-architecture** — System context, ASRs, domain model, pattern selection, component design, data architecture, deployment, cross-cutting concerns, ADRs
 - **database-design** — Table design, schema modeling, index strategy, normalization, migration planning
+- **llm-app-design** — Provider-neutral LLM app design (prompt engineering, tool use, RAG, agent patterns, evaluation) — load when the PRD includes AI/LLM features
 
 The skills contain the templates, quality standards, and anti-patterns. Follow them rigorously. Do not improvise your own frameworks.
 
