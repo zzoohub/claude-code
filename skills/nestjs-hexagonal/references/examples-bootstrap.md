@@ -1,6 +1,6 @@
 # Examples: Bootstrap & Testing
 
-Config, main.ts, module wiring, TypeORM/Mongoose setup, and hex-specific test mocks.
+Config, main.ts, module wiring, Drizzle/Mongoose setup, and hex-specific test mocks.
 
 ---
 
@@ -8,45 +8,28 @@ Config, main.ts, module wiring, TypeORM/Mongoose setup, and hex-specific test mo
 
 ```typescript
 // src/config.ts
-import { plainToInstance, Type } from "class-transformer";
-import {
-  IsEnum, IsInt, IsOptional, IsString, MinLength, validateSync,
-} from "class-validator";
+import { z } from "zod";
 
 /**
  * Typed config — validates env once at startup.
  * Include DATABASE_URL for SQL or MONGODB_URI for MongoDB (or both).
  */
-export class AppConfig {
-  @IsOptional() @IsString() @MinLength(1)
-  DATABASE_URL?: string;                         // TypeORM (SQL)
+const configSchema = z.object({
+  DATABASE_URL: z.string().min(1).optional(),    // Drizzle (SQL)
+  MONGODB_URI: z.string().min(1).optional(),     // Mongoose (MongoDB)
+  PORT: z.coerce.number().default(3000),
+  CORS_ORIGIN: z.string().default("http://localhost:3000"),
+  JWT_SECRET: z.string().min(16),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+}).refine(
+  (c) => c.DATABASE_URL || c.MONGODB_URI,
+  { message: "At least one of DATABASE_URL or MONGODB_URI must be set" },
+);
 
-  @IsOptional() @IsString() @MinLength(1)
-  MONGODB_URI?: string;                          // Mongoose (MongoDB)
-
-  @Type(() => Number) @IsInt()
-  PORT: number = 3000;
-
-  @IsString()
-  CORS_ORIGIN: string = "http://localhost:3000";
-
-  @IsString() @MinLength(16)
-  JWT_SECRET!: string;
-
-  @IsEnum(["development", "production", "test"])
-  NODE_ENV: "development" | "production" | "test" = "development";
-}
+export type AppConfig = z.infer<typeof configSchema>;
 
 export function validateConfig(config: Record<string, unknown>): AppConfig {
-  const validated = plainToInstance(AppConfig, config, {
-    enableImplicitConversion: true,
-  });
-  const errors = validateSync(validated, { skipMissingProperties: false });
-  if (errors.length > 0) throw new Error(errors.toString());
-  if (!validated.DATABASE_URL && !validated.MONGODB_URI) {
-    throw new Error("At least one of DATABASE_URL or MONGODB_URI must be set");
-  }
-  return validated;
+  return configSchema.parse(config);
 }
 ```
 
@@ -56,12 +39,10 @@ export function validateConfig(config: Record<string, unknown>): AppConfig {
 // src/main.ts
 import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
-import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { DomainExceptionFilter } from "./inbound/http/filters/domain-exception.filter";
-import { validationExceptionFactory } from "./inbound/http/validation-exception.factory";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -70,16 +51,6 @@ async function bootstrap() {
   app.use(helmet());
   const configService = app.get(ConfigService);
   app.enableCors({ origin: [configService.get("CORS_ORIGIN")] });
-
-  // Global validation — class-validator on DTO classes.
-  // exceptionFactory keeps error responses in RFC 9457 ProblemDetails shape.
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-    transformOptions: { enableImplicitConversion: true },
-    exceptionFactory: validationExceptionFactory,
-  }));
 
   // Global exception filter — maps domain errors to RFC 9457
   app.useGlobalFilters(new DomainExceptionFilter());
@@ -112,7 +83,7 @@ import { TerminusModule } from "@nestjs/terminus";
 import { validateConfig } from "./config";
 
 // Pick ONE persistence module:
-import { TypeOrmPersistenceModule } from "./outbound/typeorm/typeorm.module";
+import { DrizzlePersistenceModule } from "./outbound/drizzle/drizzle.module";
 // import { MongoosePersistenceModule } from "./outbound/mongoose/mongoose.module";
 
 import { AuthorsModule } from "./authors.module";
@@ -121,7 +92,7 @@ import { HealthController } from "./inbound/http/health/health.controller";
 @Module({
   imports: [
     ConfigModule.forRoot({ validate: validateConfig, isGlobal: true }),
-    TypeOrmPersistenceModule,       // SQL
+    DrizzlePersistenceModule,       // SQL
     // MongoosePersistenceModule,    // MongoDB — swap by toggling these
     TerminusModule,
     AuthorsModule,
@@ -188,41 +159,31 @@ export class NoOpNotifier extends AuthorNotifier {
 
 ---
 
-## TypeORM DataSource + Migrations
-
-The TypeORM CLI needs a standalone `DataSource` (it can't read Nest's DI graph). Keep this file at the project root and reuse the same `entities` and `migrations` paths the runtime module uses.
+## Drizzle Kit Config + Migrations
 
 ```typescript
-// data-source.ts
-import "reflect-metadata";
-import { DataSource } from "typeorm";
-import { AuthorEntity } from "./src/outbound/typeorm/entities/author.entity";
+// drizzle.config.ts
+import { defineConfig } from "drizzle-kit";
 
-export default new DataSource({
-  type: "postgres",
-  url: process.env.DATABASE_URL,
-  entities: [AuthorEntity],
-  migrations: ["./migrations/*.ts"],
-  // synchronize stays absent — migrations are the only path that mutates schema.
+export default defineConfig({
+  schema: "./src/outbound/drizzle/schema.ts",
+  out: "./drizzle/migrations",
+  dialect: "postgresql",
+  dbCredentials: { url: process.env.DATABASE_URL! },
 });
 ```
 
 ```bash
-# Generate a migration from the entity diff
-bunx typeorm-ts-node-commonjs migration:generate -d ./data-source.ts ./migrations/CreateAuthors
-
-# Apply pending migrations
-bunx typeorm-ts-node-commonjs migration:run -d ./data-source.ts
-
-# Revert the most recent migration
-bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
+bunx drizzle-kit generate    # Generate migration from schema changes
+bunx drizzle-kit migrate     # Apply migrations
+bunx drizzle-kit studio      # Visual DB browser
 ```
 
 ---
 
 ## package.json
 
-### SQL variant (TypeORM + PostgreSQL)
+### SQL variant (Drizzle + PostgreSQL)
 
 ```json
 {
@@ -234,9 +195,9 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
     "start": "node dist/main.js",
     "test": "jest",
     "test:e2e": "jest --config jest-e2e.json",
-    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d ./data-source.ts",
-    "migration:run": "typeorm-ts-node-commonjs migration:run -d ./data-source.ts",
-    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d ./data-source.ts"
+    "db:generate": "bunx drizzle-kit generate",
+    "db:migrate": "bunx drizzle-kit migrate",
+    "db:studio": "bunx drizzle-kit studio"
   },
   "dependencies": {
     "@nestjs/common": "^11.0",
@@ -245,17 +206,15 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
     "@nestjs/config": "^11.0",
     "@nestjs/swagger": "^11.0",
     "@nestjs/terminus": "^11.0",
-    "@nestjs/typeorm": "^11.0",
     "@nestjs/passport": "^11.0",
     "@nestjs/throttler": "^6.0",
     "@node-rs/argon2": "^2.0",
     "jsonwebtoken": "^9.0",
-    "typeorm": "^0.3",
+    "drizzle-orm": "^0.39",
     "pg": "^8.13",
     "passport": "^0.7",
     "passport-jwt": "^4.0",
-    "class-validator": "^0.14",
-    "class-transformer": "^0.5",
+    "zod": "^3.24",
     "helmet": "^8.0",
     "reflect-metadata": "^0.2",
     "rxjs": "^7.0"
@@ -263,11 +222,11 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
   "devDependencies": {
     "@nestjs/cli": "^11.0",
     "@nestjs/testing": "^11.0",
+    "drizzle-kit": "^0.30",
     "typescript": "^5.7",
     "jest": "^29.0",
     "@types/jest": "^29.0",
     "ts-jest": "^29.0",
-    "ts-node": "^10.9",
     "@types/express": "^4.0",
     "@types/pg": "^8.0"
   }
@@ -276,7 +235,7 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
 
 ### MongoDB variant (Mongoose)
 
-Replace the TypeORM deps with:
+Replace the Drizzle deps with:
 
 ```json
 {
@@ -287,7 +246,7 @@ Replace the TypeORM deps with:
 }
 ```
 
-Remove `@nestjs/typeorm`, `typeorm`, `pg`, `@types/pg`, `ts-node`, and the `migration:*` scripts.
+Remove `drizzle-orm`, `drizzle-kit`, `pg`, and the `db:*` scripts.
 
 ```bash
 bun install                    # install all deps
@@ -322,11 +281,11 @@ bun run test                   # run unit tests
     "paths": { "~/*": ["./src/*"] }
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules", "dist", "drizzle"]
 }
 ```
 
-Key: `emitDecoratorMetadata` and `experimentalDecorators` are required for NestJS DI **and** for TypeORM `@Entity`/`@Column` reflection.
+Key: `emitDecoratorMetadata` and `experimentalDecorators` are required for NestJS DI.
 
 ---
 
@@ -408,11 +367,10 @@ export class NoOpMockNotifier extends AuthorNotifier {
 ```typescript
 // tests/helpers.ts
 import { Test, type TestingModule } from "@nestjs/testing";
-import { ValidationPipe, type INestApplication } from "@nestjs/common";
+import type { INestApplication } from "@nestjs/common";
 import { AppModule } from "../src/app.module";
 import { AuthorRepository } from "../src/domain/authors/ports";
 import { DomainExceptionFilter } from "../src/inbound/http/filters/domain-exception.filter";
-import { validationExceptionFactory } from "../src/inbound/http/validation-exception.factory";
 import type { MockAuthorRepository } from "./mocks";
 
 /**
@@ -430,13 +388,6 @@ export async function createTestApp(overrides?: {
 
   const module = await builder.compile();
   const app = module.createNestApplication();
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-    transformOptions: { enableImplicitConversion: true },
-    exceptionFactory: validationExceptionFactory,
-  }));
   app.useGlobalFilters(new DomainExceptionFilter());
   await app.init();
   return { app, module };
@@ -480,7 +431,7 @@ describe("AuthorsController", () => {
       expect(res.body.type).toContain("duplicate-author");
     });
 
-    it("returns 400 for empty name (class-validator)", async () => {
+    it("returns 400 for empty name (Zod validation)", async () => {
       const repo = new MockAuthorRepository();
       ({ app } = await createTestApp({ repo }));
       await request(app.getHttpServer())
@@ -550,50 +501,34 @@ describe("AuthorServiceImpl", () => {
 });
 ```
 
-### Integration Tests (real DB — TypeORM example)
+### Integration Tests (real DB — Drizzle example)
 
 ```typescript
-// tests/integration/typeorm-author.repository.spec.ts
+// tests/integration/drizzle-author.repository.spec.ts
 import { Test } from "@nestjs/testing";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { DataSource } from "typeorm";
-import { AuthorEntity } from "../../src/outbound/typeorm/entities/author.entity";
-import { TypeOrmAuthorRepository } from "../../src/outbound/typeorm/author.repository";
+import { DRIZZLE, createDrizzleProvider, type DrizzleDB } from "../../src/outbound/drizzle/drizzle.provider";
+import { DrizzleAuthorRepository } from "../../src/outbound/drizzle/author.repository";
 import { AuthorRepository } from "../../src/domain/authors/ports";
 import { AuthorName } from "../../src/domain/authors/models";
 import { DuplicateAuthorError } from "../../src/domain/authors/errors";
 
-describe("TypeOrmAuthorRepository (integration)", () => {
-  let dataSource: DataSource;
+describe("DrizzleAuthorRepository (integration)", () => {
+  let db: DrizzleDB;
   let repo: AuthorRepository;
 
   beforeAll(async () => {
+    db = createDrizzleProvider(process.env.TEST_DATABASE_URL!);
     const module = await Test.createTestingModule({
-      imports: [
-        TypeOrmModule.forRoot({
-          type: "postgres",
-          url: process.env.TEST_DATABASE_URL,
-          entities: [AuthorEntity],
-          // synchronize is acceptable in a throw-away test DB only — never in deployed envs.
-          synchronize: true,
-          dropSchema: true,
-        }),
-        TypeOrmModule.forFeature([AuthorEntity]),
-      ],
       providers: [
-        { provide: AuthorRepository, useClass: TypeOrmAuthorRepository },
+        { provide: DRIZZLE, useValue: db },
+        { provide: AuthorRepository, useClass: DrizzleAuthorRepository },
       ],
     }).compile();
-    dataSource = module.get(DataSource);
     repo = module.get(AuthorRepository);
   });
 
-  afterAll(async () => {
-    await dataSource.destroy();
-  });
-
   beforeEach(async () => {
-    await dataSource.getRepository(AuthorEntity).clear();
+    await db.delete((await import("../../src/outbound/drizzle/schema")).authors);
   });
 
   it("creates and finds an author", async () => {
@@ -669,8 +604,8 @@ describe("MongooseAuthorRepository (integration)", () => {
 ## .env.example
 
 ```bash
-# SQL (TypeORM)
-DATABASE_URL="postgres://postgres:postgres@localhost:5432/myapp"
+# SQL (Drizzle)
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/myapp?schema=public"
 
 # MongoDB (Mongoose)
 MONGODB_URI="mongodb://localhost:27017/myapp"
