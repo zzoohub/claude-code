@@ -8,28 +8,45 @@ Config, main.ts, module wiring, Drizzle/Mongoose setup, and hex-specific test mo
 
 ```typescript
 // src/config.ts
-import { z } from "zod";
+import { plainToInstance, Type } from "class-transformer";
+import {
+  IsEnum, IsInt, IsOptional, IsString, MinLength, validateSync,
+} from "class-validator";
 
 /**
  * Typed config — validates env once at startup.
  * Include DATABASE_URL for SQL or MONGODB_URI for MongoDB (or both).
  */
-const configSchema = z.object({
-  DATABASE_URL: z.string().min(1).optional(),    // Drizzle (SQL)
-  MONGODB_URI: z.string().min(1).optional(),     // Mongoose (MongoDB)
-  PORT: z.coerce.number().default(3000),
-  CORS_ORIGIN: z.string().default("http://localhost:3000"),
-  JWT_SECRET: z.string().min(16),
-  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-}).refine(
-  (c) => c.DATABASE_URL || c.MONGODB_URI,
-  { message: "At least one of DATABASE_URL or MONGODB_URI must be set" },
-);
+export class AppConfig {
+  @IsOptional() @IsString() @MinLength(1)
+  DATABASE_URL?: string;                         // Drizzle (SQL)
 
-export type AppConfig = z.infer<typeof configSchema>;
+  @IsOptional() @IsString() @MinLength(1)
+  MONGODB_URI?: string;                          // Mongoose (MongoDB)
+
+  @Type(() => Number) @IsInt()
+  PORT: number = 3000;
+
+  @IsString()
+  CORS_ORIGIN: string = "http://localhost:3000";
+
+  @IsString() @MinLength(16)
+  JWT_SECRET!: string;
+
+  @IsEnum(["development", "production", "test"])
+  NODE_ENV: "development" | "production" | "test" = "development";
+}
 
 export function validateConfig(config: Record<string, unknown>): AppConfig {
-  return configSchema.parse(config);
+  const validated = plainToInstance(AppConfig, config, {
+    enableImplicitConversion: true,
+  });
+  const errors = validateSync(validated, { skipMissingProperties: false });
+  if (errors.length > 0) throw new Error(errors.toString());
+  if (!validated.DATABASE_URL && !validated.MONGODB_URI) {
+    throw new Error("At least one of DATABASE_URL or MONGODB_URI must be set");
+  }
+  return validated;
 }
 ```
 
@@ -39,10 +56,12 @@ export function validateConfig(config: Record<string, unknown>): AppConfig {
 // src/main.ts
 import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
+import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { DomainExceptionFilter } from "./inbound/http/filters/domain-exception.filter";
+import { validationExceptionFactory } from "./inbound/http/validation-exception.factory";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -51,6 +70,16 @@ async function bootstrap() {
   app.use(helmet());
   const configService = app.get(ConfigService);
   app.enableCors({ origin: [configService.get("CORS_ORIGIN")] });
+
+  // Global validation — class-validator on DTO classes.
+  // exceptionFactory keeps error responses in RFC 9457 ProblemDetails shape.
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+    transformOptions: { enableImplicitConversion: true },
+    exceptionFactory: validationExceptionFactory,
+  }));
 
   // Global exception filter — maps domain errors to RFC 9457
   app.useGlobalFilters(new DomainExceptionFilter());
@@ -214,7 +243,8 @@ bunx drizzle-kit studio      # Visual DB browser
     "pg": "^8.13",
     "passport": "^0.7",
     "passport-jwt": "^4.0",
-    "zod": "^3.24",
+    "class-validator": "^0.14",
+    "class-transformer": "^0.5",
     "helmet": "^8.0",
     "reflect-metadata": "^0.2",
     "rxjs": "^7.0"
@@ -367,10 +397,11 @@ export class NoOpMockNotifier extends AuthorNotifier {
 ```typescript
 // tests/helpers.ts
 import { Test, type TestingModule } from "@nestjs/testing";
-import type { INestApplication } from "@nestjs/common";
+import { ValidationPipe, type INestApplication } from "@nestjs/common";
 import { AppModule } from "../src/app.module";
 import { AuthorRepository } from "../src/domain/authors/ports";
 import { DomainExceptionFilter } from "../src/inbound/http/filters/domain-exception.filter";
+import { validationExceptionFactory } from "../src/inbound/http/validation-exception.factory";
 import type { MockAuthorRepository } from "./mocks";
 
 /**
@@ -388,6 +419,13 @@ export async function createTestApp(overrides?: {
 
   const module = await builder.compile();
   const app = module.createNestApplication();
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+    transformOptions: { enableImplicitConversion: true },
+    exceptionFactory: validationExceptionFactory,
+  }));
   app.useGlobalFilters(new DomainExceptionFilter());
   await app.init();
   return { app, module };
@@ -431,7 +469,7 @@ describe("AuthorsController", () => {
       expect(res.body.type).toContain("duplicate-author");
     });
 
-    it("returns 400 for empty name (Zod validation)", async () => {
+    it("returns 400 for empty name (class-validator)", async () => {
       const repo = new MockAuthorRepository();
       ({ app } = await createTestApp({ repo }));
       await request(app.getHttpServer())

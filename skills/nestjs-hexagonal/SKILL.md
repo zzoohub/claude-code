@@ -3,7 +3,7 @@ name: nestjs-hexagonal
 description: |
   NestJS with hexagonal architecture patterns in TypeScript.
   Use when: building TypeScript APIs with NestJS — for modular backends with built-in dependency injection.
-  Covers: API design (@nestjs/swagger), domain modeling, ports & adapters (abstract class injection tokens), NestJS module wiring, Zod validation pipes, exception filters (RFC 9457), @nestjs/testing patterns, Drizzle ORM (SQL) and Mongoose (MongoDB) dual-database support, cursor pagination, @nestjs/terminus healthcheck endpoints.
+  Covers: API design (@nestjs/swagger), domain modeling, ports & adapters (abstract class injection tokens), NestJS module wiring, class-validator with the global ValidationPipe, exception filters (RFC 9457), @nestjs/testing patterns, Drizzle ORM (SQL) and Mongoose (MongoDB) dual-database support, cursor pagination, @nestjs/terminus healthcheck endpoints.
   Do not use for: database schema design (use database-design skill). Use hono-hexagonal for lightweight multi-runtime APIs. Use fastapi-hexagonal for Python-only APIs. Use axum-hexagonal for Rust APIs.
 references:
   - references/examples-domain.md
@@ -15,7 +15,7 @@ references:
 
 # NestJS + Hexagonal Architecture
 
-**For latest NestJS/Drizzle/Mongoose/Zod APIs, use context7.**
+**For latest NestJS/Drizzle/Mongoose/class-validator APIs, use context7.**
 
 ## Core Philosophy
 
@@ -44,12 +44,11 @@ src/
 │   └── http/
 │       ├── authors/
 │       │   ├── authors.controller.ts   # Parse -> call service -> map response
-│       │   ├── request.dto.ts          # Zod schemas + toDomain()
+│       │   ├── request.dto.ts          # class-validator DTO classes + toDomain()
 │       │   └── response.dto.ts         # fromDomain() + Swagger decorators
 │       ├── filters/
 │       │   └── domain-exception.filter.ts  # Domain errors -> RFC 9457
-│       ├── pipes/
-│       │   └── zod-validation.pipe.ts      # Zod schema -> NestJS pipe
+│       ├── validation-exception.factory.ts # class-validator errors -> RFC 9457
 │       └── health/
 │           └── health.controller.ts        # @nestjs/terminus
 ├── outbound/
@@ -67,7 +66,7 @@ src/
 │   └── noop.ts                 # NoOp metrics/notifier for dev
 ├── authors.module.ts           # Feature module: wires controller + service
 ├── app.module.ts               # Root module: imports ONE persistence module + config
-├── config.ts                   # Typed config with Zod
+├── config.ts                   # Typed config validated with class-validator
 └── main.ts                     # Bootstrap — NestFactory, global middleware
 drizzle/                        # SQL only: Drizzle Kit migrations
 ├── migrations/
@@ -120,12 +119,12 @@ Abstract classes in the domain layer have zero NestJS imports — they're plain 
 
 - **Controllers** annotated with `@Controller('v1/authors')`. Each method: parse input -> call service -> map response. No Drizzle. No Mongoose. No ORM.
 - **DI** — Controllers inject the abstract service class directly. NestJS resolves it to the concrete implementation registered in the feature module.
-- **Request DTOs** decoupled from domain — Zod schema + `toDomain()` function. Use `ZodValidationPipe` on parameters.
+- **Request DTOs** decoupled from domain — class with class-validator decorators + `toDomain()` function. Validation handled by the global `ValidationPipe`. Type-annotate the controller parameter (`@Body() body: CreateAuthorBody`); without an explicit class type the pipe has no metadata to validate against.
 - **Response DTOs** built via `fromDomain()` static method — never expose domain models directly. Add `@ApiProperty()` decorators for Swagger.
 - **Exception Filters** map domain errors to RFC 9457 ProblemDetails. Register globally in `main.ts`. Match on `error.tag` for exhaustive handling.
 - **API docs** — `@nestjs/swagger` with `@ApiOperation()`, `@ApiResponse()`. Consult `references/api-design.md` for conventions and `references/api-patterns.md` for HTTP patterns.
 - **Guards** — Auth via `@UseGuards(JwtAuthGuard)`. Domain never handles tokens.
-- **Pipes** — `ZodValidationPipe` for body/query/param validation.
+- **Pipes** — Built-in `ValidationPipe` registered globally in `main.ts` (`whitelist`, `forbidNonWhitelisted`, `transform`, `enableImplicitConversion`) drives class-validator on DTO classes. `exceptionFactory` reshapes errors to RFC 9457 ProblemDetails — see `validation-exception.factory.ts`.
 - **NestJS execution order**: Guards -> Interceptors -> Pipes -> Handler -> Interceptors -> Filters.
 
 ### Non-HTTP Inbound Adapters
@@ -186,15 +185,23 @@ Choose **one** persistence module per project (or per domain if you mix database
 
 ## Validation
 
-Zod schemas define the contract at the transport boundary. Domain models validate business rules separately.
+class-validator decorators on DTO classes define the contract at the transport boundary. Domain models validate business rules separately.
 
 ```
-[HTTP body] -> [ZodValidationPipe validates shape] -> [toDomain() validates business rules] -> [Domain model]
+[HTTP body] -> [Global ValidationPipe + class-validator decorators] -> [toDomain() validates business rules] -> [Domain model]
 ```
 
-Two-layer validation is intentional: Zod catches malformed input (missing fields, wrong types) before it reaches domain code. Domain constructors enforce business invariants (non-empty names, valid ranges).
+Two-layer validation is intentional: class-validator catches malformed input (missing fields, wrong types) before it reaches domain code. Domain constructors enforce business invariants (non-empty names, valid ranges).
 
-> ZodValidationPipe implementation: `references/examples-adapters.md`
+Register the pipe once in `main.ts`:
+
+```typescript
+app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
+```
+
+`transform: true` is required so `@Type(() => Number)` coercions on query params (e.g. `limit`) actually run.
+
+> Request DTO and config validation examples: `references/examples-adapters.md`, `references/examples-bootstrap.md`
 
 ---
 
@@ -206,7 +213,7 @@ List endpoints need pagination. **Default to cursor-based pagination.** The patt
 - **Mongoose adapter**: `find({ _id: { $gt: cursor } }).sort({ _id: 1 }).limit(limit)`
 - **Inbound controller**: return `CursorPageResponse<T>` with `data`, `limit`, `nextCursor`, `hasMore`
 
-Cap `limit` at the controller level via Zod (e.g. `z.number().min(1).max(100).default(20)`).
+Cap `limit` at the controller level via class-validator on the query DTO (e.g. `@IsInt() @Min(1) @Max(100) limit: number = 20;` with `@Type(() => Number)` for query-string coercion).
 
 ### Cursor vs Offset
 
@@ -362,7 +369,7 @@ Mark with `@Global()` when the module should be available everywhere without exp
 | Question | Answer |
 |----------|--------|
 | Transactions? | Drizzle: `db.transaction()` / Mongoose: `session.withTransaction()` |
-| Validation? | Zod pipe at transport boundary, domain constructors for business rules |
+| Validation? | class-validator + global `ValidationPipe` at transport boundary, domain constructors for business rules |
 | Error mapping? | `@Catch()` exception filter in inbound |
 | Business orchestration? | Service impl |
 | Controller responsibility? | Parse -> service -> response |
@@ -391,7 +398,7 @@ Mark with `@Global()` when the module should be available everywhere without exp
 ### Framework
 - [ ] Controllers in inbound/ with `@Controller()` decorators
 - [ ] Services wired via `useFactory` (no `@Injectable` in domain)
-- [ ] Zod validation via `ZodValidationPipe` on route params
+- [ ] Validation via class-validator decorators + global `ValidationPipe` (`whitelist`, `transform`)
 - [ ] Global `DomainExceptionFilter` registered in main.ts
 - [ ] `enableShutdownHooks()` called in main.ts
 - [ ] `helmet()` middleware enabled
@@ -420,4 +427,4 @@ Mark with `@Global()` when the module should be available everywhere without exp
 ### Setup
 - [ ] `main.ts` has minimal business logic
 - [ ] `bun.lock` committed
-- [ ] Config validated with Zod at startup
+- [ ] Config validated with class-validator at startup
