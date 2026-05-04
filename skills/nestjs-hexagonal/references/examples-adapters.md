@@ -1,115 +1,133 @@
 # Examples: Adapters
 
-Inbound (controller, DTOs, exception filter, auth guard, pipes, healthcheck) and outbound (Drizzle SQL + Mongoose MongoDB repositories, mappers).
+Inbound (controller, DTOs, exception filter, auth guard, pipes, healthcheck) and outbound (TypeORM SQL + Mongoose MongoDB repositories, mappers).
 
 ---
 
-## Outbound: Drizzle — Schema
+## Outbound: TypeORM — Entity
 
 ```typescript
-// src/outbound/drizzle/schema.ts
-import { pgTable, text, uuid, timestamp } from "drizzle-orm/pg-core";
+// src/outbound/typeorm/entities/author.entity.ts
+import {
+  Entity, Column, PrimaryGeneratedColumn,
+  CreateDateColumn, UpdateDateColumn, Index,
+} from "typeorm";
 
 /**
- * Drizzle table definition — outbound only. Never import in domain.
+ * TypeORM entity — outbound only. NEVER imported in domain.
+ * This is a persistence representation of `Author`, not the domain model itself.
  */
-export const authors = pgTable("authors", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull().unique(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-```
+@Entity({ name: "authors" })
+export class AuthorEntity {
+  @PrimaryGeneratedColumn("uuid")
+  id!: string;
 
-## Outbound: Drizzle — Provider + Module
+  @Index({ unique: true })
+  @Column({ type: "text" })
+  name!: string;
 
-```typescript
-// src/outbound/drizzle/drizzle.provider.ts
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
-import * as schema from "./schema";
+  @CreateDateColumn({ name: "created_at", type: "timestamptz" })
+  createdAt!: Date;
 
-export const DRIZZLE = Symbol("DRIZZLE");
-
-export type DrizzleDB = ReturnType<typeof drizzle<typeof schema>>;
-
-export function createDrizzleProvider(databaseUrl: string): DrizzleDB {
-  const pool = new Pool({
-    connectionString: databaseUrl,
-    max: 10,
-    idleTimeoutMillis: 20_000,
-    connectionTimeoutMillis: 3_000,
-  });
-  return drizzle(pool, { schema });
+  @UpdateDateColumn({ name: "updated_at", type: "timestamptz" })
+  updatedAt!: Date;
 }
 ```
 
+## Outbound: TypeORM — Module
+
 ```typescript
-// src/outbound/drizzle/drizzle.module.ts
+// src/outbound/typeorm/typeorm.module.ts
 import { Global, Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { DRIZZLE, createDrizzleProvider } from "./drizzle.provider";
-import { DrizzleAuthorRepository } from "./author.repository";
+import { TypeOrmModule } from "@nestjs/typeorm";
+import { AuthorEntity } from "./entities/author.entity";
+import { TypeOrmAuthorRepository } from "./author.repository";
 import { AuthorRepository } from "../../domain/authors/ports";
 import type { AppConfig } from "../../config";
 
 @Global()
 @Module({
-  providers: [
-    {
-      provide: DRIZZLE,
+  imports: [
+    TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService<AppConfig, true>) =>
-        createDrizzleProvider(config.get("DATABASE_URL")),
-    },
-    { provide: AuthorRepository, useClass: DrizzleAuthorRepository },
+      useFactory: (config: ConfigService<AppConfig, true>) => ({
+        type: "postgres",
+        url: config.get("DATABASE_URL"),
+        entities: [AuthorEntity],
+        migrations: ["dist/migrations/*.js"],
+        // synchronize MUST stay false in every deployed env — migrations only.
+        synchronize: false,
+        logging: config.get("NODE_ENV") === "development" ? ["query", "error"] : ["error"],
+        poolSize: 10,
+      }),
+    }),
+    TypeOrmModule.forFeature([AuthorEntity]),
   ],
-  exports: [DRIZZLE, AuthorRepository],
+  providers: [
+    { provide: AuthorRepository, useClass: TypeOrmAuthorRepository },
+  ],
+  exports: [AuthorRepository, TypeOrmModule],
 })
-export class DrizzlePersistenceModule {}
+export class TypeOrmPersistenceModule {}
 ```
 
-## Outbound: Drizzle — Mapper + Repository
+## Outbound: TypeORM — Mapper + Repository
 
 ```typescript
-// src/outbound/drizzle/mapper.ts
+// src/outbound/typeorm/mapper.ts
 import { AuthorName } from "../../domain/authors/models";
-import type { Author } from "../../domain/authors/models";
+import type { Author, CreateAuthorRequest } from "../../domain/authors/models";
+import { AuthorEntity } from "./entities/author.entity";
 
+/**
+ * Maps in BOTH directions so the entity stays sealed inside the adapter.
+ * Domain code only ever sees `Author`.
+ */
 export class AuthorMapper {
-  static toDomain(row: { id: string; name: string }): Author {
-    return { id: row.id, name: AuthorName.create(row.name) };
+  static toDomain(entity: AuthorEntity): Author {
+    return { id: entity.id, name: AuthorName.create(entity.name) };
+  }
+
+  static toEntity(req: CreateAuthorRequest): AuthorEntity {
+    const entity = new AuthorEntity();
+    entity.name = req.name.value;
+    return entity;
   }
 }
 ```
 
 ```typescript
-// src/outbound/drizzle/author.repository.ts
-import { Inject, Injectable } from "@nestjs/common";
-import { eq, asc, gt } from "drizzle-orm";
-import { DRIZZLE, type DrizzleDB } from "./drizzle.provider";
-import { authors } from "./schema";
+// src/outbound/typeorm/author.repository.ts
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { MoreThan, QueryFailedError, Repository } from "typeorm";
+import { AuthorEntity } from "./entities/author.entity";
 import { AuthorMapper } from "./mapper";
 import { AuthorRepository } from "../../domain/authors/ports";
-import type { Author, CreateAuthorRequest } from "../../domain/authors/models";
+import type { Author, CreateAuthorRequest, CursorPage } from "../../domain/authors/models";
 import {
   DuplicateAuthorError,
   UnknownAuthorError,
 } from "../../domain/authors/errors";
 
+const PG_UNIQUE_VIOLATION = "23505";
+
 @Injectable()
-export class DrizzleAuthorRepository extends AuthorRepository {
-  constructor(@Inject(DRIZZLE) private readonly db: DrizzleDB) {
+export class TypeOrmAuthorRepository extends AuthorRepository {
+  constructor(
+    @InjectRepository(AuthorEntity)
+    private readonly repo: Repository<AuthorEntity>,
+  ) {
     super();
   }
 
   async createAuthor(req: CreateAuthorRequest): Promise<Author> {
+    const entity = AuthorMapper.toEntity(req);
     try {
-      const [row] = await this.db
-        .insert(authors)
-        .values({ name: req.name.value })
-        .returning();
-      return AuthorMapper.toDomain(row);
+      // Data Mapper style: repository.save(entity), never entity.save().
+      const saved = await this.repo.save(entity);
+      return AuthorMapper.toDomain(saved);
     } catch (error) {
       if (this.isUniqueConstraintError(error)) {
         throw new DuplicateAuthorError(req.name.value);
@@ -119,12 +137,8 @@ export class DrizzleAuthorRepository extends AuthorRepository {
   }
 
   async findAuthor(authorId: string): Promise<Author | null> {
-    const rows = await this.db
-      .select()
-      .from(authors)
-      .where(eq(authors.id, authorId));
-    if (rows.length === 0) return null;
-    return AuthorMapper.toDomain(rows[0]);
+    const entity = await this.repo.findOneBy({ id: authorId });
+    return entity ? AuthorMapper.toDomain(entity) : null;
   }
 
   async listAuthors(
@@ -133,12 +147,14 @@ export class DrizzleAuthorRepository extends AuthorRepository {
   ): Promise<CursorPage<Author>> {
     const fetchLimit = limit + 1;
 
-    const rows = cursor
-      ? await this.db.select().from(authors).where(gt(authors.id, cursor)).orderBy(asc(authors.id)).limit(fetchLimit)
-      : await this.db.select().from(authors).orderBy(asc(authors.id)).limit(fetchLimit);
+    const entities = await this.repo.find({
+      where: cursor ? { id: MoreThan(cursor) } : {},
+      order: { id: "ASC" },
+      take: fetchLimit,
+    });
 
-    const hasMore = rows.length > limit;
-    const items = rows.slice(0, limit).map(AuthorMapper.toDomain);
+    const hasMore = entities.length > limit;
+    const items = entities.slice(0, limit).map(AuthorMapper.toDomain);
     const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
 
     return { items, nextCursor, hasMore };
@@ -146,26 +162,27 @@ export class DrizzleAuthorRepository extends AuthorRepository {
 
   private isUniqueConstraintError(error: unknown): boolean {
     return (
-      error instanceof Error &&
-      (error.message.includes("23505") ||
-        error.message.includes("UNIQUE constraint failed"))
+      error instanceof QueryFailedError &&
+      (error as QueryFailedError & { driverError?: { code?: string } }).driverError?.code === PG_UNIQUE_VIOLATION
     );
   }
 }
 ```
 
-## Outbound: Drizzle — Transaction Example
+## Outbound: TypeORM — Transaction Example
 
 ```typescript
-// Multi-step operations that need atomicity:
+// Multi-step operations that need atomicity.
+// EntityManager.transaction() wraps everything in a single connection;
+// throwing inside the callback rolls the whole thing back.
 async createAuthorWithProfile(req: CreateAuthorWithProfileRequest): Promise<Author> {
   try {
-    const row = await this.db.transaction(async (tx) => {
-      const [author] = await tx.insert(authors).values({ name: req.name.value }).returning();
-      await tx.insert(profiles).values({ authorId: author.id, bio: req.bio });
+    const saved = await this.repo.manager.transaction(async (manager) => {
+      const author = await manager.save(AuthorEntity, { name: req.name.value });
+      await manager.save(ProfileEntity, { authorId: author.id, bio: req.bio });
       return author;
     });
-    return AuthorMapper.toDomain(row);
+    return AuthorMapper.toDomain(saved);
   } catch (error) {
     if (this.isUniqueConstraintError(error)) throw new DuplicateAuthorError(req.name.value);
     throw new UnknownAuthorError(error);
@@ -599,8 +616,8 @@ import { Controller, Get, Inject } from "@nestjs/common";
 import { HealthCheck, HealthCheckService } from "@nestjs/terminus";
 import { ApiTags } from "@nestjs/swagger";
 
-// For Drizzle — raw query check:
-// import { DRIZZLE, type DrizzleDB } from "../../../outbound/drizzle/drizzle.provider";
+// For TypeORM — use the built-in indicator:
+// import { TypeOrmHealthIndicator } from "@nestjs/terminus";
 // For Mongoose:
 // import { InjectConnection } from "@nestjs/mongoose";
 // import { Connection } from "mongoose";
@@ -610,7 +627,7 @@ import { ApiTags } from "@nestjs/swagger";
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
-    // Drizzle: @Inject(DRIZZLE) private readonly db: DrizzleDB,
+    // TypeORM: private readonly db: TypeOrmHealthIndicator,
     // Mongoose: @InjectConnection() private readonly connection: Connection,
   ) {}
 
@@ -623,11 +640,8 @@ export class HealthController {
   @HealthCheck()
   ready() {
     return this.health.check([
-      // Drizzle: raw SELECT 1 via pool
-      // async () => {
-      //   await this.db.execute(sql`SELECT 1`);
-      //   return { database: { status: "up" } };
-      // },
+      // TypeORM: ping the default DataSource
+      // () => this.db.pingCheck("database"),
       // Mongoose: check readyState
       // () => this.connection.readyState === 1
       //   ? Promise.resolve({ database: { status: "up" } })
