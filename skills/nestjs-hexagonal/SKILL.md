@@ -3,7 +3,7 @@ name: nestjs-hexagonal
 description: |
   NestJS with hexagonal architecture patterns in TypeScript.
   Use when: building TypeScript APIs with NestJS — for modular backends with built-in dependency injection.
-  Covers: API design (@nestjs/swagger), domain modeling, ports & adapters (abstract class injection tokens), NestJS module wiring, class-validator with the global ValidationPipe, exception filters (RFC 9457), @nestjs/testing patterns, TypeORM (SQL) and Mongoose (MongoDB) dual-database support, cursor pagination, @nestjs/terminus healthcheck endpoints.
+  Covers: API design (@nestjs/swagger), domain modeling, ports & adapters (abstract class injection tokens), NestJS module wiring, class-validator with the global ValidationPipe, exception filters (RFC 9457), @nestjs/testing patterns, TypeORM (PostgreSQL) persistence, cursor pagination, @nestjs/terminus healthcheck endpoints.
   Do not use for: database schema design (use database-design skill). Use hono-hexagonal for lightweight multi-runtime APIs. Use fastapi-hexagonal for Python-only APIs. Use axum-hexagonal for Rust APIs.
 references:
   - references/examples-domain.md
@@ -15,7 +15,7 @@ references:
 
 # NestJS + Hexagonal Architecture
 
-**For latest NestJS/TypeORM/Mongoose/class-validator APIs, use context7.**
+**For latest NestJS/TypeORM/class-validator APIs, use context7.**
 
 ## Core Philosophy
 
@@ -23,10 +23,10 @@ Separate **business domain** from **infrastructure**. Domain defines *what*; ada
 
 ```
 [Inbound Adapter: NestJS Controller] -> [Port: Service abstract class] -> [Domain Logic]
-    -> [Port: Repository abstract class] -> [Outbound Adapter: TypeORM/Mongoose/etc.]
+    -> [Port: Repository abstract class] -> [Outbound Adapter: TypeORM/etc.]
 ```
 
-**Dependencies always point inward.** Domain code never imports NestJS, TypeORM, Mongoose, or any infrastructure package.
+**Dependencies always point inward.** Domain code never imports NestJS, TypeORM, or any infrastructure package.
 
 ---
 
@@ -52,24 +52,19 @@ src/
 │       └── health/
 │           └── health.controller.ts        # @nestjs/terminus
 ├── outbound/
-│   ├── typeorm/                # SQL adapter (pick this OR mongoose)
+│   ├── typeorm/                # PostgreSQL adapter
 │   │   ├── typeorm.module.ts   #   @Global, TypeOrmModule.forRootAsync + forFeature
 │   │   ├── entities/
 │   │   │   └── author.entity.ts #  @Entity class — outbound only, NEVER imported in domain
 │   │   ├── author.repository.ts #  Implements domain port; @InjectRepository(AuthorEntity)
 │   │   └── mapper.ts            #  AuthorEntity <-> Author (domain) translation
-│   ├── mongoose/               # MongoDB adapter (pick this OR typeorm)
-│   │   ├── mongoose.module.ts  #   @Global, MongooseModule.forFeature + repositories
-│   │   ├── author.schema.ts    #   @Schema/@Prop document definition
-│   │   ├── author.repository.ts
-│   │   └── mapper.ts
 │   └── noop.ts                 # NoOp metrics/notifier for dev
 ├── authors.module.ts           # Feature module: wires controller + service
-├── app.module.ts               # Root module: imports ONE persistence module + config
+├── app.module.ts               # Root module: imports persistence module + config
 ├── config.ts                   # Typed config validated with class-validator
 └── main.ts                     # Bootstrap — NestFactory, global middleware
-data-source.ts                  # SQL only: TypeORM CLI DataSource (entities + migrations path)
-migrations/                     # SQL only: TypeORM-generated migration files
+data-source.ts                  # TypeORM CLI DataSource (entities + migrations path)
+migrations/                     # TypeORM-generated migration files
 tests/
 ├── helpers.ts                  # Test module factory
 └── mocks.ts                    # Stub, Saboteur, Spy, NoOp
@@ -77,15 +72,13 @@ tests/
 
 **Rule:** `domain/` never imports from `inbound/`, `outbound/`, or `@nestjs/*`.
 
-**Swapping databases** is one import change in `app.module.ts` — the hexagonal boundary makes this trivial.
-
 ---
 
 ## Domain Layer
 
 ### Models
 - Validate on construction (value object pattern). Classes with private constructors or factory functions.
-- **No TypeORM entities or Mongoose documents in domain** — those live in `outbound/` only. Domain `Author` and outbound `AuthorEntity` are *different types*.
+- **No TypeORM entities in domain** — those live in `outbound/` only. Domain `Author` and outbound `AuthorEntity` are *different types*.
 - Domain models are plain TypeScript. No decorators, no framework dependencies.
 - Separate `CreateAuthorRequest` from `Author` — they WILL diverge as app grows.
 
@@ -116,7 +109,7 @@ Abstract classes in the domain layer have zero NestJS imports — they're plain 
 
 ## Inbound Layer
 
-- **Controllers** annotated with `@Controller('v1/authors')`. Each method: parse input -> call service -> map response. No TypeORM. No Mongoose. No ORM. **Never** return entities directly — always go through the response DTO.
+- **Controllers** annotated with `@Controller('v1/authors')`. Each method: parse input -> call service -> map response. No TypeORM. No ORM. **Never** return entities directly — always go through the response DTO.
 - **DI** — Controllers inject the abstract service class directly. NestJS resolves it to the concrete implementation registered in the feature module.
 - **Request DTOs** decoupled from domain — class with class-validator decorators + `toDomain()` function. Validation handled by the global `ValidationPipe`. Type-annotate the controller parameter (`@Body() body: CreateAuthorBody`); without an explicit class type the pipe has no metadata to validate against.
 - **Response DTOs** built via `fromDomain()` static method — never expose domain models directly. Add `@ApiProperty()` decorators for Swagger.
@@ -145,9 +138,7 @@ All follow the same pattern: **parse input -> call service -> respond.**
 
 ## Outbound Layer
 
-Choose **one** persistence module per project (or per domain if you mix databases):
-
-### TypeORM (SQL — PostgreSQL/MySQL/SQLite)
+### TypeORM (PostgreSQL)
 
 - `@Injectable()` repositories that extend the abstract port class from domain.
 - Inject the per-entity `Repository<AuthorEntity>` via `@InjectRepository(AuthorEntity)`.
@@ -164,23 +155,7 @@ Choose **one** persistence module per project (or per domain if you mix database
 | Migrations | TypeORM CLI `migration:generate` + `migration:run` | Schema-driven SQL migrations from entity diff |
 | `synchronize` | **`false`** in every environment except local sandbox | Auto-altering production schemas is a foot-gun |
 
-### Mongoose (MongoDB)
-
-- `@Injectable()` repositories that extend the abstract port class from domain.
-- Inject Mongoose model via `@InjectModel(AuthorDocument.name)`.
-- **Transactions encapsulated in adapter** via `session.withTransaction()`, invisible to callers.
-- Map MongoDB-specific errors (duplicate key code `11000`) to domain error types.
-- Mongoose schemas live in `outbound/mongoose/author.schema.ts` with `@Schema()`/`@Prop()` decorators. Use explicit mapper.
-
-| Setting | Value | Why |
-|---------|-------|-----|
-| Schema | `@Schema({ timestamps: true })` class | NestJS-integrated schema definition |
-| Transactions | `connection.startSession()` + `withTransaction()` | Multi-document atomicity (requires replica set) |
-| Population | `populate('posts')` | Eager load references |
-| Indexes | `@Prop({ unique: true, index: true })` | Declared on schema |
-| Migrations | Not needed | Schema-less; use migration scripts for data transforms |
-
-> Full outbound examples (TypeORM + Mongoose repositories, mappers, modules): `references/examples-adapters.md`
+> Full outbound examples (TypeORM repository, mapper, module): `references/examples-adapters.md`
 
 ---
 
@@ -230,7 +205,6 @@ app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbid
 List endpoints need pagination. **Default to cursor-based pagination.** The pattern flows through all three layers:
 - **Domain port**: `listAuthors(cursor: string | null, limit: number) => Promise<CursorPage<Author>>`
 - **TypeORM adapter**: QueryBuilder `where("(author.created_at, author.id) > (:cursorAt, :cursorId)", ...).orderBy({ "author.created_at": "ASC", "author.id": "ASC" }).limit(:limit)`
-- **Mongoose adapter**: `find({ _id: { $gt: cursor } }).sort({ _id: 1 }).limit(limit)`
 - **Inbound controller**: return `CursorPageResponse<T>` with `data`, `limit`, `nextCursor`, `hasMore`
 
 Cap `limit` at the controller level via class-validator on the query DTO (e.g. `@IsInt() @Min(1) @Max(100) limit: number = 20;` with `@Type(() => Number)` for query-string coercion).
@@ -248,17 +222,13 @@ Cap `limit` at the controller level via class-validator on the query DTO (e.g. `
 Use `@nestjs/terminus` for structured health checks. These bypass the domain entirely.
 
 - `/health/live` — always 200 (liveness)
-- `/health/ready` — checks DB connectivity (readiness)
-  - **TypeORM**: `TypeOrmHealthIndicator.pingCheck("database")`
-  - **Mongoose**: `mongoose.connection.readyState`
+- `/health/ready` — checks DB connectivity (readiness) via `TypeOrmHealthIndicator.pingCheck("database")`
 
 > Healthcheck example: `references/examples-adapters.md`
 
 ---
 
 ## Migrations
-
-### TypeORM (SQL)
 
 TypeORM CLI reads `data-source.ts` (with `entities` + `migrations` paths) and generates migrations from the entity-vs-DB diff.
 
@@ -280,10 +250,6 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
 
 `synchronize: false` in every environment except a throw-away local sandbox — migrations are the only sanctioned schema mutation path.
 
-### Mongoose (MongoDB)
-
-MongoDB is schema-less — no structural migrations needed. For data transformations (rename fields, reshape documents), write one-off migration scripts.
-
 ---
 
 ## Logging
@@ -292,7 +258,7 @@ NestJS has a built-in `Logger` class. For structured logging, use `nestjs-pino`.
 
 - **Domain**: log business events at info, wrap unexpected exceptions at error
 - **Inbound**: exception filters log server errors before returning generic messages
-- **Outbound**: TypeORM query logging via `logging: ["query", "error"]` (or `"all"` in dev) / Mongoose `debug` mode
+- **Outbound**: TypeORM query logging via `logging: ["query", "error"]` (or `"all"` in dev)
 
 ---
 
@@ -329,19 +295,18 @@ Key setup: CORS -> helmet -> global filter -> Swagger -> shutdown hooks -> liste
 
 NestJS modules are the wiring layer — they connect ports to adapters.
 
-### Choosing a Database
+### Persistence Module
 
-In `app.module.ts`, import **one** persistence module:
+In `app.module.ts`, import the persistence module:
 
 ```typescript
 imports: [
-  TypeOrmPersistenceModule,    // SQL (PostgreSQL/MySQL/SQLite)
-  // MongoosePersistenceModule, // MongoDB — swap by toggling these imports
+  TypeOrmPersistenceModule,    // PostgreSQL
   AuthorsModule,
 ]
 ```
 
-Both modules provide `AuthorRepository` — the feature module and controllers don't know which DB is backing them.
+The persistence module provides `AuthorRepository` — the feature module and controllers depend only on the abstract port.
 
 ### Feature Module Pattern
 
@@ -358,7 +323,7 @@ Each domain gets a **feature module** that wires its controller, service, and re
 ### Global Modules
 
 Mark with `@Global()` when the module should be available everywhere without explicit imports:
-- Persistence module (TypeORM or Mongoose) — every feature needs DB access
+- Persistence module (TypeORM) — every feature needs DB access
 - `ConfigModule.forRoot({ isGlobal: true })` — config everywhere
 
 ---
@@ -382,13 +347,12 @@ Mark with `@Global()` when the module should be available everywhere without exp
 | Service is `undefined` | Not provided in module | Add to `providers` with correct abstract class token |
 | `@Injectable()` in domain | Framework leak | Remove it, use `useFactory` in module |
 | `HttpException` in domain | Transport leak | Use domain error classes, map in exception filter |
-| TypeORM/Mongoose types in domain | ORM leak | Use mapper in outbound, domain has own types |
+| TypeORM types in domain | ORM leak | Use mapper in outbound, domain has own types |
 | Entity returned to controller / used as domain model | Hex boundary collapse | Always map `Entity -> Author -> Response DTO` |
 | `@BeforeInsert` / Subscribers carry business logic | Logic hides in adapter | Move to domain service or `@nestjs/event-emitter` |
 | `cascade: true` produces surprise writes | Side effects hidden in relation graph | Off; call related saves explicitly inside a transaction |
 | `synchronize: true` in any deployed env | Auto-altering production schema | Keep `false`; use `migration:run` |
 | `@InjectRepository(AuthorEntity)` undefined | `TypeOrmModule.forFeature([AuthorEntity])` missing in module | Add it to the persistence module's imports |
-| Mongoose transaction fails | No replica set | MongoDB transactions require replica set (use `rs.initiate()` or Atlas) |
 | `enableShutdownHooks()` missing | DB disconnect not called | Add in `main.ts` before `app.listen()` |
 | Tests share DB state | Missing cleanup | Reset in `beforeEach` or use transaction rollback |
 
@@ -398,7 +362,7 @@ Mark with `@Global()` when the module should be available everywhere without exp
 
 | Question | Answer |
 |----------|--------|
-| Transactions? | TypeORM: `repo.manager.transaction()` / Mongoose: `session.withTransaction()` |
+| Transactions? | `repo.manager.transaction()` |
 | Validation? | class-validator + global `ValidationPipe` at transport boundary, domain constructors for business rules |
 | Error mapping? | `@Catch()` exception filter in inbound |
 | Business orchestration? | Service impl |
@@ -408,10 +372,9 @@ Mark with `@Global()` when the module should be available everywhere without exp
 | Entity <-> domain? | `AuthorMapper.toDomain(entity)` / `toEntity(domain)` in outbound |
 | Test app? | `Test.createTestingModule().overrideProvider()` |
 | Background workers? | `@nestjs/bullmq` or `@nestjs/schedule` |
-| Migrations? | TypeORM CLI for SQL (`migration:generate` + `migration:run`) / not needed for MongoDB |
+| Migrations? | TypeORM CLI (`migration:generate` + `migration:run`) |
 | Healthcheck? | `@nestjs/terminus` in inbound |
 | JWT / passwords? | `@nestjs/passport` + `@node-rs/argon2` |
-| Swap database? | Change one import in `app.module.ts` |
 
 ---
 
@@ -433,20 +396,13 @@ Mark with `@Global()` when the module should be available everywhere without exp
 - [ ] `helmet()` middleware enabled
 - [ ] CORS configured with explicit origins
 
-### Database (pick one)
-**TypeORM (SQL)**:
+### Database (TypeORM + PostgreSQL)
 - [ ] Entities in `outbound/typeorm/entities/*.entity.ts` (NEVER imported from domain)
 - [ ] `TypeOrmPersistenceModule` is `@Global()` and registers `forFeature([...entities])`
 - [ ] `synchronize: false` in every env; migrations run via TypeORM CLI
 - [ ] Data Mapper only — no `entity.save()`, no `@BeforeInsert`/Subscribers, no `cascade: true`, no lazy `Promise<Related>`
 - [ ] Repository extends domain port; `QueryFailedError` driver code mapped to domain errors
 - [ ] Mapper handles `Entity <-> Author` in both directions
-
-**Mongoose (MongoDB)**:
-- [ ] Schemas in `outbound/mongoose/*.schema.ts`
-- [ ] `MongoosePersistenceModule` is `@Global()`
-- [ ] Indexes declared on schema (`@Prop({ unique: true })`)
-- [ ] Replica set configured if transactions needed
 
 ### Testing
 **TDD**: Write all tests first as a spec, then implement, then verify all pass. (Tests -> Impl -> Green)

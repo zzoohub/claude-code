@@ -1,6 +1,6 @@
 # Examples: Bootstrap & Testing
 
-Config, main.ts, module wiring, TypeORM/Mongoose setup, and hex-specific test mocks.
+Config, main.ts, module wiring, TypeORM setup, and hex-specific test mocks.
 
 ---
 
@@ -10,19 +10,15 @@ Config, main.ts, module wiring, TypeORM/Mongoose setup, and hex-specific test mo
 // src/config.ts
 import { plainToInstance, Type } from "class-transformer";
 import {
-  IsEnum, IsInt, IsOptional, IsString, MinLength, validateSync,
+  IsEnum, IsInt, IsString, MinLength, validateSync,
 } from "class-validator";
 
 /**
  * Typed config — validates env once at startup.
- * Include DATABASE_URL for SQL or MONGODB_URI for MongoDB (or both).
  */
 export class AppConfig {
-  @IsOptional() @IsString() @MinLength(1)
-  DATABASE_URL?: string;                         // TypeORM (SQL)
-
-  @IsOptional() @IsString() @MinLength(1)
-  MONGODB_URI?: string;                          // Mongoose (MongoDB)
+  @IsString() @MinLength(1)
+  DATABASE_URL!: string;
 
   @Type(() => Number) @IsInt()
   PORT: number = 3000;
@@ -43,9 +39,6 @@ export function validateConfig(config: Record<string, unknown>): AppConfig {
   });
   const errors = validateSync(validated, { skipMissingProperties: false });
   if (errors.length > 0) throw new Error(errors.toString());
-  if (!validated.DATABASE_URL && !validated.MONGODB_URI) {
-    throw new Error("At least one of DATABASE_URL or MONGODB_URI must be set");
-  }
   return validated;
 }
 ```
@@ -111,9 +104,7 @@ import { ConfigModule } from "@nestjs/config";
 import { TerminusModule } from "@nestjs/terminus";
 import { validateConfig } from "./config";
 
-// Pick ONE persistence module:
 import { TypeOrmPersistenceModule } from "./outbound/typeorm/typeorm.module";
-// import { MongoosePersistenceModule } from "./outbound/mongoose/mongoose.module";
 
 import { AuthorsModule } from "./authors.module";
 import { HealthController } from "./inbound/http/health/health.controller";
@@ -121,8 +112,7 @@ import { HealthController } from "./inbound/http/health/health.controller";
 @Module({
   imports: [
     ConfigModule.forRoot({ validate: validateConfig, isGlobal: true }),
-    TypeOrmPersistenceModule,       // SQL
-    // MongoosePersistenceModule,    // MongoDB — swap by toggling these
+    TypeOrmPersistenceModule,
     TerminusModule,
     AuthorsModule,
   ],
@@ -222,8 +212,6 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
 
 ## package.json
 
-### SQL variant (TypeORM + PostgreSQL)
-
 ```json
 {
   "name": "myapp",
@@ -273,21 +261,6 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
   }
 }
 ```
-
-### MongoDB variant (Mongoose)
-
-Replace the TypeORM deps with:
-
-```json
-{
-  "dependencies": {
-    "@nestjs/mongoose": "^10.0",
-    "mongoose": "^8.0"
-  }
-}
-```
-
-Remove `@nestjs/typeorm`, `typeorm`, `pg`, `@types/pg`, `ts-node`, and the `migration:*` scripts.
 
 ```bash
 bun install                    # install all deps
@@ -554,7 +527,7 @@ describe("AuthorServiceImpl", () => {
 });
 ```
 
-### Integration Tests (real DB — TypeORM example)
+### Integration Tests (real DB)
 
 ```typescript
 // tests/integration/typeorm-author.repository.spec.ts
@@ -617,68 +590,12 @@ describe("TypeOrmAuthorRepository (integration)", () => {
 });
 ```
 
-### Integration Tests (real DB — Mongoose example)
-
-```typescript
-// tests/integration/mongoose-author.repository.spec.ts
-import { Test } from "@nestjs/testing";
-import { MongooseModule } from "@nestjs/mongoose";
-import { MongooseAuthorRepository } from "../../src/outbound/mongoose/author.repository";
-import { AuthorDocument, AuthorSchema } from "../../src/outbound/mongoose/author.schema";
-import { AuthorRepository } from "../../src/domain/authors/ports";
-import { AuthorName } from "../../src/domain/authors/models";
-import { DuplicateAuthorError } from "../../src/domain/authors/errors";
-import { Model } from "mongoose";
-
-describe("MongooseAuthorRepository (integration)", () => {
-  let repo: AuthorRepository;
-  let model: Model<AuthorDocument>;
-
-  beforeAll(async () => {
-    const module = await Test.createTestingModule({
-      imports: [
-        MongooseModule.forRoot(process.env.TEST_MONGODB_URI!),
-        MongooseModule.forFeature([{ name: AuthorDocument.name, schema: AuthorSchema }]),
-      ],
-      providers: [
-        { provide: AuthorRepository, useClass: MongooseAuthorRepository },
-      ],
-    }).compile();
-    repo = module.get(AuthorRepository);
-    model = module.get(`${AuthorDocument.name}Model`);
-  });
-
-  beforeEach(async () => {
-    await model.deleteMany({});
-  });
-
-  it("creates and finds an author", async () => {
-    const author = await repo.createAuthor({ name: AuthorName.create("Alice") });
-    expect(author.name.value).toBe("Alice");
-    const found = await repo.findAuthor(author.id);
-    expect(found!.name.value).toBe("Alice");
-  });
-
-  it("throws DuplicateAuthorError on unique constraint", async () => {
-    await repo.createAuthor({ name: AuthorName.create("Alice") });
-    await expect(
-      repo.createAuthor({ name: AuthorName.create("Alice") }),
-    ).rejects.toBeInstanceOf(DuplicateAuthorError);
-  });
-});
-```
-
 ---
 
 ## .env.example
 
 ```bash
-# SQL (TypeORM)
 DATABASE_URL="postgres://postgres:postgres@localhost:5432/myapp"
-
-# MongoDB (Mongoose)
-MONGODB_URI="mongodb://localhost:27017/myapp"
-
 PORT=3000
 CORS_ORIGIN="http://localhost:3000"
 JWT_SECRET="your-secret-key-at-least-16-chars"

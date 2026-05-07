@@ -1,6 +1,6 @@
 # Examples: Adapters
 
-Inbound (controller, DTOs, exception filter, auth guard, pipes, healthcheck) and outbound (TypeORM SQL + Mongoose MongoDB repositories, mappers).
+Inbound (controller, DTOs, exception filter, auth guard, pipes, healthcheck) and outbound (TypeORM + PostgreSQL repository, mapper).
 
 ---
 
@@ -216,205 +216,6 @@ async createAuthorWithProfile(req: CreateAuthorWithProfileRequest): Promise<Auth
   } catch (error) {
     if (this.isUniqueConstraintError(error)) throw new DuplicateAuthorError(req.name.value);
     throw new UnknownAuthorError(error);
-  }
-}
-```
-
----
-
-## Outbound: Mongoose — Schema
-
-```typescript
-// src/outbound/mongoose/author.schema.ts
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { type HydratedDocument } from "mongoose";
-
-/**
- * Mongoose document definition — outbound only. Never import in domain.
- * @Schema decorators are infrastructure, fine in outbound layer.
- *
- * `timestamps: true` adds createdAt/updatedAt fields automatically.
- * Composite cursor pagination relies on createdAt — index it.
- */
-@Schema({ collection: "authors", timestamps: true })
-export class AuthorDocument {
-  /** Mongoose auto-generates _id as ObjectId. Use .id for string version. */
-
-  @Prop({ required: true, unique: true, trim: true })
-  name: string;
-
-  /** Set automatically by `timestamps: true` — declared here for typing + index. */
-  @Prop({ type: Date, index: true })
-  createdAt: Date;
-}
-
-export type AuthorDoc = HydratedDocument<AuthorDocument>;
-export const AuthorSchema = SchemaFactory.createForClass(AuthorDocument);
-// Compound index supports the (createdAt, _id) cursor predicate.
-AuthorSchema.index({ createdAt: 1, _id: 1 });
-```
-
-## Outbound: Mongoose — Module
-
-```typescript
-// src/outbound/mongoose/mongoose.module.ts
-import { Global, Module } from "@nestjs/common";
-import { MongooseModule } from "@nestjs/mongoose";
-import { ConfigService } from "@nestjs/config";
-import { AuthorDocument, AuthorSchema } from "./author.schema";
-import { MongooseAuthorRepository } from "./author.repository";
-import { AuthorRepository } from "../../domain/authors/ports";
-import type { AppConfig } from "../../config";
-
-@Global()
-@Module({
-  imports: [
-    MongooseModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<AppConfig, true>) => ({
-        uri: config.get("MONGODB_URI"),
-      }),
-    }),
-    MongooseModule.forFeature([
-      { name: AuthorDocument.name, schema: AuthorSchema },
-    ]),
-  ],
-  providers: [
-    { provide: AuthorRepository, useClass: MongooseAuthorRepository },
-  ],
-  exports: [AuthorRepository],
-})
-export class MongoosePersistenceModule {}
-```
-
-## Outbound: Mongoose — Mapper + Repository
-
-```typescript
-// src/outbound/mongoose/mapper.ts
-import { AuthorName } from "../../domain/authors/models";
-import type { Author, CreateAuthorRequest } from "../../domain/authors/models";
-import type { AuthorDoc } from "./author.schema";
-
-/**
- * Maps in BOTH directions so the document stays sealed inside the adapter.
- * Domain code only ever sees `Author` — no Mongoose types leak.
- */
-export class AuthorMapper {
-  static toDomain(doc: AuthorDoc): Author {
-    return {
-      id: doc.id as string, // Mongoose .id returns string of _id
-      name: AuthorName.create(doc.name),
-    };
-  }
-
-  static toCreatePayload(req: CreateAuthorRequest): { name: string } {
-    return { name: req.name.value };
-  }
-}
-```
-
-```typescript
-// src/outbound/mongoose/author.repository.ts
-import { Injectable } from "@nestjs/common";
-import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
-import { AuthorDocument, type AuthorDoc } from "./author.schema";
-import { AuthorMapper } from "./mapper";
-import { decodeCursor, encodeCursor } from "../cursor";
-import { AuthorRepository } from "../../domain/authors/ports";
-import type {
-  Author,
-  CreateAuthorRequest,
-  CursorPage,
-} from "../../domain/authors/models";
-import {
-  DuplicateAuthorError,
-  UnknownAuthorError,
-} from "../../domain/authors/errors";
-
-@Injectable()
-export class MongooseAuthorRepository extends AuthorRepository {
-  constructor(
-    @InjectModel(AuthorDocument.name)
-    private readonly model: Model<AuthorDocument>,
-  ) {
-    super();
-  }
-
-  async createAuthor(req: CreateAuthorRequest): Promise<Author> {
-    try {
-      // Goes through the mapper — adapter doesn't unpack value objects directly.
-      const doc = await this.model.create(AuthorMapper.toCreatePayload(req));
-      return AuthorMapper.toDomain(doc as AuthorDoc);
-    } catch (error: unknown) {
-      if (error instanceof Error && 'code' in error && (error as any).code === 11000) {
-        throw new DuplicateAuthorError(req.name.value);
-      }
-      throw new UnknownAuthorError(error);
-    }
-  }
-
-  async findAuthor(authorId: string): Promise<Author | null> {
-    const doc = await this.model.findById(authorId).exec();
-    if (!doc) return null;
-    return AuthorMapper.toDomain(doc);
-  }
-
-  async listAuthors(
-    cursor: string | null,
-    limit: number,
-  ): Promise<CursorPage<Author>> {
-    // Composite (createdAt, _id) tuple via Mongo $or trick:
-    // either createdAt is strictly greater, or it's equal and _id is greater.
-    const filter = cursor
-      ? (() => {
-          const { createdAt, id } = decodeCursor(cursor);
-          return {
-            $or: [
-              { createdAt: { $gt: createdAt } },
-              { createdAt, _id: { $gt: id } },
-            ],
-          };
-        })()
-      : {};
-
-    const docs = await this.model
-      .find(filter)
-      .sort({ createdAt: 1, _id: 1 })
-      .limit(limit + 1)
-      .exec();
-
-    const hasMore = docs.length > limit;
-    const pageDocs = docs.slice(0, limit);
-    const items = pageDocs.map((d) => AuthorMapper.toDomain(d));
-    const last = pageDocs[pageDocs.length - 1];
-    const nextCursor = hasMore && last
-      ? encodeCursor(last.createdAt, last.id as string)
-      : null;
-
-    return { items, nextCursor, hasMore };
-  }
-}
-```
-
-## Outbound: Mongoose — Transaction Example
-
-```typescript
-// Transactions require a MongoDB replica set.
-async createAuthorWithProfile(req: CreateAuthorWithProfileRequest): Promise<Author> {
-  const session = await this.model.db.startSession();
-  try {
-    let doc: AuthorDoc;
-    await session.withTransaction(async () => {
-      [doc] = await this.model.create([{ name: req.name.value }], { session });
-      await this.profileModel.create([{ authorId: doc.id, bio: req.bio }], { session });
-    });
-    return AuthorMapper.toDomain(doc!);
-  } catch (error: unknown) {
-    if (error instanceof Error && 'code' in error && (error as any).code === 11000) throw new DuplicateAuthorError(req.name.value);
-    throw new UnknownAuthorError(error);
-  } finally {
-    await session.endSession();
   }
 }
 ```
@@ -679,7 +480,7 @@ export class JwtAuthGuard implements CanActivate {
 ## Inbound: Healthcheck
 
 ```typescript
-// src/inbound/http/health/health.controller.ts — TypeORM variant (active)
+// src/inbound/http/health/health.controller.ts
 import { Controller, Get } from "@nestjs/common";
 import {
   HealthCheck,
@@ -711,28 +512,6 @@ export class HealthController {
     ]);
   }
 }
-
-// Mongoose variant — swap the indicator:
-//
-// import { InjectConnection } from "@nestjs/mongoose";
-// import { Connection } from "mongoose";
-//
-// constructor(
-//   private readonly health: HealthCheckService,
-//   @InjectConnection() private readonly connection: Connection,
-// ) {}
-//
-// @Get("ready")
-// @HealthCheck()
-// ready() {
-//   return this.health.check([
-//     async () => ({
-//       database: this.connection.readyState === 1
-//         ? { status: "up" }
-//         : (() => { throw new Error("DB not connected"); })(),
-//     }),
-//   ]);
-// }
 ```
 
 ## Inbound: Job Handler (non-HTTP inbound adapter)
