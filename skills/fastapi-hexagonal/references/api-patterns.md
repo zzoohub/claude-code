@@ -13,7 +13,7 @@ POST /v1/users
 { "name": "Ada Lovelace", "email": "ada@example.com" }
 
 → 201 Created, Location: /v1/users/usr_123
-{ "data": { "id": "usr_123", "name": "Ada Lovelace", "email": "ada@example.com", "createdAt": "..." } }
+{ "data": { "id": "usr_123", "name": "Ada Lovelace", "email": "ada@example.com", "created_at": "..." } }
 ```
 
 ### Create with Idempotency Key
@@ -39,7 +39,7 @@ GET /v1/users/usr_123
 ```http
 GET /v1/users?role=admin&limit=20
 → 200 OK
-{ "data": [...], "meta": { "limit": 20, "nextCursor": "eyJ...", "hasMore": true } }
+{ "data": [...], "meta": { "limit": 20, "next_cursor": "eyJ...", "has_more": true } }
 ```
 
 ### Update (PATCH → 200)
@@ -48,7 +48,7 @@ GET /v1/users?role=admin&limit=20
 PATCH /v1/users/usr_123
 { "name": "Ada Byron Lovelace" }
 → 200 OK
-{ "data": { ..., "updatedAt": "..." } }
+{ "data": { ..., "updated_at": "..." } }
 ```
 
 ### Delete (DELETE → 204)
@@ -84,14 +84,14 @@ All use `Content-Type: application/problem+json`.
 
 ```http
 GET /v1/posts?limit=10&cursor=eyJpZCI6MTAwfQ==
-→ { "data": [...], "meta": { "limit": 10, "nextCursor": "eyJ...", "hasMore": true } }
+→ { "data": [...], "meta": { "limit": 10, "next_cursor": "eyJ...", "has_more": true } }
 ```
 
 ### Offset
 
 ```http
 GET /v1/posts?page=3&limit=10
-→ { "data": [...], "meta": { "page": 3, "limit": 10, "total": 156, "totalPages": 16 } }
+→ { "data": [...], "meta": { "page": 3, "limit": 10, "total": 156, "total_pages": 16 } }
 ```
 
 ---
@@ -122,10 +122,10 @@ file: <binary>, title: "Q4 Report"
 
 ```http
 POST /v1/uploads
-{ "filename": "video.mp4", "contentType": "video/mp4", "size": 52428800 }
-→ 200 { "data": { "uploadId": "upl_789", "uploadUrl": "https://storage.../presigned?..." } }
+{ "filename": "video.mp4", "content_type": "video/mp4", "size": 52428800 }
+→ 200 { "data": { "upload_id": "upl_789", "upload_url": "https://storage.../presigned?..." } }
 
-# Client uploads directly to uploadUrl, then:
+# Client uploads directly to upload_url, then:
 POST /v1/uploads/upl_789/complete
 ```
 
@@ -138,7 +138,7 @@ Use `POST /resources/{id}/{action}`, not PATCH with magic values.
 ```http
 POST /v1/orders/ord_123/cancel
 { "reason": "Customer changed mind" }
-→ 200 { "data": { "status": "cancelled", "cancelledAt": "..." } }
+→ 200 { "data": { "status": "cancelled", "cancelled_at": "..." } }
 ```
 
 Invalid transition → **409**:
@@ -153,7 +153,7 @@ Invalid transition → **409**:
 
 **GET** for simple queries:
 ```http
-GET /v1/products/search?q=keyboard&category=electronics&minPrice=50
+GET /v1/products/search?q=keyboard&category=electronics&min_price=50
 ```
 
 **POST** for complex queries (not creating a resource):
@@ -183,10 +183,10 @@ One level deep. Keep includable relations explicit.
 POST /v1/reports/generate
 { "type": "monthly-sales", "month": "2024-10" }
 → 202 Accepted, Location: /v1/jobs/job_456
-{ "data": { "jobId": "job_456", "status": "pending" } }
+{ "data": { "job_id": "job_456", "status": "pending" } }
 
 GET /v1/jobs/job_456
-→ { "data": { "status": "completed", "result": { "downloadUrl": "..." } } }
+→ { "data": { "status": "completed", "result": { "download_url": "..." } } }
 ```
 
 ---
@@ -212,7 +212,7 @@ Accept: text/event-stream
 
 → Content-Type: text/event-stream
 event: order.updated
-data: {"orderId": "ord_123", "status": "shipped"}
+data: {"order_id": "ord_123", "status": "shipped"}
 id: evt_001
 ```
 
@@ -226,7 +226,7 @@ id: evt_001
 POST https://customer.example.com/webhooks
 X-Webhook-Signature: sha256=a1b2c3...
 X-Webhook-Timestamp: 1699900000
-{ "event": "order.completed", "data": { "orderId": "ord_789" } }
+{ "event": "order.completed", "data": { "order_id": "ord_789" } }
 ```
 
 ### Verification

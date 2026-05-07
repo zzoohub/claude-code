@@ -304,6 +304,24 @@ Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 
 ---
 
+## Reliability & Observability Ports
+
+Cross-cutting infrastructure that must not leak into the domain. Define each as a `Protocol`; implement as adapters. Architecture-level pattern lives in `software-architecture/references/reliability-patterns.md` and `observability.md`.
+
+| Port | Purpose | Where it lives |
+|---|---|---|
+| **UnitOfWork** | Scopes a transaction across multiple repositories so the aggregate write and the outbox write share one `AsyncSession` | Outbound; entered by application service |
+| **IdempotencyStore** | Replay safe responses for `Idempotency-Key`-bearing requests | Outbound; called by inbound middleware or application service |
+| **Tracer** / **Meter** | OTel span / metric emission. Domain depends on the `Protocol`, not on `opentelemetry` packages | Outbound (OTel adapter); no-op for tests |
+
+**Architectural rule**: domain emits **`DomainEvent`** dataclasses; the application service opens a UnitOfWork (`async with uow:`) and calls both the aggregate repo and the outbox repo inside it. Same `AsyncSession` = same transaction. A separate **outbox relay** worker (background task or separate process) publishes rows asynchronously.
+
+**Why UnitOfWork instead of letting each repo create its own session?** SQLAlchemy's `AsyncSession` *is* the unit of work. If two repos own two different sessions, you're back to dual writes. UoW makes the shared session explicit and the tx boundary visible at the call site.
+
+→ Adapter examples: `references/examples-adapters.md`
+
+---
+
 ## Common Gotchas
 
 | Problem | Cause | Fix |

@@ -205,7 +205,7 @@ app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbid
 List endpoints need pagination. **Default to cursor-based pagination.** The pattern flows through all three layers:
 - **Domain port**: `listAuthors(cursor: string | null, limit: number) => Promise<CursorPage<Author>>`
 - **TypeORM adapter**: QueryBuilder `where("(author.created_at, author.id) > (:cursorAt, :cursorId)", ...).orderBy({ "author.created_at": "ASC", "author.id": "ASC" }).limit(:limit)`
-- **Inbound controller**: return `CursorPageResponse<T>` with `data`, `limit`, `nextCursor`, `hasMore`
+- **Inbound controller**: return `CursorPageResponse<T>` with `data`, `limit`, `next_cursor`, `has_more`
 
 Cap `limit` at the controller level via class-validator on the query DTO (e.g. `@IsInt() @Min(1) @Max(100) limit: number = 20;` with `@Type(() => Number)` for query-string coercion).
 
@@ -336,6 +336,24 @@ Mark with `@Global()` when the module should be available everywhere without exp
 4. **Start large, decompose when friction is observed**
 
 > If you need transactions across modules for cross-domain atomicity, your boundaries are wrong.
+
+---
+
+## Reliability & Observability Ports
+
+Cross-cutting infrastructure that must not leak into the domain. Define each as an abstract class (the same DI-token pattern used for repositories); implement as outbound adapters. Architecture-level pattern lives in `software-architecture/references/reliability-patterns.md` and `observability.md`.
+
+| Port | Purpose | Where it lives |
+|---|---|---|
+| **Outbox** | Atomic state change + message publish — outbox row written inside the same `EntityManager.transaction(...)` callback as the aggregate write | Outbound (combined with the repository adapter) |
+| **IdempotencyStore** | Replay safe responses for `Idempotency-Key`-bearing requests | Outbound; called by an interceptor or application service |
+| **Tracer** / **Meter** | OTel span / metric emission. Domain depends on the abstract class, not on `@opentelemetry/*` | Outbound (OTel adapter); no-op for tests |
+
+**Architectural rule**: domain emits **`DomainEvent`** plain objects; the outbound adapter persists the aggregate AND the outbox rows inside one `manager.transaction(async (em) => ...)` callback. A separate **outbox relay** (a `@nestjs/bullmq` worker, a `@Cron` task, or a separate process) publishes rows asynchronously.
+
+**Choose `EntityManager.transaction` over `@Transactional` (typeorm-transactional)**: the decorator hides the tx boundary in metadata and relies on AsyncLocalStorage magic. Explicit `manager.transaction(...)` keeps the tx boundary visible at the call site, which matches hexagonal's "side effects are explicit" stance and avoids a third-party lib whose maintenance has been spotty.
+
+→ Adapter examples: `references/examples-adapters.md`
 
 ---
 

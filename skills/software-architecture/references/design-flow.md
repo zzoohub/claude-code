@@ -389,6 +389,19 @@ These are the immune system of your architecture — they prevent silent erosion
 
 Day 1 priorities: error tracking, structured logging (JSON to stdout), health checks, uptime monitoring.
 
+Read `references/observability.md` for OpenTelemetry strategy, sampling, cardinality budgets, and signal correlation.
+
+### Reliability
+
+For any system with writes that must not be lost, duplicated, or interleaved incorrectly, decide upfront:
+
+- **Transaction boundary**: Where does each command's transaction begin and end? (Default: application service.)
+- **Dual-write hazards**: If a state change must be paired with a broker publish or external call, specify the **outbox pattern**.
+- **Idempotency**: Which endpoints accept `Idempotency-Key`? Which async consumers dedupe by `event.id`?
+- **Concurrency control**: Which aggregates carry a `version` column for optimistic concurrency? Which paths require pessimistic locking or atomic DB operations?
+
+Read `references/reliability-patterns.md` for transaction boundaries, idempotency, outbox, and concurrency control.
+
 ### Security
 
 Defense in depth — never rely on a single security control:

@@ -197,13 +197,13 @@ Two-layer validation is intentional: Zod catches malformed input (missing fields
 List endpoints need pagination. **Default to cursor-based pagination.** The pattern flows through all three layers:
 - **Domain port**: `listAuthors(cursor: string | null, limit: number) => Promise<CursorPage<Author>>`
 - **Outbound adapter**: `WHERE (created_at, id) > (:cursor) ORDER BY created_at, id LIMIT :limit`
-- **Inbound handler**: return `CursorPageResponse<T>` with `data`, `limit`, `nextCursor`, `hasMore`
+- **Inbound handler**: return `CursorPageResponse<T>` with `data`, `limit`, `next_cursor`, `has_more`
 
 Cap `limit` at the handler level via Zod (e.g. `z.number().min(1).max(100).default(20)`). The domain doesn't care about max page size — that's a transport concern.
 
 ### Cursor vs Offset
 
-**Cursor** (default) — `WHERE (createdAt, id) > (:cursor) ORDER BY createdAt, id LIMIT :limit`.
+**Cursor** (default) — `WHERE (created_at, id) > (:cursor) ORDER BY created_at, id LIMIT :limit`.
 Consistent performance regardless of dataset size. Ideal for feeds, timelines, and large/mutable data. Always use a **composite cursor** `(sortField, id)`. Cursor is an opaque base64-encoded string in the API; decode in the adapter only.
 
 **Offset** — `LIMIT / OFFSET` + `COUNT(*)`.
@@ -308,6 +308,24 @@ This is optional but powerful — particularly useful for monorepo setups where 
 4. **Start large, decompose when friction is observed**
 
 > If you leak transactions into business logic for cross-domain atomicity, your boundaries are wrong.
+
+---
+
+## Reliability & Observability Ports
+
+Cross-cutting infrastructure that must not leak into the domain. Define each as a TS interface; implement as adapters. Architecture-level pattern lives in `software-architecture/references/reliability-patterns.md` and `observability.md`.
+
+| Port | Purpose | Where it lives |
+|---|---|---|
+| **Outbox** | Atomic state change + message publish — outbox row written inside the same `db.transaction(...)` callback as the aggregate write | Outbound (combined with the repository adapter) |
+| **IdempotencyStore** | Replay safe responses for `Idempotency-Key`-bearing requests | Outbound; called by inbound middleware or application service |
+| **Tracer** / **Meter** | OTel span / metric emission. Domain depends on the interface, not on `@opentelemetry/*` packages | Outbound (OTel adapter); no-op for tests |
+
+**Architectural rule**: domain emits **`DomainEvent`** plain objects; the outbound adapter persists the aggregate AND the outbox rows inside one Drizzle `db.transaction(async (tx) => ...)` callback. A separate **outbox relay** (background task or worker) publishes rows asynchronously.
+
+**Edge runtime constraint**: on Cloudflare Workers + D1, `db.transaction` is locally scoped to one request and the standard OTel JS SDK does not run (Node-only deps). The `Tracer` port abstraction lets you swap to manual `traceparent` propagation + a Workers-friendly exporter (e.g., otel-cf-workers) without changing application code. If you target Node only (Bun, Deno-compat), this constraint doesn't apply.
+
+→ Adapter examples: `references/examples-adapters.md`
 
 ---
 

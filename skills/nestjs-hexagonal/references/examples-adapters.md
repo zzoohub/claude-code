@@ -535,3 +535,193 @@ export class SyncAuthorProcessor extends WorkerHost {
   }
 }
 ```
+
+---
+
+## Outbound: Outbox Adapter (transactional, TypeORM)
+
+The outbox row must be inserted inside the same `EntityManager.transaction` callback as the aggregate write. Application service decides when to start the tx; the adapter executes both writes against the scoped `EntityManager`.
+
+```typescript
+// src/domain/shared/events.ts — plain data, no NestJS imports
+export interface DomainEvent {
+  readonly aggregateType: string;
+  readonly aggregateId: string;
+  readonly eventType: string;
+  readonly payload: Record<string, unknown>;
+}
+```
+
+```typescript
+// src/domain/authors/ports.ts — port carries events to persist atomically
+export abstract class AuthorRepository {
+  abstract createAuthor(
+    req: CreateAuthorRequest,
+    events: readonly DomainEvent[],
+  ): Promise<Author>;
+  // ...
+}
+```
+
+```typescript
+// src/outbound/typeorm/postgres-author-repository.ts
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { AuthorEntity } from "./entities/author.entity";
+import { OutboxEntity } from "./entities/outbox.entity";
+import { currentTraceparent } from "./tracing";
+
+@Injectable()
+export class PostgresAuthorRepository extends AuthorRepository {
+  constructor(
+    @InjectRepository(AuthorEntity)
+    private readonly repo: Repository<AuthorEntity>,
+  ) {
+    super();
+  }
+
+  async createAuthor(
+    req: CreateAuthorRequest,
+    events: readonly DomainEvent[],
+  ): Promise<Author> {
+    // Explicit tx — visible at the call site, no decorator magic.
+    return this.repo.manager.transaction(async (em) => {
+      const saved = await em.save(AuthorEntity, AuthorEntity.fromDomain(req));
+
+      if (events.length > 0) {
+        // Trace context captured at write time, not at relay time.
+        const traceparent = currentTraceparent();
+        await em.save(
+          OutboxEntity,
+          events.map((e) =>
+            OutboxEntity.fromDomainEvent(e, traceparent),
+          ),
+        );
+      }
+
+      return Author.fromEntity(saved);
+    });
+  }
+}
+```
+
+```typescript
+// Application service composes the events
+async createAuthor(req: CreateAuthorRequest): Promise<Author> {
+  const events: DomainEvent[] = [{
+    aggregateType: "author",
+    aggregateId: req.name.value,
+    eventType: "AuthorCreated",
+    payload: { name: req.name.value },
+  }];
+  const author = await this.repo.createAuthor(req, events);
+  await this.metrics.recordCreation();
+  return author;
+}
+```
+
+**Outbox relay**: the most idiomatic NestJS approach is a `@Processor("outbox")` BullMQ worker scheduled by a `@Cron` task that reads `WHERE published_at IS NULL ORDER BY id LIMIT N`, publishes to the broker, then updates `published_at`. Keep the relay in its own module so it can be deployed as a separate process if traffic grows.
+
+### Why not `@Transactional` decorator?
+
+The `typeorm-transactional` package adds a `@Transactional()` decorator that uses AsyncLocalStorage to propagate a tx through the call stack. It hides the tx boundary in metadata and depends on a third-party lib. The hexagonal-friendlier choice is explicit `manager.transaction(...)`: tx boundary is visible, no extra lib, no risk of "why did this call fall outside the tx?" debugging sessions.
+
+### Common gotchas
+
+- Don't make `Outbox` a separate `@Injectable` provider that opens its own `manager.transaction`. Two transactions = dual write.
+- Don't rely on TypeORM lifecycle hooks (`@AfterInsert`) to publish events — they fire per row, not per tx, and have no tx context.
+
+---
+
+## Outbound: Idempotency Store
+
+A KV-shaped table keyed by `(scope, key)` with a unique constraint. Wrap the use case via an interceptor or directly in the application service.
+
+```typescript
+// src/domain/shared/idempotency.ts
+export type Acquire =
+  | { tag: "new" }
+  | { tag: "replay"; response: Buffer }
+  | { tag: "conflict" };
+
+export abstract class IdempotencyStore {
+  abstract acquire(
+    scope: string,
+    key: string,
+    requestHash: string,
+  ): Promise<Acquire>;
+  abstract store(
+    scope: string,
+    key: string,
+    response: Buffer,
+  ): Promise<void>;
+}
+```
+
+```typescript
+// src/outbound/typeorm/postgres-idempotency.ts
+@Injectable()
+export class PostgresIdempotencyStore extends IdempotencyStore {
+  constructor(
+    @InjectRepository(IdempotencyEntity)
+    private readonly repo: Repository<IdempotencyEntity>,
+  ) {
+    super();
+  }
+
+  async acquire(scope: string, key: string, hash: string): Promise<Acquire> {
+    // Insert-or-fetch — unique (scope, key) collapses races to one winner.
+    const result = await this.repo
+      .createQueryBuilder()
+      .insert()
+      .values({ scope, key, requestHash: hash })
+      .orIgnore()
+      .returning("scope")
+      .execute();
+
+    if (result.identifiers.length === 1) return { tag: "new" };
+
+    const row = await this.repo.findOneByOrFail({ scope, key });
+    if (row.requestHash !== hash) return { tag: "conflict" };
+    return row.response
+      ? { tag: "replay", response: row.response }
+      : { tag: "new" }; // in-flight
+  }
+  // store(...) updates the row with the response bytes.
+}
+```
+
+Wire as a NestJS interceptor that checks the `Idempotency-Key` header before invoking the controller — keeps the controller body free of replay logic.
+
+---
+
+## Outbound: Tracer Port (OTel)
+
+Don't import `@opentelemetry/*` into the domain. Define an abstract class (NestJS DI token); the OTel adapter extends it. Tests bind a no-op or capturing implementation.
+
+```typescript
+// src/domain/shared/tracing.ts
+export interface Span {
+  addEvent(name: string, attrs?: Record<string, string>): void;
+  recordError(err: unknown): void;
+  end(): void;
+}
+export abstract class Tracer {
+  abstract startSpan(name: string, attrs?: Record<string, string>): Span;
+}
+```
+
+The OTel adapter (`src/outbound/otel/otel-tracer.ts`) extends `Tracer` and wraps `@opentelemetry/api`. Bind it in the infra module:
+
+```typescript
+@Module({
+  providers: [{ provide: Tracer, useClass: OtelTracer }],
+  exports: [Tracer],
+})
+export class ObservabilityModule {}
+```
+
+This makes vendor swap a one-file change and lets tests run with a no-op `Tracer` provider. NestJS's auto-instrumentation packages still apply at the framework boundary (HTTP, TypeORM); the port is for *application-level* spans the domain wants to emit.
+
+For sampling, cardinality budgets, and span attribute conventions, see `software-architecture/references/observability.md`.

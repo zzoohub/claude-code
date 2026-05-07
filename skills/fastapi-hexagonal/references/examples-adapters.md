@@ -494,10 +494,10 @@ T = TypeVar("T")
 class ApiSuccess(BaseModel, Generic[T]):
     data: T
 
-class Created(ApiSuccess[T], Generic[T]):
+class Created(ApiSuccess[T]):
     pass
 
-class Ok(ApiSuccess[T], Generic[T]):
+class Ok(ApiSuccess[T]):
     pass
 
 class NoContent(BaseModel):
@@ -607,3 +607,197 @@ def health_routes(engine: AsyncEngine) -> APIRouter:
 # In Shell._build_app():
 # app.include_router(health_routes(engine))
 ```
+
+---
+
+## Outbound: UnitOfWork + Outbox Adapter (transactional, SQLAlchemy)
+
+Aggregate write and outbox row must commit atomically. SQLAlchemy's `AsyncSession` *is* the unit of work, so the cleanest pattern is a `UnitOfWork` port that scopes a session across multiple repositories.
+
+```python
+# src/domain/shared/events.py — plain data, no infra deps
+from dataclasses import dataclass
+from typing import Any
+
+@dataclass(frozen=True)
+class DomainEvent:
+    aggregate_type: str
+    aggregate_id: str
+    event_type: str
+    payload: dict[str, Any]
+```
+
+```python
+# src/domain/shared/uow.py — port
+from typing import Protocol, Self
+from .events import DomainEvent
+from ..authors.ports import AuthorRepository
+
+class OutboxRepository(Protocol):
+    async def enqueue(self, events: list[DomainEvent]) -> None: ...
+
+class UnitOfWork(Protocol):
+    authors: AuthorRepository
+    outbox: OutboxRepository
+
+    async def __aenter__(self) -> Self: ...
+    async def __aexit__(self, exc_type, exc, tb) -> None: ...
+```
+
+```python
+# src/outbound/postgres.py — one AsyncSession shared across repos
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from src.domain.shared.uow import UnitOfWork
+
+class PostgresUnitOfWork:
+    """Application service uses this to scope a tx across multiple repos."""
+
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+        self._session_factory = session_factory
+        self._session: AsyncSession | None = None
+
+    async def __aenter__(self) -> "PostgresUnitOfWork":
+        self._session = self._session_factory()
+        await self._session.__aenter__()
+        await self._session.begin()
+        # Both repos share the SAME session = same transaction.
+        self.authors = PostgresAuthorRepository(self._session)
+        self.outbox = PostgresOutboxRepository(self._session)
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> None:
+        assert self._session is not None
+        if exc_type is not None:
+            await self._session.rollback()
+        else:
+            await self._session.commit()
+        await self._session.__aexit__(exc_type, exc, tb)
+```
+
+```python
+# src/outbound/postgres_outbox.py
+import json, uuid
+from sqlalchemy import insert
+from src.domain.shared.events import DomainEvent
+from .schema import outbox_table  # SQLAlchemy core Table
+
+class PostgresOutboxRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
+
+    async def enqueue(self, events: list[DomainEvent]) -> None:
+        if not events:
+            return
+        # Trace context captured at write time, not at relay time.
+        traceparent = current_traceparent()
+        rows = [{
+            "id": uuid.uuid4(),
+            "aggregate_type": e.aggregate_type,
+            "aggregate_id": e.aggregate_id,
+            "event_type": e.event_type,
+            "payload": json.dumps(e.payload),
+            "traceparent": traceparent,
+        } for e in events]
+        await self._session.execute(insert(outbox_table), rows)
+```
+
+```python
+# Application service uses the UoW — tx boundary visible at the call site
+async def create_author(self, req: CreateAuthorRequest) -> Author:
+    async with self._uow as uow:
+        author = await uow.authors.create(req)
+        await uow.outbox.enqueue([DomainEvent(
+            aggregate_type="author",
+            aggregate_id=str(author.id),
+            event_type="AuthorCreated",
+            payload={"name": str(author.name)},
+        )])
+        # commit happens in __aexit__ on success
+    await self._metrics.record_creation()
+    return author
+```
+
+**Outbox relay** is a separate worker (started in lifespan, or a separate process). It polls `WHERE published_at IS NULL` and publishes asynchronously. Failures move to a `outbox_dead` table after N attempts.
+
+### Common gotchas
+
+- Don't let `AuthorRepository` create its own session in `__init__`. The session must be supplied — that's how UoW shares the tx.
+- Don't call `await session.commit()` inside a repo method. Commit is owned by the UoW.
+- `expire_on_commit=False` on the session factory — otherwise the entities you return become unusable after commit.
+
+---
+
+## Outbound: Idempotency Store
+
+A KV-shaped table keyed by `(scope, key)` with a unique constraint. The application service (or an inbound middleware) wraps the use case.
+
+```python
+# src/domain/shared/idempotency.py
+from dataclasses import dataclass
+from typing import Protocol
+
+@dataclass(frozen=True)
+class NewExecution: ...
+@dataclass(frozen=True)
+class Replay:
+    response: bytes
+@dataclass(frozen=True)
+class Conflict: ...
+
+Acquire = NewExecution | Replay | Conflict
+
+class IdempotencyStore(Protocol):
+    async def acquire(self, scope: str, key: str, request_hash: str) -> Acquire: ...
+    async def store(self, scope: str, key: str, response: bytes) -> None: ...
+```
+
+```python
+# src/outbound/postgres_idempotency.py
+class PostgresIdempotencyStore:
+    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+        self._session_factory = session_factory
+
+    async def acquire(self, scope: str, key: str, request_hash: str) -> Acquire:
+        async with self._session_factory() as session, session.begin():
+            # Insert-or-fetch — unique (scope, key) collapses races to one winner.
+            result = await session.execute(text("""
+                INSERT INTO idempotency (scope, key, request_hash)
+                VALUES (:s, :k, :h)
+                ON CONFLICT (scope, key) DO NOTHING
+                RETURNING 1
+            """), {"s": scope, "k": key, "h": request_hash})
+            if result.scalar() == 1:
+                return NewExecution()
+
+            row = (await session.execute(text(
+                "SELECT request_hash, response FROM idempotency "
+                "WHERE scope = :s AND key = :k"
+            ), {"s": scope, "k": key})).one()
+            if row.request_hash != request_hash:
+                return Conflict()
+            return Replay(response=row.response) if row.response else NewExecution()
+```
+
+---
+
+## Outbound: Tracer Port (OTel)
+
+Don't import `opentelemetry.*` into the domain. Define a minimal `Protocol`; the OTel adapter implements it. Tests use a no-op or capturing implementation.
+
+```python
+# src/domain/shared/tracing.py
+from typing import Protocol, Self
+
+class Span(Protocol):
+    def add_event(self, name: str, attrs: dict[str, str]) -> None: ...
+    def record_error(self, err: BaseException) -> None: ...
+    def __enter__(self) -> Self: ...
+    def __exit__(self, *exc) -> None: ...
+
+class Tracer(Protocol):
+    def start_span(self, name: str, attrs: dict[str, str]) -> Span: ...
+```
+
+The OTel adapter (`src/outbound/otel.py`) wraps `opentelemetry.trace.get_tracer(...)`. The application service depends on the `Tracer` protocol, never on the SDK. This makes vendor swap a one-file change and lets tests run with zero observability cost.
+
+For sampling, cardinality budgets, and span attribute conventions, see `software-architecture/references/observability.md`.

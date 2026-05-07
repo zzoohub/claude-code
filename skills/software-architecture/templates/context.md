@@ -5,19 +5,7 @@
 
 ---
 
-## 1. System Boundary
-
-What this system does and does not do.
-
-- **Does**: [core capabilities — verb-centric]
-- **Does not**: [explicit exclusions — prevents scope creep]
-- **External connections**: [systems this integrates with]
-
-D2 system context diagram (C4 Level 1) — the system as a black box showing actors, external systems, and data flows.
-
----
-
-## 2. Problem
+## 1. Problem
 
 **What problem, for whom, why now** (one paragraph).
 
@@ -35,6 +23,18 @@ Verb-centric list extracted from the PRD:
 | e.g., API response (main flow) | p99 < 200ms | Caching? Query optimization? |
 | e.g., Uptime | 99.5% (3.6h downtime/month) | Health checks, alerting, redundancy |
 | e.g., Memory usage | < 50MB resident | Data structure choices, streaming |
+
+---
+
+## 2. System Boundary
+
+What this system does and does not do.
+
+- **Does**: [core capabilities — verb-centric]
+- **Does not**: [explicit exclusions — prevents scope creep]
+- **External connections**: [systems this integrates with]
+
+D2 system context diagram (C4 Level 1) — the system as a black box showing actors, external systems, and data flows.
 
 ---
 

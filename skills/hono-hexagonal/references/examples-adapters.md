@@ -895,3 +895,166 @@ export function taskRoutes() {
 // app.route("/", taskRoutes());    // task queue endpoints
 // app.route("/", webhookRoutes()); // webhook endpoints
 ```
+
+---
+
+## Outbound: Outbox Adapter (transactional, Drizzle)
+
+The outbox row must be inserted inside the same `db.transaction` callback as the aggregate write. Drizzle's tx callback is the natural unit-of-work scope.
+
+```typescript
+// src/domain/shared/events.ts — plain data, no infra deps
+export interface DomainEvent {
+  readonly aggregateType: string;
+  readonly aggregateId: string;
+  readonly eventType: string;
+  readonly payload: Record<string, unknown>;
+}
+```
+
+```typescript
+// src/domain/authors/ports.ts — port carries events to persist atomically
+export interface AuthorRepository {
+  createAuthor(
+    req: CreateAuthorRequest,
+    events: readonly DomainEvent[],
+  ): Promise<Author>;
+  // ...
+}
+```
+
+```typescript
+// src/outbound/postgres-author-repository.ts
+import { authors, outbox } from "./schema";
+import { currentTraceparent } from "./tracing";
+
+export class PostgresAuthorRepository implements AuthorRepository {
+  constructor(private readonly db: NodePgDatabase) {}
+
+  async createAuthor(
+    req: CreateAuthorRequest,
+    events: readonly DomainEvent[],
+  ): Promise<Author> {
+    return this.db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(authors)
+        .values({ id: crypto.randomUUID(), name: req.name.value })
+        .returning();
+
+      if (events.length > 0) {
+        // Trace context captured at write time, not at relay time.
+        const traceparent = currentTraceparent();
+        await tx.insert(outbox).values(
+          events.map((e) => ({
+            id: crypto.randomUUID(),
+            aggregateType: e.aggregateType,
+            aggregateId: e.aggregateId,
+            eventType: e.eventType,
+            payload: e.payload,
+            traceparent,
+          })),
+        );
+      }
+
+      return Author.from(row);
+    });
+  }
+}
+```
+
+```typescript
+// Application service composes the events
+async createAuthor(req: CreateAuthorRequest): Promise<Author> {
+  const events: DomainEvent[] = [{
+    aggregateType: "author",
+    aggregateId: req.name.value,
+    eventType: "AuthorCreated",
+    payload: { name: req.name.value },
+  }];
+  const author = await this.repo.createAuthor(req, events);
+  await this.metrics.recordCreation();
+  return author;
+}
+```
+
+**Outbox relay** is a separate worker (a Node process, a Cloudflare Cron Worker, or a queue consumer). It polls `WHERE published_at IS NULL ORDER BY id LIMIT N`, publishes to the broker, and updates `published_at` on success. Failures move to a `outbox_dead` table after N attempts.
+
+### Edge runtime gotcha (Cloudflare D1)
+
+D1's transaction model is per-request and not transferable across `waitUntil` boundaries. If you defer the broker publish into `waitUntil`, the publish runs *outside* any tx — which is exactly what the outbox is for. Don't try to skip the outbox by using `waitUntil` directly; it loses durability if the worker is evicted before the publish completes.
+
+### Common gotchas
+
+- Don't make `Outbox` a separate port that takes a `tx` parameter — leaks Drizzle types into the domain. Keep both writes in the same adapter method.
+- Don't publish to the broker inside the tx. Outbox relay is the only thing that talks to the broker.
+
+---
+
+## Outbound: Idempotency Store
+
+A KV-shaped table keyed by `(scope, key)` with a unique constraint.
+
+```typescript
+// src/domain/shared/idempotency.ts
+export type Acquire =
+  | { tag: "new" }
+  | { tag: "replay"; response: Uint8Array }
+  | { tag: "conflict" };
+
+export interface IdempotencyStore {
+  acquire(scope: string, key: string, requestHash: string): Promise<Acquire>;
+  store(scope: string, key: string, response: Uint8Array): Promise<void>;
+}
+```
+
+```typescript
+// src/outbound/postgres-idempotency.ts
+export class PostgresIdempotencyStore implements IdempotencyStore {
+  constructor(private readonly db: NodePgDatabase) {}
+
+  async acquire(scope: string, key: string, hash: string): Promise<Acquire> {
+    // Insert-or-fetch — unique (scope, key) collapses races to one winner.
+    const inserted = await this.db
+      .insert(idempotency)
+      .values({ scope, key, requestHash: hash })
+      .onConflictDoNothing()
+      .returning({ ok: idempotency.scope });
+
+    if (inserted.length === 1) return { tag: "new" };
+
+    const [row] = await this.db
+      .select()
+      .from(idempotency)
+      .where(and(eq(idempotency.scope, scope), eq(idempotency.key, key)));
+
+    if (row.requestHash !== hash) return { tag: "conflict" };
+    if (row.response) return { tag: "replay", response: row.response };
+    return { tag: "new" }; // in-flight; caller blocks or 409
+  }
+  // store(...) updates the row with the response bytes.
+}
+```
+
+---
+
+## Outbound: Tracer Port (OTel)
+
+Don't import `@opentelemetry/*` into the domain. Define a minimal interface; the OTel adapter implements it. Tests use a no-op or capturing adapter.
+
+```typescript
+// src/domain/shared/tracing.ts
+export interface Span {
+  addEvent(name: string, attrs?: Record<string, string>): void;
+  recordError(err: unknown): void;
+  end(): void;
+}
+export interface Tracer {
+  startSpan(name: string, attrs?: Record<string, string>): Span;
+}
+```
+
+The Node adapter (`src/outbound/otel.ts`) wraps `@opentelemetry/api`'s tracer.
+
+**Edge variant** (Cloudflare Workers): wrap `otel-cf-workers` instead, or implement a minimal `Tracer` that emits spans via `fetch` to the OTel Collector. Same port, different adapter — no domain code changes. This is exactly the kind of swap the port abstraction earns its keep on.
+
+For sampling, cardinality budgets, and span attribute conventions, see `software-architecture/references/observability.md`.

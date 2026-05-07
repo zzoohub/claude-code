@@ -55,7 +55,11 @@ async fn main() -> anyhow::Result<()> {
         .connect(&config.database_url).await?;
 
     let sqlite = Sqlite::from_pool(pool.clone());
-    let service = AuthorServiceImpl::new(sqlite, Prometheus::new(), EmailClient::new());
+    // `Arc<AppAuthorService>` is the composition-root type alias defined in
+    // `src/composition.rs`. No `dyn`, no generics — static dispatch.
+    let service = Arc::new(
+        AuthorServiceImpl::new(sqlite, Prometheus::new(), EmailClient::new()),
+    );
     HttpServer::new(service, pool, HttpServerConfig {
         port: &config.server_port,
         cors_origin: &config.cors_origin,
@@ -132,7 +136,10 @@ impl AuthorRepository for SaboteurRepository {
 ### Spy — side-effect counting
 
 ```rust
-#[derive(Clone)]
+use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::Arc;
+
+#[derive(Clone, Default)]
 struct SpyMetrics { success: Arc<AtomicU32>, failure: Arc<AtomicU32> }
 
 impl AuthorMetrics for SpyMetrics {
@@ -161,10 +168,22 @@ impl AuthorNotifier for NoOpNotifier {
 ### Test app helper
 
 ```rust
+// Tests use a different concrete composition (NoOp adapters) than production.
+// Define a test-only alias so `AppState` keeps a single concrete type per binary.
+type TestAuthorService = AuthorServiceImpl<Sqlite, NoOpMetrics, NoOpNotifier>;
+
 async fn test_app() -> Router {
     let pool = setup_test_db().await;
-    let service = AuthorServiceImpl::new(Sqlite::from_pool(pool), NoOpMetrics, NoOpNotifier);
-    HttpServer::build_router(service, test_config()).unwrap()
+    let service: Arc<TestAuthorService> = Arc::new(
+        AuthorServiceImpl::new(Sqlite::from_pool(pool.clone()), NoOpMetrics, NoOpNotifier),
+    );
+    let cfg = HttpServerConfig {
+        port: "0",                          // unused — we don't bind a listener
+        cors_origin: "http://localhost",
+    };
+    // For tests, switch the AppState definition over to `Arc<TestAuthorService>`,
+    // or split AppState behind a `cfg(test)` alias. Pool shared with readiness probe.
+    HttpServer::build_router(service, pool, &cfg).unwrap()
 }
 
 // Pattern 1: oneshot — single request per test

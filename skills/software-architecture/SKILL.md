@@ -173,6 +173,8 @@ Before finalizing, verify:
 - Pattern selection -> `system-architecture.md`, `service-architecture.md`
 - AI features in PRD -> `ai-architecture.md` (+ `ai-agents.md` if agents needed)
 - Cross-cutting -> `operational-patterns.md`
+- Writes that must not be lost / duplicated / interleaved -> `reliability-patterns.md`
+- Stage 8 (Cross-cutting Concerns) -> `observability.md`
 
 **Skip if PRD has no AI/LLM features**: `ai-architecture.md`, `ai-agents.md`
 
@@ -188,3 +190,5 @@ Before finalizing, verify:
 | `references/ai-agents.md` | Agent patterns, protocols (MCP/A2A/AG-UI), durable execution, safety |
 | `references/tech-stack.md` | Pre-vetted technology options — language, framework, infra, data, AI, services |
 | `references/operational-patterns.md` | Resilience, background jobs, caching, rate limiting |
+| `references/reliability-patterns.md` | Transaction boundaries, idempotency, outbox, concurrency control |
+| `references/observability.md` | OpenTelemetry strategy, traces/metrics/logs, sampling, health checks |

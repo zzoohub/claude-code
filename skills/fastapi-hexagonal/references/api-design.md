@@ -63,9 +63,9 @@ Default to flat routes. Use sub-resources only when parent-child ownership is fu
 
 ## Response Format
 
-**Single**: `{ "data": {...}, "meta": { "requestId": "..." } }`
+**Single**: `{ "data": {...}, "meta": { "request_id": "..." } }`
 
-**Collection**: `{ "data": [...], "meta": { "limit": 20, "nextCursor": "...", "hasMore": true } }`
+**Collection**: `{ "data": [...], "meta": { "limit": 20, "next_cursor": "...", "has_more": true } }`
 
 **Errors** (RFC 9457, `application/problem+json`):
 
@@ -77,7 +77,7 @@ Default to flat routes. Use sub-resources only when parent-child ownership is fu
   "detail": "Email is required",
   "instance": "/v1/users",
   "errors": [{ "field": "email", "code": "required", "message": "Email is required" }],
-  "requestId": "req_abc"
+  "request_id": "req_abc"
 }
 ```
 
@@ -96,9 +96,9 @@ Default to flat routes. Use sub-resources only when parent-child ownership is fu
 
 ## Pagination
 
-**Cursor** (default): `?cursor=X&limit=20` → meta: `{ limit, nextCursor, hasMore }`
+**Cursor** (default): `?cursor=X&limit=20` → meta: `{ limit, next_cursor, has_more }`
 
-**Offset** (admin panels, small datasets): `?page=2&limit=20` → meta: `{ page, limit, total, totalPages }`
+**Offset** (admin panels, small datasets): `?page=2&limit=20` → meta: `{ page, limit, total, total_pages }`
 
 ---
 
@@ -106,7 +106,7 @@ Default to flat routes. Use sub-resources only when parent-child ownership is fu
 
 ```
 GET /v1/users?role=admin&status=active
-GET /v1/users?sort=-createdAt,name          # - = descending
+GET /v1/users?sort=-created_at,name          # - = descending
 GET /v1/users?fields=id,name,email
 ```
 
@@ -114,7 +114,7 @@ GET /v1/users?fields=id,name,email
 
 ## Soft Delete
 
-DELETE → 204, mark `deletedAt` internally. Filter deleted by default. `?includeDeleted=true` for admin.
+DELETE → 204, mark `deleted_at` internally. Filter deleted by default. `?include_deleted=true` for admin.
 
 ---
 
@@ -151,7 +151,7 @@ Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`
 - [ ] POST → 201, DELETE → 204, async → 202
 - [ ] Collections have cursor pagination
 - [ ] Errors use RFC 9457 with `application/problem+json`
-- [ ] Create/Update types exclude readOnly fields (id, createdAt, updatedAt)
+- [ ] Create/Update types exclude readOnly fields (id, created_at, updated_at)
 - [ ] Custom actions use `POST /resources/{id}/{verb}`
 - [ ] No nesting beyond 2 levels
 - [ ] If phase-tagged schema exists, implement Phase 1 endpoints only

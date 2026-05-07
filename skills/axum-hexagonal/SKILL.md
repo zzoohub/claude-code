@@ -36,6 +36,7 @@ Separate **business domain** from **infrastructure**. Domain defines *what*; ada
 src/
 ├── bin/server/main.rs           # Bootstrap only — no axum/sqlx imports
 ├── config.rs                    # Config struct, from_env()
+├── composition.rs               # `pub type AppAuthorService = ...` aliases
 ├── domain/
 │   └── authors/
 │       ├── models.rs            # Author, AuthorName, CreateAuthorRequest
@@ -120,9 +121,10 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
   ```
 - **Path params use `{id}` syntax** (not `:id`). Axum 0.8 changed this.
   Wildcards: `{*path}` (not `*path`). Literal braces: `{{` / `}}`.
-- **DI via State** — services wrapped in `Arc` inside `AppState`.
-  - **Single service:** generic `AppState<AS>`.
-  - **Multiple services:** concrete `AppState` with `FromRef` for sub-extraction.
+- **DI via State** — services wrapped in `Arc<AppXService>` inside `AppState`, where `AppXService` is a composition-root type alias (`pub type AppAuthorService = AuthorServiceImpl<Sqlite, Prometheus, EmailClient>;`). Concrete (not `dyn`) because (a) port traits use RPITIT which isn't dyn-compatible in stable Rust, (b) `routes!()` needs concrete handler items, (c) a binary has one production composition — type erasure earns nothing here.
+  - **1-2 services:** `AppState { author_service: Arc<AppAuthorService>, ... }`.
+  - **3+ services:** same `AppState`, plus `FromRef` impls so each handler extracts only the alias it needs.
+  - **When native `dyn` async stabilizes** (in flight): switch the alias to `dyn AuthorService` in one place — handlers don't change.
 - **Handlers** annotated with `#[utoipa::path]` for OpenAPI generation. Do three things only: parse input → call service → map response. No SQL.
 - **Request types** decoupled from domain — `try_into_domain()` validates into domain type. Derive `ToSchema` + `Deserialize`.
 - **Response types** built via `From<&Author>` — never expose domain structs. Derive `ToSchema` + `Serialize`.
@@ -241,8 +243,12 @@ Include graceful shutdown with `SIGINT`/`SIGTERM` handling.
 // Construct the pool once — used by both the repository AND the readiness probe.
 let pool = SqlitePoolOptions::new().connect(&config.database_url).await?;
 let sqlite = Sqlite::from_pool(pool.clone());
-let service = AuthorServiceImpl::new(sqlite, metrics, notifier);
-let server = HttpServer::new(service, pool, HttpServerConfig { port: &config.port }).await?;
+// Type inferred as Arc<AppAuthorService> — the composition-root alias.
+let service = Arc::new(AuthorServiceImpl::new(sqlite, metrics, notifier));
+let server = HttpServer::new(service, pool, HttpServerConfig {
+    port: &config.port,
+    cors_origin: &config.cors_origin,
+}).await?;
 server.run().await
 ```
 
@@ -263,23 +269,30 @@ server.run().await
 
 ## Scaling to Multiple Domains
 
-When `AppState` grows beyond one service, switch from generic `AppState<AS>` to a concrete struct with `FromRef`:
+`AppState` holds one concrete composition-root alias per service. When the struct grows beyond ~2 services, add `FromRef` impls so each handler extracts only what it needs:
 
 ```rust
+// src/composition.rs
+pub type AppAuthorService  = AuthorServiceImpl<Sqlite, Prometheus, EmailClient>;
+pub type AppBillingService = BillingServiceImpl<Postgres, Prometheus, StripeClient>;
+
+// src/inbound/http/server.rs
 #[derive(Clone)]
 struct AppState {
-    author_service: Arc<dyn AuthorService>,
-    billing_service: Arc<dyn BillingService>,
+    author_service:  Arc<AppAuthorService>,
+    billing_service: Arc<AppBillingService>,
 }
 
 // Each handler extracts only what it needs via FromRef
-impl FromRef<AppState> for Arc<dyn AuthorService> { ... }
+impl FromRef<AppState> for Arc<AppAuthorService>  { ... }
+impl FromRef<AppState> for Arc<AppBillingService> { ... }
 ```
 
 **Rules:**
 - All merged/nested routers must share the same `AppState` type.
-- Handlers extract substates via `State<Arc<dyn AuthorService>>` — still depends on trait, not concrete.
-- Switch from generics to trait objects (`Arc<dyn Trait>`) when you have 3+ services.
+- Handlers extract substates via `State<Arc<AppAuthorService>>` — still hides adapter combination behind one alias name.
+- Add `FromRef` impls when you have 3+ services or want per-handler state isolation.
+- Reach for `Arc<dyn Trait>` only when you genuinely need type erasure (runtime adapter swap, plugin systems). Until native dyn-async lands, that costs `async-trait`/`trait_variant`. Don't pay it without reason.
 
 → Full multi-domain example: `references/examples-adapters.md`
 
@@ -293,6 +306,24 @@ impl FromRef<AppState> for Arc<dyn AuthorService> { ... }
 4. **Start large, decompose when friction is observed**
 
 > If you leak transactions into business logic for cross-domain atomicity, your boundaries are wrong.
+
+---
+
+## Reliability & Observability Ports
+
+Cross-cutting infrastructure that must not leak into the domain. Define each as a port; implement as adapters. Architecture-level pattern lives in `software-architecture/references/reliability-patterns.md` and `observability.md`.
+
+| Port | Purpose | Where it lives |
+|---|---|---|
+| **Outbox** | Atomic state change + message publish — outbox row written in the **same** sqlx transaction as the aggregate | Outbound (combined with the repository adapter) |
+| **IdempotencyStore** | Replay safe responses for `Idempotency-Key`-bearing requests | Outbound; called by inbound middleware or application service |
+| **Tracer** / **Meter** | OTel span / metric emission. Domain depends on the trait, not on `opentelemetry` crates | Outbound (OTel adapter); no-op adapter for tests |
+
+**Architectural rule**: domain emits **`DomainEvent`** values (plain data); the outbound adapter persists the aggregate AND the outbox rows in a single `sqlx::Transaction` (`&mut **tx`). A separate **outbox relay** binary polls `outbox` and publishes asynchronously — this is the only safe way to pair a DB write with a broker publish.
+
+**Why not split outbox into its own port?** sqlx's `Transaction` is not `Send` across multiple owners cleanly, and exposing it across two ports either leaks the type or forces a heavyweight `UnitOfWork` abstraction. The pragmatic Rust answer is: the repository adapter is responsible for both writes within its own tx, and the *event payload* (a domain-defined `DomainEvent`) is what crosses the port boundary.
+
+→ Adapter examples: `references/examples-adapters.md`
 
 ---
 
@@ -325,8 +356,8 @@ impl FromRef<AppState> for Arc<dyn AuthorService> { ... }
 | Business orchestration? | Service impl |
 | Handler responsibility? | Parse → service → response |
 | main responsibility? | Construct adapters → assemble → start |
-| DI (single service)? | `State<AppState<AS>>` with `Arc` |
-| DI (multi service)? | Concrete `AppState` with `FromRef` |
+| DI (1-2 services)? | `State<AppState>` with `Arc<AppXService>` (concrete type alias) fields |
+| DI (3+ services)? | `AppState` + `FromRef` impls per service |
 | DB row ↔ domain? | `to_domain()` mapper in outbound |
 | Test app? | `HttpServer::build_router()` + `tower::oneshot` |
 | Health checks? | Inbound layer, not domain |
@@ -348,7 +379,7 @@ impl FromRef<AppState> for Arc<dyn AuthorService> { ... }
 ### Framework
 - [ ] Axum wrapped in `HttpServer`, `build_router()` for tests
 - [ ] Path params use `{id}` syntax (not `:id`)
-- [ ] DI via `State<AppState<AS>>` with `Arc` (or `FromRef` for multi-service)
+- [ ] DI via `State<AppState>` with `Arc<AppXService>` (concrete alias) fields (add `FromRef` for 3+ services)
 - [ ] Tower layers: trace, timeout, compression, CORS
 - [ ] `acquire_timeout` set on pool
 - [ ] Graceful shutdown with `SIGINT`/`SIGTERM` + `TimeoutLayer`
