@@ -3,7 +3,7 @@ name: nestjs-hexagonal
 description: |
   NestJS with hexagonal architecture patterns in TypeScript.
   Use when: building TypeScript APIs with NestJS — for modular backends with built-in dependency injection.
-  Covers: API design (@nestjs/swagger), domain modeling, ports & adapters (abstract class injection tokens), NestJS module wiring, Zod validation pipes, exception filters (RFC 9457), @nestjs/testing patterns, Drizzle ORM (SQL) and Mongoose (MongoDB) dual-database support, cursor pagination, @nestjs/terminus healthcheck endpoints.
+  Covers: API design (@nestjs/swagger), domain modeling, ports & adapters (abstract class injection tokens), NestJS module wiring, class-validator with the global ValidationPipe, exception filters (RFC 9457), @nestjs/testing patterns, TypeORM (SQL) and Mongoose (MongoDB) dual-database support, cursor pagination, @nestjs/terminus healthcheck endpoints.
   Do not use for: database schema design (use database-design skill). Use hono-hexagonal for lightweight multi-runtime APIs. Use fastapi-hexagonal for Python-only APIs. Use axum-hexagonal for Rust APIs.
 references:
   - references/examples-domain.md
@@ -15,7 +15,7 @@ references:
 
 # NestJS + Hexagonal Architecture
 
-**For latest NestJS/Drizzle/Mongoose/Zod APIs, use context7.**
+**For latest NestJS/TypeORM/Mongoose/class-validator APIs, use context7.**
 
 ## Core Philosophy
 
@@ -23,10 +23,10 @@ Separate **business domain** from **infrastructure**. Domain defines *what*; ada
 
 ```
 [Inbound Adapter: NestJS Controller] -> [Port: Service abstract class] -> [Domain Logic]
-    -> [Port: Repository abstract class] -> [Outbound Adapter: Drizzle/Mongoose/etc.]
+    -> [Port: Repository abstract class] -> [Outbound Adapter: TypeORM/Mongoose/etc.]
 ```
 
-**Dependencies always point inward.** Domain code never imports NestJS, Drizzle, Mongoose, or any infrastructure package.
+**Dependencies always point inward.** Domain code never imports NestJS, TypeORM, Mongoose, or any infrastructure package.
 
 ---
 
@@ -44,22 +44,21 @@ src/
 │   └── http/
 │       ├── authors/
 │       │   ├── authors.controller.ts   # Parse -> call service -> map response
-│       │   ├── request.dto.ts          # Zod schemas + toDomain()
+│       │   ├── request.dto.ts          # class-validator DTO classes + toDomain()
 │       │   └── response.dto.ts         # fromDomain() + Swagger decorators
 │       ├── filters/
 │       │   └── domain-exception.filter.ts  # Domain errors -> RFC 9457
-│       ├── pipes/
-│       │   └── zod-validation.pipe.ts      # Zod schema -> NestJS pipe
+│       ├── validation-exception.factory.ts # class-validator errors -> RFC 9457
 │       └── health/
 │           └── health.controller.ts        # @nestjs/terminus
 ├── outbound/
-│   ├── drizzle/                # SQL adapter (pick this OR mongoose)
-│   │   ├── drizzle.module.ts   #   @Global, provides DRIZZLE token + repositories
-│   │   ├── drizzle.provider.ts #   Factory: Pool -> drizzle(pool, { schema })
-│   │   ├── schema.ts           #   Drizzle table definitions
-│   │   ├── author.repository.ts
-│   │   └── mapper.ts
-│   ├── mongoose/               # MongoDB adapter (pick this OR drizzle)
+│   ├── typeorm/                # SQL adapter (pick this OR mongoose)
+│   │   ├── typeorm.module.ts   #   @Global, TypeOrmModule.forRootAsync + forFeature
+│   │   ├── entities/
+│   │   │   └── author.entity.ts #  @Entity class — outbound only, NEVER imported in domain
+│   │   ├── author.repository.ts #  Implements domain port; @InjectRepository(AuthorEntity)
+│   │   └── mapper.ts            #  AuthorEntity <-> Author (domain) translation
+│   ├── mongoose/               # MongoDB adapter (pick this OR typeorm)
 │   │   ├── mongoose.module.ts  #   @Global, MongooseModule.forFeature + repositories
 │   │   ├── author.schema.ts    #   @Schema/@Prop document definition
 │   │   ├── author.repository.ts
@@ -67,11 +66,10 @@ src/
 │   └── noop.ts                 # NoOp metrics/notifier for dev
 ├── authors.module.ts           # Feature module: wires controller + service
 ├── app.module.ts               # Root module: imports ONE persistence module + config
-├── config.ts                   # Typed config with Zod
+├── config.ts                   # Typed config validated with class-validator
 └── main.ts                     # Bootstrap — NestFactory, global middleware
-drizzle/                        # SQL only: Drizzle Kit migrations
-├── migrations/
-drizzle.config.ts
+data-source.ts                  # SQL only: TypeORM CLI DataSource (entities + migrations path)
+migrations/                     # SQL only: TypeORM-generated migration files
 tests/
 ├── helpers.ts                  # Test module factory
 └── mocks.ts                    # Stub, Saboteur, Spy, NoOp
@@ -87,7 +85,7 @@ tests/
 
 ### Models
 - Validate on construction (value object pattern). Classes with private constructors or factory functions.
-- **No Drizzle schemas or Mongoose documents in domain** — those live in `outbound/` only.
+- **No TypeORM entities or Mongoose documents in domain** — those live in `outbound/` only. Domain `Author` and outbound `AuthorEntity` are *different types*.
 - Domain models are plain TypeScript. No decorators, no framework dependencies.
 - Separate `CreateAuthorRequest` from `Author` — they WILL diverge as app grows.
 
@@ -118,14 +116,14 @@ Abstract classes in the domain layer have zero NestJS imports — they're plain 
 
 ## Inbound Layer
 
-- **Controllers** annotated with `@Controller('v1/authors')`. Each method: parse input -> call service -> map response. No Drizzle. No Mongoose. No ORM.
+- **Controllers** annotated with `@Controller('v1/authors')`. Each method: parse input -> call service -> map response. No TypeORM. No Mongoose. No ORM. **Never** return entities directly — always go through the response DTO.
 - **DI** — Controllers inject the abstract service class directly. NestJS resolves it to the concrete implementation registered in the feature module.
-- **Request DTOs** decoupled from domain — Zod schema + `toDomain()` function. Use `ZodValidationPipe` on parameters.
+- **Request DTOs** decoupled from domain — class with class-validator decorators + `toDomain()` function. Validation handled by the global `ValidationPipe`. Type-annotate the controller parameter (`@Body() body: CreateAuthorBody`); without an explicit class type the pipe has no metadata to validate against.
 - **Response DTOs** built via `fromDomain()` static method — never expose domain models directly. Add `@ApiProperty()` decorators for Swagger.
 - **Exception Filters** map domain errors to RFC 9457 ProblemDetails. Register globally in `main.ts`. Match on `error.tag` for exhaustive handling.
 - **API docs** — `@nestjs/swagger` with `@ApiOperation()`, `@ApiResponse()`. Consult `references/api-design.md` for conventions and `references/api-patterns.md` for HTTP patterns.
 - **Guards** — Auth via `@UseGuards(JwtAuthGuard)`. Domain never handles tokens.
-- **Pipes** — `ZodValidationPipe` for body/query/param validation.
+- **Pipes** — Built-in `ValidationPipe` registered globally in `main.ts` (`whitelist`, `forbidNonWhitelisted`, `transform`, `enableImplicitConversion`) drives class-validator on DTO classes. `exceptionFactory` reshapes errors to RFC 9457 ProblemDetails — see `validation-exception.factory.ts`.
 - **NestJS execution order**: Guards -> Interceptors -> Pipes -> Handler -> Interceptors -> Filters.
 
 ### Non-HTTP Inbound Adapters
@@ -149,20 +147,22 @@ All follow the same pattern: **parse input -> call service -> respond.**
 
 Choose **one** persistence module per project (or per domain if you mix databases):
 
-### Drizzle (SQL — PostgreSQL/SQLite)
+### TypeORM (SQL — PostgreSQL/MySQL/SQLite)
 
 - `@Injectable()` repositories that extend the abstract port class from domain.
-- Inject `DRIZZLE` token (symbol) — the Drizzle client wrapped in a NestJS factory provider.
-- **Transactions encapsulated in adapter** via `db.transaction()`, invisible to callers.
-- Map Drizzle-specific errors (unique constraint codes) to domain error types.
-- Drizzle table schemas live in `outbound/drizzle/schema.ts`. Use explicit mapper (`AuthorMapper.toDomain()`).
+- Inject the per-entity `Repository<AuthorEntity>` via `@InjectRepository(AuthorEntity)`.
+- **Transactions encapsulated in adapter** via `repo.manager.transaction()` (or an injected `DataSource`), invisible to callers.
+- Map TypeORM-specific errors (`QueryFailedError` with driver code `23505` on Postgres) to domain error types.
+- Entities live in `outbound/typeorm/entities/*.entity.ts`. Use **Data Mapper** style only (`repo.save(entity)`); never Active Record (`entity.save()`). The mapper translates `AuthorEntity <-> Author`.
 
 | Setting | Value | Why |
 |---------|-------|-----|
-| Client | `drizzle(pool, { schema })` | Pass your own pool for control |
-| Transactions | `db.transaction(async (tx) => ...)` | Scoped, auto-rollback on throw |
-| Relations | `db.query.authors.findMany({ with: { posts: true } })` | Eager load to prevent N+1 |
-| Migrations | Drizzle Kit `generate` + `migrate` | Schema-driven SQL migrations |
+| Module | `TypeOrmModule.forRootAsync` + `forFeature([AuthorEntity])` | Async config from `ConfigService`, per-feature repository wiring |
+| Repository style | Data Mapper only (`@InjectRepository`) | Active Record leaks persistence into domain |
+| Transactions | `repo.manager.transaction(async (m) => ...)` | Scoped, auto-rollback on throw |
+| Relations | `repo.find({ relations: { posts: true } })` or QueryBuilder `leftJoinAndSelect` | Eager join to prevent N+1; never lazy `Promise<Related>` |
+| Migrations | TypeORM CLI `migration:generate` + `migration:run` | Schema-driven SQL migrations from entity diff |
+| `synchronize` | **`false`** in every environment except local sandbox | Auto-altering production schemas is a foot-gun |
 
 ### Mongoose (MongoDB)
 
@@ -180,21 +180,48 @@ Choose **one** persistence module per project (or per domain if you mix database
 | Indexes | `@Prop({ unique: true, index: true })` | Declared on schema |
 | Migrations | Not needed | Schema-less; use migration scripts for data transforms |
 
-> Full outbound examples (Drizzle + Mongoose repositories, mappers, modules): `references/examples-adapters.md`
+> Full outbound examples (TypeORM + Mongoose repositories, mappers, modules): `references/examples-adapters.md`
+
+---
+
+## TypeORM Pitfalls (Hex Discipline)
+
+TypeORM doesn't fight hexagonal — but its convenience features do. Six hard rules; one soft note. Each one of these, left unchecked, walks the codebase back toward an Active Record monolith.
+
+| Pitfall | Hex violation | Rule |
+|---------|---------------|------|
+| Active Record (`entity.save()`, `Entity.find()`) | Domain learns about persistence | **Data Mapper only** — call `repo.save(entity)` from the adapter |
+| Lifecycle hooks (`@BeforeInsert`, `@AfterLoad`) | Business logic hides inside the adapter | **Forbidden** — put logic in the domain service |
+| `cascade: true` on relations | Auto-save/delete hides side effects | **Off by default** — call related saves explicitly inside a transaction |
+| TypeORM Subscribers / EventSubscribers | Competing event system inside the adapter | **Forbidden** — use `@nestjs/event-emitter` or domain events |
+| Lazy relations (`Promise<Related>`) | `Promise` leaks into the mapped domain object | **Forbidden** — eager-join in the adapter or mapper resolves before returning |
+| Returning entities to the controller | Domain ⇄ DTO boundary collapses | **Always** map entity → domain → response DTO |
+
+> **Note (soft):** `repo.save()` infers insert vs update from the presence of an id. When the intent matters for readability or for an audit trail, prefer `repo.insert()` / `repo.update()` explicitly.
+
+> **One-liner to remember:** *TypeORM isn't incompatible with hex — TypeORM's conveniences make hex discipline easy to erode.*
 
 ---
 
 ## Validation
 
-Zod schemas define the contract at the transport boundary. Domain models validate business rules separately.
+class-validator decorators on DTO classes define the contract at the transport boundary. Domain models validate business rules separately.
 
 ```
-[HTTP body] -> [ZodValidationPipe validates shape] -> [toDomain() validates business rules] -> [Domain model]
+[HTTP body] -> [Global ValidationPipe + class-validator decorators] -> [toDomain() validates business rules] -> [Domain model]
 ```
 
-Two-layer validation is intentional: Zod catches malformed input (missing fields, wrong types) before it reaches domain code. Domain constructors enforce business invariants (non-empty names, valid ranges).
+Two-layer validation is intentional: class-validator catches malformed input (missing fields, wrong types) before it reaches domain code. Domain constructors enforce business invariants (non-empty names, valid ranges).
 
-> ZodValidationPipe implementation: `references/examples-adapters.md`
+Register the pipe once in `main.ts`:
+
+```typescript
+app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }));
+```
+
+`transform: true` is required so `@Type(() => Number)` coercions on query params (e.g. `limit`) actually run.
+
+> Request DTO and config validation examples: `references/examples-adapters.md`, `references/examples-bootstrap.md`
 
 ---
 
@@ -202,11 +229,11 @@ Two-layer validation is intentional: Zod catches malformed input (missing fields
 
 List endpoints need pagination. **Default to cursor-based pagination.** The pattern flows through all three layers:
 - **Domain port**: `listAuthors(cursor: string | null, limit: number) => Promise<CursorPage<Author>>`
-- **Drizzle adapter**: `WHERE (created_at, id) > (:cursor) ORDER BY created_at, id LIMIT :limit`
+- **TypeORM adapter**: QueryBuilder `where("(author.created_at, author.id) > (:cursorAt, :cursorId)", ...).orderBy({ "author.created_at": "ASC", "author.id": "ASC" }).limit(:limit)`
 - **Mongoose adapter**: `find({ _id: { $gt: cursor } }).sort({ _id: 1 }).limit(limit)`
 - **Inbound controller**: return `CursorPageResponse<T>` with `data`, `limit`, `nextCursor`, `hasMore`
 
-Cap `limit` at the controller level via Zod (e.g. `z.number().min(1).max(100).default(20)`).
+Cap `limit` at the controller level via class-validator on the query DTO (e.g. `@IsInt() @Min(1) @Max(100) limit: number = 20;` with `@Type(() => Number)` for query-string coercion).
 
 ### Cursor vs Offset
 
@@ -222,7 +249,7 @@ Use `@nestjs/terminus` for structured health checks. These bypass the domain ent
 
 - `/health/live` — always 200 (liveness)
 - `/health/ready` — checks DB connectivity (readiness)
-  - **Drizzle**: raw `SELECT 1` via pool
+  - **TypeORM**: `TypeOrmHealthIndicator.pingCheck("database")`
   - **Mongoose**: `mongoose.connection.readyState`
 
 > Healthcheck example: `references/examples-adapters.md`
@@ -231,21 +258,27 @@ Use `@nestjs/terminus` for structured health checks. These bypass the domain ent
 
 ## Migrations
 
-### Drizzle (SQL)
+### TypeORM (SQL)
 
-Drizzle Kit reads schema definitions from `outbound/drizzle/schema.ts` to generate SQL migrations.
+TypeORM CLI reads `data-source.ts` (with `entities` + `migrations` paths) and generates migrations from the entity-vs-DB diff.
 
 ```
-drizzle/
-├── migrations/         # Generated SQL migration files
-drizzle.config.ts       # Points to outbound/drizzle/schema.ts
+data-source.ts          # DataSource: entities + migrations path + DB connection
+migrations/             # Generated TypeScript migration files (run via CLI)
 ```
 
 ```bash
-bunx drizzle-kit generate    # Generate migration from schema changes
-bunx drizzle-kit migrate     # Apply migrations
-bunx drizzle-kit studio      # Visual DB browser
+# Generate migration from current entity diff
+bunx typeorm-ts-node-commonjs migration:generate -d ./data-source.ts ./migrations/CreateAuthors
+
+# Apply pending migrations
+bunx typeorm-ts-node-commonjs migration:run -d ./data-source.ts
+
+# Revert the most recent migration
+bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
 ```
+
+`synchronize: false` in every environment except a throw-away local sandbox — migrations are the only sanctioned schema mutation path.
 
 ### Mongoose (MongoDB)
 
@@ -259,7 +292,7 @@ NestJS has a built-in `Logger` class. For structured logging, use `nestjs-pino`.
 
 - **Domain**: log business events at info, wrap unexpected exceptions at error
 - **Inbound**: exception filters log server errors before returning generic messages
-- **Outbound**: Drizzle query logging via `logger` option / Mongoose `debug` mode
+- **Outbound**: TypeORM query logging via `logging: ["query", "error"]` (or `"all"` in dev) / Mongoose `debug` mode
 
 ---
 
@@ -302,7 +335,7 @@ In `app.module.ts`, import **one** persistence module:
 
 ```typescript
 imports: [
-  DrizzlePersistenceModule,    // SQL (PostgreSQL/SQLite)
+  TypeOrmPersistenceModule,    // SQL (PostgreSQL/MySQL/SQLite)
   // MongoosePersistenceModule, // MongoDB — swap by toggling these imports
   AuthorsModule,
 ]
@@ -325,7 +358,7 @@ Each domain gets a **feature module** that wires its controller, service, and re
 ### Global Modules
 
 Mark with `@Global()` when the module should be available everywhere without explicit imports:
-- Persistence module (Drizzle or Mongoose) — every feature needs DB access
+- Persistence module (TypeORM or Mongoose) — every feature needs DB access
 - `ConfigModule.forRoot({ isGlobal: true })` — config everywhere
 
 ---
@@ -349,8 +382,12 @@ Mark with `@Global()` when the module should be available everywhere without exp
 | Service is `undefined` | Not provided in module | Add to `providers` with correct abstract class token |
 | `@Injectable()` in domain | Framework leak | Remove it, use `useFactory` in module |
 | `HttpException` in domain | Transport leak | Use domain error classes, map in exception filter |
-| Drizzle/Mongoose types in domain | ORM leak | Use mapper in outbound, domain has own types |
-| Drizzle `DRIZZLE` token not found | Missing `@Inject(DRIZZLE)` | Use symbol injection in repository constructor |
+| TypeORM/Mongoose types in domain | ORM leak | Use mapper in outbound, domain has own types |
+| Entity returned to controller / used as domain model | Hex boundary collapse | Always map `Entity -> Author -> Response DTO` |
+| `@BeforeInsert` / Subscribers carry business logic | Logic hides in adapter | Move to domain service or `@nestjs/event-emitter` |
+| `cascade: true` produces surprise writes | Side effects hidden in relation graph | Off; call related saves explicitly inside a transaction |
+| `synchronize: true` in any deployed env | Auto-altering production schema | Keep `false`; use `migration:run` |
+| `@InjectRepository(AuthorEntity)` undefined | `TypeOrmModule.forFeature([AuthorEntity])` missing in module | Add it to the persistence module's imports |
 | Mongoose transaction fails | No replica set | MongoDB transactions require replica set (use `rs.initiate()` or Atlas) |
 | `enableShutdownHooks()` missing | DB disconnect not called | Add in `main.ts` before `app.listen()` |
 | Tests share DB state | Missing cleanup | Reset in `beforeEach` or use transaction rollback |
@@ -361,17 +398,17 @@ Mark with `@Global()` when the module should be available everywhere without exp
 
 | Question | Answer |
 |----------|--------|
-| Transactions? | Drizzle: `db.transaction()` / Mongoose: `session.withTransaction()` |
-| Validation? | Zod pipe at transport boundary, domain constructors for business rules |
+| Transactions? | TypeORM: `repo.manager.transaction()` / Mongoose: `session.withTransaction()` |
+| Validation? | class-validator + global `ValidationPipe` at transport boundary, domain constructors for business rules |
 | Error mapping? | `@Catch()` exception filter in inbound |
 | Business orchestration? | Service impl |
 | Controller responsibility? | Parse -> service -> response |
 | main.ts responsibility? | Create app, global middleware, Swagger, listen |
 | DI mechanism? | Abstract classes as tokens + `useFactory` in modules |
-| DB row <-> domain? | `AuthorMapper.toDomain()` in outbound |
+| Entity <-> domain? | `AuthorMapper.toDomain(entity)` / `toEntity(domain)` in outbound |
 | Test app? | `Test.createTestingModule().overrideProvider()` |
 | Background workers? | `@nestjs/bullmq` or `@nestjs/schedule` |
-| Migrations? | Drizzle Kit for SQL / not needed for MongoDB |
+| Migrations? | TypeORM CLI for SQL (`migration:generate` + `migration:run`) / not needed for MongoDB |
 | Healthcheck? | `@nestjs/terminus` in inbound |
 | JWT / passwords? | `@nestjs/passport` + `@node-rs/argon2` |
 | Swap database? | Change one import in `app.module.ts` |
@@ -384,25 +421,27 @@ Mark with `@Global()` when the module should be available everywhere without exp
 - [ ] Domain never imports from inbound/, outbound/, or @nestjs/*
 - [ ] Ports as abstract classes, services orchestrate
 - [ ] All handlers (HTTP, jobs, events): parse -> service -> respond
-- [ ] Transactions in adapters only, DB row <-> domain mapper in outbound
+- [ ] Transactions in adapters only, entity <-> domain mapper in outbound
 - [ ] Errors: domain hierarchy -> exception filter -> RFC 9457
 - [ ] If phase-tagged schema exists, implement Phase 1 endpoints only
 
 ### Framework
 - [ ] Controllers in inbound/ with `@Controller()` decorators
 - [ ] Services wired via `useFactory` (no `@Injectable` in domain)
-- [ ] Zod validation via `ZodValidationPipe` on route params
+- [ ] Validation via class-validator decorators + global `ValidationPipe` (`whitelist`, `transform`)
 - [ ] Global `DomainExceptionFilter` registered in main.ts
 - [ ] `enableShutdownHooks()` called in main.ts
 - [ ] `helmet()` middleware enabled
 - [ ] CORS configured with explicit origins
 
 ### Database (pick one)
-**Drizzle (SQL)**:
-- [ ] Schema in `outbound/drizzle/schema.ts`
-- [ ] Migrations in `drizzle/migrations/`
-- [ ] `DrizzlePersistenceModule` is `@Global()`
-- [ ] Pool configured with connection limit
+**TypeORM (SQL)**:
+- [ ] Entities in `outbound/typeorm/entities/*.entity.ts` (NEVER imported from domain)
+- [ ] `TypeOrmPersistenceModule` is `@Global()` and registers `forFeature([...entities])`
+- [ ] `synchronize: false` in every env; migrations run via TypeORM CLI
+- [ ] Data Mapper only — no `entity.save()`, no `@BeforeInsert`/Subscribers, no `cascade: true`, no lazy `Promise<Related>`
+- [ ] Repository extends domain port; `QueryFailedError` driver code mapped to domain errors
+- [ ] Mapper handles `Entity <-> Author` in both directions
 
 **Mongoose (MongoDB)**:
 - [ ] Schemas in `outbound/mongoose/*.schema.ts`
@@ -420,4 +459,4 @@ Mark with `@Global()` when the module should be available everywhere without exp
 ### Setup
 - [ ] `main.ts` has minimal business logic
 - [ ] `bun.lock` committed
-- [ ] Config validated with Zod at startup
+- [ ] Config validated with class-validator at startup
