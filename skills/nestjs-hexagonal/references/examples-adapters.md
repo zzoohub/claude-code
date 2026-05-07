@@ -72,6 +72,23 @@ import type { AppConfig } from "../../config";
 export class TypeOrmPersistenceModule {}
 ```
 
+## Outbound: Cursor Helpers (composite + base64)
+
+```typescript
+// src/outbound/cursor.ts
+// Composite cursor (createdAt, id) encoded as opaque base64.
+// Single-column `id > X` cursors skip/duplicate rows under concurrent inserts;
+// composite (createdAt, id) is stable.
+export function encodeCursor(createdAt: Date, id: string): string {
+  return Buffer.from(`${createdAt.toISOString()}|${id}`).toString("base64url");
+}
+
+export function decodeCursor(raw: string): { createdAt: Date; id: string } {
+  const [ts, id] = Buffer.from(raw, "base64url").toString("utf8").split("|", 2);
+  return { createdAt: new Date(ts), id };
+}
+```
+
 ## Outbound: TypeORM — Mapper + Repository
 
 ```typescript
@@ -101,9 +118,10 @@ export class AuthorMapper {
 // src/outbound/typeorm/author.repository.ts
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { MoreThan, QueryFailedError, Repository } from "typeorm";
+import { QueryFailedError, Repository } from "typeorm";
 import { AuthorEntity } from "./entities/author.entity";
 import { AuthorMapper } from "./mapper";
+import { decodeCursor, encodeCursor } from "../cursor";
 import { AuthorRepository } from "../../domain/authors/ports";
 import type { Author, CreateAuthorRequest, CursorPage } from "../../domain/authors/models";
 import {
@@ -145,17 +163,29 @@ export class TypeOrmAuthorRepository extends AuthorRepository {
     cursor: string | null,
     limit: number,
   ): Promise<CursorPage<Author>> {
-    const fetchLimit = limit + 1;
+    // QueryBuilder for tuple comparison `(created_at, id) > (cursorAt, cursorId)`.
+    // Plain `find({ where })` doesn't support tuple predicates.
+    const qb = this.repo.createQueryBuilder("author")
+      .orderBy("author.created_at", "ASC")
+      .addOrderBy("author.id", "ASC")
+      .limit(limit + 1);
 
-    const entities = await this.repo.find({
-      where: cursor ? { id: MoreThan(cursor) } : {},
-      order: { id: "ASC" },
-      take: fetchLimit,
-    });
+    if (cursor) {
+      const { createdAt, id } = decodeCursor(cursor);
+      qb.where(
+        "(author.created_at, author.id) > (:createdAt, :id)",
+        { createdAt, id },
+      );
+    }
 
+    const entities = await qb.getMany();
     const hasMore = entities.length > limit;
-    const items = entities.slice(0, limit).map(AuthorMapper.toDomain);
-    const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
+    // Drop overflow row; cursor is the LAST RETURNED row so the next page
+    // resumes AFTER it (no duplicates, no skips).
+    const pageEntities = entities.slice(0, limit);
+    const items = pageEntities.map(AuthorMapper.toDomain);
+    const last = pageEntities[pageEntities.length - 1];
+    const nextCursor = hasMore && last ? encodeCursor(last.createdAt, last.id) : null;
 
     return { items, nextCursor, hasMore };
   }
@@ -202,6 +232,9 @@ import { type HydratedDocument } from "mongoose";
 /**
  * Mongoose document definition — outbound only. Never import in domain.
  * @Schema decorators are infrastructure, fine in outbound layer.
+ *
+ * `timestamps: true` adds createdAt/updatedAt fields automatically.
+ * Composite cursor pagination relies on createdAt — index it.
  */
 @Schema({ collection: "authors", timestamps: true })
 export class AuthorDocument {
@@ -209,10 +242,16 @@ export class AuthorDocument {
 
   @Prop({ required: true, unique: true, trim: true })
   name: string;
+
+  /** Set automatically by `timestamps: true` — declared here for typing + index. */
+  @Prop({ type: Date, index: true })
+  createdAt: Date;
 }
 
 export type AuthorDoc = HydratedDocument<AuthorDocument>;
 export const AuthorSchema = SchemaFactory.createForClass(AuthorDocument);
+// Compound index supports the (createdAt, _id) cursor predicate.
+AuthorSchema.index({ createdAt: 1, _id: 1 });
 ```
 
 ## Outbound: Mongoose — Module
@@ -253,15 +292,23 @@ export class MongoosePersistenceModule {}
 ```typescript
 // src/outbound/mongoose/mapper.ts
 import { AuthorName } from "../../domain/authors/models";
-import type { Author } from "../../domain/authors/models";
+import type { Author, CreateAuthorRequest } from "../../domain/authors/models";
 import type { AuthorDoc } from "./author.schema";
 
+/**
+ * Maps in BOTH directions so the document stays sealed inside the adapter.
+ * Domain code only ever sees `Author` — no Mongoose types leak.
+ */
 export class AuthorMapper {
   static toDomain(doc: AuthorDoc): Author {
     return {
       id: doc.id as string, // Mongoose .id returns string of _id
       name: AuthorName.create(doc.name),
     };
+  }
+
+  static toCreatePayload(req: CreateAuthorRequest): { name: string } {
+    return { name: req.name.value };
   }
 }
 ```
@@ -273,8 +320,13 @@ import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { AuthorDocument, type AuthorDoc } from "./author.schema";
 import { AuthorMapper } from "./mapper";
+import { decodeCursor, encodeCursor } from "../cursor";
 import { AuthorRepository } from "../../domain/authors/ports";
-import type { Author, CreateAuthorRequest } from "../../domain/authors/models";
+import type {
+  Author,
+  CreateAuthorRequest,
+  CursorPage,
+} from "../../domain/authors/models";
 import {
   DuplicateAuthorError,
   UnknownAuthorError,
@@ -291,7 +343,8 @@ export class MongooseAuthorRepository extends AuthorRepository {
 
   async createAuthor(req: CreateAuthorRequest): Promise<Author> {
     try {
-      const doc = await this.model.create({ name: req.name.value });
+      // Goes through the mapper — adapter doesn't unpack value objects directly.
+      const doc = await this.model.create(AuthorMapper.toCreatePayload(req));
       return AuthorMapper.toDomain(doc as AuthorDoc);
     } catch (error: unknown) {
       if (error instanceof Error && 'code' in error && (error as any).code === 11000) {
@@ -311,18 +364,33 @@ export class MongooseAuthorRepository extends AuthorRepository {
     cursor: string | null,
     limit: number,
   ): Promise<CursorPage<Author>> {
-    const query = cursor
-      ? this.model.find({ _id: { $gt: cursor } })
-      : this.model.find();
+    // Composite (createdAt, _id) tuple via Mongo $or trick:
+    // either createdAt is strictly greater, or it's equal and _id is greater.
+    const filter = cursor
+      ? (() => {
+          const { createdAt, id } = decodeCursor(cursor);
+          return {
+            $or: [
+              { createdAt: { $gt: createdAt } },
+              { createdAt, _id: { $gt: id } },
+            ],
+          };
+        })()
+      : {};
 
-    const docs = await query
-      .sort({ _id: 1 })
+    const docs = await this.model
+      .find(filter)
+      .sort({ createdAt: 1, _id: 1 })
       .limit(limit + 1)
       .exec();
 
     const hasMore = docs.length > limit;
-    const items = docs.slice(0, limit).map(AuthorMapper.toDomain);
-    const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
+    const pageDocs = docs.slice(0, limit);
+    const items = pageDocs.map((d) => AuthorMapper.toDomain(d));
+    const last = pageDocs[pageDocs.length - 1];
+    const nextCursor = hasMore && last
+      ? encodeCursor(last.createdAt, last.id as string)
+      : null;
 
     return { items, nextCursor, hasMore };
   }
@@ -611,44 +679,60 @@ export class JwtAuthGuard implements CanActivate {
 ## Inbound: Healthcheck
 
 ```typescript
-// src/inbound/http/health/health.controller.ts
-import { Controller, Get, Inject } from "@nestjs/common";
-import { HealthCheck, HealthCheckService } from "@nestjs/terminus";
+// src/inbound/http/health/health.controller.ts — TypeORM variant (active)
+import { Controller, Get } from "@nestjs/common";
+import {
+  HealthCheck,
+  HealthCheckService,
+  TypeOrmHealthIndicator,
+} from "@nestjs/terminus";
 import { ApiTags } from "@nestjs/swagger";
-
-// For TypeORM — use the built-in indicator:
-// import { TypeOrmHealthIndicator } from "@nestjs/terminus";
-// For Mongoose:
-// import { InjectConnection } from "@nestjs/mongoose";
-// import { Connection } from "mongoose";
 
 @ApiTags("health")
 @Controller("health")
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
-    // TypeORM: private readonly db: TypeOrmHealthIndicator,
-    // Mongoose: @InjectConnection() private readonly connection: Connection,
+    private readonly db: TypeOrmHealthIndicator,
   ) {}
 
+  /** Liveness — the process is up. Always 200. */
   @Get("live")
   live() {
     return { status: "ok" };
   }
 
+  /** Readiness — can it serve traffic? 503 when DB is unreachable. */
   @Get("ready")
   @HealthCheck()
   ready() {
     return this.health.check([
-      // TypeORM: ping the default DataSource
-      // () => this.db.pingCheck("database"),
-      // Mongoose: check readyState
-      // () => this.connection.readyState === 1
-      //   ? Promise.resolve({ database: { status: "up" } })
-      //   : Promise.reject("DB not connected"),
+      () => this.db.pingCheck("database"),
     ]);
   }
 }
+
+// Mongoose variant — swap the indicator:
+//
+// import { InjectConnection } from "@nestjs/mongoose";
+// import { Connection } from "mongoose";
+//
+// constructor(
+//   private readonly health: HealthCheckService,
+//   @InjectConnection() private readonly connection: Connection,
+// ) {}
+//
+// @Get("ready")
+// @HealthCheck()
+// ready() {
+//   return this.health.check([
+//     async () => ({
+//       database: this.connection.readyState === 1
+//         ? { status: "up" }
+//         : (() => { throw new Error("DB not connected"); })(),
+//     }),
+//   ]);
+// }
 ```
 
 ## Inbound: Job Handler (non-HTTP inbound adapter)

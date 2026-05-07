@@ -353,7 +353,6 @@ Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 - [ ] All handlers (HTTP, tasks, webhooks): parse → service → respond
 - [ ] Transactions in adapters only, ORM ↔ domain mapper in outbound
 - [ ] Errors: domain hierarchy → exception handlers → RFC 9457
-- [ ] If phase-tagged schema exists, implement Phase 1 endpoints only
 
 ### Framework
 - [ ] Shell wraps FastAPI, `build_test_app()` for tests

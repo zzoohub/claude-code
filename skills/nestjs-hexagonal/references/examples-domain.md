@@ -115,7 +115,7 @@ export type CreateAuthorError = DuplicateAuthorError | UnknownAuthorError;
 ```typescript
 // src/domain/authors/ports.ts
 
-import type { Author, CreateAuthorRequest } from "./models";
+import type { Author, CreateAuthorRequest, CursorPage } from "./models";
 
 /**
  * Abstract classes serve as BOTH interface contract AND DI injection token.
@@ -167,7 +167,7 @@ export abstract class AuthorService {
 // NO @Injectable() — wired via useFactory in the feature module.
 // NO @nestjs/* imports — domain stays pure.
 
-import type { Author, CreateAuthorRequest } from "./models";
+import type { Author, CreateAuthorRequest, CursorPage } from "./models";
 import type { AuthorMetrics, AuthorNotifier, AuthorRepository } from "./ports";
 import { AuthorService } from "./ports";
 import { DuplicateAuthorError, UnknownAuthorError } from "./errors";

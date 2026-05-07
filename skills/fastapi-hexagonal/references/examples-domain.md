@@ -95,7 +95,7 @@ from __future__ import annotations
 from typing import Protocol
 from uuid import UUID
 
-from domain.authors.models import Author, CreateAuthorRequest
+from domain.authors.models import Author, CreateAuthorRequest, CursorPage
 
 
 class AuthorRepository(Protocol):
@@ -126,9 +126,10 @@ class AuthorService(Protocol):
 ```python
 # src/domain/authors/service.py
 import logging
+from uuid import UUID
 
 from domain.authors.errors import CreateAuthorError, UnknownAuthorError
-from domain.authors.models import Author, CreateAuthorRequest
+from domain.authors.models import Author, CreateAuthorRequest, CursorPage
 from domain.authors.ports import AuthorMetrics, AuthorNotifier, AuthorRepository
 
 logger = logging.getLogger(__name__)

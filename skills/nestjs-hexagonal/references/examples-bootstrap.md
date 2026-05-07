@@ -345,7 +345,11 @@ Key: `emitDecoratorMetadata` and `experimentalDecorators` are required for NestJ
 
 ```typescript
 // tests/mocks.ts
-import type { Author, CreateAuthorRequest } from "../src/domain/authors/models";
+import type {
+  Author,
+  CreateAuthorRequest,
+  CursorPage,
+} from "../src/domain/authors/models";
 import {
   AuthorRepository, AuthorMetrics, AuthorNotifier, AuthorService,
 } from "../src/domain/authors/ports";

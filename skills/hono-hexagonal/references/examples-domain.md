@@ -109,7 +109,7 @@ export type CreateAuthorError =
 ```typescript
 // src/domain/authors/ports.ts
 
-import type { Author, CreateAuthorRequest } from "./models";
+import type { Author, CreateAuthorRequest, CursorPage } from "./models";
 import type { CreateAuthorError } from "./errors";
 
 /**
@@ -145,8 +145,8 @@ export interface AuthorService {
 ```typescript
 // src/domain/authors/service.ts
 
-import type { Author, CreateAuthorRequest } from "./models";
-import type { AuthorMetrics, AuthorNotifier, AuthorRepository } from "./ports";
+import type { Author, CreateAuthorRequest, CursorPage } from "./models";
+import type { AuthorMetrics, AuthorNotifier, AuthorRepository, AuthorService } from "./ports";
 import { DuplicateAuthorError, UnknownAuthorError } from "./errors";
 
 /**

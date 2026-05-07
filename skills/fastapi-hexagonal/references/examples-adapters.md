@@ -8,9 +8,10 @@ Inbound (Shell, handlers, task handlers, webhooks, auth, errors) and outbound (D
 
 ```python
 # src/outbound/postgres/models.py
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import String, Uuid
+from sqlalchemy import DateTime, String, Uuid, func
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
@@ -23,6 +24,10 @@ class AuthorModel(Base):
     __tablename__ = "authors"
     id: Mapped[UUID] = mapped_column(Uuid, primary_key=True)
     name: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    # Required by composite cursor pagination — index on (created_at, id).
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False, index=True,
+    )
 
 
 # src/outbound/postgres/mapper.py
@@ -264,7 +269,9 @@ class Shell:
     def _build_app(author_service: AuthorService, config) -> FastAPI:
         @asynccontextmanager
         async def lifespan(app: FastAPI):
-            yield {"author_service": author_service}
+            # Config goes into ASGI state so inbound deps (e.g. auth) read it
+            # via request.state — no module-level singletons.
+            yield {"author_service": author_service, "config": config}
 
         app = FastAPI(lifespan=lifespan)
         app.add_middleware(
@@ -300,20 +307,26 @@ def with_author_service(request: Request) -> AuthorService:
 
 ```python
 # src/inbound/http/auth.py
-"""Auth lives entirely in the inbound layer. Domain never handles tokens."""
-from datetime import UTC, datetime, timedelta
+"""Auth lives entirely in the inbound layer. Domain never handles tokens.
+Config flows in via lifespan state — no module-level singletons (untestable)."""
+from datetime import datetime, timedelta, timezone
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 
 from app.config import AppConfig
 
-_settings = AppConfig()
 _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+_oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 _hasher = PasswordHash((Argon2Hasher(),))
+
+
+def get_config(request: Request) -> AppConfig:
+    """Read AppConfig set in Shell lifespan state — overridable in tests."""
+    return request.state.config
 
 
 def hash_password(password: str) -> str:
@@ -322,23 +335,26 @@ def hash_password(password: str) -> str:
 def verify_password(plain: str, hashed: str) -> bool:
     return _hasher.verify(password=plain, hash=hashed)
 
-def create_access_token(user_id: int, expires_minutes: int = 30) -> str:
-    expire = datetime.now(UTC) + timedelta(minutes=expires_minutes)
+def create_access_token(user_id: int, secret_key: str, expires_minutes: int = 30) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
     return jwt.encode(
         {"sub": str(user_id), "exp": expire},
-        _settings.secret_key,
+        secret_key,
         algorithm="HS256",
     )
 
-def _decode_token(token: str) -> int | None:
+def _decode_token(token: str, secret_key: str) -> int | None:
     try:
-        payload = jwt.decode(token, _settings.secret_key, algorithms=["HS256"])
+        payload = jwt.decode(token, secret_key, algorithms=["HS256"])
         return int(payload.get("sub"))
     except (jwt.InvalidTokenError, ValueError, TypeError):
         return None
 
-async def get_current_user(token: str = Depends(_oauth2_scheme)) -> int:
-    user_id = _decode_token(token)
+async def get_current_user(
+    token: str = Depends(_oauth2_scheme),
+    config: AppConfig = Depends(get_config),
+) -> int:
+    user_id = _decode_token(token, config.secret_key)
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -348,11 +364,12 @@ async def get_current_user(token: str = Depends(_oauth2_scheme)) -> int:
     return user_id
 
 async def get_current_user_optional(
-    token: str | None = Depends(OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)),
+    token: str | None = Depends(_oauth2_scheme_optional),
+    config: AppConfig = Depends(get_config),
 ) -> int | None:
     if token is None:
         return None
-    return _decode_token(token)
+    return _decode_token(token, config.secret_key)
 ```
 
 ## Inbound: Request / Response Schemas
@@ -499,17 +516,50 @@ class CursorPageResponse(BaseModel, Generic[T]):
 class AuthorRepository(Protocol):
     async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]: ...
 
+# src/outbound/postgres/cursor.py — composite cursor (created_at, id) opaque base64
+import base64
+import uuid
+from datetime import datetime
+
+
+def encode_cursor(created_at: datetime, id_: uuid.UUID) -> str:
+    raw = f"{created_at.isoformat()}|{id_}"
+    return base64.urlsafe_b64encode(raw.encode()).decode()
+
+
+def decode_cursor(raw: str) -> tuple[datetime, uuid.UUID]:
+    decoded = base64.urlsafe_b64decode(raw.encode()).decode()
+    ts, id_str = decoded.split("|", 1)
+    return datetime.fromisoformat(ts), uuid.UUID(id_str)
+
+
 # src/outbound/postgres/repository.py — cursor pagination
+from sqlalchemy import tuple_
+
 async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]:
     async with self._session_factory() as session:
-        query = select(AuthorModel).order_by(AuthorModel.id.asc())
+        # Order by (created_at, id) — single-column `id > X` skips/duplicates rows
+        # when timestamps tie or rows are inserted between requests.
+        query = select(AuthorModel).order_by(
+            AuthorModel.created_at.asc(), AuthorModel.id.asc(),
+        )
         if cursor:
-            query = query.where(AuthorModel.id > uuid.UUID(cursor))
+            cursor_at, cursor_id = decode_cursor(cursor)
+            query = query.where(
+                tuple_(AuthorModel.created_at, AuthorModel.id) > (cursor_at, cursor_id)
+            )
+        # Fetch limit+1 to detect whether more rows exist.
         result = await session.execute(query.limit(limit + 1))
-        rows = result.scalars().all()
+        rows = list(result.scalars().all())
         has_more = len(rows) > limit
-        items = [AuthorMapper.to_domain(r) for r in rows[:limit]]
-        next_cursor = str(items[-1].id) if has_more and items else None
+        # Drop overflow row; cursor points at the LAST RETURNED row so the
+        # next page resumes AFTER it (no duplicates, no skips).
+        page_rows = rows[:limit]
+        items = [AuthorMapper.to_domain(r) for r in page_rows]
+        next_cursor = (
+            encode_cursor(page_rows[-1].created_at, page_rows[-1].id)
+            if has_more and page_rows else None
+        )
         return CursorPage(items=items, next_cursor=next_cursor, has_more=has_more)
 
 # src/inbound/http/authors/router.py — handler

@@ -8,21 +8,27 @@ Inbound (createApp, handlers, task handlers, auth, errors) and outbound (Drizzle
 
 ```typescript
 // src/outbound/drizzle/schema.ts
-import { sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { sql } from "drizzle-orm";
 
 /**
  * Drizzle table definition — outbound only. Never import in domain.
+ * createdAt is required by composite cursor pagination — index on (created_at, id).
  */
 export const authors = sqliteTable("authors", {
   id: text("id").primaryKey(),
   name: text("name").notNull().unique(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
 });
 
 // For Postgres, use pgTable from drizzle-orm/pg-core:
-// import { pgTable, text, uuid } from "drizzle-orm/pg-core";
+// import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 // export const authors = pgTable("authors", {
 //   id: uuid("id").primaryKey().defaultRandom(),
 //   name: text("name").notNull().unique(),
+//   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 // });
 ```
 
@@ -31,11 +37,14 @@ export const authors = sqliteTable("authors", {
 import { AuthorName } from "../../domain/authors/models";
 import type { Author } from "../../domain/authors/models";
 
+type AuthorRow = { id: string; name: string; createdAt: Date };
+
 /**
  * DB row <-> domain translation. Keeps domain free from Drizzle.
+ * Note: domain Author intentionally omits createdAt — adapters carry it for pagination.
  */
 export class AuthorMapper {
-  static toDomain(row: { id: string; name: string }): Author {
+  static toDomain(row: AuthorRow): Author {
     return {
       id: row.id,
       name: AuthorName.create(row.name),
@@ -51,19 +60,54 @@ export class AuthorMapper {
 }
 ```
 
+## Outbound: Cursor Helpers (composite + base64)
+
+```typescript
+// src/outbound/cursor.ts
+// Composite cursor (createdAt, id) encoded as opaque base64.
+// Single-column `id > X` cursors skip/duplicate rows under concurrent inserts;
+// composite (createdAt, id) is stable.
+
+// Runtime-agnostic base64url — works in Node, Bun, Deno, and Cloudflare Workers.
+function base64UrlEncode(raw: string): string {
+  if (typeof Buffer !== "undefined") return Buffer.from(raw).toString("base64url");
+  return btoa(raw).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+function base64UrlDecode(raw: string): string {
+  if (typeof Buffer !== "undefined") return Buffer.from(raw, "base64url").toString("utf8");
+  const padded = raw.replace(/-/g, "+").replace(/_/g, "/");
+  return atob(padded + "===".slice(0, (4 - (padded.length % 4)) % 4));
+}
+
+export function encodeCursor(createdAt: Date, id: string): string {
+  return base64UrlEncode(`${createdAt.toISOString()}|${id}`);
+}
+
+export function decodeCursor(raw: string): { createdAt: Date; id: string } {
+  const [ts, id] = base64UrlDecode(raw).split("|", 2);
+  return { createdAt: new Date(ts), id };
+}
+```
+
 ## Outbound: Drizzle Adapter (ORM + mapper)
 
 ```typescript
 // src/outbound/drizzle/repository.ts
-import { eq, asc, gt } from "drizzle-orm";
+import { and, asc, eq, gt, or } from "drizzle-orm";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { authors } from "./schema";
 import { AuthorMapper } from "./mapper";
+import { decodeCursor, encodeCursor } from "../cursor";
 import {
   DuplicateAuthorError,
   UnknownAuthorError,
 } from "../../domain/authors/errors";
-import type { Author, CreateAuthorRequest } from "../../domain/authors/models";
+import type {
+  Author,
+  CreateAuthorRequest,
+  CursorPage,
+} from "../../domain/authors/models";
 import type { AuthorRepository } from "../../domain/authors/ports";
 
 /**
@@ -105,15 +149,39 @@ export class DrizzleAuthorRepository implements AuthorRepository {
     cursor: string | null,
     limit: number,
   ): Promise<CursorPage<Author>> {
+    // Fetch limit+1 to detect whether more rows exist beyond the boundary.
     const fetchLimit = limit + 1;
 
+    // Drizzle has no native tuple-comparison operator — emulate
+    // (createdAt, id) > (cursorAt, cursorId) via OR + AND.
     const rows = cursor
-      ? await this.db.select().from(authors).where(gt(authors.id, cursor)).orderBy(asc(authors.id)).limit(fetchLimit)
-      : await this.db.select().from(authors).orderBy(asc(authors.id)).limit(fetchLimit);
+      ? await (() => {
+          const { createdAt, id } = decodeCursor(cursor);
+          return this.db
+            .select()
+            .from(authors)
+            .where(
+              or(
+                gt(authors.createdAt, createdAt),
+                and(eq(authors.createdAt, createdAt), gt(authors.id, id)),
+              ),
+            )
+            .orderBy(asc(authors.createdAt), asc(authors.id))
+            .limit(fetchLimit);
+        })()
+      : await this.db
+          .select()
+          .from(authors)
+          .orderBy(asc(authors.createdAt), asc(authors.id))
+          .limit(fetchLimit);
 
+    // Drop overflow row; cursor points at the LAST RETURNED row so the
+    // next page resumes AFTER it (no duplicates, no skips).
     const hasMore = rows.length > limit;
-    const items = rows.slice(0, limit).map(AuthorMapper.toDomain);
-    const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
+    const pageRows = rows.slice(0, limit);
+    const items = pageRows.map(AuthorMapper.toDomain);
+    const last = pageRows[pageRows.length - 1];
+    const nextCursor = hasMore && last ? encodeCursor(last.createdAt, last.id) : null;
 
     return { items, nextCursor, hasMore };
   }
@@ -136,15 +204,20 @@ export class DrizzleAuthorRepository implements AuthorRepository {
 
 ```typescript
 // src/outbound/drizzle/postgres-repository.ts
-import { eq, asc, gt } from "drizzle-orm";
+import { and, asc, eq, gt, or } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { authors } from "./schema";
 import { AuthorMapper } from "./mapper";
+import { decodeCursor, encodeCursor } from "../cursor";
 import {
   DuplicateAuthorError,
   UnknownAuthorError,
 } from "../../domain/authors/errors";
-import type { Author, CreateAuthorRequest } from "../../domain/authors/models";
+import type {
+  Author,
+  CreateAuthorRequest,
+  CursorPage,
+} from "../../domain/authors/models";
 import type { AuthorRepository } from "../../domain/authors/ports";
 
 export class PostgresAuthorRepository implements AuthorRepository {
@@ -189,12 +262,31 @@ export class PostgresAuthorRepository implements AuthorRepository {
     const fetchLimit = limit + 1;
 
     const rows = cursor
-      ? await this.db.select().from(authors).where(gt(authors.id, cursor)).orderBy(asc(authors.id)).limit(fetchLimit)
-      : await this.db.select().from(authors).orderBy(asc(authors.id)).limit(fetchLimit);
+      ? await (() => {
+          const { createdAt, id } = decodeCursor(cursor);
+          return this.db
+            .select()
+            .from(authors)
+            .where(
+              or(
+                gt(authors.createdAt, createdAt),
+                and(eq(authors.createdAt, createdAt), gt(authors.id, id)),
+              ),
+            )
+            .orderBy(asc(authors.createdAt), asc(authors.id))
+            .limit(fetchLimit);
+        })()
+      : await this.db
+          .select()
+          .from(authors)
+          .orderBy(asc(authors.createdAt), asc(authors.id))
+          .limit(fetchLimit);
 
     const hasMore = rows.length > limit;
-    const items = rows.slice(0, limit).map(AuthorMapper.toDomain);
-    const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
+    const pageRows = rows.slice(0, limit);
+    const items = pageRows.map(AuthorMapper.toDomain);
+    const last = pageRows[pageRows.length - 1];
+    const nextCursor = hasMore && last ? encodeCursor(last.createdAt, last.id) : null;
 
     return { items, nextCursor, hasMore };
   }
@@ -214,15 +306,23 @@ export class PostgresAuthorRepository implements AuthorRepository {
 // src/outbound/sqlite/repository.ts
 import { Database } from "bun:sqlite";
 import { AuthorName } from "../../domain/authors/models";
-import type { Author, CreateAuthorRequest } from "../../domain/authors/models";
+import type {
+  Author,
+  CreateAuthorRequest,
+  CursorPage,
+} from "../../domain/authors/models";
 import type { AuthorRepository } from "../../domain/authors/ports";
 import {
   DuplicateAuthorError,
   UnknownAuthorError,
 } from "../../domain/authors/errors";
+import { decodeCursor, encodeCursor } from "../cursor";
+
+type AuthorRow = { id: string; name: string; created_at: number };
 
 /**
  * Raw SQL — demonstrates that adapters choose their own data access strategy.
+ * SQLite stores timestamps as unix epoch integers (seconds).
  */
 export class SqliteAuthorRepository implements AuthorRepository {
   constructor(private readonly db: Database) {}
@@ -234,6 +334,7 @@ export class SqliteAuthorRepository implements AuthorRepository {
   async createAuthor(req: CreateAuthorRequest): Promise<Author> {
     const id = crypto.randomUUID();
     try {
+      // created_at uses DEFAULT (unixepoch()) declared in schema.
       this.db
         .prepare("INSERT INTO authors (id, name) VALUES (?, ?)")
         .run(id, req.name.value);
@@ -251,8 +352,8 @@ export class SqliteAuthorRepository implements AuthorRepository {
 
   async findAuthor(authorId: string): Promise<Author | null> {
     const row = this.db
-      .prepare("SELECT id, name FROM authors WHERE id = ?")
-      .get(authorId) as { id: string; name: string } | null;
+      .prepare("SELECT id, name, created_at FROM authors WHERE id = ?")
+      .get(authorId) as AuthorRow | null;
     if (!row) return null;
     return { id: row.id, name: AuthorName.create(row.name) };
   }
@@ -262,20 +363,34 @@ export class SqliteAuthorRepository implements AuthorRepository {
     limit: number,
   ): Promise<CursorPage<Author>> {
     const fetchLimit = limit + 1;
-    const rows = cursor
-      ? (this.db
-          .prepare("SELECT id, name FROM authors WHERE id > ? ORDER BY id ASC LIMIT ?")
-          .all(cursor, fetchLimit) as { id: string; name: string }[])
-      : (this.db
-          .prepare("SELECT id, name FROM authors ORDER BY id ASC LIMIT ?")
-          .all(fetchLimit) as { id: string; name: string }[]);
+    const rows = (cursor
+      ? (() => {
+          const { createdAt, id } = decodeCursor(cursor);
+          // Composite (created_at, id) tuple comparison via SQLite row-value syntax.
+          return this.db
+            .prepare(
+              "SELECT id, name, created_at FROM authors " +
+                "WHERE (created_at, id) > (?, ?) " +
+                "ORDER BY created_at ASC, id ASC LIMIT ?",
+            )
+            .all(Math.floor(createdAt.getTime() / 1000), id, fetchLimit);
+        })()
+      : this.db
+          .prepare(
+            "SELECT id, name, created_at FROM authors ORDER BY created_at ASC, id ASC LIMIT ?",
+          )
+          .all(fetchLimit)) as AuthorRow[];
 
     const hasMore = rows.length > limit;
-    const items = rows.slice(0, limit).map((r) => ({
+    const pageRows = rows.slice(0, limit);
+    const items = pageRows.map((r) => ({
       id: r.id,
       name: AuthorName.create(r.name),
     }));
-    const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
+    const last = pageRows[pageRows.length - 1];
+    const nextCursor = hasMore && last
+      ? encodeCursor(new Date(last.created_at * 1000), last.id)
+      : null;
 
     return { items, nextCursor, hasMore };
   }
@@ -288,7 +403,8 @@ export class SqliteAuthorRepository implements AuthorRepository {
 
 ```typescript
 // src/inbound/http/app.ts
-import { Hono } from "hono";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { swaggerUI } from "@hono/swagger-ui";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import { logger } from "hono/logger";
@@ -296,7 +412,7 @@ import { logger } from "hono/logger";
 import type { AuthorService } from "../../domain/authors/ports";
 import { authorRoutes } from "./authors/routes";
 import { registerErrorHandler } from "./errors";
-import { healthRoutes } from "./health";
+import { healthRoutes, type HealthPing } from "./health";
 import { injectServices } from "./middleware";
 
 /**
@@ -309,13 +425,19 @@ export type AppEnv = {
   };
 };
 
-export type AppContext = Hono<AppEnv>;
+export type AppContext = OpenAPIHono<AppEnv>;
+
+export type AppDeps = {
+  authorService: AuthorService;
+  /** Readiness ping — typically `() => db.execute(sql`SELECT 1`)`. */
+  healthPing: HealthPing;
+};
 
 /**
- * Creates the Hono app. Bootstrap (server.ts) never imports Hono.
+ * Creates the Hono app. Bootstrap (server.ts) never imports Hono/OpenAPIHono.
  */
-export function createApp(authorService: AuthorService): Hono<AppEnv> {
-  const app = new Hono<AppEnv>();
+export function createApp(deps: AppDeps): OpenAPIHono<AppEnv> {
+  const app = new OpenAPIHono<AppEnv>();
 
   // Global middleware — order matters: CORS must come first
   app.use("*", cors({ origin: ["http://localhost:3000"] }));
@@ -323,25 +445,32 @@ export function createApp(authorService: AuthorService): Hono<AppEnv> {
   app.use("*", logger());
 
   // DI middleware — sets services on context for all downstream handlers
-  app.use("*", injectServices(authorService));
+  app.use("*", injectServices(deps.authorService));
 
   // Health endpoints (infrastructure — no domain)
-  app.route("/", healthRoutes());
+  app.route("/", healthRoutes(deps.healthPing));
 
-  // Domain routes
+  // Domain routes — generates OpenAPI from createRoute() definitions
   app.route("/authors", authorRoutes());
 
-  // Error handler
+  // OpenAPI document + Swagger UI
+  app.doc("/openapi.json", {
+    openapi: "3.0.0",
+    info: { title: "Authors API", version: "1.0.0" },
+  });
+  app.get("/docs", swaggerUI({ url: "/openapi.json" }));
+
+  // Error handler — runs after routes
   registerErrorHandler(app);
 
   return app;
 }
 
 /**
- * For tests: same app, no server binding.
+ * For tests: same app, no server binding. Pass a stub ping that always resolves.
  */
-export function createTestApp(authorService: AuthorService): Hono<AppEnv> {
-  return createApp(authorService);
+export function createTestApp(deps: AppDeps): OpenAPIHono<AppEnv> {
+  return createApp(deps);
 }
 ```
 
@@ -408,7 +537,8 @@ export function requireAuth(secret: string) {
 
 ```typescript
 // src/inbound/http/authors/request.ts
-import { z } from "zod";
+// `z` from @hono/zod-openapi is the same Zod with .openapi() metadata extension.
+import { z } from "@hono/zod-openapi";
 import { AuthorName, type CreateAuthorRequest } from "../../../domain/authors/models";
 
 /**
@@ -458,54 +588,102 @@ export function fromDomain(author: Author): AuthorResponse {
 }
 ```
 
-## Inbound: Handlers (Routes)
+## Inbound: Handlers (Routes with OpenAPI)
+
+Routes use `@hono/zod-openapi` (`OpenAPIHono` + `createRoute`) so the OpenAPI
+spec is generated from the same schemas that validate requests — no
+separate API spec to drift from the implementation.
 
 ```typescript
 // src/inbound/http/authors/routes.ts
-import { Hono } from "hono";
-import { zValidator } from "@hono/zod-validator";
+import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
 import type { AppEnv } from "../app";
-import { createAuthorBodySchema, paginationSchema, toDomain } from "./request";
+import {
+  createAuthorBodySchema,
+  paginationSchema,
+  toDomain,
+} from "./request";
 import { fromDomain } from "./response";
 
-/**
- * Author routes as a sub-application.
- * Each handler: parse -> call service -> map response.
- */
+const AuthorSchema = z.object({
+  id: z.string().openapi({ example: "01HX9G..." }),
+  name: z.string().openapi({ example: "Ada Lovelace" }),
+}).openapi("Author");
+
+const AuthorResultSchema = z.object({ data: AuthorSchema }).openapi("AuthorResult");
+
+const AuthorPageSchema = z.object({
+  data: z.array(AuthorSchema),
+  next_cursor: z.string().nullable(),
+  has_more: z.boolean(),
+}).openapi("AuthorPage");
+
+const ProblemSchema = z.object({
+  type: z.string(),
+  title: z.string(),
+  status: z.number(),
+  detail: z.string(),
+}).openapi("ProblemDetails");
+
+const createAuthorRoute = createRoute({
+  method: "post",
+  path: "/",
+  tags: ["authors"],
+  request: {
+    body: { content: { "application/json": { schema: createAuthorBodySchema } } },
+  },
+  responses: {
+    201: { content: { "application/json": { schema: AuthorResultSchema } }, description: "Created" },
+    409: { content: { "application/json": { schema: ProblemSchema } }, description: "Duplicate" },
+  },
+});
+
+const listAuthorsRoute = createRoute({
+  method: "get",
+  path: "/",
+  tags: ["authors"],
+  request: { query: paginationSchema },
+  responses: {
+    200: { content: { "application/json": { schema: AuthorPageSchema } }, description: "Page of authors" },
+  },
+});
+
+const getAuthorRoute = createRoute({
+  method: "get",
+  path: "/{id}",
+  tags: ["authors"],
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: { content: { "application/json": { schema: AuthorResultSchema } }, description: "Author" },
+    404: { content: { "application/json": { schema: ProblemSchema } }, description: "Not found" },
+  },
+});
+
 export function authorRoutes() {
-  const app = new Hono<AppEnv>();
+  const app = new OpenAPIHono<AppEnv>();
 
-  // POST /authors
-  app.post(
-    "/",
-    zValidator("json", createAuthorBodySchema),
-    async (c) => {
-      const body = c.req.valid("json");
-      const domainReq = toDomain(body);
-      const author = await c.var.authorService.createAuthor(domainReq);
-      return c.json({ data: fromDomain(author) }, 201);
-    },
-  );
+  app.openapi(createAuthorRoute, async (c) => {
+    const body = c.req.valid("json");
+    const author = await c.var.authorService.createAuthor(toDomain(body));
+    return c.json({ data: fromDomain(author) }, 201);
+  });
 
-  // GET /authors
-  app.get(
-    "/",
-    zValidator("query", paginationSchema),
-    async (c) => {
-      const { cursor, limit } = c.req.valid("query");
-      const page = await c.var.authorService.listAuthors(cursor, limit);
-      return c.json({
+  app.openapi(listAuthorsRoute, async (c) => {
+    const { cursor, limit } = c.req.valid("query");
+    const page = await c.var.authorService.listAuthors(cursor, limit);
+    return c.json(
+      {
         data: page.items.map(fromDomain),
         next_cursor: page.nextCursor,
         has_more: page.hasMore,
-      });
-    },
-  );
+      },
+      200,
+    );
+  });
 
-  // GET /authors/:id
-  app.get("/:id", async (c) => {
-    const id = c.req.param("id");
+  app.openapi(getAuthorRoute, async (c) => {
+    const { id } = c.req.valid("param");
     const author = await c.var.authorService.findAuthor(id);
     if (!author) {
       return c.json(
@@ -518,7 +696,7 @@ export function authorRoutes() {
         404,
       );
     }
-    return c.json({ data: fromDomain(author) });
+    return c.json({ data: fromDomain(author) }, 200);
   });
 
   return app;
@@ -645,25 +823,36 @@ export interface CursorPageResponse<T> {
 // src/inbound/http/health.ts
 /**
  * Healthcheck is infrastructure — not a domain concern.
- * Wire directly in createApp, no service needed.
+ * Wire directly in createApp. The readiness probe takes a small
+ * "ping" callback so the inbound layer doesn't import drizzle/postgres directly.
  */
 import { Hono } from "hono";
 
-export function healthRoutes() {
+export type HealthPing = () => Promise<void>;
+
+export function healthRoutes(ping: HealthPing) {
   const app = new Hono();
 
   // Liveness — is the process alive?
   app.get("/healthz", (c) => c.json({ status: "ok" }));
 
-  // Readiness — can it serve traffic?
-  // In real apps: check DB connectivity, external service health
+  // Readiness — can it serve traffic? Returns 503 if the DB is unreachable
+  // so k8s/load balancers can drain a node before it accepts more traffic.
   app.get("/readyz", async (c) => {
-    // Example: await db.execute(sql`SELECT 1`);
-    return c.json({ status: "ready" });
+    try {
+      await ping();
+      return c.json({ status: "ready" });
+    } catch (err) {
+      console.error("readiness check failed:", err);
+      return c.json({ status: "not ready" }, 503);
+    }
   });
 
   return app;
 }
+
+// In createApp(): pass a ping function constructed at bootstrap.
+// e.g. `() => db.execute(sql`SELECT 1`).then(() => undefined)`
 ```
 
 ## Inbound: Task Handler (non-HTTP inbound adapter)

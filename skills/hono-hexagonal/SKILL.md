@@ -358,7 +358,6 @@ This is optional but powerful — particularly useful for monorepo setups where 
 - [ ] All handlers (HTTP, tasks, webhooks): parse -> service -> respond
 - [ ] Transactions in adapters only, DB row <-> domain mapper in outbound
 - [ ] Errors: domain hierarchy -> `app.onError()` -> RFC 9457
-- [ ] If phase-tagged schema exists, implement Phase 1 endpoints only
 
 ### Framework
 - [ ] Hono wrapped in `createApp()`, `createTestApp()` for tests

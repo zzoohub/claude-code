@@ -35,6 +35,7 @@ export function loadConfig(): AppConfig {
 
 ```typescript
 // src/app/server.ts — no Hono, no Drizzle imports
+import { sql } from "drizzle-orm";
 import { loadConfig } from "./config";
 import { AuthorServiceImpl } from "../domain/authors/service";
 import { createApp } from "../inbound/http/app";
@@ -46,7 +47,10 @@ const config = loadConfig();
 const db = createDb(config.DATABASE_URL);
 const repo = DrizzleAuthorRepository.fromClient(db);
 const service = new AuthorServiceImpl(repo, new NoOpMetrics(), new NoOpNotifier());
-const app = createApp(service);
+const app = createApp({
+  authorService: service,
+  healthPing: async () => { await db.run(sql`SELECT 1`); },
+});
 
 export default {
   fetch: app.fetch,
@@ -59,6 +63,7 @@ export default {
 ```typescript
 // src/app/server.ts — Node.js with @hono/node-server
 import { serve } from "@hono/node-server";
+import { sql } from "drizzle-orm";
 import { loadConfig } from "./config";
 import { AuthorServiceImpl } from "../domain/authors/service";
 import { createApp } from "../inbound/http/app";
@@ -70,7 +75,10 @@ const config = loadConfig();
 const db = createDb(config.DATABASE_URL);
 const repo = DrizzleAuthorRepository.fromClient(db);
 const service = new AuthorServiceImpl(repo, new NoOpMetrics(), new NoOpNotifier());
-const app = createApp(service);
+const app = createApp({
+  authorService: service,
+  healthPing: async () => { await db.execute(sql`SELECT 1`); },
+});
 
 serve(
   { fetch: app.fetch, port: config.PORT },
@@ -92,35 +100,43 @@ process.on("SIGINT", () => {
 
 ## Bootstrap (Cloudflare Workers)
 
-```typescript
-// src/app/server.ts — Cloudflare Workers
-// DI works differently: services are created per-request from c.env bindings.
-import { Hono } from "hono";
-import { AuthorServiceImpl } from "../domain/authors/service";
-import { D1AuthorRepository } from "../outbound/d1/repository";
-import { authorRoutes } from "../inbound/http/authors/routes";
-import { registerErrorHandler } from "../inbound/http/errors";
-import { NoOpMetrics, NoOpNotifier } from "../outbound/noop";
+Cloudflare bindings are per-request (`c.env`), so the worker entry point has
+to construct adapters inside a request handler. To keep `src/app/` free of
+Hono/Drizzle imports (the hex rule), put the wiring in
+`src/inbound/http/cloudflare.ts` and re-export from `src/app/server.ts`.
 
-type Bindings = {
+```typescript
+// src/inbound/http/cloudflare.ts — inbound layer (allowed to import Hono/D1)
+import { drizzle } from "drizzle-orm/d1";
+import { sql } from "drizzle-orm";
+import { AuthorServiceImpl } from "../../domain/authors/service";
+import { DrizzleAuthorRepository } from "../../outbound/drizzle/repository";
+import { NoOpMetrics, NoOpNotifier } from "../../outbound/noop";
+import * as schema from "../../outbound/drizzle/schema";
+import { createApp } from "./app";
+
+export type Bindings = {
   DB: D1Database;
   JWT_SECRET: string;
 };
 
-const app = new Hono<{ Bindings: Bindings }>();
+export default {
+  async fetch(req: Request, env: Bindings, ctx: ExecutionContext): Promise<Response> {
+    const db = drizzle(env.DB, { schema });
+    const repo = DrizzleAuthorRepository.fromClient(db);
+    const service = new AuthorServiceImpl(repo, new NoOpMetrics(), new NoOpNotifier());
+    const app = createApp({
+      authorService: service,
+      healthPing: async () => { await db.run(sql`SELECT 1`); },
+    });
+    return app.fetch(req, env, ctx);
+  },
+};
+```
 
-// Per-request DI from Cloudflare bindings
-app.use("*", async (c, next) => {
-  const repo = new D1AuthorRepository(c.env.DB);
-  const service = new AuthorServiceImpl(repo, new NoOpMetrics(), new NoOpNotifier());
-  c.set("authorService", service);
-  await next();
-});
-
-app.route("/authors", authorRoutes());
-registerErrorHandler(app);
-
-export default app;
+```typescript
+// src/app/server.ts — bootstrap stays free of framework imports
+export { default } from "../inbound/http/cloudflare";
 ```
 
 ## Drizzle Client Factory
@@ -229,6 +245,8 @@ bun drizzle-kit studio
   },
   "dependencies": {
     "hono": "^4.7",
+    "@hono/zod-openapi": "^0.18",
+    "@hono/swagger-ui": "^0.5",
     "@hono/zod-validator": "^0.5",
     "zod": "^3.24",
     "drizzle-orm": "^0.39",
@@ -277,7 +295,11 @@ bun add -d some-tool           # add dev dependency
 
 ```typescript
 // tests/mocks.ts
-import type { Author, CreateAuthorRequest } from "../src/domain/authors/models";
+import type {
+  Author,
+  CreateAuthorRequest,
+  CursorPage,
+} from "../src/domain/authors/models";
 import type {
   AuthorRepository,
   AuthorMetrics,
@@ -389,10 +411,11 @@ import { NoOpMetrics, NoOpNotifier } from "./mocks";
 /**
  * Build a test app with a given repository.
  * Uses app.request() — Hono's built-in test utility.
+ * Stub healthPing always succeeds in tests.
  */
 export function buildTestApp(repo: AuthorRepository) {
   const service = new AuthorServiceImpl(repo, new NoOpMetrics(), new NoOpNotifier());
-  return createTestApp(service);
+  return createTestApp({ authorService: service, healthPing: async () => {} });
 }
 
 /**
@@ -400,7 +423,7 @@ export function buildTestApp(repo: AuthorRepository) {
  * Use when testing handler behavior in isolation.
  */
 export function buildTestAppWithService(service: AuthorService) {
-  return createTestApp(service);
+  return createTestApp({ authorService: service, healthPing: async () => {} });
 }
 ```
 
@@ -552,8 +575,10 @@ function createTestDb() {
   sqlite.run(`
     CREATE TABLE authors (
       id TEXT PRIMARY KEY,
-      name TEXT NOT NULL UNIQUE
+      name TEXT NOT NULL UNIQUE,
+      created_at INTEGER NOT NULL DEFAULT (unixepoch())
     );
+    CREATE INDEX idx_authors_created_at_id ON authors(created_at, id);
   `);
   return drizzle(sqlite, { schema });
 }

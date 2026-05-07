@@ -238,9 +238,11 @@ Construct adapters → assemble service → start server. **No axum/sqlx imports
 Include graceful shutdown with `SIGINT`/`SIGTERM` handling.
 
 ```rust
-let sqlite = Sqlite::new(&config.database_url).await?;
+// Construct the pool once — used by both the repository AND the readiness probe.
+let pool = SqlitePoolOptions::new().connect(&config.database_url).await?;
+let sqlite = Sqlite::from_pool(pool.clone());
 let service = AuthorServiceImpl::new(sqlite, metrics, notifier);
-let server = HttpServer::new(service, HttpServerConfig { port: &config.port }).await?;
+let server = HttpServer::new(service, pool, HttpServerConfig { port: &config.port }).await?;
 server.run().await
 ```
 
@@ -342,7 +344,6 @@ impl FromRef<AppState> for Arc<dyn AuthorService> { ... }
 - [ ] All handlers (HTTP, tasks, webhooks): parse → service → respond
 - [ ] Transactions in adapters only, `&mut **tx` for SQLx 0.8+
 - [ ] Errors: domain enum → `From<DomainError> for ApiError` → RFC 9457
-- [ ] If phase-tagged schema exists, implement Phase 1 endpoints only
 
 ### Framework
 - [ ] Axum wrapped in `HttpServer`, `build_router()` for tests

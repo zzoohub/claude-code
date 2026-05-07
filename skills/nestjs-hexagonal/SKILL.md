@@ -423,7 +423,6 @@ Mark with `@Global()` when the module should be available everywhere without exp
 - [ ] All handlers (HTTP, jobs, events): parse -> service -> respond
 - [ ] Transactions in adapters only, entity <-> domain mapper in outbound
 - [ ] Errors: domain hierarchy -> exception filter -> RFC 9457
-- [ ] If phase-tagged schema exists, implement Phase 1 endpoints only
 
 ### Framework
 - [ ] Controllers in inbound/ with `@Controller()` decorators

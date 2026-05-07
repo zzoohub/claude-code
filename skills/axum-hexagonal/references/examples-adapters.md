@@ -8,7 +8,22 @@ Inbound (HttpServer, handlers, task handlers, webhooks, auth, errors) and outbou
 
 ```rust
 // src/outbound/sqlite.rs
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+use chrono::{DateTime, Utc};
+
 const UNIQUE_CONSTRAINT_VIOLATION: &str = "2067";
+
+/// Composite cursor `(created_at, id)` encoded as opaque base64.
+/// Stable under concurrent inserts — single-column `id > X` skips/duplicates rows.
+fn encode_cursor(created_at: &DateTime<Utc>, id: &Uuid) -> String {
+    URL_SAFE_NO_PAD.encode(format!("{}|{}", created_at.to_rfc3339(), id))
+}
+
+fn decode_cursor(raw: &str) -> anyhow::Result<(DateTime<Utc>, Uuid)> {
+    let decoded = String::from_utf8(URL_SAFE_NO_PAD.decode(raw)?)?;
+    let (ts, id) = decoded.split_once('|').context("invalid cursor")?;
+    Ok((DateTime::parse_from_rfc3339(ts)?.with_timezone(&Utc), Uuid::parse_str(id)?))
+}
 
 #[derive(Debug, Clone)]
 pub struct Sqlite { pool: sqlx::SqlitePool }
@@ -59,28 +74,51 @@ impl AuthorRepository for Sqlite {
     }
 
     async fn list_authors(&self, cursor: Option<&str>, limit: usize) -> Result<CursorPage<Author>, anyhow::Error> {
+        // Fetch limit+1 to detect whether more rows exist beyond the page boundary.
         let fetch_limit = (limit + 1) as i64;
 
-        let rows = if let Some(cursor_id) = cursor {
-            sqlx::query!("SELECT id, name FROM authors WHERE id > $1 ORDER BY id ASC LIMIT $2",
-                cursor_id, fetch_limit)
-                .fetch_all(&self.pool).await.context("failed to list authors")?
+        let rows = if let Some(raw) = cursor {
+            let (cursor_at, cursor_id) = decode_cursor(raw)?;
+            let cursor_id_str = cursor_id.to_string();
+            sqlx::query!(
+                "SELECT id, name, created_at FROM authors \
+                 WHERE (created_at, id) > ($1, $2) \
+                 ORDER BY created_at ASC, id ASC LIMIT $3",
+                cursor_at, cursor_id_str, fetch_limit,
+            )
+            .fetch_all(&self.pool).await.context("failed to list authors")?
         } else {
-            sqlx::query!("SELECT id, name FROM authors ORDER BY id ASC LIMIT $1",
-                fetch_limit)
-                .fetch_all(&self.pool).await.context("failed to list authors")?
+            sqlx::query!(
+                "SELECT id, name, created_at FROM authors \
+                 ORDER BY created_at ASC, id ASC LIMIT $1",
+                fetch_limit,
+            )
+            .fetch_all(&self.pool).await.context("failed to list authors")?
         };
 
+        // Boundary: if we got the extra row, there are more pages.
+        // Drop the overflow row; cursor points at the LAST RETURNED row so
+        // the next page starts AFTER it (no duplicate, no skip).
         let has_more = rows.len() > limit;
-        let items: Vec<Author> = rows.into_iter()
-            .take(limit)
+        let truncated: Vec<_> = rows.into_iter().take(limit).collect();
+
+        let next_cursor = if has_more {
+            truncated.last().and_then(|r| {
+                let id = Uuid::parse_str(&r.id).ok()?;
+                Some(encode_cursor(&r.created_at, &id))
+            })
+        } else {
+            None
+        };
+
+        let items: Vec<Author> = truncated
+            .into_iter()
             .map(|r| Ok(Author::new(
                 Uuid::parse_str(&r.id)?,
                 AuthorName::new(&r.name).map_err(|e| anyhow!(e))?,
             )))
             .collect::<Result<Vec<_>, anyhow::Error>>()?;
 
-        let next_cursor = if has_more { items.last().map(|a| a.id().to_string()) } else { None };
         Ok(CursorPage { items, next_cursor, has_more })
     }
 }
@@ -192,22 +230,26 @@ pub async fn handle_sync_author<AS: AuthorService>(
 pub struct HttpServer { router: Router, listener: TcpListener }
 
 #[derive(Debug, Clone)]
-struct AppState<AS: AuthorService> { author_service: Arc<AS> }
+struct AppState<AS: AuthorService> {
+    author_service: Arc<AS>,
+    /// Held by the readiness probe to ping the DB. For Postgres, change to `sqlx::PgPool`.
+    db_pool: sqlx::SqlitePool,
+}
 
 impl HttpServer {
     pub async fn new<AS: AuthorService>(
-        author_service: AS, config: HttpServerConfig<'_>,
+        author_service: AS, db_pool: sqlx::SqlitePool, config: HttpServerConfig<'_>,
     ) -> anyhow::Result<Self> {
-        let router = Self::build_router(author_service, config)?;
+        let router = Self::build_router(author_service, db_pool, config)?;
         let listener = TcpListener::bind(format!("0.0.0.0:{}", config.port)).await?;
         Ok(Self { router, listener })
     }
 
     /// For tests: returns Router without binding a port.
     pub fn build_router<AS: AuthorService>(
-        author_service: AS, config: HttpServerConfig<'_>,
+        author_service: AS, db_pool: sqlx::SqlitePool, config: HttpServerConfig<'_>,
     ) -> anyhow::Result<Router> {
-        let state = AppState { author_service: Arc::new(author_service) };
+        let state = AppState { author_service: Arc::new(author_service), db_pool };
         let origin = config.cors_origin.parse::<HeaderValue>()?;
         Ok(Router::new()
             // Axum 0.8+: use {id} syntax, not :id
@@ -252,10 +294,15 @@ impl HttpServer {
 // Health check — readiness probe (lives in inbound, not domain)
 impl HttpServer {
     async fn readiness_check<AS: AuthorService>(
-        State(_state): State<AppState<AS>>,
+        State(state): State<AppState<AS>>,
     ) -> StatusCode {
-        // For real apps: check DB pool health, external service connectivity
-        StatusCode::OK
+        match sqlx::query("SELECT 1").execute(&state.db_pool).await {
+            Ok(_) => StatusCode::OK,
+            Err(e) => {
+                tracing::warn!("readiness check failed: {}", e);
+                StatusCode::SERVICE_UNAVAILABLE
+            }
+        }
     }
 }
 ```

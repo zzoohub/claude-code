@@ -32,7 +32,11 @@ impl Config {
 ## Bootstrap
 
 ```rust
-// src/bin/server/main.rs — no axum, no sqlx imports
+// src/bin/server/main.rs — `sqlx` import is allowed in bootstrap because
+// the pool is the one infrastructure handle the readiness probe needs.
+// Domain code never sees it.
+use sqlx::sqlite::SqlitePoolOptions;
+
 use myapp::config::Config;
 use myapp::domain::authors::service::AuthorServiceImpl;
 use myapp::inbound::http::{HttpServer, HttpServerConfig};
@@ -42,9 +46,17 @@ use myapp::outbound::{sqlite::Sqlite, prometheus::Prometheus, email_client::Emai
 async fn main() -> anyhow::Result<()> {
     let config = Config::from_env()?;
     tracing_subscriber::fmt::init();
-    let sqlite = Sqlite::new(&config.database_url).await?;
+
+    // Construct the pool once so we can reuse it for both the repository
+    // adapter AND the readiness probe.
+    let pool = SqlitePoolOptions::new()
+        .max_connections(10)
+        .acquire_timeout(std::time::Duration::from_secs(3))
+        .connect(&config.database_url).await?;
+
+    let sqlite = Sqlite::from_pool(pool.clone());
     let service = AuthorServiceImpl::new(sqlite, Prometheus::new(), EmailClient::new());
-    HttpServer::new(service, HttpServerConfig {
+    HttpServer::new(service, pool, HttpServerConfig {
         port: &config.server_port,
         cors_origin: &config.cors_origin,
     }).await?.run().await
