@@ -33,20 +33,24 @@ At millions of rows, this difference adds up to gigabytes of storage and proport
 faster sequential scans (less data to read from disk).
 
 **Alignment size by type:**
-| Size | Types |
-|------|-------|
-| 8 bytes | BIGINT, TIMESTAMPTZ, TIMESTAMP, DOUBLE PRECISION, BIGSERIAL |
-| 4 bytes | INTEGER, REAL, DATE, SERIAL |
-| 2 bytes | SMALLINT |
-| 1 byte | BOOLEAN, CHAR(1) |
-| Variable | TEXT, VARCHAR, NUMERIC, JSONB, BYTEA (start on 4-byte boundary) |
+| Alignment | Storage | Types |
+|------|------|-------|
+| 8 bytes | 8 bytes | BIGINT, TIMESTAMPTZ, TIMESTAMP, DOUBLE PRECISION, BIGSERIAL |
+| 4 bytes | 16 bytes | UUID |
+| 4 bytes | 4 bytes | INTEGER, REAL, DATE, SERIAL |
+| 2 bytes | 2 bytes | SMALLINT |
+| 1 byte | 1 byte | BOOLEAN, CHAR(1) |
+| Variable | variable | TEXT, VARCHAR, NUMERIC, JSONB, BYTEA (start on 4-byte boundary) |
 
 **Recommended column order in CREATE TABLE:**
-1. Fixed 8-byte columns (BIGINT, TIMESTAMPTZ)
-2. Fixed 4-byte columns (INTEGER, DATE)
-3. Fixed 2-byte columns (SMALLINT)
-4. Fixed 1-byte columns (BOOLEAN)
-5. Variable-length columns (TEXT, JSONB, NUMERIC)
+1. Fixed 8-byte-aligned columns (BIGINT, TIMESTAMPTZ)
+2. UUID columns (16 bytes, 4-byte aligned — pack before smaller 4-byte types)
+3. Fixed 4-byte columns (INTEGER, DATE)
+4. Fixed 2-byte columns (SMALLINT)
+5. Fixed 1-byte columns (BOOLEAN)
+6. Variable-length columns (TEXT, JSONB, NUMERIC)
+
+Note: with the skill's UUID v7 PK default, the conventional `id` column sits at offset 0 with 4-byte alignment. Following it directly with `created_at`/`updated_at` (both 8-byte aligned) wastes no padding because the 16-byte UUID consumes a multiple-of-8 footprint. Place INTEGER/SMALLINT/BOOLEAN columns *after* the timestamps.
 
 ## 2. postgresql.conf Tuning
 
@@ -116,6 +120,8 @@ reserve_pool_size = 5          # emergency extra connections
 
 ```sql
 -- Range Partitioning (most common: time-series, logs)
+-- BIGINT IDENTITY here per SKILL.md mixed strategy: high-volume append-only log
+-- where 8-byte savings cascade through every row.
 CREATE TABLE access_log (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
     url TEXT NOT NULL,
@@ -132,9 +138,10 @@ CREATE TABLE access_log_2025_02 PARTITION OF access_log
 
 -- List Partitioning (region, category)
 CREATE TABLE "order" (
-    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    id UUID NOT NULL DEFAULT uuidv7(),
     region TEXT NOT NULL,
-    total NUMERIC(15, 2)
+    total NUMERIC(15, 2),
+    PRIMARY KEY (id, region)  -- partition key must be in PK
 ) PARTITION BY LIST (region);
 
 CREATE TABLE order_us PARTITION OF "order" FOR VALUES IN ('US');
@@ -142,10 +149,13 @@ CREATE TABLE order_eu PARTITION OF "order" FOR VALUES IN ('EU');
 CREATE TABLE order_apac PARTITION OF "order" FOR VALUES IN ('APAC');
 
 -- Hash Partitioning (even distribution when no natural key)
+-- Note: uuidv7() (PG18+); pre-PG18 generate at app layer. gen_random_uuid() is v4
+-- and forbidden for hot-table PKs (see SKILL.md Critical Rules).
 CREATE TABLE session (
-    id UUID DEFAULT gen_random_uuid(),
-    user_id BIGINT NOT NULL,
-    data JSONB
+    id UUID NOT NULL DEFAULT uuidv7(),
+    user_id UUID NOT NULL,
+    data JSONB,
+    PRIMARY KEY (id, user_id)  -- partition key must be in PK
 ) PARTITION BY HASH (user_id);
 
 CREATE TABLE session_p0 PARTITION OF session FOR VALUES WITH (MODULUS 4, REMAINDER 0);

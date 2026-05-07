@@ -127,6 +127,8 @@ COMMENT ON TABLE schema_name.table_name IS 'Table description';
 COMMENT ON COLUMN schema_name.table_name.column IS 'Column description';
 ```
 
+⚠️ The `updated_at DEFAULT now()` only fires on INSERT. To keep it accurate on UPDATE, attach a `BEFORE UPDATE` trigger or manage it at the application/ORM layer — pick one and apply consistently. See `references/design-patterns.md` §9 "Auto-Updated Timestamps".
+
 ### Step 5: Index Strategy
 → consult `references/indexing-strategy.md`
 - Verify auto-indexes on PK; manually create indexes on FK columns (PostgreSQL does NOT auto-index FK)

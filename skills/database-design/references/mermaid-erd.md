@@ -7,7 +7,7 @@ Use this syntax when producing the ERD output file (`docs/erd.mermaid`).
 ```mermaid
 erDiagram
     user_account {
-        bigint id PK
+        uuid id PK
         text email UK
         text name
         timestamptz created_at
@@ -15,23 +15,23 @@ erDiagram
     }
 
     "order" {
-        bigint id PK
-        bigint user_id FK
+        uuid id PK
+        uuid user_id FK
         order_status status
         timestamptz created_at
         timestamptz updated_at
     }
 
     order_item {
-        bigint id PK
-        bigint order_id FK
-        bigint product_id FK
+        uuid id PK
+        uuid order_id FK
+        uuid product_id FK
         int quantity
         numeric unit_price
     }
 
     product {
-        bigint id PK
+        uuid id PK
         text name
         numeric price
         jsonb attributes
@@ -71,7 +71,7 @@ Read left to right: left side of `--` describes left entity, right side describe
 
 ## Rules for This Skill
 
-1. Use PostgreSQL type names as column types (bigint, text, timestamptz, numeric, jsonb)
+1. Use PostgreSQL type names as column types (uuid, bigint, text, timestamptz, numeric, jsonb) — PK type matches the table's actual PK choice (UUID v7 by default, BIGINT for high-volume internal tables — see SKILL.md "Primary Key Type Decision")
 2. Quote table names that are reserved words (`"order"`, `"user"`)
 3. Include PK, FK, UK markers
 4. Keep relationship labels short (verb phrases: "places", "contains", "belongs to")

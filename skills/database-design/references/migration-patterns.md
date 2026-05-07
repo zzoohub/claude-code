@@ -160,16 +160,17 @@ Phase 6: Drop old table (after verification period)
 ```sql
 -- Phase 1
 CREATE TABLE user_account_v2 (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     email TEXT NOT NULL,
     name TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Phase 3: Batch migrate
-INSERT INTO user_account_v2 (email, name, created_at, updated_at)
-SELECT email, name, created_at, updated_at
+-- Phase 3: Batch migrate (preserve original ids if cross-table FKs reference them;
+-- otherwise let DEFAULT uuidv7() generate new ones).
+INSERT INTO user_account_v2 (id, email, name, created_at, updated_at)
+SELECT id, email, name, created_at, updated_at
 FROM user_account_v1
 WHERE id > $last_migrated_id
 ORDER BY id

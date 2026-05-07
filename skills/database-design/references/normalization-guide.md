@@ -9,15 +9,15 @@
 ```sql
 -- BAD: violates 1NF
 CREATE TABLE order_bad (
-    id BIGINT PRIMARY KEY,
+    id UUID PRIMARY KEY,
     product_names TEXT  -- 'iPhone, MacBook, AirPods' comma-separated
 );
 
 -- GOOD: 1NF compliant
 CREATE TABLE order_item (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    order_id BIGINT NOT NULL REFERENCES "order"(id),
-    product_id BIGINT NOT NULL REFERENCES product(id),
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    order_id UUID NOT NULL REFERENCES "order"(id),
+    product_id UUID NOT NULL REFERENCES product(id),
     quantity INT NOT NULL CHECK (quantity > 0)
 );
 ```
@@ -29,7 +29,7 @@ search/join is not required on individual elements.
 ```sql
 -- ARRAY is appropriate here: simple filtering on tags
 CREATE TABLE article (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     title TEXT NOT NULL,
     tags TEXT[] DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -48,8 +48,8 @@ SELECT * FROM article WHERE 'postgresql' = ANY(tags);
 ```sql
 -- BAD: violates 2NF (student_name depends only on student_id)
 CREATE TABLE enrollment_bad (
-    student_id BIGINT,
-    course_id BIGINT,
+    student_id UUID,
+    course_id UUID,
     student_name TEXT,      -- depends only on student_id
     grade CHAR(2),
     PRIMARY KEY (student_id, course_id)
@@ -57,13 +57,13 @@ CREATE TABLE enrollment_bad (
 
 -- GOOD: 2NF compliant
 CREATE TABLE student (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL
 );
 
 CREATE TABLE enrollment (
-    student_id BIGINT REFERENCES student(id),
-    course_id BIGINT REFERENCES course(id),
+    student_id UUID REFERENCES student(id),
+    course_id UUID REFERENCES course(id),
     grade CHAR(2),
     PRIMARY KEY (student_id, course_id)
 );
@@ -76,7 +76,7 @@ CREATE TABLE enrollment (
 ```sql
 -- BAD: violates 3NF (city -> country transitive dependency)
 CREATE TABLE customer_bad (
-    id BIGINT PRIMARY KEY,
+    id UUID PRIMARY KEY,
     name TEXT NOT NULL,
     city TEXT,
     country TEXT    -- determined by city
@@ -84,15 +84,15 @@ CREATE TABLE customer_bad (
 
 -- GOOD: 3NF compliant
 CREATE TABLE city (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     country TEXT NOT NULL
 );
 
 CREATE TABLE customer (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
-    city_id BIGINT REFERENCES city(id)
+    city_id UUID REFERENCES city(id)
 );
 ```
 
@@ -150,7 +150,7 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY mv_product_stats;
 -- 1. Ensure PK/FK type match (no implicit casting)
 -- BAD: type mismatch forces casting
 SELECT * FROM order_item oi
-JOIN product p ON p.id = oi.product_id::BIGINT;  -- casting needed = design mistake
+JOIN product p ON p.id = oi.product_id::UUID;  -- casting needed = design mistake
 
 -- 2. Verify FK columns have indexes
 -- PostgreSQL does NOT auto-create indexes on FK columns!

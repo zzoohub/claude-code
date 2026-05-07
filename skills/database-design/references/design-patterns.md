@@ -9,7 +9,7 @@ All types in one table. Simple but may accumulate many NULL columns.
 
 ```sql
 CREATE TABLE payment (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     type TEXT NOT NULL CHECK (type IN ('credit_card', 'bank_transfer', 'paypal')),
     amount NUMERIC(15, 2) NOT NULL,
     -- credit_card only
@@ -36,14 +36,14 @@ Shared table + type-specific tables. Normalized but requires joins.
 
 ```sql
 CREATE TABLE payment (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     type TEXT NOT NULL,
     amount NUMERIC(15, 2) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE payment_credit_card (
-    payment_id BIGINT PRIMARY KEY REFERENCES payment(id) ON DELETE CASCADE,
+    payment_id UUID PRIMARY KEY REFERENCES payment(id) ON DELETE CASCADE,
     card_last_four CHAR(4) NOT NULL,
     card_brand TEXT NOT NULL,
     expiry_month SMALLINT NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE payment_credit_card (
 );
 
 CREATE TABLE payment_bank_transfer (
-    payment_id BIGINT PRIMARY KEY REFERENCES payment(id) ON DELETE CASCADE,
+    payment_id UUID PRIMARY KEY REFERENCES payment(id) ON DELETE CASCADE,
     bank_name TEXT NOT NULL,
     account_number TEXT NOT NULL,
     routing_number TEXT
@@ -70,7 +70,7 @@ CREATE TABLE payment_credit_card () INHERITS (payment);
 
 ```sql
 CREATE TABLE user_account (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     email TEXT NOT NULL,
     name TEXT NOT NULL,
     deleted_at TIMESTAMPTZ,  -- NULL = active
@@ -85,7 +85,7 @@ SELECT * FROM user_account WHERE deleted_at IS NULL;
 CREATE UNIQUE INDEX uq_user_email_active ON user_account (email) WHERE deleted_at IS NULL;
 
 -- Delete operation
-UPDATE user_account SET deleted_at = now() WHERE id = 123;
+UPDATE user_account SET deleted_at = now() WHERE id = '...';
 ```
 
 **Caveats**:
@@ -97,10 +97,13 @@ UPDATE user_account SET deleted_at = now() WHERE id = 123;
 ### Trigger-based automatic audit logging
 
 ```sql
+-- BIGINT IDENTITY here per SKILL.md mixed strategy: high-volume internal append-only
+-- table where 8-byte savings cascade through every audit row. record_id is TEXT to
+-- accommodate any PK type (UUID, BIGINT, composite).
 CREATE TABLE audit_log (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     table_name TEXT NOT NULL,
-    record_id BIGINT NOT NULL,
+    record_id TEXT NOT NULL,
     action TEXT NOT NULL CHECK (action IN ('INSERT', 'UPDATE', 'DELETE')),
     old_data JSONB,
     new_data JSONB,
@@ -109,6 +112,9 @@ CREATE TABLE audit_log (
 );
 
 CREATE INDEX idx_audit_log_table_record ON audit_log (table_name, record_id);
+
+-- For triggers below: NEW.id and OLD.id are typed per the source table (UUID, BIGINT, etc.).
+-- Cast to TEXT when inserting into audit_log.record_id.
 CREATE INDEX idx_audit_log_changed_at ON audit_log USING BRIN (changed_at);
 
 -- Generic audit trigger function
@@ -117,13 +123,13 @@ RETURNS TRIGGER AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
         INSERT INTO audit_log (table_name, record_id, action, new_data, changed_by)
-        VALUES (TG_TABLE_NAME, NEW.id, 'INSERT', to_jsonb(NEW), current_user);
+        VALUES (TG_TABLE_NAME, NEW.id::TEXT, 'INSERT', to_jsonb(NEW), current_user);
     ELSIF TG_OP = 'UPDATE' THEN
         INSERT INTO audit_log (table_name, record_id, action, old_data, new_data, changed_by)
-        VALUES (TG_TABLE_NAME, NEW.id, 'UPDATE', to_jsonb(OLD), to_jsonb(NEW), current_user);
+        VALUES (TG_TABLE_NAME, NEW.id::TEXT, 'UPDATE', to_jsonb(OLD), to_jsonb(NEW), current_user);
     ELSIF TG_OP = 'DELETE' THEN
         INSERT INTO audit_log (table_name, record_id, action, old_data, changed_by)
-        VALUES (TG_TABLE_NAME, OLD.id, 'DELETE', to_jsonb(OLD), current_user);
+        VALUES (TG_TABLE_NAME, OLD.id::TEXT, 'DELETE', to_jsonb(OLD), current_user);
     END IF;
     RETURN COALESCE(NEW, OLD);
 END;
@@ -140,6 +146,8 @@ CREATE TRIGGER trg_order_audit
 Store every state change as an event. Derive current state by replaying events.
 
 ```sql
+-- BIGINT IDENTITY here per SKILL.md mixed strategy: append-only event store can
+-- accumulate billions of rows; 8-byte PKs save measurable space cumulatively.
 CREATE TABLE event_store (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     aggregate_type TEXT NOT NULL,
@@ -173,16 +181,16 @@ CREATE TABLE order_projection (
 ```sql
 -- Write Model (normalized, integrity-focused)
 CREATE TABLE "order" (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id BIGINT NOT NULL REFERENCES user_account(id),
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    user_id UUID NOT NULL REFERENCES user_account(id),
     status order_status NOT NULL DEFAULT 'pending',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE order_item (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    order_id BIGINT NOT NULL REFERENCES "order"(id) ON DELETE CASCADE,
-    product_id BIGINT NOT NULL REFERENCES product(id),
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    order_id UUID NOT NULL REFERENCES "order"(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES product(id),
     quantity INT NOT NULL CHECK (quantity > 0),
     unit_price NUMERIC(12, 2) NOT NULL
 );
@@ -219,15 +227,15 @@ CREATE TABLE tenant_acme."order" ( ... );
 ### Row-Level Security (flexible isolation)
 ```sql
 CREATE TABLE "order" (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    tenant_id BIGINT NOT NULL,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    tenant_id UUID NOT NULL,
     -- ... other columns
 );
 
 ALTER TABLE "order" ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY tenant_isolation ON "order"
-    USING (tenant_id = current_setting('app.current_tenant')::BIGINT);
+    USING (tenant_id = current_setting('app.current_tenant')::UUID);
 ```
 
 ## 7. Polymorphic Association
@@ -237,10 +245,10 @@ One table needs to reference multiple different parent tables.
 ```sql
 -- Approach 1: Separate FK columns (recommended — FK constraints enforced)
 CREATE TABLE comment (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     body TEXT NOT NULL,
-    article_id BIGINT REFERENCES article(id),
-    product_id BIGINT REFERENCES product(id),
+    article_id UUID REFERENCES article(id),
+    product_id UUID REFERENCES product(id),
     CONSTRAINT chk_one_parent CHECK (
         (article_id IS NOT NULL)::INT + (product_id IS NOT NULL)::INT = 1
     ),
@@ -249,15 +257,15 @@ CREATE TABLE comment (
 
 -- Approach 2: Intermediate table (more extensible)
 CREATE TABLE commentable (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     commentable_type TEXT NOT NULL,
-    commentable_id BIGINT NOT NULL,
+    commentable_id UUID NOT NULL,
     UNIQUE (commentable_type, commentable_id)
 );
 
 CREATE TABLE comment (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    commentable_id BIGINT NOT NULL REFERENCES commentable(id),
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    commentable_id UUID NOT NULL REFERENCES commentable(id),
     body TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -268,8 +276,8 @@ CREATE TABLE comment (
 ```sql
 -- Data with validity periods (prices, policies, etc.)
 CREATE TABLE product_price (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    product_id BIGINT NOT NULL REFERENCES product(id),
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    product_id UUID NOT NULL REFERENCES product(id),
     price NUMERIC(12, 2) NOT NULL,
     valid_from TIMESTAMPTZ NOT NULL DEFAULT now(),
     valid_until TIMESTAMPTZ,
@@ -286,9 +294,49 @@ ORDER BY product_id, valid_from DESC;
 
 -- Range type with exclusion constraint (prevent overlapping reservations)
 CREATE TABLE room_reservation (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    room_id BIGINT NOT NULL REFERENCES room(id),
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    room_id UUID NOT NULL REFERENCES room(id),
     reserved_period TSTZRANGE NOT NULL,
     EXCLUDE USING GIST (room_id WITH =, reserved_period WITH &&)
 );
+```
+
+## 9. Auto-Updated Timestamps
+
+The `updated_at TIMESTAMPTZ NOT NULL DEFAULT now()` column from the SKILL.md DDL skeleton only fires the default on INSERT. To keep `updated_at` accurate on every UPDATE, attach a trigger.
+
+```sql
+-- Reusable trigger function (define once per database)
+CREATE OR REPLACE FUNCTION fn_set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Attach per entity table
+CREATE TRIGGER trg_user_account_updated_at
+    BEFORE UPDATE ON user_account
+    FOR EACH ROW EXECUTE FUNCTION fn_set_updated_at();
+
+CREATE TRIGGER trg_order_updated_at
+    BEFORE UPDATE ON "order"
+    FOR EACH ROW EXECUTE FUNCTION fn_set_updated_at();
+```
+
+**Alternative**: Manage `updated_at` at the application/ORM layer. Either is valid — pick one and apply consistently. Mixed strategies cause inconsistent `updated_at` values when one path forgets.
+
+**Skip-update optimization**: The trigger above runs on every UPDATE even when the row didn't actually change. To skip no-op updates:
+
+```sql
+CREATE OR REPLACE FUNCTION fn_set_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW IS DISTINCT FROM OLD THEN
+        NEW.updated_at = now();
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 ```

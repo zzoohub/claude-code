@@ -5,13 +5,15 @@
 The right data type affects storage, performance, and data integrity.
 The difference is negligible at thousands of rows but decisive at hundreds of millions.
 
+> Examples in this guide use the skill's PK default (`UUID NOT NULL PRIMARY KEY DEFAULT uuidv7()`, PG18+). For pre-PG18 or BIGINT IDENTITY trade-offs, see SKILL.md → "Primary Key Type Decision".
+
 ## Numeric Types
 
 | Type | Size | Range | When to Use |
 |------|------|-------|-------------|
-| SMALLINT | 2 bytes | -32,768 to 32,767 | Status codes, small counters |
+| SMALLINT | 2 bytes | -32,768 to 32,767 | Status codes, small counters, lookup-table PKs |
 | INTEGER | 4 bytes | -2.1B to 2.1B | General-purpose integers |
-| BIGINT | 8 bytes | ±9.2 × 10^18 | PK, FK, large counters |
+| BIGINT | 8 bytes | ±9.2 × 10^18 | Large counters; PKs only for high-volume internal tables (events, audit logs) — see SKILL.md PK decision |
 | NUMERIC(p,s) | variable | arbitrary precision | **Monetary values, financial data** |
 | REAL | 4 bytes | 6-digit precision | Scientific calcs (precision not critical) |
 | DOUBLE PRECISION | 8 bytes | 15-digit precision | Coordinates, statistics (precision not critical) |
@@ -26,14 +28,14 @@ CREATE TABLE payment_bad (
 
 -- CORRECT: fixed-point for exact values
 CREATE TABLE payment (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     amount NUMERIC(15, 2) NOT NULL CHECK (amount >= 0),
     currency CHAR(3) NOT NULL DEFAULT 'USD'
 );
 
 -- Alternative: store as smallest unit (cents, won)
 CREATE TABLE payment_int (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     amount_cents BIGINT NOT NULL CHECK (amount_cents >= 0),
     currency CHAR(3) NOT NULL DEFAULT 'USD'
 );
@@ -41,19 +43,27 @@ CREATE TABLE payment_int (
 
 ### PK Type Selection
 
+The full decision table (UUID v7 default, BIGINT IDENTITY for high-volume internal tables) lives in SKILL.md → "Primary Key Type Decision". Generation patterns:
+
 ```sql
--- Recommended: BIGINT IDENTITY (sequential, index-friendly)
+-- Default: UUID v7 (PG18+ — native uuidv7() function)
 CREATE TABLE example (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7()
 );
 
--- UUID when needed (distributed systems, externally-exposed IDs)
-CREATE TABLE example_uuid (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY
+-- Pre-PG18: generate UUID v7 at the application layer and pass into INSERT
+CREATE TABLE example_pre18 (
+    id UUID NOT NULL PRIMARY KEY  -- no DEFAULT; app generates v7
 );
--- Note: UUID v4 is random, which degrades B-tree index performance
--- PostgreSQL 17+ supports uuid_generate_v7() for time-ordered UUIDs
+
+-- High-volume internal table where 8-byte savings measurably matter
+-- (event logs, metrics, billion-row append-only tables)
+CREATE TABLE example_internal (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+);
 ```
+
+⚠️ **Avoid `gen_random_uuid()` for PKs on hot tables** — it generates UUID v4 (random), which fragments B-tree indexes and hurts write performance. See SKILL.md "Critical Rules".
 
 ## String Types
 
@@ -68,7 +78,7 @@ CREATE TABLE example_uuid (
 -- Enforce length limits via CHECK constraints instead
 
 CREATE TABLE user_account (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     email TEXT NOT NULL,
     username TEXT NOT NULL,
     bio TEXT,
@@ -90,7 +100,7 @@ CREATE TABLE user_account (
 ```sql
 -- Always TIMESTAMPTZ
 CREATE TABLE event (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     started_at TIMESTAMPTZ NOT NULL,
     ended_at TIMESTAMPTZ,
@@ -99,7 +109,7 @@ CREATE TABLE event (
 
 -- DATE when only the date matters
 CREATE TABLE employee (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     birth_date DATE,
     hired_date DATE NOT NULL DEFAULT CURRENT_DATE
@@ -115,7 +125,7 @@ Use only when values change very rarely and there are roughly 3-10 options.
 CREATE TYPE order_status AS ENUM ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled');
 
 CREATE TABLE "order" (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     status order_status NOT NULL DEFAULT 'pending',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -127,6 +137,7 @@ ALTER TYPE order_status ADD VALUE 'refunded' AFTER 'cancelled';
 **ENUM alternative**: Use a lookup table when values change frequently
 
 ```sql
+-- Lookup table — SMALLINT IDENTITY is fine here (small, internal, never exposed)
 CREATE TABLE order_status (
     id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
@@ -137,7 +148,7 @@ INSERT INTO order_status (name) VALUES
     ('pending'), ('confirmed'), ('shipped'), ('delivered'), ('cancelled');
 
 CREATE TABLE "order" (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     status_id SMALLINT NOT NULL REFERENCES order_status(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -149,7 +160,7 @@ Best for data with a flexible or frequently changing structure.
 
 ```sql
 CREATE TABLE product (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     price NUMERIC(12, 2) NOT NULL,
     -- Category-specific attributes as JSONB
@@ -177,7 +188,7 @@ SELECT * FROM product WHERE attributes->>'brand' = 'Apple';
 
 ```sql
 CREATE TABLE feature_flag (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL UNIQUE,
     is_enabled BOOLEAN NOT NULL DEFAULT false
 );
@@ -190,7 +201,7 @@ CREATE INDEX idx_feature_flag_enabled ON feature_flag (name) WHERE is_enabled = 
 
 ```sql
 CREATE TABLE article (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     title TEXT NOT NULL,
     tags TEXT[] NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -226,14 +237,14 @@ CREATE DOMAIN url AS TEXT
 
 -- Use in tables
 CREATE TABLE user_account (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     email email NOT NULL,
     website url,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE invoice (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     amount positive_amount NOT NULL,
     recipient_email email NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -250,7 +261,7 @@ Computed columns stored on disk, automatically maintained by PostgreSQL.
 
 ```sql
 CREATE TABLE product (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     price NUMERIC(12, 2) NOT NULL,
     tax_rate NUMERIC(5, 4) NOT NULL DEFAULT 0.10,
@@ -261,7 +272,7 @@ CREATE TABLE product (
 
 -- Full-text search vector (avoids recomputing on every query)
 CREATE TABLE article (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     title TEXT NOT NULL,
     body TEXT NOT NULL,
     search_vector TSVECTOR GENERATED ALWAYS AS (
