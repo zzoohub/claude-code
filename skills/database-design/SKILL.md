@@ -30,10 +30,13 @@ Database design must be completed before writing code. Always follow this sequen
 - Actively leverage PostgreSQL-specific features: JSONB, Array, Enum, Partial Index, CTE, Window Functions, Range Types, Row-Level Security
 - Consult `references/` files for detailed guidance as needed
 
-### 3. Naming Convention (mandatory)
+### 3. Naming Convention
+
+Pick one and apply consistently — the value is uniformity, not the specific choice.
+
 ```
 Schemas:      snake_case, abbreviated (fin, hr, mkt)
-Tables:       snake_case, singular (user_account, NOT user_accounts)
+Tables:       snake_case. This skill defaults to singular (user_account); plural is equally valid — match your team/ORM convention and keep it consistent.
 Columns:      snake_case, no table prefix (name, NOT user_name in user table)
 PK:           id (surrogate) or meaningful natural key
 FK:           referenced_table_id (e.g., user_id, order_id)
@@ -75,13 +78,15 @@ If a DB-domain decision differs from what the design doc implies, **state the de
 - Transaction requirements (ACID strictness)
 - Scaling plans (single server vs distributed)
 
-**Feature-aware schema** (critical — read before writing any DDL):
+**Feature-aware schema** (read before writing any DDL):
 
-When feature specs exist in `docs/prd/features/*.md`, read the relevant spec for the current task. Design the **full schema for the complete product vision** (so you don't paint yourself into a corner), but **tag tables and indexes with the feature they belong to** using comments — e.g., `[auth]`, `[billing]`, `[workspace]`. This tagging drives which migration file each table lives in.
+Design the **full schema for the complete product vision** (so you don't paint yourself into a corner), then split migrations by domain so features can ship independently.
 
-Reference the dev order in `docs/prd/prd.md` to decide which domain migrations come first. Migrations are split per-domain (see Output section below), so the order here determines file numbering (`001_create_user_account.sql` → `002_create_workspace.sql` → ...).
+If the project tracks features in planning docs (e.g. `docs/prd/features/*.md` or any similar `features/` directory), read the relevant spec and **tag tables/indexes with the feature** in comments — e.g., `[auth]`, `[billing]`, `[workspace]`. The tags drive which migration file each table lives in, and the dev order in the PRD determines file numbering (`001_create_user_account.sql` → `002_create_workspace.sql` → ...).
 
-Don't collapse all of MVP into one mega-migration. Don't also over-split into per-table files — one migration per **domain/bounded context**, holding the related tables together.
+If no such planning docs exist, ask the user which features ship in which order — that order determines numbering.
+
+Don't collapse all of MVP into one mega-migration. Don't over-split into per-table files either — one migration per **domain/bounded context**, holding related tables together.
 
 ### Step 2: Schema Design
 1. Identify core entities and relationships
@@ -106,9 +111,9 @@ For each, decide:
 
 ### Step 4: Write DDL
 ```sql
--- Always follow this structure
+-- Default skeleton — UUID v7 PK, TIMESTAMPTZ everywhere
 CREATE TABLE schema_name.table_name (
-    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),  -- PG18+; ≤17: generate at app layer
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     -- then INTEGER columns, then SMALLINT, BOOLEAN, etc.
@@ -149,8 +154,8 @@ Before writing `docs/arch/database.md` or any migration file, every item below m
 
 **Structural integrity**
 - [ ] Every table has a PRIMARY KEY
-- [ ] Every FK column has a matching index (PostgreSQL does not auto-create them)
-- [ ] Every table has `created_at` (and `updated_at` unless append-only)
+- [ ] Every FK column used in JOIN or filter has an index (PG does not auto-create); FKs intentionally left unindexed are documented in a comment or ADR
+- [ ] Every entity table has `created_at` (and `updated_at` unless append-only). Pure association/pivot tables may omit both when no audit trail is needed
 - [ ] No FLOAT/REAL used for money — NUMERIC(p,s) only
 - [ ] All timestamps are TIMESTAMPTZ, not TIMESTAMP
 - [ ] ENUMs used only where value set is stable; otherwise lookup table
@@ -242,7 +247,7 @@ db/migrations/
 - Rollback is atomic — revert one domain without touching others
 - `git blame` attributes each domain's schema history to the right PR
 - PR review unit matches the feature unit
-- Aligns with the architect agent's Mode C rule: "create new migration files, never modify existing ones"
+- Never modify a migration that has been applied — add a new one. Editing applied migrations creates drift between environments and breaks rollback chains
 
 **Numbering**: Zero-padded sequential (`001`, `002`, ...). Follow the dev order from `docs/prd/prd.md` when deciding which domains migrate first.
 
@@ -259,7 +264,7 @@ Enable these when the design requires their capabilities:
 | `pgcrypto` | Cryptographic functions | Hashing passwords, generating UUIDs (pre-PG13) |
 | `pg_stat_statements` | Query performance tracking | Production monitoring (enable always) |
 | `pg_partman` | Automated partition management | Time-series partitioning in production |
-| `uuid-ossp` | UUID generation functions | UUID v1/v3/v5 (use `gen_random_uuid()` for v4, built-in since PG13) |
+| `uuid-ossp` | UUID generation functions (v1/v3/v5 only) | When you need v1/v3/v5 specifically. For v4, `gen_random_uuid()` is built-in (PG13+). For v7 (this skill's PK default), use PG18 `uuidv7()` or generate at the application layer |
 | `vector` (pgvector) | Vector similarity search (HNSW, IVFFlat) | Embeddings, semantic search, RAG — up to ~100M vectors co-located with relational data |
 
 ```sql
@@ -268,18 +273,32 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;       -- needed for fuzzy search indexes
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;  -- query performance tracking
 ```
 
-## Critical Rules
+## Critical Rules — Data / Performance Disasters
 
-- **Never use FLOAT for monetary values** → use NUMERIC(precision, scale)
-- **Prefer TEXT over VARCHAR** (no performance difference in PostgreSQL; enforce length via CHECK)
-- **Use ENUM only when values rarely change** (ALTER TYPE is expensive)
-- **Always use TIMESTAMPTZ** for timestamps (timezone-aware)
-- **Include created_at and updated_at on every table** (exceptions: append-only event/audit logs only need `created_at`)
-- **Default to BIGINT IDENTITY surrogate keys** — see "Primary Key Type Decision" below for when UUID v7 is justified
-- **Always create indexes on FK columns** — PostgreSQL does not do this automatically
-- **Multi-tenant default is `tenant_id` column + Row-Level Security (RLS)** — enforce isolation at the database, not in application code. Only deviate (schema-per-tenant, database-per-tenant) when regulatory or enterprise isolation requirements demand it — and record as an ADR.
-- **Design around your query patterns** — ensure indexes support WHERE/JOIN, keep resultsets reasonable, cache computed data
-- **Choose isolation levels deliberately** — default Read Committed is fine for most OLTP; use Repeatable Read or Serializable only where correctness demands it, with retry logic
+These prevent data corruption, loss, or major regressions. Not negotiable.
+
+- **Never use FLOAT for monetary values** → `NUMERIC(precision, scale)`. FLOAT cannot represent decimals exactly; you will lose money.
+- **Always use TIMESTAMPTZ** for timestamps. `TIMESTAMP` (without tz) silently strips timezone info — a footgun across regions/clients.
+- **Index every FK you JOIN or filter on.** PostgreSQL does not auto-create FK indexes. Missing FK indexes turn parent-row updates/deletes into full table scans. Intentionally unindexed FKs must be documented.
+- **`ON DELETE` behavior must be explicit on every FK** (`CASCADE` / `RESTRICT` / `SET NULL` / `NO ACTION`). The default differs by tool/intent and propagates surprises silently.
+- **`CREATE INDEX CONCURRENTLY`** for any index added to a table that already serves production traffic. Plain `CREATE INDEX` takes a write lock for the duration.
+- **Destructive ops (`DROP COLUMN`, `RENAME`) follow expand-contract**, never direct. Direct DDL mid-deploy breaks rolling deployments.
+- **Auto-DDL (`synchronize: true` and friends) is forbidden in any deployed environment.** Migrations are the only sanctioned schema-mutation path.
+
+## Conventions — Defensible Defaults
+
+These are choices, not mandates. The skill's defaults are defensible; teams may swap them so long as consistency holds.
+
+- **PK default: UUID v7.** External-API-safe, distributed/offline-friendly, time-ordered (preserves index locality, unlike v4). BIGINT IDENTITY remains the right pick for internal-only IDs and megatables where 8-byte savings measurably matter — see "Primary Key Type Decision" below.
+- **Strings: TEXT by default.** No performance cost in PostgreSQL. Use `VARCHAR(n)` only when the length cap carries semantic weight you want enforced at the type level. Otherwise enforce length with `CHECK`.
+- **ENUM only when values are stable.** `ALTER TYPE ... ADD VALUE` runs outside transactions and propagates awkwardly. For anything user-extensible, use a lookup table.
+- **Default isolation: Read Committed.** Most OLTP fits. Escalate to Repeatable Read / Serializable per-operation only where correctness demands it (with retry logic).
+- **`created_at` / `updated_at` on entity tables**, except pure association/pivot tables (`user_role`) and append-only event tables (which need only `created_at`).
+- **Multi-tenancy default depends on tenant shape**:
+  - **Many small tenants (B2B SaaS)** → `tenant_id` column + RLS. Single DB, simple ops, isolation enforced in DB.
+  - **Few large tenants (enterprise)** → schema-per-tenant or DB-per-tenant. Better blast-radius isolation, easier per-tenant tuning/backup, regulatory-friendlier.
+  - Either way, record as an ADR. Tenant-scoped composite indexes lead with `tenant_id` *only when* tenant-scoped queries dominate; cross-tenant analytics paths may want the opposite ordering.
+- **Design around your query patterns** — indexes serve real WHERE/JOIN, resultsets bounded, computed values cached when worthwhile.
 
 ## Primary Key Type Decision
 
@@ -287,12 +306,18 @@ PK type is a **one-way door** — changing it later requires rewriting every FK 
 
 | Situation | Choose | Why |
 |---|---|---|
-| Default — internal IDs, single-region writes, no external exposure | **BIGINT IDENTITY** | Sequential, tight B-tree packing, 8 bytes, human-readable in logs |
-| ID exposed in public URLs and enumeration is a concern | **UUID v7** | Unguessable + time-ordered (preserves index locality, unlike v4) |
+| **Default** — modern app with any external surface (API, mobile, third-party integration, possible future multi-region/offline) | **UUID v7** | Time-ordered (preserves B-tree locality, unlike v4). Safe to expose externally. Distributed/offline-safe. Avoids painful BIGINT→UUID migration if requirements grow. |
+| Pure internal IDs, never exposed externally, single-region only, and 8-byte savings are measurable (event logs, metrics, billion-row append-only tables) | **BIGINT IDENTITY** | 8 bytes vs 16, denser B-tree, human-readable in logs. Savings cascade through FK columns. |
 | Distributed ID generation across regions/clients (no central DB assignment) | **UUID v7** | No coordination needed; clients can mint IDs |
 | Offline-first clients that generate IDs before sync | **UUID v7** | Collision-safe without server round-trip |
 | Merging data from multiple systems later | **UUID v7** | No renumbering at merge time |
 
-**Do not use UUID v4** for PKs on hot tables — random ordering fragments B-tree indexes and hurts write performance. If only v4 is available, accept the cost only for low-volume tables.
+**Never use UUID v4 for PKs on hot tables** — random ordering fragments B-tree indexes and hurts write performance. v4 is only acceptable for low-volume / low-write tables.
 
-**Mixed strategy is fine**: BIGINT for most tables, UUID v7 for the handful of entities that need it (e.g., public share links, offline-created documents). Just don't flip a whole schema's convention later.
+### UUID v7 generation
+
+- **PostgreSQL 18+**: native `uuidv7()` — `id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7()`.
+- **PostgreSQL ≤17**: generate at the application layer (Node: `uuidv7` package; Python: `uuid_utils.uuid7()`; Rust: `Uuid::now_v7()`; Go: `github.com/gofrs/uuid` v5+; Java: `com.github.f4b6a3:uuid-creator`). Pass the generated UUID into `INSERT` explicitly.
+- The `uuid-ossp` extension covers v1/v3/v5 only — not v7. `gen_random_uuid()` produces v4 (the version we're avoiding).
+
+**Mixed strategy is fine**: UUID v7 for most tables, BIGINT for the handful of high-volume internal tables where bytes measurably matter (events, audit logs). Just don't flip a whole schema's convention later.
