@@ -8,10 +8,10 @@ Problem-solution patterns for common PostgreSQL query challenges.
 
 ```sql
 -- ❌ Slow at deep offsets
-SELECT * FROM post ORDER BY created_at DESC LIMIT 20 OFFSET 100000;
+SELECT * FROM posts ORDER BY created_at DESC LIMIT 20 OFFSET 100000;
 
 -- ✅ Keyset pagination (constant performance regardless of page)
-SELECT id, title, created_at FROM post
+SELECT id, title, created_at FROM posts
 WHERE (created_at, id) < (:last_created_at, :last_id)
 ORDER BY created_at DESC, id DESC
 LIMIT 20;
@@ -19,7 +19,7 @@ LIMIT 20;
 
 Required index:
 ```sql
-CREATE INDEX idx_post_pagination ON post (created_at DESC, id DESC);
+CREATE INDEX idx_posts_pagination ON posts (created_at DESC, id DESC);
 ```
 
 **Trade-off**: Cannot jump to arbitrary page numbers. Use for infinite scroll, feeds, API cursors.
@@ -30,17 +30,17 @@ CREATE INDEX idx_post_pagination ON post (created_at DESC, id DESC);
 
 ```sql
 -- Generated tsvector column with weighted fields
-ALTER TABLE post ADD COLUMN search_vector tsvector
+ALTER TABLE posts ADD COLUMN search_vector tsvector
     GENERATED ALWAYS AS (
         setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
         setweight(to_tsvector('english', coalesce(content, '')), 'B')
     ) STORED;
 
-CREATE INDEX idx_post_search ON post USING GIN (search_vector);
+CREATE INDEX idx_posts_search ON posts USING GIN (search_vector);
 
 -- Query with ranking
 SELECT id, title, ts_rank(search_vector, q) AS rank
-FROM post, to_tsquery('english', 'postgres & performance') q
+FROM posts, to_tsquery('english', 'postgres & performance') q
 WHERE search_vector @@ q
 ORDER BY rank DESC
 LIMIT 20;
@@ -49,9 +49,9 @@ LIMIT 20;
 **For fuzzy / typo-tolerant search**: Use `pg_trgm` extension instead:
 ```sql
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE INDEX idx_post_title_trgm ON post USING GIN (title gin_trgm_ops);
+CREATE INDEX idx_posts_title_trgm ON posts USING GIN (title gin_trgm_ops);
 
-SELECT * FROM post WHERE title % 'postgre';  -- similarity search
+SELECT * FROM posts WHERE title % 'postgre';  -- similarity search
 ```
 
 ## 3. N+1 Query Prevention
@@ -64,8 +64,8 @@ SELECT u.id, u.name,
         FILTER (WHERE o.id IS NOT NULL),
         '[]'
     ) AS orders
-FROM user_account u
-LEFT JOIN "order" o ON o.user_id = u.id
+FROM user_accounts u
+LEFT JOIN orders o ON o.user_id = u.id
 WHERE u.id = ANY(:user_ids)
 GROUP BY u.id;
 ```
@@ -73,13 +73,13 @@ GROUP BY u.id;
 **Solution B**: LATERAL join (when you need per-row limits)
 ```sql
 SELECT u.id, u.name, recent.orders
-FROM user_account u
+FROM user_accounts u
 LEFT JOIN LATERAL (
     SELECT jsonb_agg(
         jsonb_build_object('id', o.id, 'total', o.total)
         ORDER BY o.created_at DESC
     ) AS orders
-    FROM "order" o
+    FROM orders o
     WHERE o.user_id = u.id
     LIMIT 5
 ) recent ON true
@@ -91,9 +91,9 @@ WHERE u.id = ANY(:user_ids);
 ### Queue Processing with SKIP LOCKED
 ```sql
 -- Worker grabs next pending job without blocking others
-UPDATE job SET status = 'processing', worker_id = :worker
+UPDATE jobs SET status = 'processing', worker_id = :worker
 WHERE id = (
-    SELECT id FROM job
+    SELECT id FROM jobs
     WHERE status = 'pending'
     ORDER BY created_at
     FOR UPDATE SKIP LOCKED
@@ -104,13 +104,13 @@ WHERE id = (
 ### Batched Counter Updates (avoid row-level contention)
 ```sql
 -- Buffer increments into a staging table
-INSERT INTO view_count_buffer (post_id, delta) VALUES (:id, 1);
+INSERT INTO view_count_buffers (post_id, delta) VALUES (:id, 1);
 
 -- Periodic flush (cron or background worker)
 WITH flushed AS (
-    DELETE FROM view_count_buffer RETURNING post_id, delta
+    DELETE FROM view_count_buffers RETURNING post_id, delta
 )
-UPDATE post p
+UPDATE posts p
 SET view_count = view_count + f.total
 FROM (SELECT post_id, SUM(delta) AS total FROM flushed GROUP BY post_id) f
 WHERE p.id = f.post_id;
@@ -131,10 +131,10 @@ SELECT pg_advisory_unlock(hashtext('import:' || :resource_id));
 
 ```sql
 -- Add version column (database-design includes this in audit patterns)
-ALTER TABLE "order" ADD COLUMN version INT NOT NULL DEFAULT 1;
+ALTER TABLE orders ADD COLUMN version INT NOT NULL DEFAULT 1;
 
 -- Update with version check
-UPDATE "order"
+UPDATE orders
 SET status = 'shipped', version = version + 1, updated_at = now()
 WHERE id = :id AND version = :expected_version;
 
@@ -147,37 +147,37 @@ WHERE id = :id AND version = :expected_version;
 WITH RECURSIVE tree AS (
     -- Base case: root node
     SELECT id, name, parent_id, 1 AS depth, ARRAY[id] AS path
-    FROM category WHERE id = :root_id
+    FROM categories WHERE id = :root_id
 
     UNION ALL
 
     -- Recursive case: children
     SELECT c.id, c.name, c.parent_id, t.depth + 1, t.path || c.id
-    FROM category c
+    FROM categories c
     JOIN tree t ON c.parent_id = t.id
     WHERE t.depth < 10  -- always add depth limit
 )
 SELECT * FROM tree ORDER BY path;
 ```
 
-**Required index**: `CREATE INDEX idx_category_parent ON category (parent_id);`
+**Required index**: `CREATE INDEX idx_categories_parent ON categories (parent_id);`
 
 ## 7. JSONB Query Patterns
 
 ```sql
 -- Containment check (uses GIN index)
-CREATE INDEX idx_product_attrs ON product USING GIN (attributes);
-SELECT * FROM product WHERE attributes @> '{"color": "red"}';
+CREATE INDEX idx_products_attrs ON products USING GIN (attributes);
+SELECT * FROM products WHERE attributes @> '{"color": "red"}';
 
 -- Specific key lookup (uses expression index, smaller)
-CREATE INDEX idx_product_color ON product ((attributes->>'color'));
-SELECT * FROM product WHERE attributes->>'color' = 'red';
+CREATE INDEX idx_products_color ON products ((attributes->>'color'));
+SELECT * FROM products WHERE attributes->>'color' = 'red';
 
 -- Check key existence
-SELECT * FROM product WHERE attributes ? 'color';
+SELECT * FROM products WHERE attributes ? 'color';
 
 -- Nested path
-SELECT * FROM product WHERE attributes #>> '{specs,weight}' = '1.5kg';
+SELECT * FROM products WHERE attributes #>> '{specs,weight}' = '1.5kg';
 ```
 
 **Pitfall**: `->>'key'` returns TEXT, `->'key'` returns JSONB. Use `->>`for comparison with string values.
@@ -192,7 +192,7 @@ CREATE TEMP TABLE staging (LIKE product INCLUDING DEFAULTS);
 COPY staging FROM '/path/to/data.csv' WITH (FORMAT csv, HEADER true);
 
 -- 3. Upsert from staging to production table
-INSERT INTO product (sku, name, price, updated_at)
+INSERT INTO products (sku, name, price, updated_at)
 SELECT sku, name, price, now() FROM staging
 ON CONFLICT (sku) DO UPDATE SET
     name = EXCLUDED.name,
@@ -203,7 +203,7 @@ ON CONFLICT (sku) DO UPDATE SET
 DROP TABLE staging;
 
 -- 5. Refresh statistics
-ANALYZE product;
+ANALYZE products;
 ```
 
 **For very large loads** (millions of rows):
@@ -220,8 +220,8 @@ SELECT
     date_trunc('day', o.created_at) AS day,
     SUM(oi.quantity * oi.unit_price) AS revenue,
     COUNT(DISTINCT o.id) AS order_count
-FROM "order" o
-JOIN order_item oi ON oi.order_id = o.id
+FROM orders o
+JOIN order_items oi ON oi.order_id = o.id
 WHERE o.status = 'completed'
 GROUP BY 1;
 
@@ -237,14 +237,14 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY mv_daily_revenue;
 ## 10. Row-Level Security (Multi-Tenant)
 
 ```sql
-ALTER TABLE "order" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY tenant_isolation ON "order"
+CREATE POLICY tenant_isolation ON orders
     USING (tenant_id = current_setting('app.tenant_id')::BIGINT);
 
 -- Set per connection/transaction
 SET app.tenant_id = '123';
-SELECT * FROM "order";  -- automatically filtered to tenant 123
+SELECT * FROM orders;  -- automatically filtered to tenant 123
 ```
 
 **Pitfall**: Superusers and table owners bypass RLS by default. Test with non-superuser roles.
@@ -252,7 +252,7 @@ SELECT * FROM "order";  -- automatically filtered to tenant 123
 ## 11. Time-Series with Partitioning
 
 ```sql
-CREATE TABLE event (
+CREATE TABLE events (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
     event_type TEXT NOT NULL,
     data JSONB,
@@ -260,13 +260,13 @@ CREATE TABLE event (
 ) PARTITION BY RANGE (created_at);
 
 -- Monthly partitions
-CREATE TABLE event_2025_01 PARTITION OF event
+CREATE TABLE events_2025_01 PARTITION OF events
     FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
-CREATE TABLE event_2025_02 PARTITION OF event
+CREATE TABLE events_2025_02 PARTITION OF events
     FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
 
 -- BRIN index for time-ordered data (tiny, effective for append-only)
-CREATE INDEX idx_event_brin ON event USING BRIN (created_at);
+CREATE INDEX idx_events_brin ON events USING BRIN (created_at);
 
 -- Drop old data instantly (vs DELETE which generates dead tuples)
 DROP TABLE event_2024_01;
@@ -278,7 +278,7 @@ DROP TABLE event_2024_01;
 
 ```sql
 -- Insert or update a single row
-INSERT INTO user_setting (user_id, key, value, updated_at)
+INSERT INTO user_settings (user_id, key, value, updated_at)
 VALUES (:user_id, :key, :value, now())
 ON CONFLICT (user_id, key) DO UPDATE SET
     value = EXCLUDED.value,
@@ -289,12 +289,12 @@ ON CONFLICT (user_id, key) DO UPDATE SET
 
 ```sql
 -- Insert-only if not exists (no update on conflict)
-INSERT INTO user_account (email, name)
+INSERT INTO user_accounts (email, name)
 VALUES ('user@example.com', 'New User')
 ON CONFLICT (email) DO NOTHING;
 
 -- Return the row whether inserted or existing
-INSERT INTO tag (name) VALUES ('postgresql')
+INSERT INTO tags (name) VALUES ('postgresql')
 ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name  -- no-op update
 RETURNING id, name;
 ```
@@ -309,7 +309,7 @@ Window functions compute values across a set of rows related to the current row 
 SELECT * FROM (
     SELECT o.*,
         ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY created_at DESC) AS rn
-    FROM "order" o
+    FROM orders o
 ) sub
 WHERE rn <= 3;
 ```
@@ -318,7 +318,7 @@ WHERE rn <= 3;
 ```sql
 SELECT id, amount,
     SUM(amount) OVER (ORDER BY created_at) AS running_total
-FROM payment
+FROM payments
 WHERE user_id = :user_id;
 ```
 
@@ -351,7 +351,7 @@ Returns one row per group — simpler than window function + subquery when you o
 ```sql
 -- Latest order per user (single query, no subquery)
 SELECT DISTINCT ON (user_id) *
-FROM "order"
+FROM orders
 ORDER BY user_id, created_at DESC;
 ```
 
@@ -360,7 +360,7 @@ ORDER BY user_id, created_at DESC;
 ```sql
 -- Most recent login per user, only active users
 SELECT DISTINCT ON (u.id) u.id, u.name, l.logged_in_at
-FROM user_account u
+FROM user_accounts u
 JOIN login l ON l.user_id = u.id
 WHERE u.status = 'active'
 ORDER BY u.id, l.logged_in_at DESC;
@@ -376,7 +376,7 @@ SELECT
     COUNT(*) FILTER (WHERE status = 'pending') AS pending,
     COUNT(*) FILTER (WHERE status = 'completed') AS completed,
     SUM(total) FILTER (WHERE status = 'completed') AS completed_revenue
-FROM "order"
+FROM orders
 WHERE created_at > now() - interval '30 days';
 ```
 
@@ -386,7 +386,7 @@ SELECT
     date_trunc('month', created_at) AS month,
     SUM(CASE WHEN type = 'credit' THEN amount ELSE 0 END) AS credits,
     SUM(CASE WHEN type = 'debit' THEN amount ELSE 0 END) AS debits
-FROM transaction
+FROM transactions
 GROUP BY 1
 ORDER BY 1;
 ```
@@ -406,7 +406,7 @@ FROM generate_series(
     date_trunc('day', now()),
     interval '1 day'
 ) AS d(day)
-LEFT JOIN "order" o ON date_trunc('day', o.created_at) = d.day
+LEFT JOIN orders o ON date_trunc('day', o.created_at) = d.day
     AND o.status = 'completed'
 GROUP BY d.day
 ORDER BY d.day;
@@ -421,7 +421,7 @@ FROM generate_series(
     date_trunc('hour', now()),
     interval '1 hour'
 ) AS h(hour)
-LEFT JOIN user_account u ON date_trunc('hour', u.created_at) = h.hour
+LEFT JOIN user_accounts u ON date_trunc('hour', u.created_at) = h.hour
 GROUP BY h.hour
 ORDER BY h.hour;
 ```
@@ -432,29 +432,29 @@ ORDER BY h.hour;
 ```sql
 -- Reduce intermediate data before joining
 WITH recent_order AS (
-    SELECT id, user_id, total FROM "order"
+    SELECT id, user_id, total FROM orders
     WHERE created_at > now() - interval '30 days'
 ),
 target_product AS (
-    SELECT id FROM product WHERE category = 'electronics'
+    SELECT id FROM products WHERE category = 'electronics'
 )
 SELECT ro.id, ro.total
-FROM recent_order ro
-JOIN order_item oi ON oi.order_id = ro.id
-JOIN target_product tp ON tp.id = oi.product_id;
+FROM recent_orders ro
+JOIN order_items oi ON oi.order_id = ro.id
+JOIN target_products tp ON tp.id = oi.product_id;
 ```
 
 ### EXISTS vs IN vs JOIN
 ```sql
 -- EXISTS: stops at first match (good when you only need boolean check)
-SELECT * FROM user_account u
-WHERE EXISTS (SELECT 1 FROM "order" o WHERE o.user_id = u.id AND o.status = 'pending');
+SELECT * FROM user_accounts u
+WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id AND o.status = 'pending');
 
 -- IN: good for small subquery results
-SELECT * FROM product WHERE category_id IN (SELECT id FROM category WHERE name = 'Electronics');
+SELECT * FROM products WHERE category_id IN (SELECT id FROM categories WHERE name = 'Electronics');
 
 -- JOIN: when you need columns from both tables
 SELECT u.name, o.total
-FROM user_account u
-JOIN "order" o ON o.user_id = u.id;
+FROM user_accounts u
+JOIN orders o ON o.user_id = u.id;
 ```

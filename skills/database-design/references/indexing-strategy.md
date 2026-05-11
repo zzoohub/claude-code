@@ -33,11 +33,11 @@ ORDER BY selectivity DESC;
 ### B-tree (default, most commonly used)
 ```sql
 -- Suitable for equality, range, sorting, LIKE 'prefix%'
-CREATE INDEX idx_order_created_at ON "order" (created_at);
-CREATE INDEX idx_user_email ON user_account (email);
+CREATE INDEX idx_orders_created_at ON orders (created_at);
+CREATE INDEX idx_user_email ON user_accounts (email);
 
 -- Composite index: matches left-to-right (leftmost prefix rule)
-CREATE INDEX idx_order_user_status ON "order" (user_id, status);
+CREATE INDEX idx_orders_user_status ON orders (user_id, status);
 -- ✅ WHERE user_id = 1
 -- ✅ WHERE user_id = 1 AND status = 'pending'
 -- ❌ WHERE status = 'pending' (without user_id, index is not used)
@@ -46,18 +46,18 @@ CREATE INDEX idx_order_user_status ON "order" (user_id, status);
 ### Hash (equality-only)
 ```sql
 -- Slightly faster than B-tree for pure = comparisons
-CREATE INDEX idx_session_token ON session USING HASH (token);
+CREATE INDEX idx_sessions_token ON sessions USING HASH (token);
 -- ❌ Cannot do range searches or sorting
 ```
 
 ### GIN (Generalized Inverted Index)
 ```sql
 -- Essential for ARRAY, JSONB, full-text search
-CREATE INDEX idx_product_tags ON product USING GIN (tags);
-CREATE INDEX idx_product_attrs ON product USING GIN (attributes);
+CREATE INDEX idx_products_tags ON products USING GIN (tags);
+CREATE INDEX idx_products_attrs ON products USING GIN (attributes);
 
 -- Full-text search
-CREATE INDEX idx_article_fts ON article USING GIN (to_tsvector('english', title || ' ' || body));
+CREATE INDEX idx_articles_fts ON articles USING GIN (to_tsvector('english', title || ' ' || body));
 ```
 
 ### GiST (Generalized Search Tree)
@@ -75,7 +75,7 @@ CREATE INDEX idx_reservation_period ON reservation USING GIST (
 ```sql
 -- Physically sorted large datasets (time-series, logs)
 -- Much smaller than B-tree
-CREATE INDEX idx_log_created_at ON access_log USING BRIN (created_at);
+CREATE INDEX idx_logs_created_at ON access_logs USING BRIN (created_at);
 -- Requirement: data must be physically ordered by the indexed column
 ```
 
@@ -86,7 +86,7 @@ Index only rows that match a condition. Saves space and improves performance.
 
 ```sql
 -- Only index active orders (if 5% of total, saves 95% space)
-CREATE INDEX idx_order_active ON "order" (created_at)
+CREATE INDEX idx_orders_active ON orders (created_at)
 WHERE status NOT IN ('delivered', 'cancelled');
 
 -- Unread notifications only
@@ -94,23 +94,23 @@ CREATE INDEX idx_notification_unread ON notification (user_id, created_at)
 WHERE is_read = false;
 
 -- Soft delete pattern
-CREATE INDEX idx_user_active ON user_account (email)
+CREATE INDEX idx_user_active ON user_accounts (email)
 WHERE deleted_at IS NULL;
 ```
 
 ### Expression Index
 ```sql
 -- Case-insensitive search
-CREATE INDEX idx_user_email_lower ON user_account (lower(email));
+CREATE INDEX idx_user_email_lower ON user_accounts (lower(email));
 -- Query: WHERE lower(email) = 'user@example.com'
 
 -- Date extraction
-CREATE INDEX idx_order_year_month ON "order" (
+CREATE INDEX idx_orders_year_month ON orders (
     date_trunc('month', created_at)
 );
 
 -- JSONB specific key
-CREATE INDEX idx_product_brand ON product ((attributes->>'brand'));
+CREATE INDEX idx_products_brand ON products ((attributes->>'brand'));
 ```
 
 ### Covering Index (INCLUDE)
@@ -118,10 +118,10 @@ Enables Index-Only Scan by including all needed columns in the index.
 
 ```sql
 -- Frequent lookup by id returning email and name
-CREATE INDEX idx_user_lookup ON user_account (id) INCLUDE (email, name);
+CREATE INDEX idx_user_lookup ON user_accounts (id) INCLUDE (email, name);
 
 -- Order listing optimization
-CREATE INDEX idx_order_user_list ON "order" (user_id, created_at DESC)
+CREATE INDEX idx_orders_user_list ON orders (user_id, created_at DESC)
 INCLUDE (status, total_amount);
 ```
 
@@ -134,10 +134,10 @@ Column order matters:
 
 ```sql
 -- Query: WHERE user_id = ? AND status = ? ORDER BY created_at DESC
-CREATE INDEX idx_order_user_status_date ON "order" (user_id, status, created_at DESC);
+CREATE INDEX idx_orders_user_status_date ON orders (user_id, status, created_at DESC);
 
 -- Query: WHERE user_id = ? AND created_at > ?
-CREATE INDEX idx_order_user_date ON "order" (user_id, created_at);
+CREATE INDEX idx_orders_user_date ON orders (user_id, created_at);
 ```
 
 ## Index Maintenance
@@ -160,12 +160,12 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 ### Rebuild bloated indexes
 ```sql
 -- CONCURRENTLY (zero-downtime, recommended)
-REINDEX INDEX CONCURRENTLY idx_order_created_at;
+REINDEX INDEX CONCURRENTLY idx_orders_created_at;
 
 -- Or create new + swap
-CREATE INDEX CONCURRENTLY idx_order_created_at_new ON "order" (created_at);
-DROP INDEX idx_order_created_at;
-ALTER INDEX idx_order_created_at_new RENAME TO idx_order_created_at;
+CREATE INDEX CONCURRENTLY idx_orders_created_at_new ON orders (created_at);
+DROP INDEX idx_orders_created_at;
+ALTER INDEX idx_orders_created_at_new RENAME TO idx_orders_created_at;
 ```
 
 ### Check index sizes
@@ -188,14 +188,14 @@ ORDER BY pg_relation_size(indexrelid) DESC;
    -- Index is ignored
    WHERE UPPER(email) = 'USER@EXAMPLE.COM'
    -- Needs Expression Index
-   CREATE INDEX idx_user_email_upper ON user_account (UPPER(email));
+   CREATE INDEX idx_user_email_upper ON user_accounts (UPPER(email));
    ```
 
 ## Reading EXPLAIN ANALYZE
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
-SELECT * FROM "order" WHERE user_id = 123 AND status = 'pending';
+SELECT * FROM orders WHERE user_id = 123 AND status = 'pending';
 ```
 
 Key indicators:

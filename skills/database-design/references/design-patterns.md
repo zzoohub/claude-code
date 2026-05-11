@@ -8,7 +8,7 @@ Model multiple entity types that share common attributes.
 All types in one table. Simple but may accumulate many NULL columns.
 
 ```sql
-CREATE TABLE payment (
+CREATE TABLE payments (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     type TEXT NOT NULL CHECK (type IN ('credit_card', 'bank_transfer', 'paypal')),
     amount NUMERIC(15, 2) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE payment (
 );
 
 -- Per-type constraints
-ALTER TABLE payment ADD CONSTRAINT chk_credit_card
+ALTER TABLE payments ADD CONSTRAINT chk_credit_card
     CHECK (type != 'credit_card' OR (card_last_four IS NOT NULL AND card_brand IS NOT NULL));
 ```
 
@@ -35,23 +35,23 @@ ALTER TABLE payment ADD CONSTRAINT chk_credit_card
 Shared table + type-specific tables. Normalized but requires joins.
 
 ```sql
-CREATE TABLE payment (
+CREATE TABLE payments (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     type TEXT NOT NULL,
     amount NUMERIC(15, 2) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE payment_credit_card (
-    payment_id UUID PRIMARY KEY REFERENCES payment(id) ON DELETE CASCADE,
+CREATE TABLE payment_credit_cards (
+    payment_id UUID PRIMARY KEY REFERENCES payments(id) ON DELETE CASCADE,
     card_last_four CHAR(4) NOT NULL,
     card_brand TEXT NOT NULL,
     expiry_month SMALLINT NOT NULL,
     expiry_year SMALLINT NOT NULL
 );
 
-CREATE TABLE payment_bank_transfer (
-    payment_id UUID PRIMARY KEY REFERENCES payment(id) ON DELETE CASCADE,
+CREATE TABLE payment_bank_transfers (
+    payment_id UUID PRIMARY KEY REFERENCES payments(id) ON DELETE CASCADE,
     bank_name TEXT NOT NULL,
     account_number TEXT NOT NULL,
     routing_number TEXT
@@ -62,14 +62,14 @@ CREATE TABLE payment_bank_transfer (
 
 ### PostgreSQL Native Inheritance (reference only)
 ```sql
-CREATE TABLE payment_credit_card () INHERITS (payment);
+CREATE TABLE payment_credit_cards () INHERITS (payment);
 ```
 ⚠️ **Not recommended in production**: FK constraints don't apply to child tables, UNIQUE is per-table only.
 
 ## 2. Soft Delete
 
 ```sql
-CREATE TABLE user_account (
+CREATE TABLE user_accounts (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     email TEXT NOT NULL,
     name TEXT NOT NULL,
@@ -79,13 +79,13 @@ CREATE TABLE user_account (
 
 -- View for active users only
 CREATE VIEW active_user AS
-SELECT * FROM user_account WHERE deleted_at IS NULL;
+SELECT * FROM user_accounts WHERE deleted_at IS NULL;
 
 -- Partial unique index (active users only)
-CREATE UNIQUE INDEX uq_user_email_active ON user_account (email) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX uq_user_email_active ON user_accounts (email) WHERE deleted_at IS NULL;
 
 -- Delete operation
-UPDATE user_account SET deleted_at = now() WHERE id = '...';
+UPDATE user_accounts SET deleted_at = now() WHERE id = '...';
 ```
 
 **Caveats**:
@@ -100,7 +100,7 @@ UPDATE user_account SET deleted_at = now() WHERE id = '...';
 -- BIGINT IDENTITY here per SKILL.md mixed strategy: high-volume internal append-only
 -- table where 8-byte savings cascade through every audit row. record_id is TEXT to
 -- accommodate any PK type (UUID, BIGINT, composite).
-CREATE TABLE audit_log (
+CREATE TABLE audit_logs (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     table_name TEXT NOT NULL,
     record_id TEXT NOT NULL,
@@ -111,24 +111,24 @@ CREATE TABLE audit_log (
     changed_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_audit_log_table_record ON audit_log (table_name, record_id);
+CREATE INDEX idx_audit_logs_table_record ON audit_logs (table_name, record_id);
 
 -- For triggers below: NEW.id and OLD.id are typed per the source table (UUID, BIGINT, etc.).
--- Cast to TEXT when inserting into audit_log.record_id.
-CREATE INDEX idx_audit_log_changed_at ON audit_log USING BRIN (changed_at);
+-- Cast to TEXT when inserting into audit_logs.record_id.
+CREATE INDEX idx_audit_logs_changed_at ON audit_logs USING BRIN (changed_at);
 
 -- Generic audit trigger function
 CREATE OR REPLACE FUNCTION fn_audit_trigger()
 RETURNS TRIGGER AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
-        INSERT INTO audit_log (table_name, record_id, action, new_data, changed_by)
+        INSERT INTO audit_logs (table_name, record_id, action, new_data, changed_by)
         VALUES (TG_TABLE_NAME, NEW.id::TEXT, 'INSERT', to_jsonb(NEW), current_user);
     ELSIF TG_OP = 'UPDATE' THEN
-        INSERT INTO audit_log (table_name, record_id, action, old_data, new_data, changed_by)
+        INSERT INTO audit_logs (table_name, record_id, action, old_data, new_data, changed_by)
         VALUES (TG_TABLE_NAME, NEW.id::TEXT, 'UPDATE', to_jsonb(OLD), to_jsonb(NEW), current_user);
     ELSIF TG_OP = 'DELETE' THEN
-        INSERT INTO audit_log (table_name, record_id, action, old_data, changed_by)
+        INSERT INTO audit_logs (table_name, record_id, action, old_data, changed_by)
         VALUES (TG_TABLE_NAME, OLD.id::TEXT, 'DELETE', to_jsonb(OLD), current_user);
     END IF;
     RETURN COALESCE(NEW, OLD);
@@ -136,8 +136,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Apply trigger to a table
-CREATE TRIGGER trg_order_audit
-    AFTER INSERT OR UPDATE OR DELETE ON "order"
+CREATE TRIGGER trg_orders_audit
+    AFTER INSERT OR UPDATE OR DELETE ON orders
     FOR EACH ROW EXECUTE FUNCTION fn_audit_trigger();
 ```
 
@@ -148,7 +148,7 @@ Store every state change as an event. Derive current state by replaying events.
 ```sql
 -- BIGINT IDENTITY here per SKILL.md mixed strategy: append-only event store can
 -- accumulate billions of rows; 8-byte PKs save measurable space cumulatively.
-CREATE TABLE event_store (
+CREATE TABLE event_stores (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     aggregate_type TEXT NOT NULL,
     aggregate_id UUID NOT NULL,
@@ -160,11 +160,11 @@ CREATE TABLE event_store (
     UNIQUE (aggregate_id, version)  -- optimistic concurrency control
 );
 
-CREATE INDEX idx_event_store_aggregate ON event_store (aggregate_id, version);
-CREATE INDEX idx_event_store_type ON event_store (aggregate_type, created_at);
+CREATE INDEX idx_events_stores_aggregate ON event_stores (aggregate_id, version);
+CREATE INDEX idx_events_stores_type ON event_stores (aggregate_type, created_at);
 
 -- Current state via projection table
-CREATE TABLE order_projection (
+CREATE TABLE order_projections (
     id UUID PRIMARY KEY,
     status TEXT NOT NULL,
     total_amount NUMERIC(15, 2) NOT NULL DEFAULT 0,
@@ -180,17 +180,17 @@ CREATE TABLE order_projection (
 
 ```sql
 -- Write Model (normalized, integrity-focused)
-CREATE TABLE "order" (
+CREATE TABLE orders (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
-    user_id UUID NOT NULL REFERENCES user_account(id),
+    user_id UUID NOT NULL REFERENCES user_accounts(id),
     status order_status NOT NULL DEFAULT 'pending',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE order_item (
+CREATE TABLE order_items (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
-    order_id UUID NOT NULL REFERENCES "order"(id) ON DELETE CASCADE,
-    product_id UUID NOT NULL REFERENCES product(id),
+    order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id UUID NOT NULL REFERENCES products(id),
     quantity INT NOT NULL CHECK (quantity > 0),
     unit_price NUMERIC(12, 2) NOT NULL
 );
@@ -206,9 +206,9 @@ SELECT
     COUNT(oi.id) AS item_count,
     SUM(oi.quantity * oi.unit_price) AS total_amount,
     o.created_at
-FROM "order" o
-JOIN user_account u ON u.id = o.user_id
-JOIN order_item oi ON oi.order_id = o.id
+FROM orders o
+JOIN user_accounts u ON u.id = o.user_id
+JOIN order_items oi ON oi.order_id = o.id
 GROUP BY o.id, o.user_id, u.name, u.email, o.status, o.created_at;
 
 CREATE UNIQUE INDEX idx_mv_order_summary_id ON mv_order_summary (order_id);
@@ -220,21 +220,21 @@ CREATE INDEX idx_mv_order_summary_user ON mv_order_summary (user_id);
 ### Schema-per-Tenant (strong isolation)
 ```sql
 CREATE SCHEMA tenant_acme;
-CREATE TABLE tenant_acme.user_account ( ... );
-CREATE TABLE tenant_acme."order" ( ... );
+CREATE TABLE tenant_acme.user_accounts ( ... );
+CREATE TABLE tenant_acme.orders ( ... );
 ```
 
 ### Row-Level Security (flexible isolation)
 ```sql
-CREATE TABLE "order" (
+CREATE TABLE orders (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     tenant_id UUID NOT NULL,
     -- ... other columns
 );
 
-ALTER TABLE "order" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY tenant_isolation ON "order"
+CREATE POLICY tenant_isolation ON orders
     USING (tenant_id = current_setting('app.current_tenant')::UUID);
 ```
 
@@ -244,11 +244,11 @@ One table needs to reference multiple different parent tables.
 
 ```sql
 -- Approach 1: Separate FK columns (recommended — FK constraints enforced)
-CREATE TABLE comment (
+CREATE TABLE comments (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     body TEXT NOT NULL,
-    article_id UUID REFERENCES article(id),
-    product_id UUID REFERENCES product(id),
+    article_id UUID REFERENCES articles(id),
+    product_id UUID REFERENCES products(id),
     CONSTRAINT chk_one_parent CHECK (
         (article_id IS NOT NULL)::INT + (product_id IS NOT NULL)::INT = 1
     ),
@@ -256,16 +256,16 @@ CREATE TABLE comment (
 );
 
 -- Approach 2: Intermediate table (more extensible)
-CREATE TABLE commentable (
+CREATE TABLE commentables (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     commentable_type TEXT NOT NULL,
     commentable_id UUID NOT NULL,
     UNIQUE (commentable_type, commentable_id)
 );
 
-CREATE TABLE comment (
+CREATE TABLE comments (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
-    commentable_id UUID NOT NULL REFERENCES commentable(id),
+    commentable_id UUID NOT NULL REFERENCES commentables(id),
     body TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -275,9 +275,9 @@ CREATE TABLE comment (
 
 ```sql
 -- Data with validity periods (prices, policies, etc.)
-CREATE TABLE product_price (
+CREATE TABLE product_prices (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
-    product_id UUID NOT NULL REFERENCES product(id),
+    product_id UUID NOT NULL REFERENCES products(id),
     price NUMERIC(12, 2) NOT NULL,
     valid_from TIMESTAMPTZ NOT NULL DEFAULT now(),
     valid_until TIMESTAMPTZ,
@@ -288,12 +288,12 @@ CREATE TABLE product_price (
 CREATE VIEW current_product_price AS
 SELECT DISTINCT ON (product_id)
     product_id, price, valid_from
-FROM product_price
+FROM product_prices
 WHERE valid_from <= now() AND (valid_until IS NULL OR valid_until > now())
 ORDER BY product_id, valid_from DESC;
 
 -- Range type with exclusion constraint (prevent overlapping reservations)
-CREATE TABLE room_reservation (
+CREATE TABLE room_reservations (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     room_id UUID NOT NULL REFERENCES room(id),
     reserved_period TSTZRANGE NOT NULL,
@@ -316,12 +316,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Attach per entity table
-CREATE TRIGGER trg_user_account_updated_at
-    BEFORE UPDATE ON user_account
+CREATE TRIGGER trg_user_accounts_updated_at
+    BEFORE UPDATE ON user_accounts
     FOR EACH ROW EXECUTE FUNCTION fn_set_updated_at();
 
-CREATE TRIGGER trg_order_updated_at
-    BEFORE UPDATE ON "order"
+CREATE TRIGGER trg_orders_updated_at
+    BEFORE UPDATE ON orders
     FOR EACH ROW EXECUTE FUNCTION fn_set_updated_at();
 ```
 

@@ -41,19 +41,19 @@ SET default_transaction_isolation = 'repeatable read';
 ```sql
 -- Pessimistic locking: lock rows before updating
 BEGIN;
-SELECT * FROM account WHERE id = 1 FOR UPDATE;
+SELECT * FROM accounts WHERE id = 1 FOR UPDATE;
 -- Row is locked until COMMIT/ROLLBACK
-UPDATE account SET balance = balance - 100 WHERE id = 1;
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
 COMMIT;
 
 -- FOR SHARE: shared lock (allows concurrent reads, blocks writes)
-SELECT * FROM product WHERE id = 5 FOR SHARE;
+SELECT * FROM products WHERE id = 5 FOR SHARE;
 
 -- NOWAIT: fail immediately if row is locked (don't wait)
-SELECT * FROM account WHERE id = 1 FOR UPDATE NOWAIT;
+SELECT * FROM accounts WHERE id = 1 FOR UPDATE NOWAIT;
 
 -- SKIP LOCKED: skip locked rows (queue processing pattern)
-SELECT id, payload FROM task_queue
+SELECT id, payload FROM task_queues
 WHERE status = 'pending'
 ORDER BY created_at
 LIMIT 10
@@ -66,14 +66,14 @@ No database lock held — check version at write time instead.
 
 ```sql
 -- Add version column
-ALTER TABLE product ADD COLUMN version INT NOT NULL DEFAULT 1;
+ALTER TABLE products ADD COLUMN version INT NOT NULL DEFAULT 1;
 
 -- Read
-SELECT id, name, price, version FROM product WHERE id = 42;
+SELECT id, name, price, version FROM products WHERE id = 42;
 -- Application stores: version = 3
 
 -- Update with version check
-UPDATE product
+UPDATE products
 SET price = 29.99, version = version + 1
 WHERE id = 42 AND version = 3;
 
@@ -115,10 +115,10 @@ Deadlocks occur when two transactions each hold a lock the other needs.
 
 -- PREVENTION: always lock rows in a consistent order
 BEGIN;
-SELECT * FROM account WHERE id IN (1, 2) ORDER BY id FOR UPDATE;
+SELECT * FROM accounts WHERE id IN (1, 2) ORDER BY id FOR UPDATE;
 -- Both transactions lock in the same order → no deadlock
-UPDATE account SET balance = balance - 100 WHERE id = 1;
-UPDATE account SET balance = balance + 100 WHERE id = 2;
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;
 COMMIT;
 ```
 
@@ -135,16 +135,16 @@ COMMIT;
 
 ```sql
 BEGIN;
-INSERT INTO "order" (user_id, status) VALUES (1, 'pending');
+INSERT INTO orders (user_id, status) VALUES (1, 'pending');
 
 SAVEPOINT before_items;
-INSERT INTO order_item (order_id, product_id, quantity) VALUES (1, 999, 1);
+INSERT INTO order_items (order_id, product_id, quantity) VALUES (1, 999, 1);
 -- Error: product_id 999 doesn't exist
 
 ROLLBACK TO SAVEPOINT before_items;
 -- Order insert is preserved, only the failed item is rolled back
 
-INSERT INTO order_item (order_id, product_id, quantity) VALUES (1, 100, 1);
+INSERT INTO order_items (order_id, product_id, quantity) VALUES (1, 100, 1);
 COMMIT;
 ```
 
@@ -154,17 +154,17 @@ COMMIT;
 ```sql
 -- BAD: external API call inside transaction (holds locks for seconds)
 BEGIN;
-UPDATE account SET balance = balance - 100 WHERE id = 1;
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
 -- ... call external payment API (2-5 seconds) ...
-UPDATE account SET balance = balance + 100 WHERE id = 2;
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;
 COMMIT;
 
 -- GOOD: external call outside transaction
 -- Step 1: call external API first
 -- Step 2: only then open transaction for database updates
 BEGIN;
-UPDATE account SET balance = balance - 100 WHERE id = 1;
-UPDATE account SET balance = balance + 100 WHERE id = 2;
+UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+UPDATE accounts SET balance = balance + 100 WHERE id = 2;
 COMMIT;
 ```
 

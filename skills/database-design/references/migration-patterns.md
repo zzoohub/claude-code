@@ -19,12 +19,12 @@ pg_restore -d mydb backup_before_migration.dump
 
 ```
 migrations/
-├── 001_create_user_account.sql
-├── 001_create_user_account.rollback.sql
-├── 002_create_order.sql
-├── 002_create_order.rollback.sql
-├── 003_add_user_phone.sql
-└── 003_add_user_phone.rollback.sql
+├── 001_create_user_accounts.sql
+├── 001_create_user_accounts.rollback.sql
+├── 002_create_orders.sql
+├── 002_create_orders.rollback.sql
+├── 003_add_phone_to_users.sql
+└── 003_add_phone_to_users.rollback.sql
 ```
 
 ## Zero-Downtime Migration Patterns
@@ -32,20 +32,20 @@ migrations/
 ### Adding a Column (safe)
 ```sql
 -- Forward: Adding a nullable column does NOT lock the table
-ALTER TABLE user_account ADD COLUMN phone TEXT;
+ALTER TABLE user_accounts ADD COLUMN phone TEXT;
 
 -- PostgreSQL 11+: Adding with DEFAULT is also safe (no table rewrite)
-ALTER TABLE user_account ADD COLUMN is_verified BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE user_accounts ADD COLUMN is_verified BOOLEAN NOT NULL DEFAULT false;
 
 -- Rollback
-ALTER TABLE user_account DROP COLUMN phone;
-ALTER TABLE user_account DROP COLUMN is_verified;
+ALTER TABLE user_accounts DROP COLUMN phone;
+ALTER TABLE user_accounts DROP COLUMN is_verified;
 ```
 
 ### Creating an Index (safe with CONCURRENTLY)
 ```sql
 -- Forward: CONCURRENTLY does not block reads or writes
-CREATE INDEX CONCURRENTLY idx_user_email ON user_account (email);
+CREATE INDEX CONCURRENTLY idx_user_email ON user_accounts (email);
 
 -- Rollback
 DROP INDEX idx_user_email;
@@ -60,19 +60,19 @@ DROP INDEX IF EXISTS idx_user_email;
 ### Adding a NOT NULL Constraint (careful)
 ```sql
 -- Step 1: Add column as nullable
-ALTER TABLE user_account ADD COLUMN phone TEXT;
+ALTER TABLE user_accounts ADD COLUMN phone TEXT;
 
 -- Step 2: Backfill existing rows (in batches)
-UPDATE user_account SET phone = 'unknown' WHERE phone IS NULL;
+UPDATE user_accounts SET phone = 'unknown' WHERE phone IS NULL;
 
 -- Step 3: Add NOT NULL constraint with NOT VALID (no table scan)
-ALTER TABLE user_account ADD CONSTRAINT chk_phone_not_null CHECK (phone IS NOT NULL) NOT VALID;
+ALTER TABLE user_accounts ADD CONSTRAINT chk_phone_not_null CHECK (phone IS NOT NULL) NOT VALID;
 
 -- Step 4: Validate (scans table but does NOT hold ACCESS EXCLUSIVE lock for the full duration)
-ALTER TABLE user_account VALIDATE CONSTRAINT chk_phone_not_null;
+ALTER TABLE user_accounts VALIDATE CONSTRAINT chk_phone_not_null;
 
 -- Rollback
-ALTER TABLE user_account DROP CONSTRAINT chk_phone_not_null;
+ALTER TABLE user_accounts DROP CONSTRAINT chk_phone_not_null;
 ```
 
 ### Renaming a Column (Expand-Contract Pattern)
@@ -81,39 +81,39 @@ Never rename directly in production — it breaks running application code.
 
 ```sql
 -- Phase 1: EXPAND — add new column
-ALTER TABLE user_account ADD COLUMN full_name TEXT;
+ALTER TABLE user_accounts ADD COLUMN full_name TEXT;
 
 -- Phase 2: Dual-write — application writes to both columns
-UPDATE user_account SET full_name = name WHERE full_name IS NULL;
+UPDATE user_accounts SET full_name = name WHERE full_name IS NULL;
 
 -- Phase 3: Deploy code that reads from full_name
 
 -- Phase 4: CONTRACT — drop old column (after all code is migrated)
-ALTER TABLE user_account DROP COLUMN name;
+ALTER TABLE user_accounts DROP COLUMN name;
 
 -- Rollback (Phase 1)
-ALTER TABLE user_account DROP COLUMN full_name;
+ALTER TABLE user_accounts DROP COLUMN full_name;
 ```
 
 ### Changing a Column Type
 
 ```sql
 -- Phase 1: Add new column with target type
-ALTER TABLE product ADD COLUMN price_new NUMERIC(15, 2);
+ALTER TABLE products ADD COLUMN price_new NUMERIC(15, 2);
 
 -- Phase 2: Batch-copy data
-UPDATE product SET price_new = price::NUMERIC(15, 2) WHERE price_new IS NULL;
+UPDATE products SET price_new = price::NUMERIC(15, 2) WHERE price_new IS NULL;
 
 -- Phase 3: Deploy dual-write code (writes to both columns)
 
 -- Phase 4: Switch reads to new column
 
 -- Phase 5: Drop old column
-ALTER TABLE product DROP COLUMN price;
-ALTER TABLE product RENAME COLUMN price_new TO price;
+ALTER TABLE products DROP COLUMN price;
+ALTER TABLE products RENAME COLUMN price_new TO price;
 
 -- Rollback (Phase 1)
-ALTER TABLE product DROP COLUMN price_new;
+ALTER TABLE products DROP COLUMN price_new;
 ```
 
 ### Dropping a Column (Expand-Contract)
@@ -123,7 +123,7 @@ ALTER TABLE product DROP COLUMN price_new;
 -- Phase 2: Deploy code that no longer reads the column
 -- Phase 3: Wait for all old code versions to be replaced
 -- Phase 4: Drop
-ALTER TABLE user_account DROP COLUMN legacy_field;
+ALTER TABLE user_accounts DROP COLUMN legacy_field;
 
 -- Rollback: Cannot easily undo a DROP COLUMN
 -- This is why you wait and verify before dropping
@@ -159,7 +159,7 @@ Phase 6: Drop old table (after verification period)
 
 ```sql
 -- Phase 1
-CREATE TABLE user_account_v2 (
+CREATE TABLE user_accounts_v2 (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     email TEXT NOT NULL,
     name TEXT NOT NULL,
@@ -169,15 +169,15 @@ CREATE TABLE user_account_v2 (
 
 -- Phase 3: Batch migrate (preserve original ids if cross-table FKs reference them;
 -- otherwise let DEFAULT uuidv7() generate new ones).
-INSERT INTO user_account_v2 (id, email, name, created_at, updated_at)
+INSERT INTO user_accounts_v2 (id, email, name, created_at, updated_at)
 SELECT id, email, name, created_at, updated_at
-FROM user_account_v1
+FROM user_accounts_v1
 WHERE id > $last_migrated_id
 ORDER BY id
 LIMIT 10000;
 
 -- Phase 6
-DROP TABLE user_account_v1;
+DROP TABLE user_accounts_v1;
 ```
 
 ## Large Table Migrations
@@ -192,11 +192,11 @@ DECLARE
     rows_updated INT;
 BEGIN
     LOOP
-        UPDATE user_account
+        UPDATE user_accounts
         SET phone = 'unknown'
         WHERE phone IS NULL
         AND id IN (
-            SELECT id FROM user_account
+            SELECT id FROM user_accounts
             WHERE phone IS NULL
             LIMIT batch_size
             FOR UPDATE SKIP LOCKED

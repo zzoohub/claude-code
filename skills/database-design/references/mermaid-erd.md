@@ -6,7 +6,7 @@ Use this syntax when producing the ERD output file (`docs/erd.mermaid`).
 
 ```mermaid
 erDiagram
-    user_account {
+    user_accounts {
         uuid id PK
         text email UK
         text name
@@ -14,7 +14,7 @@ erDiagram
         timestamptz updated_at
     }
 
-    "order" {
+    orders {
         uuid id PK
         uuid user_id FK
         order_status status
@@ -22,7 +22,7 @@ erDiagram
         timestamptz updated_at
     }
 
-    order_item {
+    order_items {
         uuid id PK
         uuid order_id FK
         uuid product_id FK
@@ -30,7 +30,7 @@ erDiagram
         numeric unit_price
     }
 
-    product {
+    products {
         uuid id PK
         text name
         numeric price
@@ -38,9 +38,9 @@ erDiagram
         timestamptz created_at
     }
 
-    user_account ||--o{ "order" : "places"
-    "order" ||--|{ order_item : "contains"
-    product ||--o{ order_item : "referenced by"
+    user_accounts ||--o{ orders : "places"
+    orders ||--|{ order_items : "contains"
+    products ||--o{ order_items : "referenced by"
 ```
 
 ## Relationship Cardinality
@@ -72,7 +72,7 @@ Read left to right: left side of `--` describes left entity, right side describe
 ## Rules for This Skill
 
 1. Use PostgreSQL type names as column types (uuid, bigint, text, timestamptz, numeric, jsonb) — PK type matches the table's actual PK choice (UUID v7 by default, BIGINT for high-volume internal tables — see SKILL.md "Primary Key Type Decision")
-2. Quote table names that are reserved words (`"order"`, `"user"`)
+2. Quote table names only if they collide with reserved words (rare with plural names — e.g., `"groups"`)
 3. Include PK, FK, UK markers
 4. Keep relationship labels short (verb phrases: "places", "contains", "belongs to")
 5. Group related tables visually — Mermaid renders top-to-bottom by default

@@ -11,7 +11,7 @@ Reference for REST API endpoint design. Consult when defining routes, request/re
 3. List operations needed — think beyond CRUD to real workflows
 4. Map relationships
 
-**From DB schema**: singular `snake_case` → plural `kebab-case` (`user_account` → `/v1/user-accounts`)
+**From DB schema**: `snake_case` → `kebab-case` (`user_accounts` → `/v1/user-accounts`)
 
 **Sub-resource vs flat route:**
 

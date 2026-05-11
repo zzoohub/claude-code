@@ -6,13 +6,13 @@ Real-world scenarios where indexes are ignored or used inefficiently, and how to
 
 ```sql
 -- Index
-CREATE INDEX idx_file_zero ON file (size) WHERE size = 0 AND file_hash IS NULL;
+CREATE INDEX idx_files_zero ON files (size) WHERE size = 0 AND file_hash IS NULL;
 
 -- ❌ NOT USED: query doesn't include file_hash IS NULL
-SELECT * FROM file WHERE size = 0;
+SELECT * FROM files WHERE size = 0;
 
 -- ✅ USED: query matches index WHERE clause exactly
-SELECT * FROM file WHERE size = 0 AND file_hash IS NULL;
+SELECT * FROM files WHERE size = 0 AND file_hash IS NULL;
 ```
 
 **Rule**: Partial index WHERE clause must appear verbatim in the query. PostgreSQL will not infer that `file_hash IS NULL` is always true when `size = 0`, even if your data guarantees it.
@@ -21,10 +21,10 @@ SELECT * FROM file WHERE size = 0 AND file_hash IS NULL;
 
 ```sql
 -- Index (wrong order for this query)
-CREATE INDEX idx_log_time_user ON log (created_at, user_id);
+CREATE INDEX idx_logs_time_user ON logs (created_at, user_id);
 
 -- Query
-SELECT * FROM log WHERE user_id = 42 AND created_at > now() - interval '1 day';
+SELECT * FROM logs WHERE user_id = 42 AND created_at > now() - interval '1 day';
 ```
 
 PostgreSQL uses composite indexes left-to-right. Once it hits a range condition, subsequent columns are less effective.
@@ -33,22 +33,22 @@ PostgreSQL uses composite indexes left-to-right. Once it hits a range condition,
 
 ```sql
 -- ✅ Correct order
-CREATE INDEX idx_log_user_time ON log (user_id, created_at);
+CREATE INDEX idx_logs_user_time ON logs (user_id, created_at);
 ```
 
 ## Pitfall 3: Index Not Selective Enough — Filter Instead of Index Cond
 
 ```sql
 -- Index on only one column
-CREATE INDEX idx_download_user ON download (user_id);
+CREATE INDEX idx_downloads_user ON downloads (user_id);
 
 -- Query filters on two columns
-SELECT * FROM download WHERE user_id = 42 AND download_status = 'complete';
+SELECT * FROM downloads WHERE user_id = 42 AND download_status = 'complete';
 ```
 
 EXPLAIN shows:
 ```
-Index Scan using idx_download_user
+Index Scan using idx_downloads_user
   Index Cond: (user_id = 42)
   Filter: (download_status = 'complete')    -- ← wasteful
   Rows Removed by Filter: 3847             -- ← wasted I/O
@@ -56,7 +56,7 @@ Index Scan using idx_download_user
 
 **Fix**: Composite index covering both filter columns:
 ```sql
-CREATE INDEX idx_download_user_status ON download (user_id, download_status);
+CREATE INDEX idx_downloads_user_status ON downloads (user_id, download_status);
 ```
 
 **Rule**: If EXPLAIN shows `Filter` + `Rows Removed by Filter`, the index is incomplete. All WHERE conditions should appear in `Index Cond`.
@@ -65,10 +65,10 @@ CREATE INDEX idx_download_user_status ON download (user_id, download_status);
 
 ```sql
 -- B-tree index on text column with en_US.UTF-8 collation
-CREATE INDEX idx_file_path ON file (path);
+CREATE INDEX idx_files_path ON files (path);
 
 -- ❌ NOT USED with locale-aware collation
-SELECT * FROM file WHERE path LIKE '/media/photos/2023/%';
+SELECT * FROM files WHERE path LIKE '/media/photos/2023/%';
 ```
 
 PostgreSQL converts `LIKE 'prefix%'` to range comparison (`>= AND <`), but locale-aware collation (en_US.UTF-8) doesn't guarantee binary-consistent ordering.
@@ -76,11 +76,11 @@ PostgreSQL converts `LIKE 'prefix%'` to range comparison (`>= AND <`), but local
 **Fix options**:
 ```sql
 -- Option 1: Specify C collation on the index
-CREATE INDEX idx_file_path_c ON file (path COLLATE "C");
+CREATE INDEX idx_files_path_c ON files (path COLLATE "C");
 -- Query must also use: WHERE path COLLATE "C" LIKE '/media/photos/2023/%'
 
 -- Option 2: Use text_pattern_ops operator class
-CREATE INDEX idx_file_path_pattern ON file (path text_pattern_ops);
+CREATE INDEX idx_files_path_pattern ON files (path text_pattern_ops);
 
 -- Option 3: Set database default collation to "C" (if appropriate for your use case)
 ```
@@ -91,23 +91,23 @@ CREATE INDEX idx_file_path_pattern ON file (path text_pattern_ops);
 
 ```sql
 -- Index (default ASC)
-CREATE INDEX idx_item_cat_pub ON item (category, published_at);
+CREATE INDEX idx_items_cat_pub ON items (category, published_at);
 
 -- Query needs DESC
-SELECT * FROM item WHERE category = 'books' ORDER BY published_at DESC LIMIT 10;
+SELECT * FROM items WHERE category = 'books' ORDER BY published_at DESC LIMIT 10;
 ```
 
 PostgreSQL can scan B-tree indexes backwards, but only for the entire index. Mixed directions in composite indexes require explicit direction specification.
 
 **Fix**:
 ```sql
-CREATE INDEX idx_item_cat_pub_desc ON item (category, published_at DESC);
+CREATE INDEX idx_items_cat_pub_desc ON items (category, published_at DESC);
 ```
 
 ## Pitfall 6: FK DELETE Slow — Missing Index on Referenced Column
 
 ```sql
-DELETE FROM region WHERE id = 1;
+DELETE FROM regions WHERE id = 1;
 ```
 
 Looks simple, but EXPLAIN ANALYZE reveals:
@@ -118,14 +118,14 @@ Trigger: RI_ConstraintTrigger  Time: 10244ms  Calls: 126
 On DELETE, PostgreSQL validates referential integrity:
 ```sql
 -- Internally executes:
-SELECT 1 FROM file WHERE region_id = 1;
+SELECT 1 FROM files WHERE region_id = 1;
 ```
 
 If `file.region_id` has no index → sequential scan for every DELETE.
 
 **Fix**:
 ```sql
-CREATE INDEX idx_file_region_id ON file (region_id);
+CREATE INDEX idx_files_region_id ON files (region_id);
 ```
 
 **Rule**: Always index FK columns. PostgreSQL does NOT auto-index foreign keys. This affects both JOIN performance and CASCADE DELETE/UPDATE speed.
@@ -189,10 +189,10 @@ REINDEX INDEX CONCURRENTLY your_index;
 
 ```sql
 -- ❌ Index on email is NOT used
-SELECT * FROM user_account WHERE lower(email) = 'user@example.com';
+SELECT * FROM user_accounts WHERE lower(email) = 'user@example.com';
 
 -- ✅ Create expression index
-CREATE INDEX idx_user_email_lower ON user_account (lower(email));
+CREATE INDEX idx_user_email_lower ON user_accounts (lower(email));
 ```
 
 **Rule**: If WHERE clause applies a function to a column, you need an expression index on that same function call. The bare column index won't be used.

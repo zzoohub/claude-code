@@ -22,19 +22,19 @@ The difference is negligible at thousands of rows but decisive at hundreds of mi
 
 ```sql
 -- WRONG: floating-point rounding errors
-CREATE TABLE payment_bad (
+CREATE TABLE payments_bad (
     amount REAL  -- 0.1 + 0.2 != 0.3
 );
 
 -- CORRECT: fixed-point for exact values
-CREATE TABLE payment (
+CREATE TABLE payments (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     amount NUMERIC(15, 2) NOT NULL CHECK (amount >= 0),
     currency CHAR(3) NOT NULL DEFAULT 'USD'
 );
 
 -- Alternative: store as smallest unit (cents, won)
-CREATE TABLE payment_int (
+CREATE TABLE payments_int (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     amount_cents BIGINT NOT NULL CHECK (amount_cents >= 0),
     currency CHAR(3) NOT NULL DEFAULT 'USD'
@@ -47,18 +47,18 @@ The full decision table (UUID v7 default, BIGINT IDENTITY for high-volume intern
 
 ```sql
 -- Default: UUID v7 (PG18+ — native uuidv7() function)
-CREATE TABLE example (
+CREATE TABLE examples (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7()
 );
 
 -- Pre-PG18: generate UUID v7 at the application layer and pass into INSERT
-CREATE TABLE example_pre18 (
+CREATE TABLE examples_pre18 (
     id UUID NOT NULL PRIMARY KEY  -- no DEFAULT; app generates v7
 );
 
 -- High-volume internal table where 8-byte savings measurably matter
 -- (event logs, metrics, billion-row append-only tables)
-CREATE TABLE example_internal (
+CREATE TABLE examples_internal (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY
 );
 ```
@@ -77,7 +77,7 @@ CREATE TABLE example_internal (
 -- In PostgreSQL, TEXT vs VARCHAR has zero performance difference
 -- Enforce length limits via CHECK constraints instead
 
-CREATE TABLE user_account (
+CREATE TABLE user_accounts (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     email TEXT NOT NULL,
     username TEXT NOT NULL,
@@ -99,7 +99,7 @@ CREATE TABLE user_account (
 
 ```sql
 -- Always TIMESTAMPTZ
-CREATE TABLE event (
+CREATE TABLE events (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     started_at TIMESTAMPTZ NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE event (
 );
 
 -- DATE when only the date matters
-CREATE TABLE employee (
+CREATE TABLE employees (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     birth_date DATE,
@@ -124,7 +124,7 @@ Use only when values change very rarely and there are roughly 3-10 options.
 -- ENUM when appropriate
 CREATE TYPE order_status AS ENUM ('pending', 'confirmed', 'shipped', 'delivered', 'cancelled');
 
-CREATE TABLE "order" (
+CREATE TABLE orders (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     status order_status NOT NULL DEFAULT 'pending',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -138,18 +138,18 @@ ALTER TYPE order_status ADD VALUE 'refunded' AFTER 'cancelled';
 
 ```sql
 -- Lookup table — SMALLINT IDENTITY is fine here (small, internal, never exposed)
-CREATE TABLE order_status (
+CREATE TABLE order_statuses (
     id SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     description TEXT
 );
 
-INSERT INTO order_status (name) VALUES
+INSERT INTO order_statuses (name) VALUES
     ('pending'), ('confirmed'), ('shipped'), ('delivered'), ('cancelled');
 
-CREATE TABLE "order" (
+CREATE TABLE orders (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
-    status_id SMALLINT NOT NULL REFERENCES order_status(id),
+    status_id SMALLINT NOT NULL REFERENCES order_statuses(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
@@ -159,7 +159,7 @@ CREATE TABLE "order" (
 Best for data with a flexible or frequently changing structure.
 
 ```sql
-CREATE TABLE product (
+CREATE TABLE products (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     price NUMERIC(12, 2) NOT NULL,
@@ -169,14 +169,14 @@ CREATE TABLE product (
 );
 
 -- GIN index for JSONB search optimization
-CREATE INDEX idx_product_attributes ON product USING GIN (attributes);
+CREATE INDEX idx_products_attributes ON products USING GIN (attributes);
 
 -- Expression Index for frequently queried keys
-CREATE INDEX idx_product_attr_color ON product ((attributes->>'color'));
+CREATE INDEX idx_products_attr_color ON products ((attributes->>'color'));
 
 -- Query examples
-SELECT * FROM product WHERE attributes @> '{"color": "red"}';
-SELECT * FROM product WHERE attributes->>'brand' = 'Apple';
+SELECT * FROM products WHERE attributes @> '{"color": "red"}';
+SELECT * FROM products WHERE attributes->>'brand' = 'Apple';
 ```
 
 **JSONB rules**:
@@ -187,31 +187,31 @@ SELECT * FROM product WHERE attributes->>'brand' = 'Apple';
 ## Boolean
 
 ```sql
-CREATE TABLE feature_flag (
+CREATE TABLE feature_flags (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL UNIQUE,
     is_enabled BOOLEAN NOT NULL DEFAULT false
 );
 
 -- Partial Index combines well with Boolean
-CREATE INDEX idx_feature_flag_enabled ON feature_flag (name) WHERE is_enabled = true;
+CREATE INDEX idx_feature_flags_enabled ON feature_flags (name) WHERE is_enabled = true;
 ```
 
 ## Arrays
 
 ```sql
-CREATE TABLE article (
+CREATE TABLE articles (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     title TEXT NOT NULL,
     tags TEXT[] NOT NULL DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_article_tags ON article USING GIN (tags);
+CREATE INDEX idx_articles_tags ON articles USING GIN (tags);
 
 -- Queries
-SELECT * FROM article WHERE 'postgresql' = ANY(tags);
-SELECT * FROM article WHERE tags @> ARRAY['postgresql', 'design'];
+SELECT * FROM articles WHERE 'postgresql' = ANY(tags);
+SELECT * FROM articles WHERE tags @> ARRAY['postgresql', 'design'];
 ```
 
 **ARRAY rules**:
@@ -236,14 +236,14 @@ CREATE DOMAIN url AS TEXT
     CHECK (VALUE ~ '^https?://');
 
 -- Use in tables
-CREATE TABLE user_account (
+CREATE TABLE user_accounts (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     email email NOT NULL,
     website url,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE invoice (
+CREATE TABLE invoices (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     amount positive_amount NOT NULL,
     recipient_email email NOT NULL,
@@ -260,7 +260,7 @@ CREATE TABLE invoice (
 Computed columns stored on disk, automatically maintained by PostgreSQL.
 
 ```sql
-CREATE TABLE product (
+CREATE TABLE products (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     price NUMERIC(12, 2) NOT NULL,
@@ -271,7 +271,7 @@ CREATE TABLE product (
 );
 
 -- Full-text search vector (avoids recomputing on every query)
-CREATE TABLE article (
+CREATE TABLE articles (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     title TEXT NOT NULL,
     body TEXT NOT NULL,
@@ -281,10 +281,10 @@ CREATE TABLE article (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_article_search ON article USING GIN (search_vector);
+CREATE INDEX idx_articles_search ON articles USING GIN (search_vector);
 
 -- Query using the stored vector (no runtime computation)
-SELECT * FROM article WHERE search_vector @@ to_tsquery('english', 'postgresql & design');
+SELECT * FROM articles WHERE search_vector @@ to_tsquery('english', 'postgresql & design');
 ```
 
 **When to use**: Computed values queried frequently (full-text vectors, derived amounts, normalized strings). Trades write-time computation for read-time performance.

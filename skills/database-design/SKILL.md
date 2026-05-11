@@ -36,12 +36,12 @@ Pick one and apply consistently — the value is uniformity, not the specific ch
 
 ```
 Schemas:      snake_case, abbreviated (fin, hr, mkt)
-Tables:       snake_case. This skill defaults to singular (user_account); plural is equally valid — match your team/ORM convention and keep it consistent.
+Tables:       snake_case, plural (`user_accounts`, `orders`). Plural is the industry default and avoids reserved-word collisions (`order` → `orders`). FK columns stay singular: `user_account_id REFERENCES user_accounts(id)`.
 Columns:      snake_case, no table prefix (name, NOT user_name in user table)
 PK:           id (surrogate) or meaningful natural key
 FK:           referenced_table_id (e.g., user_id, order_id)
-Indexes:      idx_{table}_{columns} (e.g., idx_order_created_at)
-Constraints:  {type}_{table}_{columns} (e.g., uq_user_email, chk_order_amount)
+Indexes:      idx_{table}_{columns} (e.g., idx_orders_created_at)
+Constraints:  {type}_{table}_{columns} (e.g., uq_user_email, chk_orders_amount)
 Enums:        snake_case (order_status, NOT OrderStatus)
 ```
 
@@ -82,7 +82,7 @@ If a DB-domain decision differs from what the design doc implies, **state the de
 
 Design the **full schema for the complete product vision** (so you don't paint yourself into a corner), then split migrations by domain so features can ship independently.
 
-If the project tracks features in planning docs (e.g. `docs/prd/features/*.md` or any similar `features/` directory), read the relevant spec and **tag tables/indexes with the feature** in comments — e.g., `[auth]`, `[billing]`, `[workspace]`. The tags drive which migration file each table lives in, and the dev order in the PRD determines file numbering (`001_create_user_account.sql` → `002_create_workspace.sql` → ...).
+If the project tracks features in planning docs (e.g. `docs/prd/features/*.md` or any similar `features/` directory), read the relevant spec and **tag tables/indexes with the feature** in comments — e.g., `[auth]`, `[billing]`, `[workspace]`. The tags drive which migration file each table lives in, and the dev order in the PRD determines file numbering (`001_create_user_accounts.sql` → `002_create_workspaces.sql` → ...).
 
 If no such planning docs exist, ask the user which features ship in which order — that order determines numbering.
 
@@ -236,10 +236,10 @@ Split the initial schema into **per-domain migration files** — one file per bo
 
 ```
 db/migrations/
-├── 001_create_user_account.sql
-├── 001_create_user_account.rollback.sql
-├── 002_create_workspace.sql
-├── 002_create_workspace.rollback.sql
+├── 001_create_user_accounts.sql
+├── 001_create_user_accounts.rollback.sql
+├── 002_create_workspaces.sql
+├── 002_create_workspaces.rollback.sql
 ├── 003_create_billing.sql
 ├── 003_create_billing.rollback.sql
 └── ...

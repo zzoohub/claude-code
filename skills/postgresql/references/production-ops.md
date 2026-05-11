@@ -7,23 +7,23 @@ Patterns for running PostgreSQL reliably in production.
 ### Adding NOT NULL Constraint (safe pattern)
 ```sql
 -- Step 1: Add CHECK constraint without validation (instant, no lock)
-ALTER TABLE user_account ADD CONSTRAINT chk_user_email_nn
+ALTER TABLE user_accounts ADD CONSTRAINT chk_user_email_nn
     CHECK (email IS NOT NULL) NOT VALID;
 
 -- Step 2: Backfill NULLs in batches (see Backfilling section)
 
 -- Step 3: Validate (scans table, minimal lock — NOT ACCESS EXCLUSIVE)
-ALTER TABLE user_account VALIDATE CONSTRAINT chk_user_email_nn;
+ALTER TABLE user_accounts VALIDATE CONSTRAINT chk_user_email_nn;
 
 -- Step 4: Convert to actual NOT NULL (instant, planner uses validated constraint)
-ALTER TABLE user_account ALTER COLUMN email SET NOT NULL;
-ALTER TABLE user_account DROP CONSTRAINT chk_user_email_nn;
+ALTER TABLE user_accounts ALTER COLUMN email SET NOT NULL;
+ALTER TABLE user_accounts DROP CONSTRAINT chk_user_email_nn;
 ```
 
 ### Adding Index (non-blocking)
 ```sql
 -- ✅ CONCURRENTLY: does not block reads or writes
-CREATE INDEX CONCURRENTLY idx_user_email ON user_account (email);
+CREATE INDEX CONCURRENTLY idx_user_email ON user_accounts (email);
 
 -- ⚠️ Cannot run inside a transaction block
 -- ⚠️ If it fails, clean up the invalid index:
@@ -36,25 +36,25 @@ DROP INDEX IF EXISTS idx_user_email;  -- then retry
 
 ### Adding Foreign Key (non-blocking)
 ```sql
-ALTER TABLE "order" ADD CONSTRAINT fk_order_user
-    FOREIGN KEY (user_id) REFERENCES user_account(id) NOT VALID;
+ALTER TABLE orders ADD CONSTRAINT fk_orders_user
+    FOREIGN KEY (user_id) REFERENCES user_accounts(id) NOT VALID;
 
 -- Validate separately (scans but doesn't hold heavy lock)
-ALTER TABLE "order" VALIDATE CONSTRAINT fk_order_user;
+ALTER TABLE orders VALIDATE CONSTRAINT fk_orders_user;
 ```
 
 ### Column Rename (Expand-Contract)
 ```sql
 -- Phase 1: Add new column
-ALTER TABLE user_account ADD COLUMN full_name TEXT;
+ALTER TABLE user_accounts ADD COLUMN full_name TEXT;
 
 -- Phase 2: Dual-write (application writes to both columns)
 -- Phase 3: Backfill old rows
-UPDATE user_account SET full_name = name WHERE full_name IS NULL;
+UPDATE user_accounts SET full_name = name WHERE full_name IS NULL;
 
 -- Phase 4: Switch reads to new column (deploy)
 -- Phase 5: Drop old column
-ALTER TABLE user_account DROP COLUMN name;
+ALTER TABLE user_accounts DROP COLUMN name;
 ```
 
 ## 2. Backfilling Large Tables
@@ -71,14 +71,14 @@ DECLARE
 BEGIN
     LOOP
         WITH batch AS (
-            SELECT id FROM user_account
+            SELECT id FROM user_accounts
             WHERE new_column IS NULL
             LIMIT batch_size
             FOR UPDATE SKIP LOCKED
         )
-        UPDATE user_account u
+        UPDATE user_accounts u
         SET new_column = compute_value(u.old_column)
-        FROM batch b WHERE u.id = b.id;
+        FROM batches b WHERE u.id = b.id;
 
         GET DIAGNOSTICS affected = ROW_COUNT;
         EXIT WHEN affected = 0;
@@ -98,14 +98,14 @@ DROP PROCEDURE backfill_new_column;
 ```sql
 -- Run this in a loop from application code, each call in its own transaction:
 WITH batch AS (
-    SELECT id FROM user_account
+    SELECT id FROM user_accounts
     WHERE new_column IS NULL
     LIMIT 5000
     FOR UPDATE SKIP LOCKED
 )
-UPDATE user_account u
+UPDATE user_accounts u
 SET new_column = compute_value(u.old_column)
-FROM batch b WHERE u.id = b.id;
+FROM batches b WHERE u.id = b.id;
 -- Check affected rows; stop when 0
 ```
 ```
@@ -133,7 +133,7 @@ ORDER BY n_dead_tup DESC;
 ### Per-Table Autovacuum Tuning (for hot tables)
 ```sql
 -- More aggressive vacuum for frequently updated tables
-ALTER TABLE "order" SET (
+ALTER TABLE orders SET (
     autovacuum_vacuum_scale_factor = 0.05,   -- trigger at 5% dead tuples (default 20%)
     autovacuum_analyze_scale_factor = 0.02,  -- re-analyze at 2% changes
     autovacuum_vacuum_cost_delay = 2         -- less throttling
@@ -146,7 +146,7 @@ ALTER TABLE "order" SET (
 - When EXPLAIN shows row estimate ≠ actual (stale stats)
 
 ```sql
-ANALYZE "order";           -- specific table
+ANALYZE orders;           -- specific table
 ANALYZE;                   -- entire database (use sparingly)
 ```
 
@@ -187,12 +187,12 @@ ORDER BY pg_relation_size(indexrelid) DESC;
 
 ### Rebuild Bloated Indexes (zero-downtime)
 ```sql
-REINDEX INDEX CONCURRENTLY idx_order_created_at;
+REINDEX INDEX CONCURRENTLY idx_orders_created_at;
 
 -- Or create-new + swap (more control)
-CREATE INDEX CONCURRENTLY idx_order_created_at_new ON "order" (created_at);
-DROP INDEX idx_order_created_at;
-ALTER INDEX idx_order_created_at_new RENAME TO idx_order_created_at;
+CREATE INDEX CONCURRENTLY idx_orders_created_at_new ON orders (created_at);
+DROP INDEX idx_orders_created_at;
+ALTER INDEX idx_orders_created_at_new RENAME TO idx_orders_created_at;
 ```
 
 ### Check Index Sizes

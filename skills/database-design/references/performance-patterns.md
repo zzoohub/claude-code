@@ -122,46 +122,46 @@ reserve_pool_size = 5          # emergency extra connections
 -- Range Partitioning (most common: time-series, logs)
 -- BIGINT IDENTITY here per SKILL.md mixed strategy: high-volume append-only log
 -- where 8-byte savings cascade through every row.
-CREATE TABLE access_log (
+CREATE TABLE access_logs (
     id BIGINT GENERATED ALWAYS AS IDENTITY,
     url TEXT NOT NULL,
     status_code SMALLINT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL
 ) PARTITION BY RANGE (created_at);
 
-CREATE TABLE access_log_2025_01 PARTITION OF access_log
+CREATE TABLE access_logs_2025_01 PARTITION OF access_logs
     FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
-CREATE TABLE access_log_2025_02 PARTITION OF access_log
+CREATE TABLE access_logs_2025_02 PARTITION OF access_logs
     FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
 
 -- Automate with pg_partman for production use
 
 -- List Partitioning (region, category)
-CREATE TABLE "order" (
+CREATE TABLE orders (
     id UUID NOT NULL DEFAULT uuidv7(),
     region TEXT NOT NULL,
     total NUMERIC(15, 2),
     PRIMARY KEY (id, region)  -- partition key must be in PK
 ) PARTITION BY LIST (region);
 
-CREATE TABLE order_us PARTITION OF "order" FOR VALUES IN ('US');
-CREATE TABLE order_eu PARTITION OF "order" FOR VALUES IN ('EU');
-CREATE TABLE order_apac PARTITION OF "order" FOR VALUES IN ('APAC');
+CREATE TABLE orders_us PARTITION OF orders FOR VALUES IN ('US');
+CREATE TABLE orders_eu PARTITION OF orders FOR VALUES IN ('EU');
+CREATE TABLE orders_apac PARTITION OF orders FOR VALUES IN ('APAC');
 
 -- Hash Partitioning (even distribution when no natural key)
 -- Note: uuidv7() (PG18+); pre-PG18 generate at app layer. gen_random_uuid() is v4
 -- and forbidden for hot-table PKs (see SKILL.md Critical Rules).
-CREATE TABLE session (
+CREATE TABLE sessions (
     id UUID NOT NULL DEFAULT uuidv7(),
     user_id UUID NOT NULL,
     data JSONB,
     PRIMARY KEY (id, user_id)  -- partition key must be in PK
 ) PARTITION BY HASH (user_id);
 
-CREATE TABLE session_p0 PARTITION OF session FOR VALUES WITH (MODULUS 4, REMAINDER 0);
-CREATE TABLE session_p1 PARTITION OF session FOR VALUES WITH (MODULUS 4, REMAINDER 1);
-CREATE TABLE session_p2 PARTITION OF session FOR VALUES WITH (MODULUS 4, REMAINDER 2);
-CREATE TABLE session_p3 PARTITION OF session FOR VALUES WITH (MODULUS 4, REMAINDER 3);
+CREATE TABLE sessions_p0 PARTITION OF sessions FOR VALUES WITH (MODULUS 4, REMAINDER 0);
+CREATE TABLE sessions_p1 PARTITION OF sessions FOR VALUES WITH (MODULUS 4, REMAINDER 1);
+CREATE TABLE sessions_p2 PARTITION OF sessions FOR VALUES WITH (MODULUS 4, REMAINDER 2);
+CREATE TABLE sessions_p3 PARTITION OF sessions FOR VALUES WITH (MODULUS 4, REMAINDER 3);
 ```
 
 ### Partition Sizing
@@ -174,16 +174,16 @@ CREATE TABLE session_p3 PARTITION OF session FOR VALUES WITH (MODULUS 4, REMAIND
 ### Keyset Pagination (avoid OFFSET)
 ```sql
 -- BAD: OFFSET scans and discards rows (O(n) cost)
-SELECT * FROM product ORDER BY created_at DESC, id DESC LIMIT 20 OFFSET 10000;
+SELECT * FROM products ORDER BY created_at DESC, id DESC LIMIT 20 OFFSET 10000;
 
 -- GOOD: Keyset pagination (constant performance regardless of page depth)
-SELECT * FROM product
+SELECT * FROM products
 WHERE (created_at, id) < ('2025-01-15 10:30:00+00', 99500)
 ORDER BY created_at DESC, id DESC
 LIMIT 20;
 
 -- Requires index
-CREATE INDEX idx_product_pagination ON product (created_at DESC, id DESC);
+CREATE INDEX idx_products_pagination ON products (created_at DESC, id DESC);
 ```
 
 ### Design Queries Around These Guidelines
@@ -197,28 +197,28 @@ CREATE INDEX idx_product_pagination ON product (created_at DESC, id DESC);
    ```sql
    -- The planner will push these filters down automatically if indexed:
    SELECT o.id, o.total
-   FROM "order" o
-   JOIN order_item oi ON oi.order_id = o.id
-   JOIN product p ON p.id = oi.product_id
+   FROM orders o
+   JOIN order_items oi ON oi.order_id = o.id
+   JOIN products p ON p.id = oi.product_id
    WHERE p.category = 'electronics'
    AND o.created_at > '2025-01-01';
 
    -- Required indexes for the planner to filter efficiently:
-   CREATE INDEX idx_order_created_at ON "order" (created_at);
-   CREATE INDEX idx_order_item_order_id ON order_item (order_id);
-   CREATE INDEX idx_order_item_product_id ON order_item (product_id);
-   CREATE INDEX idx_product_category ON product (category);
+   CREATE INDEX idx_orders_created_at ON orders (created_at);
+   CREATE INDEX idx_orders_items_order_id ON order_items (order_id);
+   CREATE INDEX idx_orders_items_product_id ON order_items (product_id);
+   CREATE INDEX idx_products_category ON products (category);
    ```
 
    Use EXISTS instead of JOIN when you only need to check existence (not retrieve columns):
    ```sql
    -- BETTER than JOIN when you don't need product columns:
    SELECT o.id, o.total
-   FROM "order" o
+   FROM orders o
    WHERE o.created_at > '2025-01-01'
    AND EXISTS (
-       SELECT 1 FROM order_item oi
-       JOIN product p ON p.id = oi.product_id
+       SELECT 1 FROM order_items oi
+       JOIN products p ON p.id = oi.product_id
        WHERE oi.order_id = o.id AND p.category = 'electronics'
    );
    ```
@@ -237,7 +237,7 @@ CREATE INDEX idx_product_pagination ON product (created_at DESC, id DESC);
 
 -- Queue pattern with SKIP LOCKED
 SELECT id, payload
-FROM task_queue
+FROM task_queues
 WHERE status = 'pending'
 ORDER BY created_at
 LIMIT 1000
@@ -252,8 +252,8 @@ SELECT
     date_trunc('day', o.created_at) AS day,
     SUM(oi.quantity * oi.unit_price) AS revenue,
     COUNT(DISTINCT o.id) AS order_count
-FROM "order" o
-JOIN order_item oi ON oi.order_id = o.id
+FROM orders o
+JOIN order_items oi ON oi.order_id = o.id
 GROUP BY date_trunc('day', o.created_at);
 
 -- Required for REFRESH CONCURRENTLY
@@ -282,7 +282,7 @@ ORDER BY n_dead_tup DESC;
 ### Per-Table Autovacuum Tuning (for hot tables)
 ```sql
 -- Reduce autovacuum threshold for frequently updated tables
-ALTER TABLE "order" SET (
+ALTER TABLE orders SET (
     autovacuum_vacuum_scale_factor = 0.05,   -- trigger at 5% dead tuples (default 20%)
     autovacuum_analyze_scale_factor = 0.02,  -- re-analyze at 2% changes
     autovacuum_vacuum_cost_delay = 2         -- less throttling = faster vacuum
@@ -295,19 +295,19 @@ When loading large volumes of historical data:
 
 ```sql
 -- 1. Drop non-essential indexes before bulk load
-DROP INDEX idx_order_created_at;
+DROP INDEX idx_orders_created_at;
 
 -- 2. Bulk insert in batches (1000-5000 rows per INSERT)
-INSERT INTO "order" (user_id, status, total, created_at)
+INSERT INTO orders (user_id, status, total, created_at)
 VALUES
     (...), (...), (...),  -- batch of rows
     ...;
 
 -- 3. Recreate indexes after load (CONCURRENTLY for zero downtime)
-CREATE INDEX CONCURRENTLY idx_order_created_at ON "order" (created_at);
+CREATE INDEX CONCURRENTLY idx_orders_created_at ON orders (created_at);
 
 -- 4. Analyze after bulk load for fresh statistics
-ANALYZE "order";
+ANALYZE orders;
 ```
 
 **Additional tips for large backfills:**
@@ -317,7 +317,7 @@ ANALYZE "order";
 - Use parallel insert processes targeting different partitions
 - If using COPY command, it's faster than INSERT for bulk loads:
   ```sql
-  COPY "order" (user_id, status, total, created_at)
+  COPY orders (user_id, status, total, created_at)
   FROM '/path/to/data.csv' WITH (FORMAT csv, HEADER true);
   ```
 - After backfill: VACUUM ANALYZE to update statistics and reclaim space
@@ -333,7 +333,7 @@ ANALYZE "order";
 ### Upsert (INSERT ... ON CONFLICT)
 ```sql
 -- Requires a uniqueness constraint
-INSERT INTO product (sku, name, price, updated_at)
+INSERT INTO products (sku, name, price, updated_at)
 VALUES ('ABC-123', 'Widget', 29.99, now())
 ON CONFLICT (sku) DO UPDATE SET
     name = EXCLUDED.name,

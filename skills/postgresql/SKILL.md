@@ -21,7 +21,7 @@ Implements schemas designed by `database-design` skill. Focuses on writing corre
 
 ### 1. Design First, Query Second
 Schema must be designed using `database-design` skill before writing queries. This skill assumes:
-- Naming follows snake_case convention (tables singular, FKs as `referenced_table_id`)
+- Naming follows snake_case convention (tables plural, FKs singular as `referenced_table_id`)
 - PKs are `BIGINT GENERATED ALWAYS AS IDENTITY` unless UUID is justified
 - All tables have `created_at` and `updated_at` (TIMESTAMPTZ)
 - Columns ordered largest-to-smallest for alignment optimization

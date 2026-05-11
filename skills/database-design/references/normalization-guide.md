@@ -8,16 +8,16 @@
 
 ```sql
 -- BAD: violates 1NF
-CREATE TABLE order_bad (
+CREATE TABLE orders_bad (
     id UUID PRIMARY KEY,
     product_names TEXT  -- 'iPhone, MacBook, AirPods' comma-separated
 );
 
 -- GOOD: 1NF compliant
-CREATE TABLE order_item (
+CREATE TABLE order_items (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
-    order_id UUID NOT NULL REFERENCES "order"(id),
-    product_id UUID NOT NULL REFERENCES product(id),
+    order_id UUID NOT NULL REFERENCES orders(id),
+    product_id UUID NOT NULL REFERENCES products(id),
     quantity INT NOT NULL CHECK (quantity > 0)
 );
 ```
@@ -28,17 +28,17 @@ search/join is not required on individual elements.
 
 ```sql
 -- ARRAY is appropriate here: simple filtering on tags
-CREATE TABLE article (
+CREATE TABLE articles (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     title TEXT NOT NULL,
     tags TEXT[] DEFAULT '{}',
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_article_tags ON article USING GIN (tags);
+CREATE INDEX idx_articles_tags ON articles USING GIN (tags);
 
 -- Query
-SELECT * FROM article WHERE 'postgresql' = ANY(tags);
+SELECT * FROM articles WHERE 'postgresql' = ANY(tags);
 ```
 
 ### 2NF (Second Normal Form)
@@ -47,7 +47,7 @@ SELECT * FROM article WHERE 'postgresql' = ANY(tags);
 
 ```sql
 -- BAD: violates 2NF (student_name depends only on student_id)
-CREATE TABLE enrollment_bad (
+CREATE TABLE enrollments_bad (
     student_id UUID,
     course_id UUID,
     student_name TEXT,      -- depends only on student_id
@@ -56,13 +56,13 @@ CREATE TABLE enrollment_bad (
 );
 
 -- GOOD: 2NF compliant
-CREATE TABLE student (
+CREATE TABLE students (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL
 );
 
-CREATE TABLE enrollment (
-    student_id UUID REFERENCES student(id),
+CREATE TABLE enrollments (
+    student_id UUID REFERENCES students(id),
     course_id UUID REFERENCES course(id),
     grade CHAR(2),
     PRIMARY KEY (student_id, course_id)
@@ -75,7 +75,7 @@ CREATE TABLE enrollment (
 
 ```sql
 -- BAD: violates 3NF (city -> country transitive dependency)
-CREATE TABLE customer_bad (
+CREATE TABLE customers_bad (
     id UUID PRIMARY KEY,
     name TEXT NOT NULL,
     city TEXT,
@@ -83,16 +83,16 @@ CREATE TABLE customer_bad (
 );
 
 -- GOOD: 3NF compliant
-CREATE TABLE city (
+CREATE TABLE cities (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     country TEXT NOT NULL
 );
 
-CREATE TABLE customer (
+CREATE TABLE customers (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
-    city_id UUID REFERENCES city(id)
+    city_id UUID REFERENCES cities(id)
 );
 ```
 
@@ -127,9 +127,9 @@ SELECT
     COUNT(r.id) AS review_count,
     AVG(r.rating)::NUMERIC(3,2) AS avg_rating,
     SUM(oi.quantity) AS total_sold
-FROM product p
+FROM products p
 LEFT JOIN review r ON r.product_id = p.id
-LEFT JOIN order_item oi ON oi.product_id = p.id
+LEFT JOIN order_items oi ON oi.product_id = p.id
 GROUP BY p.id, p.name;
 
 CREATE UNIQUE INDEX idx_mv_product_stats_id ON mv_product_stats (product_id);
@@ -149,21 +149,21 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY mv_product_stats;
 ```sql
 -- 1. Ensure PK/FK type match (no implicit casting)
 -- BAD: type mismatch forces casting
-SELECT * FROM order_item oi
-JOIN product p ON p.id = oi.product_id::UUID;  -- casting needed = design mistake
+SELECT * FROM order_items oi
+JOIN products p ON p.id = oi.product_id::UUID;  -- casting needed = design mistake
 
 -- 2. Verify FK columns have indexes
 -- PostgreSQL does NOT auto-create indexes on FK columns!
-CREATE INDEX idx_order_item_product_id ON order_item (product_id);
+CREATE INDEX idx_orders_items_product_id ON order_items (product_id);
 
 -- 3. SELECT only needed columns
 -- BAD
-SELECT * FROM "order" o JOIN order_item oi ON oi.order_id = o.id;
+SELECT * FROM orders o JOIN order_items oi ON oi.order_id = o.id;
 -- GOOD
 SELECT o.id, o.status, oi.product_id, oi.quantity
-FROM "order" o JOIN order_item oi ON oi.order_id = o.id;
+FROM orders o JOIN order_items oi ON oi.order_id = o.id;
 
 -- 4. For very small lookup tables, consider subquery/IN instead of join
-SELECT * FROM product
-WHERE category_id IN (SELECT id FROM category WHERE name = 'Electronics');
+SELECT * FROM products
+WHERE category_id IN (SELECT id FROM categories WHERE name = 'Electronics');
 ```

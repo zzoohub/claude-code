@@ -4,17 +4,17 @@
 
 ```sql
 -- Plan only (does NOT execute)
-EXPLAIN SELECT * FROM "order" WHERE user_id = 123;
+EXPLAIN SELECT * FROM orders WHERE user_id = 123;
 
 -- Full execution with timing and buffer stats
 EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
-SELECT * FROM "order" WHERE user_id = 123 AND status = 'pending';
+SELECT * FROM orders WHERE user_id = 123 AND status = 'pending';
 ```
 
 **WARNING**: EXPLAIN ANALYZE executes the query. For INSERT/UPDATE/DELETE, wrap in a transaction and ROLLBACK:
 ```sql
 BEGIN;
-EXPLAIN ANALYZE UPDATE "order" SET status = 'shipped' WHERE id = 1;
+EXPLAIN ANALYZE UPDATE orders SET status = 'shipped' WHERE id = 1;
 ROLLBACK;
 ```
 
@@ -31,7 +31,7 @@ ROLLBACK;
 
 ### Index Cond vs Filter
 ```
-Index Scan using idx_order_user_status on "order"
+Index Scan using idx_orders_user_status on "order"
   Index Cond: (user_id = 42)
   Filter: (status = 'pending')
   Rows Removed by Filter: 3847
@@ -42,7 +42,7 @@ Index Scan using idx_order_user_status on "order"
 
 **Fix**: Create a composite index covering both conditions:
 ```sql
-CREATE INDEX idx_order_user_status ON "order" (user_id, status);
+CREATE INDEX idx_orders_user_status ON orders (user_id, status);
 ```
 After fix, both conditions appear in Index Cond, Filter disappears.
 
@@ -54,7 +54,7 @@ Large mismatch = stale statistics.
 
 **Fix**:
 ```sql
-ANALYZE "order";
+ANALYZE orders;
 ```
 
 ### Buffer Statistics
@@ -94,11 +94,11 @@ Nested Loop (actual rows=500000)
 **Cause**: Index doesn't match ORDER BY direction.
 ```sql
 -- Index is ASC but query needs DESC
-CREATE INDEX idx_item_published ON item (category, published_at);
-SELECT * FROM item WHERE category = 'books' ORDER BY published_at DESC LIMIT 10;
+CREATE INDEX idx_items_published ON items (category, published_at);
+SELECT * FROM items WHERE category = 'books' ORDER BY published_at DESC LIMIT 10;
 
 -- Fix: match index direction
-CREATE INDEX idx_item_published ON item (category, published_at DESC);
+CREATE INDEX idx_items_published ON items (category, published_at DESC);
 ```
 
 ## Diagnostic Queries
