@@ -161,7 +161,7 @@ All follow the same pattern: **parse input -> call service -> respond.**
 
 ## TypeORM Pitfalls (Hex Discipline)
 
-TypeORM doesn't fight hexagonal — but its convenience features do. Six hard rules; one soft note. Each one of these, left unchecked, walks the codebase back toward an Active Record monolith.
+TypeORM doesn't fight hexagonal — but its convenience features do. Six hard rules; two soft notes. Each one of these, left unchecked, walks the codebase back toward an Active Record monolith.
 
 | Pitfall | Hex violation | Rule |
 |---------|---------------|------|
@@ -173,6 +173,8 @@ TypeORM doesn't fight hexagonal — but its convenience features do. Six hard ru
 | Returning entities to the controller | Domain ⇄ DTO boundary collapses | **Always** map entity → domain → response DTO |
 
 > **Note (soft):** `repo.save()` infers insert vs update from the presence of an id. When the intent matters for readability or for an audit trail, prefer `repo.insert()` / `repo.update()` explicitly.
+
+> **Note (TypeORM 1.0):** A `where` field set to `null`/`undefined` on a high-level API (`findOneBy`, `findBy`, `repo.update`, …) now **throws** instead of being silently ignored. In adapters that build dynamic filters, omit the field entirely rather than passing `undefined`; match SQL `NULL` with the `IsNull()` operator. (Raw `QueryBuilder.where(...)` still passes values through as-is.)
 
 > **One-liner to remember:** *TypeORM isn't incompatible with hex — TypeORM's conveniences make hex discipline easy to erode.*
 
