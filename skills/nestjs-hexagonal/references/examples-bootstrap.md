@@ -8,38 +8,24 @@ Config, main.ts, module wiring, TypeORM setup, and hex-specific test mocks.
 
 ```typescript
 // src/config.ts
-import { plainToInstance, Type } from "class-transformer";
-import {
-  IsEnum, IsInt, IsString, MinLength, validateSync,
-} from "class-validator";
+import { z } from "zod";
 
 /**
  * Typed config — validates env once at startup.
  */
-export class AppConfig {
-  @IsString() @MinLength(1)
-  DATABASE_URL!: string;
+const configSchema = z.object({
+  DATABASE_URL: z.string().min(1),
+  PORT: z.coerce.number().default(3000),
+  CORS_ORIGIN: z.string().default("http://localhost:3000"),
+  JWT_SECRET: z.string().min(16),
+  NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
+});
 
-  @Type(() => Number) @IsInt()
-  PORT: number = 3000;
-
-  @IsString()
-  CORS_ORIGIN: string = "http://localhost:3000";
-
-  @IsString() @MinLength(16)
-  JWT_SECRET!: string;
-
-  @IsEnum(["development", "production", "test"])
-  NODE_ENV: "development" | "production" | "test" = "development";
-}
+export type AppConfig = z.infer<typeof configSchema>;
 
 export function validateConfig(config: Record<string, unknown>): AppConfig {
-  const validated = plainToInstance(AppConfig, config, {
-    enableImplicitConversion: true,
-  });
-  const errors = validateSync(validated, { skipMissingProperties: false });
-  if (errors.length > 0) throw new Error(errors.toString());
-  return validated;
+  // .parse throws a ZodError listing every failing key — surfaced at startup.
+  return configSchema.parse(config);
 }
 ```
 
@@ -49,12 +35,11 @@ export function validateConfig(config: Record<string, unknown>): AppConfig {
 // src/main.ts
 import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
-import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import { cleanupOpenApiDoc } from "nestjs-zod";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { DomainExceptionFilter } from "./inbound/http/filters/domain-exception.filter";
-import { validationExceptionFactory } from "./inbound/http/validation-exception.factory";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -64,27 +49,18 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   app.enableCors({ origin: [configService.get("CORS_ORIGIN")] });
 
-  // Global validation — class-validator on DTO classes.
-  // exceptionFactory keeps error responses in RFC 9457 ProblemDetails shape.
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-    transformOptions: { enableImplicitConversion: true },
-    exceptionFactory: validationExceptionFactory,
-  }));
-
-  // Global exception filter — maps domain errors to RFC 9457
+  // Global exception filter — maps domain errors to RFC 9457.
+  // Request validation runs through the global ZodValidationPipe (APP_PIPE in AppModule).
   app.useGlobalFilters(new DomainExceptionFilter());
 
-  // Swagger
+  // Swagger — cleanupOpenApiDoc post-processes createZodDto schemas into valid OpenAPI.
   const config = new DocumentBuilder()
     .setTitle("Author API")
     .setVersion("1")
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup("docs", app, document);
+  SwaggerModule.setup("docs", app, cleanupOpenApiDoc(document));
 
   // Graceful shutdown — triggers onModuleDestroy
   app.enableShutdownHooks();
@@ -100,6 +76,7 @@ bootstrap();
 ```typescript
 // src/app.module.ts
 import { Module } from "@nestjs/common";
+import { APP_PIPE } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { TerminusModule } from "@nestjs/terminus";
 import { validateConfig } from "./config";
@@ -108,6 +85,7 @@ import { TypeOrmPersistenceModule } from "./outbound/typeorm/typeorm.module";
 
 import { AuthorsModule } from "./authors.module";
 import { HealthController } from "./inbound/http/health/health.controller";
+import { ZodValidationPipe } from "./inbound/http/pipes/zod-validation.pipe";
 
 @Module({
   imports: [
@@ -117,6 +95,8 @@ import { HealthController } from "./inbound/http/health/health.controller";
     AuthorsModule,
   ],
   controllers: [HealthController],
+  // Global ZodValidationPipe — validates every createZodDto-typed parameter.
+  providers: [{ provide: APP_PIPE, useClass: ZodValidationPipe }],
 })
 export class AppModule {}
 ```
@@ -242,8 +222,8 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
     "pg": "^8.13",
     "passport": "^0.7",
     "passport-jwt": "^4.0",
-    "class-validator": "^0.14",
-    "class-transformer": "^0.5",
+    "nestjs-zod": "^5.4",
+    "zod": "^4.0",
     "helmet": "^8.0",
     "reflect-metadata": "^0.2",
     "rxjs": "^7.0"
@@ -385,11 +365,10 @@ export class NoOpMockNotifier extends AuthorNotifier {
 ```typescript
 // tests/helpers.ts
 import { Test, type TestingModule } from "@nestjs/testing";
-import { ValidationPipe, type INestApplication } from "@nestjs/common";
+import { type INestApplication } from "@nestjs/common";
 import { AppModule } from "../src/app.module";
 import { AuthorRepository } from "../src/domain/authors/ports";
 import { DomainExceptionFilter } from "../src/inbound/http/filters/domain-exception.filter";
-import { validationExceptionFactory } from "../src/inbound/http/validation-exception.factory";
 import type { MockAuthorRepository } from "./mocks";
 
 /**
@@ -407,13 +386,7 @@ export async function createTestApp(overrides?: {
 
   const module = await builder.compile();
   const app = module.createNestApplication();
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-    transformOptions: { enableImplicitConversion: true },
-    exceptionFactory: validationExceptionFactory,
-  }));
+  // ZodValidationPipe comes from AppModule's APP_PIPE provider — nothing to wire here.
   app.useGlobalFilters(new DomainExceptionFilter());
   await app.init();
   return { app, module };
@@ -457,7 +430,7 @@ describe("AuthorsController", () => {
       expect(res.body.type).toContain("duplicate-author");
     });
 
-    it("returns 400 for empty name (class-validator)", async () => {
+    it("returns 400 for empty name (Zod)", async () => {
       const repo = new MockAuthorRepository();
       ({ app } = await createTestApp({ repo }));
       await request(app.getHttpServer())

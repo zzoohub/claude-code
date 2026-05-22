@@ -222,74 +222,62 @@ async createAuthorWithProfile(req: CreateAuthorWithProfileRequest): Promise<Auth
 
 ---
 
-## Inbound: ValidationPipe Exception Factory
+## Inbound: ZodValidationPipe
 
-The built-in `ValidationPipe` (registered globally in `main.ts`) handles validation. The factory below converts class-validator errors to RFC 9457 ProblemDetails so error bodies match the rest of the API.
+`nestjs-zod` ships the `ZodValidationPipe`; register it once via `APP_PIPE` (see `examples-bootstrap.md`). Build it with `createZodValidationPipe` so a failed parse returns the RFC 9457 ProblemDetails body — `DomainExceptionFilter` already serves `HttpException` bodies as `application/problem+json`, so this shape flows through unchanged. Without the custom factory, `nestjs-zod` emits its own `{ statusCode, message, errors }` body, which breaks the API's error contract.
 
 ```typescript
-// src/inbound/http/validation-exception.factory.ts
+// src/inbound/http/pipes/zod-validation.pipe.ts
 import { BadRequestException } from "@nestjs/common";
-import type { ValidationError } from "class-validator";
+import { createZodValidationPipe } from "nestjs-zod";
+import type { ZodError } from "zod";
 
-interface FieldError { field: string; messages: string[] }
-
-function flatten(errors: ValidationError[], parent = ""): FieldError[] {
-  return errors.flatMap((err) => {
-    const path = parent ? `${parent}.${err.property}` : err.property;
-    const own = err.constraints
-      ? [{ field: path, messages: Object.values(err.constraints) }]
-      : [];
-    const children = err.children?.length ? flatten(err.children, path) : [];
-    return [...own, ...children];
-  });
-}
-
-export function validationExceptionFactory(errors: ValidationError[]): BadRequestException {
-  return new BadRequestException({
-    type: "https://api.example.com/errors/validation-failed",
-    title: "Validation Failed",
-    status: 400,
-    errors: flatten(errors),
-  });
-}
+/**
+ * nestjs-zod's pipe, customized so validation failures match the API's
+ * RFC 9457 ProblemDetails error shape instead of nestjs-zod's default body.
+ */
+export const ZodValidationPipe = createZodValidationPipe({
+  createValidationException: (error: ZodError) =>
+    new BadRequestException({
+      type: "https://api.example.com/errors/validation-failed",
+      title: "Validation Failed",
+      status: 400,
+      errors: error.issues.map((e) => ({
+        field: e.path.join("."),
+        code: e.code,
+        message: e.message,
+      })),
+    }),
+});
 ```
-
-`DomainExceptionFilter` already serves `HttpException` bodies as `application/problem+json`, so the body shape above flows through unchanged.
 
 ## Inbound: Request DTOs
 
-DTO classes carry class-validator decorators. The controller parameter **must** be type-annotated with the DTO class — without it the global pipe has no metadata to validate against.
+`createZodDto(schema)` turns a Zod schema into a class that is three things at once: the compile-time type, the runtime validation schema, and the OpenAPI schema `@nestjs/swagger` reads. `toDomain()` translates the validated DTO into the domain request.
 
 ```typescript
 // src/inbound/http/authors/request.dto.ts
-import { IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from "class-validator";
-import { Type } from "class-transformer";
+import { createZodDto } from "nestjs-zod";
+import { z } from "zod";
 import { AuthorName, type CreateAuthorRequest } from "../../../domain/authors/models";
 
-export class CreateAuthorBody {
-  @IsString()
-  @IsNotEmpty({ message: "name is required" })
-  name!: string;
-}
+export const createAuthorSchema = z.object({
+  name: z.string().min(1, "name is required"),
+});
+export class CreateAuthorDto extends createZodDto(createAuthorSchema) {}
 
-export function toDomain(body: CreateAuthorBody): CreateAuthorRequest {
+export function toDomain(body: CreateAuthorDto): CreateAuthorRequest {
   return { name: AuthorName.create(body.name) };
 }
 
-export class PaginationQuery {
-  @IsOptional()
-  @IsString()
-  cursor?: string;
-
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
-  limit: number = 20;
-}
+export const paginationSchema = z.object({
+  cursor: z.string().nullish().transform((v) => v ?? null),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+export class PaginationQueryDto extends createZodDto(paginationSchema) {}
 ```
 
-> Nested DTOs need `@ValidateNested() @Type(() => ChildDto)`; arrays of DTOs need `@ValidateNested({ each: true })`. class-validator has no first-class discriminated-union; for those, validate the discriminator field with `@IsIn([...])` and branch in `toDomain()`.
+> `z.coerce.number()` is required for query-string params — every query value arrives as a string. For nested objects just nest `z.object(...)`; for tagged unions use `z.discriminatedUnion("type", [...])`.
 
 ## Inbound: Response DTOs
 
@@ -335,9 +323,7 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import { AuthorService } from "../../../domain/authors/ports";
-import {
-  CreateAuthorBody, PaginationQuery, toDomain,
-} from "./request.dto";
+import { CreateAuthorDto, PaginationQueryDto, toDomain } from "./request.dto";
 import { AuthorResponse, CursorPageResponse } from "./response.dto";
 import { AuthorNotFoundError } from "../../../domain/authors/errors";
 
@@ -351,7 +337,7 @@ export class AuthorsController {
   @ApiOperation({ summary: "Create an author" })
   @ApiResponse({ status: 201, type: AuthorResponse })
   async create(
-    @Body() body: CreateAuthorBody,
+    @Body() body: CreateAuthorDto,
   ): Promise<{ data: AuthorResponse }> {
     const author = await this.authorService.createAuthor(toDomain(body));
     return { data: AuthorResponse.fromDomain(author) };
@@ -360,9 +346,9 @@ export class AuthorsController {
   @Get()
   @ApiOperation({ summary: "List authors" })
   async list(
-    @Query() query: PaginationQuery,
+    @Query() query: PaginationQueryDto,
   ): Promise<CursorPageResponse> {
-    const page = await this.authorService.listAuthors(query.cursor ?? null, query.limit);
+    const page = await this.authorService.listAuthors(query.cursor, query.limit);
     return {
       data: page.items.map(AuthorResponse.fromDomain),
       next_cursor: page.nextCursor,
