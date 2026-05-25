@@ -1,7 +1,7 @@
 ---
 name: software-architecture
 description: |
-  Produce a Software Architecture Design Document from a PRD: system context, ASRs,
+  Produce a full Software Architecture Design Document from a PRD: system context, ASRs,
   domain model, pattern selection, component design, data architecture, deployment,
   cross-cutting concerns, and decision records. Produces D2 architecture diagrams.
   Use when: user says "design doc", "software architecture", "system design",
@@ -10,8 +10,9 @@ description: |
   system", "ASR", "utility tree", "domain model", "ATAM", "event storming", or
   provides a PRD and asks for technical architecture. Also trigger when the system
   involves AI/LLM features (RAG, agents, chat, copilot, semantic search). Use this
-  skill whenever the user wants to plan or structure a new project, even if they
-  don't explicitly say "architecture".
+  skill whenever the user wants to plan or structure a NEW project.
+  Do NOT use for: a single architectural decision on an existing system (use
+  arch-decision instead — it appends one ADR without rewriting the full design).
   Do NOT use for: table schemas, column types, indexes, or migrations (use
   database-design); folder structure, code conventions, or linting rules (CLAUDE.md
   concern); concrete UI component trees or page layouts (use ux-design +
@@ -19,9 +20,14 @@ description: |
   or eval harnesses (use llm-app-design after architecture is set).
 ---
 
-# Software Architect Skill
+# Software Architecture — Full Design Pass
 
-When given a Product Requirements Document (PRD), produce architecture documents through a 10-stage design flow that captures the system's structure, trade-offs, and rationale.
+Produces the **full architecture documents** for a new system from a PRD:
+context, system design, and decision log. Use this skill at the start of a
+new project.
+
+**For one decision on an existing system**, use `arch-decision` instead —
+it appends a single ADR without rewriting `context.md` or `system.md`.
 
 ## Premise
 
@@ -119,7 +125,25 @@ The design flow produces three output files:
 | `docs/arch/system.md` | 4-8 | How — patterns, components, data, deployment, cross-cutting | `templates/system.md` |
 | `docs/arch/decisions.md` | All | Decisions and risks — ADRs, risk register, tech debt | `templates/decisions.md` |
 
+If your project keeps architecture docs elsewhere, see `AGENTS.md` at the repo root.
+
 Read the template files before writing output. Follow their structure.
+
+### Line limits
+
+Before updating, check the file's line count. If it exceeds the limit,
+**consolidate** — merge redundant sections, tighten wording, remove items
+already resolved. Trust git history.
+
+Exception for `docs/arch/decisions.md`: ADRs are append-only. If the limit is
+hit, summarize superseded ADRs to one-line form and mark them
+`[superseded by ADR-NNN]` rather than deleting.
+
+| File | Limit |
+|---|---|
+| `docs/arch/context.md` | 400 lines |
+| `docs/arch/system.md` | 600 lines |
+| `docs/arch/decisions.md` | 400 lines |
 
 ---
 
@@ -129,7 +153,7 @@ For future Claude sessions working on this project:
 
 - **New session** -> always load `docs/arch/context.md` first
 - **Implementation work** -> also load `docs/arch/system.md`
-- **Decision point** -> append to `docs/arch/decisions.md` immediately
+- **Decision point** -> append to `docs/arch/decisions.md` immediately (or use `arch-decision` skill)
 
 ---
 

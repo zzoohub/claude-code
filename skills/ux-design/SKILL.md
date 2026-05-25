@@ -1,9 +1,17 @@
 ---
 name: ux-design
 description: |
-  Senior-level UX design principles, diagnostic frameworks, and design process.
-  Use when: designing user flows, information architecture, navigation patterns, screen layouts, interaction design, UX copy, diagnosing usability problems, reviewing designs against best practices, or designing for 3D/XR/spatial computing (AR, VR, MR, visionOS, Quest, spatial UI).
-  Do not use for: visual styling, color palettes, component implementation, design tokens (use design-system skill), or ui code.
+  Senior-level UX design for a NEW product — app-wide information architecture,
+  global navigation, shared interaction conventions, and accessibility standards.
+  Produces `docs/ux/ux-design.md` plus per-screen specs for every screen in the
+  initial design.
+  Use when: starting UX for a new product, designing the overall app structure,
+  defining IA / global patterns / accessibility standards, or designing for
+  3D/XR/spatial computing (AR, VR, MR, visionOS, Quest, spatial UI).
+  Do NOT use for: designing a single screen on an existing app (use
+  screen-design — lighter, doesn't rewrite ux-design.md). Do NOT use for visual
+  styling, color palettes, component implementation, design tokens (use
+  design-system skill), or ui code.
   Workflow: User research → this skill (IA, flows, interactions, copy, spatial design) → design-system (tokens, components, visual patterns) → platform implementation.
 references:
   - references/design-process.md         # 5-step process: Research → Map → Design → Remove → Validate
@@ -16,11 +24,18 @@ references:
   - references/xr-design.md              # XR spatial UX: comfort zones, interaction models, passthrough MR, content persistence, text input, multi-user, cybersickness, onboarding, privacy, platform guidelines (visionOS 26, Quest, Android XR)
 ---
 
-# UX Design
+# UX Design — Full App Pass
+
+Produces the **application-level UX** (`docs/ux/ux-design.md`) plus per-screen
+specs for every screen in the initial design.
+
+**For one screen on an existing app**, use `screen-design` instead — it
+creates a single screen spec without rewriting the app-level UX.
 
 ## Context Check
 
-If `docs/prd/prd.md` or `docs/prd/features/*.md` exists, read it first. Use as input, not constraint.
+If `docs/prd/prd.md` or `docs/prd/features/*.md` exists, read it first. Use as
+input, not constraint. If your project keeps PRDs elsewhere, see `AGENTS.md`.
 
 ---
 
@@ -132,7 +147,9 @@ Comfort zones, interaction models (gaze, hand, voice, controller), text input, p
 
 ## Feature-Aware Design
 
-When feature specs exist in `docs/prd/features/*.md`, read the relevant feature spec for the current task. Design the full UX for that feature's requirements, user journeys, and edge cases. Reference the dev order in `docs/prd/prd.md` to understand dependencies between features.
+When feature specs exist in `docs/prd/features/*.md`, read the relevant feature
+specs for the screens you're designing. Reference the dev order in
+`docs/prd/prd.md` to understand dependencies between features.
 
 ---
 
@@ -220,6 +237,8 @@ One file per screen or distinct view. Each screen file covers:
 **Naming:** Use kebab-case matching the screen name (e.g., `account-settings.md`, `project-dashboard.md`, `onboarding-welcome.md`).
 
 **When to create a new file vs. add to an existing one:** Each independently navigable screen gets its own file. Modals, drawers, and sheets that belong to a specific screen go in that screen's file. If a flow spans multiple screens, each screen still gets its own file — cross-reference between them.
+
+If your project keeps UX docs elsewhere, see `AGENTS.md`.
 
 ### Line Limits
 

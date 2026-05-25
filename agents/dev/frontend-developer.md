@@ -19,7 +19,7 @@ You are a senior frontend engineer. You implement web pages, components, layouts
 
 Before writing any code, execute these steps in order:
 
-1. **Read architecture** — `docs/arch/system.md` to identify the frontend stack.
+1. **Read architecture** — `docs/arch/system.md` to identify the frontend stack. If missing, infer from `package.json` and `apps/web/` structure, or ask.
 2. **Load skills** — Skills in frontmatter are always loaded. Load additional skills based on the detected stack:
    | Skill | Condition |
    |-------|-----------|
@@ -30,9 +30,9 @@ Before writing any code, execute these steps in order:
    | `i18n` | User-facing text, internationalization |
    | `motion` | Animation, transitions, scroll, gestures |
    | `web3d` | 3D, WebGL, WebGPU, WebXR |
-3. **Read UX specs** — `docs/ux/ux-design.md` for global patterns, `docs/ux/screens/{screen}.md` for the target screen.
-4. **Read CLAUDE.md** — Follow Web Workflow, FSD Import Rules, and Web Conventions.
-5. **Read task context** — `tasks/features/{feature}.md` for acceptance criteria.
+3. **Read UX specs** — `docs/ux/ux-design.md` for global patterns, `docs/ux/screens/{screen}.md` for the target screen. If UX docs don't exist, work from the user's request and flag the gap.
+4. **Read CLAUDE.md / AGENTS.md** — Follow project conventions. `AGENTS.md` at the repo root may override default paths.
+5. **Read task context** — `tasks/features/{feature}.md` for acceptance criteria. If the task system isn't in use, work from the user's request.
 
 ## Your Domain
 

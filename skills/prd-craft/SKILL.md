@@ -1,21 +1,27 @@
 ---
 name: prd-craft
 description: |
-  Write world-class Product Requirements Documents (PRDs) using proven frameworks
-  from top product leaders. Use when user asks to "write a PRD", "create a product
-  requirements document", "draft product specs", "define product requirements",
-  "write a feature spec", "create a product proposal", "spec out a feature",
-  "write requirements for [feature]", or mentions PRD, product spec, feature
-  requirements, or product planning documents. Also use when user asks to
-  "review a PRD", "improve my PRD", "audit my PRD", or "give feedback on my PRD".
-  Even if the user doesn't say "PRD" explicitly, trigger this skill when they're
-  describing what a product should do and need a structured requirements document.
-  Do NOT use for user stories, sprint tickets, API documentation, or architecture decision records.
+  Write a complete Product Requirements Document (PRD) for a new product, using
+  proven frameworks from top product leaders. Creates the full vision PRD
+  (problem, target users, success metrics, feature overview, dev order, scope)
+  PLUS feature specs for every feature listed in the PRD.
+  Use when: user asks to "write a PRD", "create a product requirements
+  document", "draft product specs", "define product requirements", "create a
+  product proposal", "spec out a product". Also when the user describes a new
+  product and needs structured requirements.
+  Also use to "review a PRD", "improve my PRD", "audit my PRD".
+  Do NOT use for: a single feature on an existing product (use feature-spec
+  instead — it's lighter and won't rewrite the vision PRD). Do NOT use for user
+  stories, sprint tickets, API documentation, or architecture decision records.
 ---
 
-# PRD Craft — Framework for Writing World-Class PRDs
+# PRD Craft — Vision PRD for a New Product
 
-A PRD defines what to build and why. It works for any product — tools, apps, games, libraries, services.
+Builds the **vision PRD** (`docs/prd/prd.md`) plus a feature spec for every
+feature the PRD lists. Use when you're defining a new product from scratch.
+
+**For adding one feature to an existing product**, use the `feature-spec`
+skill instead — it creates a single feature spec without rewriting the PRD.
 
 ## Core Philosophy
 
@@ -42,6 +48,8 @@ docs/prd/
 
 **Every file is a single source of truth (SSOT).** If a file already exists, update it in place — never create duplicates. The file should always reflect the latest state.
 
+If your project keeps PRDs elsewhere, see `AGENTS.md` at the repo root.
+
 ### Role of Each File
 
 | File | Contains | When Read | When Modified |
@@ -63,9 +71,13 @@ Scale document depth to your product's complexity.
 
 ### Phase 0: Check for Existing Context
 
-Before discovery, check if a product brief already exists (look for
-`docs/prd/product-brief.md` or ask the user). If a brief exists, use it as a
-starting point to accelerate discovery.
+Before discovery, check if a product brief already exists at
+`docs/prd/product-brief.md`. If a brief exists, use it as a starting point to
+accelerate discovery.
+
+Also check if `docs/prd/prd.md` already exists. If yes, this is probably a
+single-feature add — switch to `feature-spec` skill instead of rewriting the
+PRD.
 
 ### Phase 1: Discovery Interview
 
@@ -94,7 +106,7 @@ Offer the **Problem-User-Success** rapid discovery — just 3 questions:
 2. How is this handled today?
 3. What does success look like?
 
-### Phase 2: Write the PRD (`prd.md`)
+### Phase 2: Write the PRD (`docs/prd/prd.md`)
 
 The PRD is the **vision document** — concise enough to read every session,
 comprehensive enough to guide all feature work. Target ~300 lines (scale down

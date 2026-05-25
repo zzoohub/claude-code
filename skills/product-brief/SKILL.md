@@ -24,6 +24,12 @@ It sits upstream of the PRD. The brief defines the problem and direction; the PR
 specifies requirements, user journeys, scope, risks, and metrics in detail.
 Keep the brief lean — anything the PRD covers in depth does not belong here.
 
+## When to skip the brief
+
+Brownfield projects adding a feature to an existing product don't need a brief.
+Go straight to `feature-spec` for that one feature, or to `prd-craft` if the
+addition is large enough to warrant updating the vision PRD.
+
 ## What a Product Brief Is (and Is Not)
 
 - **Product Brief**: Problem, direction, success signal. One page. A discovery tool, not a commitment to build.
@@ -137,5 +143,8 @@ Grounded in evidence, names a specific situation, quantifies the pain.
 ## Output
 
 Save to `docs/prd/product-brief.md`. Always update this single file in place.
+
+If your project keeps the brief elsewhere, see `AGENTS.md` at the repo root for
+the override; falls back to the default path above.
 
 - **150-line limit:** If the file exceeds 150 lines, consolidate — tighten wording, merge redundant content, remove resolved questions — then apply changes.

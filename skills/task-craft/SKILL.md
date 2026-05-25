@@ -1,27 +1,26 @@
 ---
 name: task-craft
 description: |
-  Task breakdown methodology and templates. Converts a PRD + architecture + UX into
-  phase-based, parallel-safe, session-sized implementation tasks. Single source of
-  truth for the board.md and features/*.md formats, phase rules, status lifecycle,
-  and task quality bar used by the task-manager agent.
-  Use when: generating implementation tasks from design docs, updating a task
-  board, reorganizing tasks after plan changes, validating task quality, or
-  setting up a new task system in a project.
-  Do NOT use for: product planning (use prd-craft), architecture (use
-  software-architecture), UX design (use ux-design), or implementing tasks
-  themselves (that's the developer agents' job).
+  Create the initial task board from a complete PRD + architecture + UX. Generates
+  the full `tasks/board.md` (phase-grouped) plus per-feature task files for every
+  feature in the PRD. Used once per project to bootstrap the task system.
+  Use when: a new project's design docs are ready and you need the initial task
+  breakdown. Single source of truth for `tasks/board.md` format and task quality bar.
+  Do NOT use for: adding a task to an existing board (use task-add instead). Do
+  NOT use for: moving task status (use task-status). Do NOT use for: product
+  planning (use prd-craft), architecture (use software-architecture), UX design
+  (use ux-design), or implementing tasks (developer agents' job).
 ---
 
-# Task Craft
+# Task Craft — Initial Board from Design Docs
 
-Turn design documents into actionable, session-sized tasks organized by execution phase. This skill is the format authority for `tasks/board.md` and `tasks/features/*.md` so the task-manager agent and any worker agents share one contract.
-
----
+Turn a complete set of design documents into a phased, parallel-safe task board.
+Use this once when starting a new project. After the board exists, use
+**`task-add`** to append tasks and **`task-status`** to move task state.
 
 ## Inputs
 
-Before generating tasks, read:
+Read before generating tasks:
 
 - `docs/prd/prd.md` — dev order, feature overview, scope
 - `docs/prd/features/*.md` — detailed requirements per feature
@@ -30,7 +29,10 @@ Before generating tasks, read:
 - `docs/ux/` — user flows, wireframes, screen specs (if exists)
 - `docs/api/` — OpenAPI specs, API contracts (if exists)
 
-If architecture docs don't exist yet, flag it. Tasks without architecture decisions tend to need rework.
+If architecture docs don't exist, flag it. Tasks without architecture decisions
+tend to need rework.
+
+If your project keeps these elsewhere, see `AGENTS.md` at the repo root.
 
 ---
 
@@ -40,11 +42,12 @@ If architecture docs don't exist yet, flag it. Tasks without architecture decisi
 tasks/
 ├── board.md              # Phase-based status table (mutable; orchestrator reads this)
 └── features/
-    ├── {feature}.md      # Full task details per feature
-    └── ...
+    └── {feature}.md      # Full task details per feature
 ```
 
-**Separation principle**: `board.md` tracks state (changes often). Feature files hold context (change rarely). Minimizes merge conflicts when multiple agents work in parallel.
+**Separation principle**: `board.md` tracks state (changes often). Feature files
+hold context (change rarely). Minimizes merge conflicts when multiple agents
+work in parallel.
 
 ---
 
@@ -56,7 +59,8 @@ You produce publication-ready task systems, not drafts for the user to fix.
 - `board.md`: **600 lines** — split into phase sub-files only if it grows past 1000
 - `features/{feature}.md`: **400 lines** per feature
 
-When a file hits the limit: tighten wording, merge redundant context, remove resolved open notes. Trust git for history.
+When a file hits the limit: tighten wording, merge redundant context, remove
+resolved open notes. Trust git for history.
 
 ---
 
@@ -80,17 +84,28 @@ The board is the single source of truth for task state.
 
 ## Phase 1 — Foundation (all parallel)
 
-| id | feature | task | priority | status | assignee | touches |
-|----|---------|------|----------|--------|----------|---------|
-| T-001 | infra | Project scaffolding and CI setup | high | done | — | package.json, tsconfig.json |
-| T-002 | file-parser | Input schema type definitions | high | backlog | — | src/types/input.ts |
+| id | feature | task | type | priority | status | assignee | touches |
+|----|---------|------|------|----------|--------|----------|---------|
+| T-001 | infra | Project scaffolding and CI setup | chore | high | done | — | package.json, tsconfig.json |
+| T-002 | file-parser | Input schema type definitions | feature | high | backlog | — | src/types/input.ts |
 
 ## Phase 2 — Core (all parallel, after Phase 1)
 
-| id | feature | task | priority | status | assignee | touches |
-|----|---------|------|----------|--------|----------|---------|
-| T-003 | file-parser | CSV streaming reader | high | backlog | — | src/parsers/csv.ts |
+| id | feature | task | type | priority | status | assignee | touches |
+|----|---------|------|------|----------|--------|----------|---------|
+| T-003 | file-parser | CSV streaming reader | feature | high | backlog | — | src/parsers/csv.ts |
 ```
+
+### Task fields
+
+- `id` — globally unique, monotonically increasing (`T-001`, `T-002`, ...). Survives across batches.
+- `feature` — feature name; maps to `features/{feature}.md`.
+- `task` — one-line description.
+- `type` — `feature` | `bugfix` | `hotfix` | `refactor` | `spike` | `chore`. Drives the acceptance shape (see below).
+- `priority` — `low` | `medium` | `high`.
+- `status` — `backlog` | `active` | `done` | `blocked`.
+- `assignee` — agent or person; set by orchestrator, not on creation. `—` initially.
+- `touches` — primary files the task creates or modifies. Avoids agent conflicts.
 
 ### Status Values
 
@@ -101,16 +116,16 @@ The board is the single source of truth for task state.
 
 ### Board Rules
 
-- IDs are globally unique, monotonically increasing (`T-001`, `T-002`, ...)
-- `touches` lists primary files the task will create or modify (helps avoid agent conflicts)
-- `assignee` is set by the orchestrator, not when generating. Leave as `—` initially
-- When updating status, edit only the relevant row — do not rewrite the entire table
+- IDs are globally unique and monotonic.
+- `touches` helps avoid agent conflicts.
+- `assignee` is set by the orchestrator, not on creation.
 
 ---
 
 ## features/{feature}.md — Task Detail Files
 
-One file per feature. Contains full context so a worker agent can start immediately without reading the entire project.
+One file per feature. Contains full context so a worker agent can start
+immediately without reading the entire project.
 
 ### Format
 
@@ -126,6 +141,7 @@ One file per feature. Contains full context so a worker agent can start immediat
 ## Tasks
 
 ### T-002: Input schema type definitions
+- **type:** feature
 - **phase:** 1
 - **priority:** high
 - **depends_on:** —
@@ -146,6 +162,31 @@ One file per feature. Contains full context so a worker agent can start immediat
 
 ---
 
+## Task Type Guide
+
+Each task type implies a different shape for `context` and `acceptance`.
+
+| Type | `context` should include | `acceptance` should include |
+|---|---|---|
+| `feature` | Feature spec ref, arch section, UX screen ref | New behavior verifiable end-to-end, tests added |
+| `bugfix` | Bug repro, observed vs expected, root cause hypothesis | Test that fails before fix and passes after, no regression in adjacent code |
+| `hotfix` | Production impact, severity, affected users | Fix deployed, post-mortem task created |
+| `refactor` | Current shape, target shape, ASR or pain motivating change | No behavior change (existing tests still pass), affected files listed |
+| `spike` | Question to answer, time-box | Decision recorded (ADR or note), follow-up tasks if needed |
+| `chore` | What and why | Done criteria (e.g., "CI green", "docs published") |
+
+---
+
+## Workflow
+
+1. Read all input documents.
+2. Build a dependency graph: identify which tasks can run in parallel vs. must be sequential.
+3. Assign tasks to phases (earliest possible phase respecting dependencies).
+4. Create `tasks/board.md` with phase-grouped tables.
+5. Create `tasks/features/{feature}.md` for each feature with full task details.
+
+---
+
 ## Task Quality Bar
 
 Every task must satisfy:
@@ -158,42 +199,14 @@ Every task must satisfy:
   - ❌ Bad: "Set up parsing"
   - ✅ Good: "Implement CSV streaming reader with backpressure for files over 100MB"
 - **Feature-grouped** — One feature file per feature, matching `docs/prd/features/` filenames.
-
----
-
-## Workflow
-
-### Generate (initial breakdown)
-
-1. Read all input documents.
-2. Build a dependency graph: identify which tasks can run in parallel vs. must be sequential.
-3. Assign tasks to phases (earliest possible phase respecting dependencies).
-4. Create `tasks/board.md` with phase-grouped tables.
-5. Create `tasks/features/{feature}.md` for each feature with full task details.
-
-### Update (plan change)
-
-1. Read current `tasks/` files and relevant source documents.
-2. Apply requested changes to both `board.md` and affected feature files.
-3. If new tasks are added, assign the next available ID (check highest existing ID).
-4. If dependencies change, re-evaluate phase assignments.
-5. Append a dated entry to the `Changes` section of affected feature files.
-
-### Progress (status moves)
-
-- **Start**: Set status to `active` in `board.md`
-- **Complete**: Set status to `done` in `board.md`
-- **Block**: Set status to `blocked` in `board.md`, add a note in the feature file
-- **Abandon**: Set status back to `backlog` in `board.md`, append reason to feature file Changes
-
-Progress updates only touch `board.md` (one row edit). Feature files are not modified for status changes.
+- **Type-appropriate acceptance** — See Task Type Guide above.
 
 ---
 
 ## Quality Gates (apply before saving)
 
 - [ ] Every task has a unique ID in format `T-NNN`
-- [ ] Every task has `phase`, `priority`, `touches`, `context`, `acceptance`
+- [ ] Every task has `type`, `phase`, `priority`, `touches`, `context`, `acceptance`
 - [ ] No two tasks in the same phase touch the same file (or the conflict is flagged and sequenced)
 - [ ] Every feature in `docs/prd/features/` has a corresponding `tasks/features/` file
 - [ ] `board.md` phases correctly reflect dependency ordering (Phase N depends_on items must be in Phase < N)
@@ -205,7 +218,9 @@ Fail a gate → revise before saving.
 
 ## Cross-References
 
-- **prd-craft** (skill) — Produces the PRD this skill consumes
-- **software-architecture** (skill) — Produces `docs/arch/` which this skill relies on for stack decisions
-- **ux-design** (skill) — Produces `docs/ux/` which this skill uses for frontend task specificity
-- **task-manager** (agent) — Orchestrator that invokes this skill
+- **prd-craft** — Produces PRD + feature specs this skill consumes
+- **software-architecture** — Produces `docs/arch/` which this skill relies on
+- **ux-design** — Produces `docs/ux/` which this skill uses for frontend task specificity
+- **task-add** — Append new tasks to an existing board (brownfield)
+- **task-status** — Move task status (start/complete/block)
+- **task-manager** — Orchestrator agent that invokes these task skills

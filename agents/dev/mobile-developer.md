@@ -25,9 +25,9 @@ Before writing any code, execute these steps in order:
    | `design-system` | UI components, styling, theming |
    | `i18n` | User-facing text, internationalization |
    | `motion` | Animation, transitions, scroll, gestures |
-2. **Read UX specs** — `docs/ux/ux-design.md` for global patterns, `docs/ux/screens/{screen}.md` for the target screen.
-3. **Read CLAUDE.md** — Follow Mobile Workflow and Mobile Conventions.
-4. **Read task context** — `tasks/features/{feature}.md` for acceptance criteria.
+2. **Read UX specs** — `docs/ux/ux-design.md` for global patterns, `docs/ux/screens/{screen}.md` for the target screen. If UX docs don't exist, work from the user's request and flag the gap.
+3. **Read CLAUDE.md / AGENTS.md** — Follow project conventions. `AGENTS.md` at the repo root may override default paths.
+4. **Read task context** — `tasks/features/{feature}.md` for acceptance criteria. If the task system isn't in use, work from the user's request.
 
 ## Your Domain
 

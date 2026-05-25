@@ -1,8 +1,12 @@
 # Feature Spec — Template & Writing Guide
 
-After writing the PRD (`docs/prd/prd.md`), create a separate spec file for each
-feature in `docs/prd/features/`. Each file is a self-contained reference for
-implementing that feature.
+After writing the PRD (`docs/prd/prd.md`), create a separate spec file for
+each feature in `docs/prd/features/`. Each file is a self-contained reference
+for implementing that feature.
+
+This template is consumed by two skills:
+- `prd-craft` — creates one spec per feature listed in a new PRD (greenfield)
+- `feature-spec` — creates a single spec for one feature added to an existing product (brownfield)
 
 ---
 
@@ -162,9 +166,14 @@ consider splitting the feature into sub-features with their own specs.
 
 ### Naming Convention
 
+Files live under `docs/prd/features/`. Examples:
+
 - `docs/prd/features/file-parser.md`
 - `docs/prd/features/transform-engine.md`
 - `docs/prd/features/output-formatter.md`
 
 Use short, descriptive names matching the feature name in the PRD's feature
 overview table. Filenames should be kebab-case for multi-word features.
+
+If your project keeps feature specs elsewhere, see `AGENTS.md` at the repo
+root.
