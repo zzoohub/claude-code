@@ -15,10 +15,3 @@
 skills/**/dist/
 skills/**/node_modules/
 skills/**/*.bun-build
-!settings.json
-
-# 플러그인 메타만
-!plugins/
-!plugins/config.json
-!plugins/installed_plugins.json
-!plugins/known_marketplaces.json
