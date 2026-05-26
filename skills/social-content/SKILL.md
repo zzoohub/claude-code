@@ -11,8 +11,6 @@ description: |
   "content pillar", "content repurposing", "topic cluster", "editorial calendar",
   "build in public", "launch strategy", "Product Hunt", "Hacker News", "Reddit marketing",
   "viral content", "hook formula", "social media analytics", "engagement rate".
-  Make sure to use this skill even when the user doesn't explicitly mention social media --
-  if they're asking about content distribution, audience building, or platform strategy, this skill applies.
   Do NOT use for: email content (use email-marketing), ad creative (use ad-creative),
   SEO/blog optimization (use search-visibility), UX copy (use copywriting).
 ---
@@ -205,12 +203,3 @@ Community > broadcast. The shift from audience to community is real.
 | Engagement benchmarks, metrics to track, analytics framework | `references/metrics-benchmarks.md` |
 
 ---
-
-## Cross-References
-
-- **copywriting** (skill) -- Copy quality, persuasion principles, microcopy
-- **search-visibility** (skill) -- SEO-driven content strategy, AEO, GEO
-- **marketing-psychology** (skill) -- 70+ mental models for engagement and persuasion
-- **ad-creative** (skill) -- Paid social content and ad creative
-- **email-marketing** (skill) -- Email sequences and newsletter strategy
-- **cro** (skill) -- Conversion optimization for landing pages and signup flows

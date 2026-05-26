@@ -12,25 +12,12 @@ description: |
   screen-design — lighter, doesn't rewrite ux-design.md). Do NOT use for visual
   styling, color palettes, component implementation, design tokens (use
   design-system skill), or ui code.
-  Workflow: User research → this skill (IA, flows, interactions, copy, spatial design) → design-system (tokens, components, visual patterns) → platform implementation.
-references:
-  - references/design-process.md         # 5-step process: Research → Map → Design → Remove → Validate
-  - references/cognitive-principles.md   # 12 behavioral principles with diagnosis guide
-  - references/information-architecture.md # Navigation patterns, IA principles, sitemap design
-  - references/interaction-patterns.md   # State machines, feedback, gestures, loading, undo
-  - references/ux-writing.md            # Button labels, error messages, empty states, microcopy
-  - references/ergonomics.md            # Sizing, spacing, platform specs, accessibility, motion
-  - references/3d-design.md              # 3D viewport UX: camera interaction, object interaction, depth hierarchy, configurator UX, photorealistic scenes, scroll-driven 3D, loading, discoverability, accessibility
-  - references/xr-design.md              # XR spatial UX: comfort zones, interaction models, passthrough MR, content persistence, text input, multi-user, cybersickness, onboarding, privacy, platform guidelines (visionOS 26, Quest, Android XR)
 ---
 
 # UX Design — Full App Pass
 
 Produces the **application-level UX** (`docs/ux/ux-design.md`) plus per-screen
 specs for every screen in the initial design.
-
-**For one screen on an existing app**, use `screen-design` instead — it
-creates a single screen spec without rewriting the app-level UX.
 
 ## Context Check
 

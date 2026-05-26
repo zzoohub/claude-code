@@ -10,17 +10,16 @@ description: |
   batched backfills, pg_stat_statements setup, or any PostgreSQL query-level work.
   Do NOT use for: schema design or data modeling (use database-design skill first),
   basic SQL syntax lookup (use context7).
-  Workflow: database-design (design) → this skill (implement queries).
 ---
 
 # PostgreSQL Query & Optimization Skill
 
-Implements schemas designed by `database-design` skill. Focuses on writing correct, performant queries and solving production PostgreSQL problems.
+Focuses on writing correct, performant queries and solving production PostgreSQL problems against an established schema.
 
 ## Core Principles
 
 ### 1. Design First, Query Second
-Schema must be designed using `database-design` skill before writing queries. This skill assumes:
+This skill operates on an existing schema. It assumes:
 - Naming follows snake_case convention (tables plural, FKs singular as `referenced_table_id`)
 - PKs are `BIGINT GENERATED ALWAYS AS IDENTITY` unless UUID is justified
 - All tables have `created_at` and `updated_at` (TIMESTAMPTZ)

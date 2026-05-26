@@ -5,12 +5,6 @@ description: |
   Use when: building Python APIs — only when Python-only libraries are required (LangGraph, PyTorch, transformers, etc.).
   Covers: API design (Pydantic + auto OpenAPI), domain modeling, ports & adapters, service layer, error handling, async patterns, testing, Alembic migrations, pagination, healthcheck endpoints.
   Do not use for: database schema design (use database-design skill). Default to axum-hexagonal unless Python-only libraries are needed.
-references:
-  - references/examples-domain.md
-  - references/examples-adapters.md
-  - references/examples-bootstrap.md
-  - references/api-design.md
-  - references/api-patterns.md
 ---
 
 # FastAPI + Hexagonal Architecture

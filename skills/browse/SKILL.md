@@ -10,12 +10,13 @@ allowed-tools:
   - Bash
   - Read
   - AskUserQuestion
-
 ---
 <!-- AUTO-GENERATED from SKILL.md.tmpl — do not edit directly -->
 <!-- Regenerate: bun run gen:skill-docs -->
 
 # browse: QA Testing & Dogfooding
+
+> **Tool-skill notice**: Unlike most skills in this repo, `browse` ships a compiled binary (TypeScript + Playwright via Bun). Run `./setup` once before use. Source lives in `src/`; build emits `dist/browse`.
 
 Persistent headless Chromium. First call auto-starts (~3s), then ~100ms per command.
 State persists between calls (cookies, tabs, login sessions).
@@ -35,7 +36,7 @@ fi
 ```
 
 If `NEEDS_SETUP`:
-1. Tell the user: "gstack browse needs a one-time build (~10 seconds). OK to proceed?" Then STOP and wait.
+1. Tell the user: "The browse tool needs a one-time build (~10 seconds). OK to proceed?" Then STOP and wait.
 2. Run: `cd <SKILL_DIR> && ./setup`
 3. If `bun` is not installed: `curl -fsSL https://bun.sh/install | bash`
 

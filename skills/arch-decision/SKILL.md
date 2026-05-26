@@ -18,14 +18,13 @@ description: |
 
 # Arch Decision — Single ADR
 
-Brownfield counterpart to `software-architecture`. Record one decision, tied
-to the existing system's ASRs, without rewriting `context.md` or `system.md`.
+Record one decision, tied to the existing system's ASRs, without rewriting
+`context.md` or `system.md`.
 
 ## Prerequisites
 
-`docs/arch/context.md` and `docs/arch/system.md` should exist. If they don't,
-the project is greenfield — use `software-architecture` instead. (You can
-still record an ADR against a missing context, but flag the gap.)
+`docs/arch/context.md` and `docs/arch/system.md` should exist. You can still
+record an ADR against a missing context, but flag the gap.
 
 If your project keeps architecture docs elsewhere, see `AGENTS.md`.
 
@@ -50,7 +49,7 @@ If your project keeps architecture docs elsewhere, see `AGENTS.md`.
 - Does not rewrite `context.md` (the problem and ASRs don't change)
 - Does not rewrite `system.md` from scratch
 - Does not produce diagrams unless the decision adds a new container
-- Does not produce database schema changes (use `database-design`)
+- Does not produce database schema changes
 
 ## ADR Template
 
@@ -87,8 +86,7 @@ We chose Option {X} because {reason tied to ASR or constraint}.
 ## Workflow
 
 1. **Read context** — `docs/arch/context.md` and `docs/arch/system.md`. If
-   either is missing, flag it: "Architecture context is incomplete. Want me to
-   do a full design pass with `software-architecture` instead?"
+   either is missing, flag it to the user before proceeding.
 2. **Get the next ADR number** — Find the highest existing ADR-NNN in
    `decisions.md` or under `decisions/` and add 1.
 3. **Frame one decision** — If multiple decisions surface, ask the user which
@@ -119,9 +117,3 @@ We chose Option {X} because {reason tied to ASR or constraint}.
 
 **Line limit:** `decisions.md` — 400 lines. When exceeded, summarize superseded
 ADRs to one line and mark them `[superseded by ADR-NNN]` rather than deleting.
-
-## Cross-References
-
-- `software-architecture` — Creates the initial design; this skill extends it
-- `database-design` — Schema-level decisions go through that skill instead
-- `task-add` — Generates implementation tasks for the decided change

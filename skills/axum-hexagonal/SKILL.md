@@ -5,12 +5,6 @@ description: |
   Use when: building any Rust API — this is the default backend implementation skill.
   Covers: API design (utoipa-axum + OpenApiRouter), domain modeling, ports & adapters, service layer, error handling, testing.
   Do not use for: database schema design (use database-design skill).
-references:
-  - references/examples-domain.md
-  - references/examples-adapters.md
-  - references/examples-bootstrap.md
-  - references/api-design.md
-  - references/api-patterns.md
 ---
 
 # Axum + Hexagonal Architecture

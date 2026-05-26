@@ -17,32 +17,26 @@ description: |
 
 # Task Add — Append to Existing Board
 
-Brownfield counterpart to `task-craft`. Adds tasks to a board that already
-exists, picking the right group and the next available ID.
+Adds tasks to a board that already exists, picking the right group and the
+next available ID.
 
 ## Prerequisites
 
-`tasks/board.md` must already exist. If it doesn't, the project is greenfield —
-use `task-craft` to create the initial board.
-
-If your project keeps tasks elsewhere, see `AGENTS.md` at the repo root.
+`tasks/board.md` must already exist. If your project keeps tasks elsewhere,
+see `AGENTS.md` at the repo root.
 
 ## What This Skill Does
 
-1. Reads `tasks/board.md` to learn the grouping (phases or iterations or
-   simple Backlog/Active/Done) and the highest existing ID.
+1. Reads `tasks/board.md` to learn the phase grouping and the highest
+   existing ID.
 2. Reads the relevant feature spec at `docs/prd/features/{feature}.md` if
    the task is feature work.
 3. Reads `docs/arch/system.md` for stack and component names, so tasks
    reference the right files.
 4. Generates one or more tasks (default: one) with type appropriate for the
    work (feature, bugfix, hotfix, refactor, spike, chore).
-5. Picks the right group:
-   - Phase grouping: earliest phase that respects dependencies. If all
-     phases are done, append `Phase N+1 — {feature}` or switch to a
-     Backlog group.
-   - Iteration grouping: current iteration if in scope; otherwise `Backlog`.
-   - Simple Backlog/Active/Done: append to Backlog.
+5. Picks the right group — earliest phase that respects dependencies. If all
+   phases are done, append `Phase N+1 — {feature}`.
 6. Updates or creates `tasks/features/{feature}.md` with task details. For
    one-off bugfixes / chores, skip the feature file unless the user asks for
    `--with-spec` or the change is non-trivial.
@@ -51,14 +45,14 @@ If your project keeps tasks elsewhere, see `AGENTS.md` at the repo root.
 ## What This Skill Does NOT Do
 
 - Does not rewrite `tasks/board.md` from scratch
-- Does not move task status (that's `task-status`)
-- Does not create the initial board (that's `task-craft`)
-- Does not write feature specs or ADRs (use `feature-spec` / `arch-decision`)
+- Does not move task status
+- Does not create the initial board
+- Does not write feature specs or ADRs
 
 ## Task Types
 
-Each task type implies different `context` and `acceptance` shapes. See
-`task-craft/SKILL.md` for the full guide. Quick reference:
+Each task type implies different `context` and `acceptance` shapes. Quick
+reference:
 
 | Type | Use for |
 |---|---|
@@ -77,7 +71,7 @@ Each task type implies different `context` and `acceptance` shapes. See
    - Bugfix → user's repro description (ask for steps to reproduce, observed
      vs expected, severity)
    - Refactor → `docs/arch/system.md` (current shape) + the proposed shape
-     (may already be in an ADR via `arch-decision`)
+     (may already be recorded in an ADR)
    - Spike → the question to answer + time-box
 3. **Pick the next ID** — highest existing `T-NNN` + 1
 4. **Choose the group** — see step 5 above
@@ -109,7 +103,7 @@ add it as part of this update (one-time schema upgrade).
 - **touches:** {files to create/modify}
 - **context:** {Enough detail that an agent picking this up can start immediately. Cite arch §X, feature R# }
 - **acceptance:**
-  - {Type-appropriate criteria — see task-craft Task Type Guide}
+  - {Type-appropriate criteria}
 ```
 
 ## Quality Bar
@@ -130,10 +124,3 @@ add it as part of this update (one-time schema upgrade).
 - `tasks/board.md` — patched (rows added in correct group)
 - `tasks/features/{feature}.md` — updated (or created if absent and the task
   warrants context)
-
-## Cross-References
-
-- `task-craft` — Creates the initial board; this skill extends it
-- `task-status` — Moves task status (start, complete, block)
-- `feature-spec` — Writes the feature spec a feature task implements
-- `arch-decision` — Records the architectural decision a refactor implements

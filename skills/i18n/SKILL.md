@@ -4,7 +4,6 @@ description: |
   Internationalization (i18n) architecture and patterns for web and mobile apps.
   Use when: adding multi-language support, setting up translation structure, configuring locale routing, language switching, pluralization, date/number/currency formatting, translation key design. Also use when user says "translate my app", "make it multilingual", "add Korean/English support", "localize my app", or mentions hreflang, locale detection, or language picker.
   Do not use for: general React/Next.js patterns (use vercel-composition-patterns), general mobile patterns (use expo-app-design:building-native-ui), UX copy decisions (use copywriting).
-  Workflow: Use alongside vercel-composition-patterns skill (Next.js/web) or expo-app-design:building-native-ui skill (mobile).
 ---
 
 # i18n Architecture

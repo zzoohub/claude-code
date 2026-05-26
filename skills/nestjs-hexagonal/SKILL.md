@@ -5,12 +5,6 @@ description: |
   Use when: building TypeScript APIs with NestJS — for modular backends with built-in dependency injection.
   Covers: API design (@nestjs/swagger), domain modeling, ports & adapters (abstract class injection tokens), NestJS module wiring, Zod validation via nestjs-zod (createZodDto), exception filters (RFC 9457), @nestjs/testing patterns, TypeORM (PostgreSQL) persistence, cursor pagination, @nestjs/terminus healthcheck endpoints.
   Do not use for: database schema design (use database-design skill). Use hono-hexagonal for lightweight multi-runtime APIs. Use fastapi-hexagonal for Python-only APIs. Use axum-hexagonal for Rust APIs.
-references:
-  - references/examples-domain.md
-  - references/examples-adapters.md
-  - references/examples-bootstrap.md
-  - references/api-design.md
-  - references/api-patterns.md
 ---
 
 # NestJS + Hexagonal Architecture

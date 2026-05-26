@@ -26,9 +26,6 @@ Produces the **full architecture documents** for a new system from a PRD:
 context, system design, and decision log. Use this skill at the start of a
 new project.
 
-**For one decision on an existing system**, use `arch-decision` instead —
-it appends a single ADR without rewriting `context.md` or `system.md`.
-
 ## Premise
 
 Architecture for **system correctness**, not for persuasion.
@@ -84,7 +81,14 @@ See `references/design-flow.md` for detailed methodology for each stage.
 
 ## Stage 0 — Auto-Classification
 
-Analyze the PRD and classify the software automatically. No user questions — derive everything from the PRD.
+**First, read the PRD by path:**
+- `docs/prd/prd.md` (vision, dev order, success metrics)
+- `docs/prd/features/*.md` (per-feature requirements)
+- `docs/prd/product-brief.md` (upstream brief, if present)
+
+If your project keeps PRDs elsewhere, see `AGENTS.md` for the override.
+
+Then analyze the PRD content and classify the software automatically. No user questions — derive everything from the PRD.
 
 ### Software Type Classification
 
@@ -153,7 +157,7 @@ For future Claude sessions working on this project:
 
 - **New session** -> always load `docs/arch/context.md` first
 - **Implementation work** -> also load `docs/arch/system.md`
-- **Decision point** -> append to `docs/arch/decisions.md` immediately (or use `arch-decision` skill)
+- **Decision point** -> append to `docs/arch/decisions.md` immediately
 
 ---
 

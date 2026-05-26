@@ -2,7 +2,7 @@
 
 UX principles for spatially embodied experiences — AR, VR, and MR. The user is *inside* the interface, interacting with their body (gaze, hands, head, voice) rather than through a screen and pointer. Covers headset-native platforms (visionOS, Quest, Android XR) and WebXR.
 
-For technical implementation (renderers, APIs, frameworks), see the `web3d` skill.
+Scope: spatial UX decisions (comfort zones, interaction models, passthrough MR, content persistence, text input, multi-user, cybersickness, onboarding, privacy). Technical implementation (renderers, APIs, frameworks) is outside this skill's scope.
 
 ---
 

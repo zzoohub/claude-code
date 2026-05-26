@@ -134,9 +134,3 @@ Every hypothesis needs validation. What works on one site may fail on another. S
 | Paywall | View → upgrade rate | Click-through to pricing, plan selection |
 
 ---
-
-## Cross-References
-
-- **copywriting** (skill) — For conversion copy, CTA text, value propositions
-- **marketing-psychology** (skill) — For persuasion principles behind CRO tactics
-- **churn-prevention** (skill) — For post-conversion retention optimization

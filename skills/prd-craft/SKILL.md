@@ -20,9 +20,6 @@ description: |
 Builds the **vision PRD** (`docs/prd/prd.md`) plus a feature spec for every
 feature the PRD lists. Use when you're defining a new product from scratch.
 
-**For adding one feature to an existing product**, use the `feature-spec`
-skill instead — it creates a single feature spec without rewriting the PRD.
-
 ## Core Philosophy
 
 A PRD answers **WHAT are we building** and **WHY**. It does NOT answer HOW
@@ -40,7 +37,7 @@ A PRD answers **WHAT are we building** and **WHY**. It does NOT answer HOW
 
 ```
 docs/prd/
- ├─ product-brief.md       # Upstream (product-brief skill owns this)
+ ├─ product-brief.md       # Upstream strategic one-pager (if present)
  ├─ prd.md                 # Vision + requirements + dev order (~300 lines)
  └─ features/
      └─ [feature].md       # Feature spec: requirements, journeys, decisions
@@ -76,8 +73,7 @@ Before discovery, check if a product brief already exists at
 accelerate discovery.
 
 Also check if `docs/prd/prd.md` already exists. If yes, this is probably a
-single-feature add — switch to `feature-spec` skill instead of rewriting the
-PRD.
+single-feature add — return to the user before rewriting the PRD.
 
 ### Phase 1: Discovery Interview
 

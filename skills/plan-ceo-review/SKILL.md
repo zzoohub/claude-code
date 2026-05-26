@@ -1,10 +1,13 @@
 ---
 name: plan-ceo-review
 description: |
-  CEO/founder-mode plan review. Rethink the problem, find the 10-star product,
-  challenge premises, expand scope when it creates a better product. Three modes:
+  CEO/founder-mode plan review for re-examining the problem at the scope/vision
+  level. Rethink the problem, find the 10-star product, challenge premises,
+  expand scope when it creates a better product. Three modes:
   SCOPE EXPANSION (dream big), HOLD SCOPE (maximum rigor), SCOPE REDUCTION
-  (strip to essentials). Use after PRD is created, before development starts.
+  (strip to essentials). Use post-PRD when scope is still negotiable.
+  Do NOT use for: locked-scope execution-rigor reviews on a fixed plan
+  (use plan-eng-review). Do NOT use for: pure code review.
 allowed-tools:
   - Read
   - Grep
@@ -12,10 +15,6 @@ allowed-tools:
   - Bash
   - AskUserQuestion
 ---
-
-<!-- Ported from gstack plan-ceo-review skill. -->
-<!-- MERGE STRATEGY: When updating from gstack, diff gstack/plan-ceo-review/SKILL.md against this file. -->
-<!-- Local modifications marked with "# LOCAL" comments. -->
 
 # Mega Plan Review Mode
 
@@ -30,12 +29,12 @@ Do NOT make any code changes. Do NOT start implementation. Your only job right n
 
 ## Prime Directives
 1. Zero silent failures. Every failure mode must be visible — to the system, to the team, to the user. If a failure can happen silently, that is a critical defect in the plan.
-2. Every error has a name. Don't say "handle errors." Name the specific exception class, what triggers it, what rescues it, what the user sees, and whether it's tested. Catch-all exception handling is a code smell — call it out. <!-- # LOCAL: was "rescue StandardError" -->
+2. Every error has a name. Don't say "handle errors." Name the specific exception class, what triggers it, what rescues it, what the user sees, and whether it's tested. Catch-all exception handling is a code smell — call it out.
 3. Data flows have shadow paths. Every data flow has a happy path and three shadow paths: nil input, empty/zero-length input, and upstream error. Trace all four for every new flow.
 4. Interactions have edge cases. Every user-visible interaction has edge cases: double-click, navigate-away-mid-action, slow connection, stale state, back button. Map them.
 5. Observability is scope, not afterthought. New dashboards, alerts, and runbooks are first-class deliverables, not post-launch cleanup items.
 6. Diagrams are mandatory. No non-trivial flow goes undiagrammed. ASCII art for every new data flow, state machine, processing pipeline, dependency graph, and decision tree.
-7. Everything deferred must be written down. Vague intentions are lies. `tasks/board.md` or it doesn't exist. <!-- # LOCAL: was TODOS.md -->
+7. Everything deferred must be written down. Vague intentions are lies. `tasks/board.md` or it doesn't exist.
 8. Optimize for the 6-month future, not just today. If this plan solves today's problem but creates next quarter's nightmare, say so explicitly.
 9. You have permission to say "scrap it and do this instead." If there's a fundamentally better approach, table it. I'd rather hear it now.
 
@@ -49,7 +48,7 @@ Do NOT make any code changes. Do NOT start implementation. Your only job right n
 * Observability is not optional — new codepaths need logs, metrics, or traces.
 * Security is not optional — new codepaths need threat modeling.
 * Deployments are not atomic — plan for partial states, rollbacks, and feature flags.
-* ASCII diagrams in code comments for complex designs — Domain models (state transitions), Services (pipelines), Route handlers (request flow), Middleware (shared behavior), Tests (non-obvious setup). <!-- # LOCAL: was "Models (state transitions), Services (pipelines), Controllers (request flow), Concerns (mixin behavior)" -->
+* ASCII diagrams in code comments for complex designs — Domain models (state transitions), Services (pipelines), Route handlers (request flow), Middleware (shared behavior), Tests (non-obvious setup).
 * Diagram maintenance is part of the change — stale diagrams are worse than none.
 
 ## Priority Hierarchy Under Context Pressure
@@ -63,14 +62,14 @@ Run the following commands:
 git log --oneline -30                          # Recent history
 git diff main --stat                           # What's already changed
 git stash list                                 # Any stashed work
-grep -r "TODO\|FIXME\|HACK\|XXX" --include="*.ts" --include="*.tsx" --include="*.rs" --include="*.py" -l  # LOCAL: was --include="*.rb" --include="*.js"
-find . -name "*.ts" -o -name "*.tsx" -o -name "*.rs" -o -name "*.py" | head -20  # Recently touched files  # LOCAL: was find . -name "*.rb"
+grep -r "TODO\|FIXME\|HACK\|XXX" --include="*.ts" --include="*.tsx" --include="*.rs" --include="*.py" -l
+find . -name "*.ts" -o -name "*.tsx" -o -name "*.rs" -o -name "*.py" | head -20  # Recently touched files
 ```
-Then read CLAUDE.md, `tasks/board.md`, `tasks/features/*.md`, and any existing architecture docs. When reading `tasks/`, specifically: <!-- # LOCAL: was TODOS.md -->
+Then read CLAUDE.md, `tasks/board.md`, `tasks/features/*.md`, and any existing architecture docs. When reading `tasks/`, specifically:
 * Note any tasks this plan touches, blocks, or unlocks
 * Check if deferred work from prior reviews relates to this plan
 * Flag dependencies: does this plan enable or depend on deferred items?
-* Map known pain points (from `tasks/board.md`) to this plan's scope <!-- # LOCAL: was TODOS.md -->
+* Map known pain points (from `tasks/board.md`) to this plan's scope
 
 Map:
 * What is the current system state?
@@ -189,10 +188,10 @@ For every new method, service, or codepath that can fail, fill in this table:
   ConnectionTimeoutError       | N ← GAP   | —                      | 500 error ← BAD
   NotFoundError                | Y         | Return nil, log warning | "Not found" message
 ```
-<!-- # LOCAL: replaced Ruby/Rails class names with stack-neutral names -->
+
 Rules for this section:
-* Catch-all exception handling is ALWAYS a smell. Name the specific exceptions. <!-- # LOCAL: was "rescue StandardError" -->
-* Catching an error with only structured logging (Sentry, console.error) of the message is insufficient. Log the full context: what was being attempted, with what arguments, for what user/request. <!-- # LOCAL: was "rescue => e with only Rails.logger.error(e.message)" -->
+* Catch-all exception handling is ALWAYS a smell. Name the specific exceptions.
+* Catching an error with only structured logging (Sentry, console.error) of the message is insufficient. Log the full context: what was being attempted, with what arguments, for what user/request.
 * Every rescued error must either: retry with backoff, degrade gracefully with a user-visible message, or re-raise with added context. "Swallow and continue" is almost never acceptable.
 * For each GAP (unrescued error that should be rescued): specify the rescue action and what the user should see.
 * For LLM/AI service calls specifically: what happens when the response is malformed? When it's empty? When it hallucinates invalid JSON? When the model returns a refusal? Each of these is a distinct failure mode.
@@ -303,7 +302,7 @@ For LLM/prompt changes: Check CLAUDE.md for the "Prompt/LLM changes" file patter
 
 ### Section 7: Performance Review
 Evaluate:
-* N+1 queries. For every new ORM association/relation traversal: is there eager loading (Drizzle `with`, SQLAlchemy `joinedload`, etc.)? <!-- # LOCAL: was "ActiveRecord association traversal: is there an includes/preload?" -->
+* N+1 queries. For every new ORM association/relation traversal: is there eager loading (Drizzle `with`, SQLAlchemy `joinedload`, etc.)?
 * Memory usage. For every new data structure: what's the maximum size in production?
 * Database indexes. For every new query: is there an index?
 * Caching opportunities. For every expensive computation or external call: should it be cached?
@@ -349,7 +348,7 @@ Evaluate:
 * Path dependency. Does this make future changes harder?
 * Knowledge concentration. Documentation sufficient for a new engineer?
 * Reversibility. Rate 1-5: 1 = one-way door, 5 = easily reversible.
-* Ecosystem fit. Aligns with chosen tech stack ecosystem direction? <!-- # LOCAL: was "Aligns with Rails/JS ecosystem direction?" -->
+* Ecosystem fit. Aligns with chosen tech stack ecosystem direction?
 * The 1-year question. Read this plan as a new engineer in 12 months — obvious?
 
 **EXPANSION mode additions:**
@@ -391,8 +390,8 @@ Complete table of every method that can fail, every exception class, rescued sta
 ```
 Any row with RESCUED=N, TEST=N, USER SEES=Silent → **CRITICAL GAP**.
 
-### tasks/board.md updates <!-- # LOCAL: was TODOS.md -->
-Present each potential task as its own individual AskUserQuestion. Never batch tasks — one per question. Never silently skip this step. New tasks are added as rows to `tasks/board.md` with details in the relevant `tasks/features/*.md` file. <!-- # LOCAL: was "Follow the format in .claude/skills/review/TODOS-format.md" -->
+### tasks/board.md updates
+Present each potential task as its own individual AskUserQuestion. Never batch tasks — one per question. Never silently skip this step. New tasks are added as rows to `tasks/board.md` with details in the relevant `tasks/features/*.md` file.
 
 **board.md row format:**
 ```
@@ -420,10 +419,10 @@ For each TODO, describe:
 * **Priority:** P1/P2/P3
 * **Depends on / blocked by:** Any prerequisites or ordering constraints.
 
-Then present options: **A)** Add to `tasks/board.md` **B)** Skip — not valuable enough **C)** Build it now in this PR instead of deferring. <!-- # LOCAL: was TODOS.md -->
+Then present options: **A)** Add to `tasks/board.md` **B)** Skip — not valuable enough **C)** Build it now in this PR instead of deferring.
 
 ### Delight Opportunities (EXPANSION mode only)
-Identify at least 5 "bonus chunk" opportunities (<30 min each) that would make users think "oh nice, they thought of that." Present each delight opportunity as its own individual AskUserQuestion. Never batch them. For each one, describe what it is, why it would delight users, and effort estimate. Then present options: **A)** Add to `tasks/board.md` as a vision item **B)** Skip **C)** Build it now in this PR. <!-- # LOCAL: was TODOS.md -->
+Identify at least 5 "bonus chunk" opportunities (<30 min each) that would make users think "oh nice, they thought of that." Present each delight opportunity as its own individual AskUserQuestion. Never batch them. For each one, describe what it is, why it would delight users, and effort estimate. Then present options: **A)** Add to `tasks/board.md` as a vision item **B)** Skip **C)** Build it now in this PR.
 
 ### Diagrams (mandatory, produce all that apply)
 1. System architecture

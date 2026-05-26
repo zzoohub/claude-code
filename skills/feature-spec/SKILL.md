@@ -15,15 +15,13 @@ description: |
 
 # Feature Spec — Single Feature on Existing Product
 
-Brownfield counterpart to `prd-craft`. Use when the product already exists
-and you need to add a feature without rewriting the vision PRD.
+Use when the product already exists and you need to add a feature without
+rewriting the vision PRD.
 
 ## Prerequisites
 
-`docs/prd/prd.md` must already exist. If it doesn't, the request is for a new
-product — use `prd-craft` instead.
-
-If your project keeps PRDs elsewhere, see `AGENTS.md` at the repo root.
+`docs/prd/prd.md` must already exist. If your project keeps PRDs elsewhere,
+see `AGENTS.md` at the repo root.
 
 ## What This Skill Does
 
@@ -35,8 +33,7 @@ If your project keeps PRDs elsewhere, see `AGENTS.md` at the repo root.
 3. Asks the minimum questions needed to write the spec (problem, journey,
    acceptance — 3 questions max). Skip what's already clear from prd.md or the
    user's request.
-4. Writes one new `docs/prd/features/{feature}.md` using the template from
-   `prd-craft/references/feature-spec.md`.
+4. Writes one new `docs/prd/features/{feature}.md` following the template below.
 5. Patches `docs/prd/prd.md` in place:
    - Appends one row to the **Feature Overview** table (§5)
    - Inserts the feature into **Dev Order** (§6) at the right position
@@ -48,13 +45,13 @@ If your project keeps PRDs elsewhere, see `AGENTS.md` at the repo root.
 - Does not rewrite the PRD vision
 - Does not touch Problem, Target Users, Success Metrics, Proposed Solution
   unless the new feature genuinely changes them (rare)
-- Does not create architecture decisions (use `arch-decision`)
-- Does not create UX screens (use `screen-design`)
-- Does not create tasks (use `task-add`)
+- Does not create architecture decisions
+- Does not create UX screens
+- Does not create tasks
 
 ## Feature Spec Template
 
-Reuse the template at `prd-craft/references/feature-spec.md`. Same shape:
+Same shape used across feature specs:
 
 ```markdown
 # [Feature Name]
@@ -72,7 +69,7 @@ Step-by-step flows for each user type.
 What happens when things go wrong.
 
 ## Technical Decisions
-Decisions specific to this feature (not architectural — those go in arch-decision).
+Decisions specific to this feature (not architectural).
 
 ## Out of Scope
 What this feature does NOT do, with rationale.
@@ -106,10 +103,3 @@ What this feature does NOT do, with rationale.
 
 **Line limit:** `docs/prd/features/{feature}.md` — 200 lines. Consolidate if
 over.
-
-## Cross-References
-
-- `prd-craft` — Creates the initial PRD; this skill extends it
-- `arch-decision` — Records the architectural decisions this feature introduces
-- `screen-design` — Designs the UX for screens this feature touches
-- `task-add` — Generates implementation tasks once design is done

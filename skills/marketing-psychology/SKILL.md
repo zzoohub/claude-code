@@ -158,10 +158,3 @@ Full descriptions with marketing applications: `references/mental-models-referen
 5. **Measure** — Use data-analyst to track impact
 
 ---
-
-## Cross-References
-
-- **cro** (skill) — Apply psychological models to specific conversion scenarios
-- **copywriting** (skill) — Use models to inform persuasive copy
-- **pricing** (skill) — Pricing strategy and tier design (this skill covers the psychology; pricing covers what to charge)
-- **churn-prevention** (skill) — Retention psychology for cancel flows

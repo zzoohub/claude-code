@@ -5,22 +5,6 @@ description: |
   Use this skill whenever the user works on: 3D scenes, WebGL/WebGPU rendering, Three.js shaders (TSL/node materials), VR/AR/XR/mixed reality, spatial computing, immersive experiences, 3D physics simulation, ECS game architecture, particle systems, procedural geometry, glTF models, spatial audio, hand tracking, controller input, head-mounted displays, or any task involving three/webgpu, three/tsl, koota, @dimforge/rapier3d, or WebXR.
   Also trigger when the user mentions "three.js", "webxr", "webgpu", "TSL", "node material", "shader", "ECS", "rapier", or "wasm" in a 3D/game context.
   Framework-specific implementations (React/R3F, Solid, Svelte) are in `references/<framework>/`.
-references:
-  - references/shaders.md
-  - references/ecs.md
-  - references/physics.md
-  - references/web-xr.md
-  - references/wasm.md
-  - references/threading.md
-  - references/assets.md
-  - references/performance.md
-  - references/react/setup.md
-  - references/react/drei.md
-  - references/react/ecs.md
-  - references/react/physics.md
-  - references/react/web-xr.md
-  - references/react/wasm.md
-  - references/react/performance.md
 ---
 
 # Web 3D & XR Development

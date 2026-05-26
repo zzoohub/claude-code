@@ -4,10 +4,6 @@ After writing the PRD (`docs/prd/prd.md`), create a separate spec file for
 each feature in `docs/prd/features/`. Each file is a self-contained reference
 for implementing that feature.
 
-This template is consumed by two skills:
-- `prd-craft` — creates one spec per feature listed in a new PRD (greenfield)
-- `feature-spec` — creates a single spec for one feature added to an existing product (brownfield)
-
 ---
 
 ## Why Separate Feature Files?

@@ -9,9 +9,6 @@ description: |
   Do not use for: Next.js (use nextjs skill), standalone SolidJS without TanStack Start.
   For React-specific patterns, also read `references/react.md`.
   For SolidJS-specific patterns, also read `references/solidjs.md`.
-references:
-  - references/react.md
-  - references/solidjs.md
 ---
 
 # TanStack Start

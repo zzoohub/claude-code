@@ -171,11 +171,3 @@ When designing a referral/viral loop, produce:
 - [first experiment to validate]
 ```
 
----
-
-## Cross-References
-
-- **cro/SKILL.md** — This reference's parent skill; CRO primitives apply within each loop step
-- **marketing-psychology** (skill) — Principles behind why incentives, social proof, reciprocity work in loops
-- **churn-prevention** (skill) — If the loop brings users who churn, fix retention first
-- **product-analytics** (skill) — Aha Moment discovery is a prerequisite to placing the invite trigger

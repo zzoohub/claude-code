@@ -1,10 +1,14 @@
 ---
 name: plan-eng-review
 description: |
-  Eng manager-mode plan review. Lock in the execution plan — architecture,
-  data flow, diagrams, edge cases, test coverage, performance. Walks through
-  issues interactively with opinionated recommendations. Use after design doc
-  is created, before development starts.
+  Eng manager-mode plan review for locking in execution rigor on a fixed plan
+  — architecture, data flow, diagrams, edge cases, test coverage, performance.
+  Walks through issues interactively with opinionated recommendations.
+  Use after the design doc is created and scope is locked, before development
+  starts.
+  Do NOT use for: scope challenges or 10x-ambition reviews where scope is still
+  negotiable (use plan-ceo-review). Do NOT use for: post-implementation code
+  review.
 allowed-tools:
   - Read
   - Grep
@@ -12,9 +16,6 @@ allowed-tools:
   - AskUserQuestion
   - Bash
 ---
-<!-- Ported from gstack plan-eng-review skill. -->
-<!-- MERGE STRATEGY: When updating from gstack, diff gstack/plan-eng-review/SKILL.md against this file. -->
-<!-- Local modifications marked with "# LOCAL" comments. -->
 
 # Plan Review Mode
 
@@ -33,7 +34,7 @@ If you are running low on context or the user asks you to compress: Step 0 > Tes
 
 ## Documentation and diagrams:
 * I value ASCII art diagrams highly — for data flow, state machines, dependency graphs, processing pipelines, and decision trees. Use them liberally in plans and design docs.
-* For particularly complex designs or behaviors, embed ASCII diagrams directly in code comments in the appropriate places: Domain models (data relationships, state transitions), Route handlers (request flow), Middleware (shared behavior), Services (processing pipelines), and Tests (what's being set up and why) when the test structure is non-obvious. <!-- # LOCAL: stack-neutral diagram locations -->
+* For particularly complex designs or behaviors, embed ASCII diagrams directly in code comments in the appropriate places: Domain models (data relationships, state transitions), Route handlers (request flow), Middleware (shared behavior), Services (processing pipelines), and Tests (what's being set up and why) when the test structure is non-obvious.
 * **Diagram maintenance is part of the change.** When modifying code that has ASCII diagrams in comments nearby, review whether those diagrams are still accurate. Update them as part of the same commit. Stale diagrams are worse than no diagrams — they actively mislead. Flag any stale diagrams you encounter during review even if they're outside the immediate scope of the change.
 
 ## BEFORE YOU START:
@@ -43,7 +44,7 @@ Before reviewing anything, answer these questions:
 1. **What existing code already partially or fully solves each sub-problem?** Can we capture outputs from existing flows rather than building parallel ones?
 2. **What is the minimum set of changes that achieves the stated goal?** Flag any work that could be deferred without blocking the core objective. Be ruthless about scope creep.
 3. **Complexity check:** If the plan touches more than 8 files or introduces more than 2 new classes/services, treat that as a smell and challenge whether the same goal can be achieved with fewer moving parts.
-4. **TASKS cross-reference:** Read `tasks/board.md` and `tasks/features/*.md` if they exist. Are any deferred items blocking this plan? Can any deferred items be bundled into this PR without expanding scope? Does this plan create new work that should be captured as a task? <!-- # LOCAL: tasks/ instead of TODOS.md -->
+4. **TASKS cross-reference:** Read `tasks/board.md` and `tasks/features/*.md` if they exist. Are any deferred items blocking this plan? Can any deferred items be bundled into this PR without expanding scope? Does this plan create new work that should be captured as a task?
 
 Then ask if I want one of three options:
 1. **SCOPE REDUCTION:** The plan is overbuilt. Propose a minimal version that achieves the core goal, then review that.
@@ -78,9 +79,9 @@ Evaluate:
 **STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
 
 ### 3. Test review
-Make a diagram of all new UX, new data flow, new codepaths, and new branching if statements or outcomes. For each, note what is new about the features discussed in this branch and plan. Then, for each new item in the diagram, make sure there is a test (vitest, nextest, pytest, or project test runner). <!-- # LOCAL: stack-neutral test runners -->
+Make a diagram of all new UX, new data flow, new codepaths, and new branching if statements or outcomes. For each, note what is new about the features discussed in this branch and plan. Then, for each new item in the diagram, make sure there is a test (vitest, nextest, pytest, or project test runner).
 
-For LLM/prompt changes: check CLAUDE.md for prompt-related file patterns. If this plan touches ANY of those patterns, state which eval suites must be run, which cases should be added, and what baselines to compare against. Then use AskUserQuestion to confirm the eval scope with the user. <!-- # LOCAL: generic prompt pattern reference -->
+For LLM/prompt changes: check CLAUDE.md for prompt-related file patterns. If this plan touches ANY of those patterns, state which eval suites must be run, which cases should be added, and what baselines to compare against. Then use AskUserQuestion to confirm the eval scope with the user.
 
 **STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
 
@@ -115,10 +116,9 @@ Every plan review MUST produce a "NOT in scope" section listing work that was co
 ### "What already exists" section
 List existing code/flows that already partially solve sub-problems in this plan, and whether the plan reuses them or unnecessarily rebuilds them.
 
-### tasks/board.md updates <!-- # LOCAL: tasks/ instead of TODOS.md -->
+### tasks/board.md updates
 After all review sections are complete, present each potential task as its own individual AskUserQuestion. Never batch tasks — one per question. Never silently skip this step.
 
-<!-- # LOCAL: inlined TASKS format instead of external TODOS-format.md reference -->
 Use this format for each new `tasks/board.md` row + `tasks/features/*.md` detail:
 
 ```markdown
@@ -147,12 +147,12 @@ For each TODO, describe:
 * **Context:** Enough detail that someone picking this up in 3 months understands the motivation, the current state, and where to start.
 * **Depends on / blocked by:** Any prerequisites or ordering constraints.
 
-Then present options: **A)** Add to `tasks/board.md` **B)** Skip — not valuable enough **C)** Build it now in this PR instead of deferring. <!-- # LOCAL: tasks/ instead of TODOS.md -->
+Then present options: **A)** Add to `tasks/board.md` **B)** Skip — not valuable enough **C)** Build it now in this PR instead of deferring.
 
 Do NOT just append vague bullet points. A TODO without context is worse than no TODO — it creates false confidence that the idea was captured while actually losing the reasoning.
 
 ### Diagrams
-The plan itself should use ASCII diagrams for any non-trivial data flow, state machine, or processing pipeline. Additionally, identify which files in the implementation should get inline ASCII diagram comments — particularly Domain models with complex state transitions, Services with multi-step pipelines, and Middleware with non-obvious shared behavior. <!-- # LOCAL: stack-neutral diagram locations -->
+The plan itself should use ASCII diagrams for any non-trivial data flow, state machine, or processing pipeline. Additionally, identify which files in the implementation should get inline ASCII diagram comments — particularly Domain models with complex state transitions, Services with multi-step pipelines, and Middleware with non-obvious shared behavior.
 
 ### Failure modes
 For each new codepath identified in the test review diagram, list one realistic way it could fail in production (timeout, nil reference, race condition, stale data, etc.) and whether:
@@ -171,7 +171,7 @@ At the end of the review, fill in and display this summary so the user can see a
 - Performance Review: ___ issues found
 - NOT in scope: written
 - What already exists: written
-- tasks/ updates: ___ items proposed to user <!-- # LOCAL: tasks/ instead of TODOS.md -->
+- tasks/ updates: ___ items proposed to user
 - Failure modes: ___ critical gaps flagged
 
 ## Retrospective learning

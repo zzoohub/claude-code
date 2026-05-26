@@ -29,13 +29,6 @@ Guidelines for creating high-converting digital product copy, UX microcopy, bran
 | `references/plain-english.md` | Simplifying language, removing jargon, tone checks |
 | `references/transitions.md` | Improving flow, connecting sections, long-form content |
 
-## Related Skills
-
-- **cro** (skill) — When copy changes need conversion rate validation
-- **marketing-psychology** (skill) — For psychological principles behind persuasive copy
-- **email-marketing** (skill) — For email-specific copy patterns
-- **search-visibility** (skill) — For SEO-optimized content writing
-
 ## Task Routing
 
 Match the task to the right workflow:

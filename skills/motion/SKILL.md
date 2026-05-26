@@ -4,12 +4,6 @@ description: |
   Motion design for web and React Native — animation, scroll effects, gestures, page transitions, visual atmosphere, and interactive charts.
   Use when: adding animation or motion polish (scroll reveals, parallax, stagger, page transitions, cursor effects, kinetic typography, marquee/ticker), gesture interactions (swipe, drag, pinch, shared element transitions, spring animations), interactive data visualization (animated charts, D3, bar/line/area/donut charts), or making a UI feel more alive/cinematic/immersive. Trigger on phrases like "add animations", "more dynamic", "add wow factor", "make it interactive", "micro-interactions", "loading animation", "splash screen", or any request to add motion to an existing UI on either web or mobile.
   Do NOT use for: basic CSS hover states (use design-system motion tokens), building components from scratch, UX flow decisions (use ux-design), data/API work, or 3D/WebGL/WebGPU scenes (consider web3d).
-  Workflow position: ux-design (flow) -> design-system (tokens) -> UI implementation -> **this skill** (motion polish).
-references:
-  - references/motion-theory.md
-  - references/web-conventions.md
-  - references/react-conventions.md
-  - references/react-native-conventions.md
 ---
 
 # Interactive Motion

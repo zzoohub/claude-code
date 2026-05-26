@@ -52,13 +52,13 @@ backlog ──start──▶ active ──complete──▶ done
 ## What This Skill Does NOT Do
 
 - Does not rewrite the board
-- Does not create or modify task details (use `task-add`)
-- Does not validate completion (use the verifier agent for that)
+- Does not create or modify task details
+- Does not validate completion
 
 ## Workflow
 
 1. **Find the task** — Grep `T-NNN` in `tasks/board.md`. If not found, ask
-   the user (it might be a new task — use `task-add` instead).
+   the user (it might be a new task).
 2. **Read its current status and feature column** — needed for transition
    validation and (for block/abandon) finding the feature file.
 3. **Validate the transition** — see lifecycle table above. Reject invalid
@@ -88,9 +88,3 @@ backlog ──start──▶ active ──complete──▶ done
 
 - `tasks/board.md` — one row patched
 - `tasks/features/{feature}.md` — Changes section appended (block/abandon only)
-
-## Cross-References
-
-- `task-craft` — Creates the initial board
-- `task-add` — Appends new tasks to the board
-- `verifier` (agent) — Validates that work matches acceptance before complete

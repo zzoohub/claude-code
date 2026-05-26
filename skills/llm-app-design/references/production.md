@@ -114,8 +114,6 @@ LLM apps are vulnerable to attacks that don't exist elsewhere:
 - Input length caps.
 - Cost budgets per user per day.
 
-For deeper security review, see the `security-checklists` skill — the AI/LLM domain is covered there.
-
 ## Rollout
 
 Ship LLM features like any risky change:

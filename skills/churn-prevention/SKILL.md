@@ -142,10 +142,3 @@ When analyzing why users are leaving, segment churn data to find patterns:
 | B2B annual (logo churn) | >15% | 8-15% | <8% |
 
 ---
-
-## Cross-References
-
-- **cro** (skill) — For optimizing specific flows (signup, onboarding, paywall)
-- **email-marketing** (skill) — For win-back campaigns, re-engagement sequences, and dunning email copywriting
-- **marketing-psychology** (skill) — For psychological principles in save offers (loss aversion, endowment effect)
-- **product-analytics** (skill) — For retention cohort analysis and aha moment discovery

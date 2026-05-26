@@ -279,11 +279,3 @@ and modern performance data all converge on the same truths:
 - **Framework**: Direct offer or single benefit claim
 
 ---
-
-## Cross-References
-
-- **copywriting** (skill) — For long-form persuasive writing
-- **marketing-psychology** (skill) — For 70+ psychological triggers
-- **social-content** (skill) — For organic content that can be boosted
-- **cro** (skill) — For landing page alignment with ad messaging
-- **growth-optimizer** (agent) — For conversion funnel optimization

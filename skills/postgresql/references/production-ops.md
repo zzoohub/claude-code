@@ -2,6 +2,8 @@
 
 Patterns for running PostgreSQL reliably in production.
 
+For runnable diagnostic queries against a live database (high-filter queries, lock waits, bloat, vacuum lag, slow planner stats), see `../scripts/query_diagnostics.sql` — psql-ready queries you can execute directly.
+
 ## 1. Zero-Downtime Migrations
 
 ### Adding NOT NULL Constraint (safe pattern)

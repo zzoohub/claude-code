@@ -122,10 +122,3 @@ When metrics are underperforming, the problem usually lives in a specific layer.
 | Kit (ConvertKit) | Creator-focused email marketing |
 
 ---
-
-## Cross-References
-
-- **copywriting** (skill) — For email copy quality and persuasion
-- **churn-prevention** (skill) — For dunning and cancel-related emails
-- **cro** (skill) — For onboarding flow optimization (email + in-app)
-- **marketing-psychology** (skill) — For persuasion principles in email

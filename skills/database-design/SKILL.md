@@ -203,6 +203,8 @@ Use this checklist:
 9. **Ingestion pattern**: Append-only vs backfill vs update-heavy implications
 10. **Storage**: Column ordering for alignment (large tables only) → `references/performance-patterns.md`
 
+For runnable diagnostic queries (unindexed FKs, unused indexes, oversized rows, missing constraints), see `scripts/schema_review.sql` — psql-ready queries you can execute directly against the target database.
+
 ## Key Design Patterns Summary
 
 | Pattern | When to Use | Reference |

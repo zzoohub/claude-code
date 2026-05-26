@@ -4,14 +4,6 @@ description: |
   Provider-neutral LLM application design: prompt engineering, tool use, RAG, agent patterns, evaluation, and production concerns.
   Use when: designing an AI feature or product (chatbot, copilot, agent, RAG system, semantic search, classification, extraction), deciding whether to use an LLM at all, structuring system prompts, designing tool/function-calling schemas, planning a RAG pipeline, picking an agent architecture, setting up evals before shipping, or reasoning about latency/cost/reliability of LLM features. Also trigger on "AI feature", "LLM app", "chatbot", "copilot", "agent", "RAG", "retrieval augmented", "prompt engineering", "eval", "LLM-as-judge", "tool use", "function calling", "semantic search", "fine-tune vs prompt".
   Do not use for: provider-specific SDK mechanics (use claude-api for Anthropic, vercel:ai-sdk for multi-provider Vercel apps), tracing/observability setup (use posthog:instrument-llm-analytics or sentry:sentry-setup-ai-monitoring), or pure ML/training.
-  Workflow: software-architecture (system design) → this skill (LLM-specific patterns, decision framework, evals) → claude-api | vercel:ai-sdk (implementation).
-references:
-  - references/prompting.md
-  - references/tool-use.md
-  - references/rag.md
-  - references/agents.md
-  - references/evaluation.md
-  - references/production.md
 ---
 
 # LLM Application Design
@@ -99,14 +91,5 @@ Structured (JSON schema, regex-parseable) or free-form? Structured outputs cost 
 **Logging nothing.** LLM apps generate latent failure modes: hallucinations, drift after a model update, quality regression from a prompt tweak. Without traces, you find out from users. Wire observability from day one — it costs almost nothing and saves everything.
 
 **Mixing design and implementation.** Deciding "we'll figure out the prompt while we code" leads to prompts shaped like the first thing that compiled. Design the prompt, the output contract, and the eval set *before* opening the SDK.
-
-## Handoff to implementation
-
-Once the design is locked:
-
-- **Anthropic SDK (Python/TS)** → `claude-api` plugin skill
-- **Multi-provider via Vercel** → `vercel:ai-sdk` plugin skill
-- **Instrumentation** → `posthog:instrument-llm-analytics` or `sentry:sentry-setup-ai-monitoring`
-- **Architecture doc** → `software-architecture` skill (if the LLM feature is part of a larger system)
 
 This skill's job ends where the implementation SDK begins.

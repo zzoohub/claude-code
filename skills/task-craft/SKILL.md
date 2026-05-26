@@ -15,8 +15,7 @@ description: |
 # Task Craft — Initial Board from Design Docs
 
 Turn a complete set of design documents into a phased, parallel-safe task board.
-Use this once when starting a new project. After the board exists, use
-**`task-add`** to append tasks and **`task-status`** to move task state.
+Use this once when starting a new project.
 
 ## Inputs
 
@@ -27,7 +26,6 @@ Read before generating tasks:
 - `docs/arch/` — architecture decisions (stack, component boundaries, patterns)
 - `docs/arch/database.md` — data model (if exists)
 - `docs/ux/` — user flows, wireframes, screen specs (if exists)
-- `docs/api/` — OpenAPI specs, API contracts (if exists)
 
 If architecture docs don't exist, flag it. Tasks without architecture decisions
 tend to need rework.
@@ -215,12 +213,3 @@ Every task must satisfy:
 Fail a gate → revise before saving.
 
 ---
-
-## Cross-References
-
-- **prd-craft** — Produces PRD + feature specs this skill consumes
-- **software-architecture** — Produces `docs/arch/` which this skill relies on
-- **ux-design** — Produces `docs/ux/` which this skill uses for frontend task specificity
-- **task-add** — Append new tasks to an existing board (brownfield)
-- **task-status** — Move task status (start/complete/block)
-- **task-manager** — Orchestrator agent that invokes these task skills

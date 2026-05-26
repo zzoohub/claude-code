@@ -133,10 +133,3 @@ Every competitor page should include:
 7. **CTA** — Clear next step (trial, demo, import)
 
 ---
-
-## Cross-References
-
-- **search-visibility** (skill) — For SEO optimization of competitor pages
-- **copywriting** (skill) — For persuasive comparison copy
-- **cro** (skill) — For conversion optimization of these pages
-- **marketing-psychology** (skill) — For comparison framing (anchoring, contrast effect)

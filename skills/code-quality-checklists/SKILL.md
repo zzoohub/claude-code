@@ -15,7 +15,7 @@ description: |
 
 # Code Quality Checklists
 
-Structural issues that pass tests and lint but still blow up in production. This is the **Pass 2 (Informational)** layer of code review. Security issues (Pass 1) live in `security-checklists`.
+Structural issues that pass tests and lint but still blow up in production. This is the **Pass 2 (Informational)** layer of code review — for tests-pass-but-still-broken bugs.
 
 Pick sections by what the diff actually changes — most reviews need 3-5.
 
@@ -71,7 +71,7 @@ Pick sections by what the diff actually changes — most reviews need 3-5.
 
 - **Prompt lists tools that aren't wired up** — Model hallucinates tools.
 - **Token / word limits stated in multiple places** — Prompt says 500, UI copy says 300, `max_tokens` says 1000. They drift.
-- **Prompt changes without eval** — Any prompt change should be paired with a benchmark run (see `llm-app-design`).
+- **Prompt changes without eval** — Any prompt change should be paired with a benchmark run.
 
 ---
 
@@ -87,10 +87,3 @@ Pick sections by what the diff actually changes — most reviews need 3-5.
 These are Pass 2 (informational). Do not block a PR on them unless project policy says otherwise.
 
 ---
-
-## Cross-References
-
-- **security-checklists** (skill) — Pass 1 (blocking) OWASP Top 10:2025
-- **postgresql** (skill) — N+1 diagnosis via EXPLAIN
-- **llm-app-design** (skill) — Upstream design for LLM output handling and eval-driven prompt changes
-- **reviewer** (agent) — Invokes this skill during pre-landing review

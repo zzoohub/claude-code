@@ -17,16 +17,13 @@ description: |
 
 # Screen Design — Single Screen on Existing App
 
-Brownfield counterpart to `ux-design`. Designs one screen against the
-existing app-level UX without rewriting `docs/ux/ux-design.md`.
+Designs one screen against an existing app-level UX without rewriting
+`docs/ux/ux-design.md`.
 
 ## Prerequisites
 
 `docs/ux/ux-design.md` should already exist (defines IA, global patterns,
-shared interactions). If it doesn't, the project is greenfield — use
-`ux-design` instead.
-
-If your project keeps UX docs elsewhere, see `AGENTS.md`.
+shared interactions). If your project keeps UX docs elsewhere, see `AGENTS.md`.
 
 ## What This Skill Does
 
@@ -49,18 +46,8 @@ If your project keeps UX docs elsewhere, see `AGENTS.md`.
 
 - Does not rewrite app-level UX
 - Does not redesign navigation unless the new screen demands it
-- Does not produce visual designs, tokens, or component code (use
-  design-system + frontend skills)
-- Does not produce tasks (use `task-add`)
-
-## Loading References
-
-Load `ux-design`'s reference files as needed:
-- `ux-design/references/interaction-patterns.md` — for state design
-- `ux-design/references/ux-writing.md` — for copy
-- `ux-design/references/cognitive-principles.md` — when diagnosing friction
-- `ux-design/references/ergonomics.md` — for sizing/spacing/accessibility
-- `ux-design/references/3d-design.md` or `xr-design.md` — for 3D/XR screens
+- Does not produce visual designs, tokens, or component code
+- Does not produce tasks
 
 ## Workflow
 
@@ -74,8 +61,7 @@ Load `ux-design`'s reference files as needed:
    refreshing, offline
 5. **Write UX copy** — specific verbs for buttons, "what + how to fix" for
    errors, explanation + CTA for empty states
-6. **Run the Quick Checklist** from `ux-design/SKILL.md`
-7. **Patch `ux-design.md` if needed** — only when global IA or conventions
+6. **Patch `ux-design.md` if needed** — only when global IA or conventions
    change
 
 ## Quality Bar
@@ -89,7 +75,6 @@ Load `ux-design`'s reference files as needed:
 - [ ] Empty states: explanation + actionable CTA
 - [ ] Accessibility: contrast, focus, keyboard, screen reader labels
 - [ ] Mobile: primary actions in thumb zone, safe areas respected
-- [ ] No anti-patterns from `ux-design`'s anti-pattern list
 
 ## Output
 
@@ -101,11 +86,3 @@ into child screens (e.g., `settings-profile.md`, `settings-billing.md`).
 
 **Naming:** kebab-case matching the screen name. Modals, drawers, and sheets
 that belong to a screen live in that screen's file.
-
-## Cross-References
-
-- `ux-design` — Creates the initial app UX; this skill extends it
-- `feature-spec` — Provides feature requirements this screen serves
-- `design-system` — Tokens, components, visual patterns (consumed by
-  implementation, not this skill)
-- `task-add` — Generates frontend implementation tasks

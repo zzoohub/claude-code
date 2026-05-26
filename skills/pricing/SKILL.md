@@ -157,12 +157,3 @@ Credits are the bridge model: customers get budget predictability (like a subscr
 8. **Pricing is never done** — Revisit quarterly. Companies updating pricing quarterly see 2-4x higher ARPU.
 
 ---
-
-## Cross-References
-
-- **cro** — Paywall/upgrade flow optimization, conversion funnel design
-- **marketing-psychology** — Anchoring, decoy effect, compromise effect, loss aversion
-- **copywriting** — Pricing page copy, tier descriptions, CTA language
-- **competitor-pages** — Competitor pricing comparison and "vs" pages
-- **product-analytics** — Revenue metrics, cohort analysis, PMF assessment
-- **churn-prevention** — Cancel flow, payment recovery, retention strategies

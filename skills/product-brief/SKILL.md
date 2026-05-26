@@ -27,8 +27,8 @@ Keep the brief lean — anything the PRD covers in depth does not belong here.
 ## When to skip the brief
 
 Brownfield projects adding a feature to an existing product don't need a brief.
-Go straight to `feature-spec` for that one feature, or to `prd-craft` if the
-addition is large enough to warrant updating the vision PRD.
+A brief is a discovery tool for *new product directions*, not for incremental
+feature work on an existing product.
 
 ## What a Product Brief Is (and Is Not)
 

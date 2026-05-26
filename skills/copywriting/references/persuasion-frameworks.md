@@ -138,9 +138,8 @@ When writing copy:
 
 ---
 
-## Cross-References
+## Related Files
 
 - `copy-frameworks.md` — Page structure and CTA formulas (different scope — page-level layout, not persuasion framework)
 - `editing-sweeps.md` — Editing discipline applied to any framework's output
 - `plain-english.md` — Voice and jargon elimination
-- **marketing-psychology** (skill) — Full 70+ model psychology library (triggers above are the subset that appear most often in copy)

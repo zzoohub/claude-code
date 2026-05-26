@@ -2,7 +2,7 @@
 
 UX principles for screen-mediated 3D experiences. The user views and manipulates 3D content through a 2D viewport — desktop browser, mobile browser, or embedded viewer. The user is always *outside* the 3D scene, controlling a virtual camera.
 
-For technical implementation (renderers, frameworks, APIs, performance optimization), see the `web3d` skill.
+Scope: UX decisions for 3D viewports (camera interaction, object interaction, depth hierarchy, discoverability, accessibility). Technical implementation (renderers, frameworks, APIs, performance optimization) is outside this skill's scope.
 
 ---
 

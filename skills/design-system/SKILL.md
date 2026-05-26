@@ -4,18 +4,6 @@ description: |
   Design token architecture, component patterns, and cross-platform UI for web and React Native.
   Use when: building UI components, defining design tokens, creating themed interfaces, setting up dark mode or theming, configuring Tailwind with design tokens, setting up typography or motion systems, choosing component API patterns (flat vs compound vs explicit variants), adding shadows or elevation, or any task involving consistent styling across components. Use this skill whenever the user mentions design tokens, theming, dark mode toggle, component variants, or cross-platform styling — even if they don't explicitly say "design system".
   Do not use for: UX research or user journey decisions (use ux-design), business logic, data fetching, API design.
-  Workflow: ux-design (what/why) → this skill (tokens, components, patterns) → vercel-composition-patterns skill | expo-app-design:building-native-ui skill.
-references:
-  - references/tokens.md
-  - references/typography.md
-  - references/motion.md
-  - references/components.md
-  - references/platform-web.md
-  - references/pipeline.md
-  - references/react/components.md
-  - references/react/react-19.md
-  - references/react-native/platform.md
-  - references/react-native/typography.md
 ---
 
 # Design System

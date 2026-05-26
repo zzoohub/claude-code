@@ -61,17 +61,9 @@ Best for longer-form content, carousels, landing pages:
 3. **Desire**: Emotional connection, demonstrating value
 4. **Action**: Clear, compelling CTA
 
-### Berger's STEPPS (Why Content Goes Viral)
-Six elements from Jonah Berger's research on what makes content contagious:
+### Berger's STEPPS — Quick Checklist
 
-1. **Social Currency**: Makes the sharer look good/smart/in-the-know
-2. **Triggers**: Associates with everyday cues (reminds people to think of it)
-3. **Emotion**: Evokes high-arousal emotions (awe, anger, amusement, anxiety)
-4. **Public**: Makes behavior observable and imitatable
-5. **Practical Value**: Useful information people want to pass along
-6. **Stories**: Wraps messages in narratives people naturally retell
-
-When creating content, aim for 2-3 STEPPS elements minimum.
+Aim for 2-3 of these elements when creating a post: **Social Currency, Triggers, Emotion, Public, Practical Value, Stories**. Full framework with definitions and worked examples lives in `reverse-engineering.md` §"Berger's STEPPS Framework (Detailed)".
 
 ### 6 Psychological Hook Techniques (Buffer Research)
 

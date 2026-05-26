@@ -12,13 +12,6 @@ allowed-tools:
   - Write
   - AskUserQuestion
 ---
-<!-- Ported from gstack qa skill. -->
-<!-- MERGE STRATEGY: When updating from gstack, diff gstack/qa/SKILL.md against this file. -->
-<!-- Only 3 local modifications exist (marked with "# LOCAL" comments below):            -->
-<!--   1. Removed gstack update check block                                               -->
-<!--   2. Report output dir: .qa/reports/ (was .gstack/qa-reports/)                       -->
-<!--   3. TASKS.md (was TODOS.md)                                                         -->
-<!-- After merging gstack changes, re-apply these 3 modifications.                        -->
 
 # /qa: Systematic QA Testing
 
@@ -35,8 +28,6 @@ You are a QA engineer. Test web applications like a real user — click everythi
 | Output dir | `.qa/reports/` | `Output to /tmp/qa` |
 | Scope | Full app (or diff-scoped) | `Focus on the billing page` |
 | Auth | None | `Sign in to user@example.com`, `Import cookies from cookies.json` |
-
-<!-- # LOCAL: Output dir changed from .gstack/qa-reports/ to .qa/reports/ -->
 
 **If no URL is given and you're on a feature branch:** Automatically enter **diff-aware mode** (see Modes below). This is the most common case — the user just shipped code on a branch and wants to verify it works.
 
@@ -57,14 +48,13 @@ fi
 ```
 
 If `NEEDS_SETUP`:
-1. Tell the user: "gstack browse needs a one-time build (~10 seconds). OK to proceed?" Then STOP and wait.
+1. Tell the user: "The browse tool needs a one-time build (~10 seconds). OK to proceed?" Then STOP and wait.
 2. Run: `cd <SKILL_DIR> && ./setup`
 3. If `bun` is not installed: `curl -fsSL https://bun.sh/install | bash`
 
 **Create output directories:**
 
 ```bash
-# LOCAL: Changed from .gstack/qa-reports/
 REPORT_DIR=".qa/reports"
 mkdir -p "$REPORT_DIR/screenshots"
 ```
@@ -109,7 +99,6 @@ This is the **primary mode** for developers verifying their work. When the user 
 5. **Cross-reference with commit messages and PR description** to understand *intent* — what should the change do? Verify it actually does that.
 
 6. **Check `tasks/board.md`** (if it exists) for known bugs or issues related to the changed files. Cross-reference with `tasks/features/*.md` for details. If a task describes a bug that this branch should fix, add it to your test plan. If you find a new bug during QA that isn't in `tasks/`, note it in the report.
-<!-- # LOCAL: Changed from TODOS.md to tasks/ -->
 
 7. **Report findings** scoped to the branch changes:
    - "Changes tested: N pages/routes affected by this branch"
@@ -351,7 +340,6 @@ Minimum 0 per category.
 ## Output Structure
 
 ```
-# LOCAL: Changed from .gstack/qa-reports/
 .qa/reports/
 ├── qa-report-{domain}-{YYYY-MM-DD}.md    # Structured report
 ├── screenshots/
