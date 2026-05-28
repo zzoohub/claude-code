@@ -37,12 +37,18 @@ import { NestFactory } from "@nestjs/core";
 import { ConfigService } from "@nestjs/config";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { cleanupOpenApiDoc } from "nestjs-zod";
+import { Logger } from "nestjs-pino";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
 import { DomainExceptionFilter } from "./inbound/http/filters/domain-exception.filter";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // `bufferLogs: true` queues startup logs until nestjs-pino is wired,
+  // so the Nest banner uses the same JSON formatter as the rest of the app.
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+
+  // Replace the built-in logger with nestjs-pino (structured JSON, low overhead).
+  app.useLogger(app.get(Logger));
 
   // Security
   app.use(helmet());
@@ -76,9 +82,13 @@ bootstrap();
 ```typescript
 // src/app.module.ts
 import { Module } from "@nestjs/common";
-import { APP_PIPE } from "@nestjs/core";
+import { APP_GUARD, APP_PIPE } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { TerminusModule } from "@nestjs/terminus";
+import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
+import { ClsModule } from "nestjs-cls";
+import { LoggerModule } from "nestjs-pino";
+import { randomUUID } from "node:crypto";
 import { validateConfig } from "./config";
 
 import { TypeOrmPersistenceModule } from "./outbound/typeorm/typeorm.module";
@@ -90,13 +100,47 @@ import { ZodValidationPipe } from "./inbound/http/pipes/zod-validation.pipe";
 @Module({
   imports: [
     ConfigModule.forRoot({ validate: validateConfig, isGlobal: true }),
+
+    // Request-scoped context (request_id, tenant_id, userId).
+    // The CLS store is populated automatically per request; adapters read it
+    // without threading values through every constructor.
+    ClsModule.forRoot({
+      global: true,
+      middleware: {
+        mount: true,
+        generateId: true,
+        idGenerator: () => randomUUID(),
+        setup: (cls, req) => {
+          cls.set("requestId", cls.getId());
+          // Populate tenantId / userId from guard or header here once auth runs.
+        },
+      },
+    }),
+
+    // Structured logging — stamps every line with the CLS request_id.
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: process.env.NODE_ENV === "production" ? "info" : "debug",
+        // Avoid noisy req/res serialisation in production; rely on Pino's defaults.
+        autoLogging: { ignore: (req) => req.url === "/health/live" },
+        customProps: () => ({}),
+      },
+    }),
+
+    // Global rate limit. Per-route tightening with @Throttle(); opt-out with @SkipThrottle().
+    ThrottlerModule.forRoot([{ name: "default", ttl: 60_000, limit: 100 }]),
+
     TypeOrmPersistenceModule,
     TerminusModule,
     AuthorsModule,
   ],
   controllers: [HealthController],
-  // Global ZodValidationPipe — validates every createZodDto-typed parameter.
-  providers: [{ provide: APP_PIPE, useClass: ZodValidationPipe }],
+  providers: [
+    // Global ZodValidationPipe — validates every createZodDto-typed parameter.
+    { provide: APP_PIPE, useClass: ZodValidationPipe },
+    // Global rate-limit guard (ThrottlerGuard reads ThrottlerModule's config).
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}
 ```
@@ -112,24 +156,30 @@ import { AuthorServiceImpl } from "./domain/authors/service";
 import { NoOpMetrics, NoOpNotifier } from "./outbound/noop";
 
 /**
- * Feature module: wires controller + service.
+ * Feature module — wires controller, service, and supporting ports.
+ *
+ * Default pattern: `useClass`. `AuthorServiceImpl` carries `@Injectable()`,
+ * so NestJS reads its constructor metadata and injects the abstract-class
+ * tokens (AuthorRepository / AuthorMetrics / AuthorNotifier) directly.
+ *
  * AuthorRepository comes from the persistence module (@Global).
- * Service is wired via useFactory — keeps domain free from @Injectable().
+ *
+ * Alternative — `useFactory` (no @Injectable() in domain). Keeps
+ * domain/ free of NestJS imports at the cost of more wiring per service:
+ *
+ *   {
+ *     provide: AuthorService,
+ *     useFactory: (repo, metrics, notifier) =>
+ *       new AuthorServiceImpl(repo, metrics, notifier),
+ *     inject: [AuthorRepository, AuthorMetrics, AuthorNotifier],
+ *   }
  */
 @Module({
   controllers: [AuthorsController],
   providers: [
     { provide: AuthorMetrics, useClass: NoOpMetrics },
     { provide: AuthorNotifier, useClass: NoOpNotifier },
-    {
-      provide: AuthorService,
-      useFactory: (
-        repo: AuthorRepository,
-        metrics: AuthorMetrics,
-        notifier: AuthorNotifier,
-      ) => new AuthorServiceImpl(repo, metrics, notifier),
-      inject: [AuthorRepository, AuthorMetrics, AuthorNotifier],
-    },
+    { provide: AuthorService, useClass: AuthorServiceImpl },
   ],
   exports: [AuthorService],
 })
@@ -196,12 +246,16 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
 {
   "name": "myapp",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",
     "start": "node dist/main.js",
-    "test": "jest",
-    "test:e2e": "jest --config jest-e2e.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
     "migration:generate": "typeorm-ts-node-commonjs migration:generate -d ./data-source.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d ./data-source.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d ./data-source.ts"
@@ -214,15 +268,16 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
     "@nestjs/swagger": "^11.0",
     "@nestjs/terminus": "^11.0",
     "@nestjs/typeorm": "^11.0.1",
-    "@nestjs/passport": "^11.0",
     "@nestjs/throttler": "^6.0",
     "@node-rs/argon2": "^2.0",
-    "jsonwebtoken": "^9.0",
+    "@opentelemetry/api": "^1.9",
+    "jose": "^6.2",
     "typeorm": "^1.0",
     "pg": "^8.13",
-    "passport": "^0.7",
-    "passport-jwt": "^4.0",
     "nestjs-zod": "^5.4",
+    "nestjs-pino": "^4.4",
+    "pino-http": "^10.4",
+    "nestjs-cls": "^5.0",
     "zod": "^4.0",
     "helmet": "^8.0",
     "reflect-metadata": "^0.2",
@@ -232,12 +287,14 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
     "@nestjs/cli": "^11.0",
     "@nestjs/testing": "^11.0",
     "typescript": "^5.7",
-    "jest": "^29.0",
-    "@types/jest": "^29.0",
-    "ts-jest": "^29.0",
+    "vitest": "^3.0",
+    "@vitest/coverage-v8": "^3.0",
+    "unplugin-swc": "^1.5",
+    "supertest": "^7.0",
     "ts-node": "^10.9",
     "@types/express": "^4.0",
-    "@types/pg": "^8.0"
+    "@types/pg": "^8.0",
+    "@types/supertest": "^6.0"
   }
 }
 ```
@@ -245,8 +302,10 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
 ```bash
 bun install                    # install all deps
 bun run dev                    # watch mode development
-bun run test                   # run unit tests
+bun run test                   # run unit tests (vitest)
 ```
+
+> **Why no `jsonwebtoken` / `passport-jwt`?** The JWT guard uses `jose` directly — modern, ESM-friendly, clean security history. Add `@nestjs/passport` + a strategy package only when you need OAuth providers alongside JWT.
 
 ---
 
@@ -280,6 +339,50 @@ bun run test                   # run unit tests
 ```
 
 Key: `emitDecoratorMetadata` and `experimentalDecorators` are required for NestJS DI **and** for TypeORM `@Entity`/`@Column` reflection.
+
+---
+
+## Vitest config
+
+Vitest replaces Jest as the test runner — faster startup, native ESM, better with Bun. The catch: Vitest doesn't transform decorators by default. Use `unplugin-swc` so `@Injectable`, `@Entity`, etc. emit reflect metadata correctly.
+
+```typescript
+// vitest.config.ts
+import { defineConfig } from "vitest/config";
+import swc from "unplugin-swc";
+
+export default defineConfig({
+  test: {
+    globals: false,          // import { describe, it, expect } explicitly
+    environment: "node",
+    include: ["tests/**/*.spec.ts"],
+    setupFiles: ["reflect-metadata"],
+  },
+  plugins: [
+    swc.vite({
+      jsc: {
+        parser: { syntax: "typescript", decorators: true },
+        transform: { legacyDecorator: true, decoratorMetadata: true },
+        target: "es2023",
+      },
+    }),
+  ],
+});
+```
+
+```typescript
+// vitest.e2e.config.ts — same plugin, separate include + longer timeouts
+import { defineConfig, mergeConfig } from "vitest/config";
+import base from "./vitest.config";
+
+export default mergeConfig(base, defineConfig({
+  test: {
+    include: ["tests/e2e/**/*.spec.ts"],
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
+  },
+}));
+```
 
 ---
 
@@ -393,16 +496,17 @@ export async function createTestApp(overrides?: {
 }
 ```
 
-### Controller Tests (supertest)
+### Controller Tests (Vitest + supertest)
 
 ```typescript
 // tests/controllers/authors.controller.spec.ts
-import * as request from "supertest";
+import { afterEach, describe, expect, it } from "vitest";
+import request from "supertest";
+import type { INestApplication } from "@nestjs/common";
 import { AuthorName } from "../../src/domain/authors/models";
 import { DuplicateAuthorError } from "../../src/domain/authors/errors";
 import { createTestApp } from "../helpers";
 import { MockAuthorRepository } from "../mocks";
-import type { INestApplication } from "@nestjs/common";
 
 describe("AuthorsController", () => {
   let app: INestApplication;
@@ -430,23 +534,27 @@ describe("AuthorsController", () => {
       expect(res.body.type).toContain("duplicate-author");
     });
 
-    it("returns 400 for empty name (Zod)", async () => {
+    it("returns 422 for empty name (Zod)", async () => {
       const repo = new MockAuthorRepository();
       ({ app } = await createTestApp({ repo }));
+      // Status is 422 (Unprocessable Entity) — body validated but semantically
+      // invalid. 400 would imply malformed transport (unparseable JSON, etc.).
       await request(app.getHttpServer())
-        .post("/v1/authors").send({ name: "" }).expect(400);
+        .post("/v1/authors").send({ name: "" }).expect(422);
     });
   });
 
   describe("GET /v1/authors", () => {
-    it("returns empty list with pagination", async () => {
+    it("returns empty list with cursor pagination meta", async () => {
       const repo = new MockAuthorRepository();
       ({ app } = await createTestApp({ repo }));
 
       const res = await request(app.getHttpServer())
         .get("/v1/authors?limit=10").expect(200);
       expect(res.body.data).toEqual([]);
-      expect(res.body.has_more).toBe(false);
+      // Cursor metadata lives in `meta`, per api-design.md.
+      expect(res.body.meta.has_more).toBe(false);
+      expect(res.body.meta.next_cursor).toBeNull();
     });
   });
 });
@@ -456,6 +564,7 @@ describe("AuthorsController", () => {
 
 ```typescript
 // tests/services/author.service.spec.ts
+import { describe, expect, it } from "vitest";
 import { AuthorServiceImpl } from "../../src/domain/authors/service";
 import { AuthorName } from "../../src/domain/authors/models";
 import { DuplicateAuthorError, UnknownAuthorError } from "../../src/domain/authors/errors";
@@ -500,10 +609,13 @@ describe("AuthorServiceImpl", () => {
 });
 ```
 
+> **Spy mock note:** hand-rolled `SpyMetrics` / `SpyNotifier` are clear at small port surfaces. Once a port has 5+ methods, hybrid with `vi.fn()` — extend the abstract class but back each method with a `vi.fn()` so you get the same Stub/Saboteur/Spy ergonomics plus `toHaveBeenCalledWith` assertions without growing a class per behaviour.
+
 ### Integration Tests (real DB)
 
 ```typescript
 // tests/integration/typeorm-author.repository.spec.ts
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { Test } from "@nestjs/testing";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { DataSource } from "typeorm";

@@ -34,6 +34,47 @@ export class AuthorEntity {
 }
 ```
 
+```typescript
+// src/outbound/typeorm/entities/outbox.entity.ts
+import {
+  Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, Index,
+} from "typeorm";
+
+/**
+ * Outbox row — written inside the same UoW as the aggregate. A relay worker
+ * reads `published_at IS NULL ORDER BY id LIMIT N`, publishes, then updates
+ * `published_at`. `traceparent` carries the originating request's trace.
+ */
+@Entity({ name: "outbox" })
+export class OutboxEntity {
+  @PrimaryGeneratedColumn("uuid")
+  id!: string;
+
+  @Column({ name: "aggregate_type", type: "text" })
+  aggregateType!: string;
+
+  @Column({ name: "aggregate_id", type: "text" })
+  aggregateId!: string;
+
+  @Column({ name: "event_type", type: "text" })
+  eventType!: string;
+
+  @Column({ type: "jsonb" })
+  payload!: Record<string, unknown>;
+
+  @Column({ type: "text", nullable: true })
+  traceparent!: string | null;
+
+  @CreateDateColumn({ name: "created_at", type: "timestamptz" })
+  createdAt!: Date;
+
+  // Index covers the relay's "find next batch" query.
+  @Index("idx_outbox_unpublished", ["publishedAt", "id"])
+  @Column({ name: "published_at", type: "timestamptz", nullable: true })
+  publishedAt!: Date | null;
+}
+```
+
 ## Outbound: TypeORM — Module
 
 ```typescript
@@ -42,8 +83,13 @@ import { Global, Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AuthorEntity } from "./entities/author.entity";
+import { OutboxEntity } from "./entities/outbox.entity";
 import { TypeOrmAuthorRepository } from "./author.repository";
+import { TypeOrmOutboxRepository } from "./typeorm-outbox.repository";
+import { TypeOrmUnitOfWork } from "./typeorm-unit-of-work";
 import { AuthorRepository } from "../../domain/authors/ports";
+import { OutboxRepository } from "../../domain/shared/outbox";
+import { UnitOfWork } from "../../domain/shared/unit-of-work";
 import type { AppConfig } from "../../config";
 
 @Global()
@@ -54,7 +100,7 @@ import type { AppConfig } from "../../config";
       useFactory: (config: ConfigService<AppConfig, true>) => ({
         type: "postgres",
         url: config.get("DATABASE_URL"),
-        entities: [AuthorEntity],
+        entities: [AuthorEntity, OutboxEntity],
         migrations: ["dist/migrations/*.js"],
         // synchronize MUST stay false in every deployed env — migrations only.
         synchronize: false,
@@ -62,15 +108,21 @@ import type { AppConfig } from "../../config";
         poolSize: 10,
       }),
     }),
-    TypeOrmModule.forFeature([AuthorEntity]),
+    TypeOrmModule.forFeature([AuthorEntity, OutboxEntity]),
   ],
   providers: [
+    // Repository implementations — each bound to its domain port.
     { provide: AuthorRepository, useClass: TypeOrmAuthorRepository },
+    { provide: OutboxRepository, useClass: TypeOrmOutboxRepository },
+    // UnitOfWork — wraps DataSource.transaction + CLS propagation.
+    { provide: UnitOfWork, useClass: TypeOrmUnitOfWork },
   ],
-  exports: [AuthorRepository, TypeOrmModule],
+  exports: [AuthorRepository, OutboxRepository, UnitOfWork, TypeOrmModule],
 })
 export class TypeOrmPersistenceModule {}
 ```
+
+> The persistence module depends on `ClsModule` (registered in `AppModule`) for the CLS-scoped `EntityManager`. CLS is set up via middleware on the request, then `TypeOrmUnitOfWork.run()` nests its own frame on top.
 
 ## Outbound: Cursor Helpers (composite + base64)
 
@@ -118,9 +170,11 @@ export class AuthorMapper {
 // src/outbound/typeorm/author.repository.ts
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { QueryFailedError, Repository } from "typeorm";
+import { ClsService } from "nestjs-cls";
+import { EntityManager, QueryFailedError, Repository } from "typeorm";
 import { AuthorEntity } from "./entities/author.entity";
 import { AuthorMapper } from "./mapper";
+import { TYPEORM_EM_KEY } from "./typeorm-unit-of-work";
 import { decodeCursor, encodeCursor } from "../cursor";
 import { AuthorRepository } from "../../domain/authors/ports";
 import type { Author, CreateAuthorRequest, CursorPage } from "../../domain/authors/models";
@@ -136,15 +190,26 @@ export class TypeOrmAuthorRepository extends AuthorRepository {
   constructor(
     @InjectRepository(AuthorEntity)
     private readonly repo: Repository<AuthorEntity>,
+    private readonly cls: ClsService,
   ) {
     super();
+  }
+
+  /**
+   * Pick the active EntityManager — CLS-scoped if we're inside `uow.run(...)`,
+   * otherwise the repository's default manager. Every read/write goes through
+   * this helper so the same code participates in any active transaction
+   * without each caller threading an `em` parameter.
+   */
+  private em(): EntityManager {
+    return this.cls.get<EntityManager>(TYPEORM_EM_KEY) ?? this.repo.manager;
   }
 
   async createAuthor(req: CreateAuthorRequest): Promise<Author> {
     const entity = AuthorMapper.toEntity(req);
     try {
-      // Data Mapper style: repository.save(entity), never entity.save().
-      const saved = await this.repo.save(entity);
+      // Data Mapper style: em.save(EntityClass, entity), never entity.save().
+      const saved = await this.em().save(AuthorEntity, entity);
       return AuthorMapper.toDomain(saved);
     } catch (error) {
       if (this.isUniqueConstraintError(error)) {
@@ -155,7 +220,7 @@ export class TypeOrmAuthorRepository extends AuthorRepository {
   }
 
   async findAuthor(authorId: string): Promise<Author | null> {
-    const entity = await this.repo.findOneBy({ id: authorId });
+    const entity = await this.em().findOneBy(AuthorEntity, { id: authorId });
     return entity ? AuthorMapper.toDomain(entity) : null;
   }
 
@@ -165,7 +230,8 @@ export class TypeOrmAuthorRepository extends AuthorRepository {
   ): Promise<CursorPage<Author>> {
     // QueryBuilder for tuple comparison `(created_at, id) > (cursorAt, cursorId)`.
     // Plain `find({ where })` doesn't support tuple predicates.
-    const qb = this.repo.createQueryBuilder("author")
+    const qb = this.em()
+      .createQueryBuilder(AuthorEntity, "author")
       .orderBy("author.created_at", "ASC")
       .addOrderBy("author.id", "ASC")
       .limit(limit + 1);
@@ -199,15 +265,21 @@ export class TypeOrmAuthorRepository extends AuthorRepository {
 }
 ```
 
-## Outbound: TypeORM — Transaction Example
+> **Why `this.em()` everywhere?** Without it, `this.repo.save(...)` always uses the data source's *default* manager — never the UoW's scoped one. The result: `uow.run(...)` opens a tx, but the repo writes outside it. Silent atomicity failure. Making every read/write go through `this.em()` is the only safe default.
+
+## Outbound: TypeORM — Inline Single-Repo Transaction
+
+For a transaction confined to **one repository** (writing two entities the
+adapter already knows about), inline `manager.transaction(...)` is the simplest
+path — no UoW needed.
 
 ```typescript
-// Multi-step operations that need atomicity.
-// EntityManager.transaction() wraps everything in a single connection;
-// throwing inside the callback rolls the whole thing back.
 async createAuthorWithProfile(req: CreateAuthorWithProfileRequest): Promise<Author> {
   try {
-    const saved = await this.repo.manager.transaction(async (manager) => {
+    // Use the active EM as the *transaction root*. If we're already inside
+    // `uow.run(...)`, this nests via SAVEPOINT (be aware). If not, it opens
+    // a fresh tx for just this method.
+    const saved = await this.em().transaction(async (manager) => {
       const author = await manager.save(AuthorEntity, { name: req.name.value });
       await manager.save(ProfileEntity, { authorId: author.id, bio: req.bio });
       return author;
@@ -220,6 +292,8 @@ async createAuthorWithProfile(req: CreateAuthorWithProfileRequest): Promise<Auth
 }
 ```
 
+For atomicity that spans multiple repositories (aggregate write + outbox enqueue, or two aggregates touched together), use the `UnitOfWork` port instead — the service composes the repos inside one `uow.run(...)` callback.
+
 ---
 
 ## Inbound: ZodValidationPipe
@@ -228,20 +302,24 @@ async createAuthorWithProfile(req: CreateAuthorWithProfileRequest): Promise<Auth
 
 ```typescript
 // src/inbound/http/pipes/zod-validation.pipe.ts
-import { BadRequestException } from "@nestjs/common";
+import { UnprocessableEntityException } from "@nestjs/common";
 import { createZodValidationPipe } from "nestjs-zod";
 import type { ZodError } from "zod";
 
 /**
  * nestjs-zod's pipe, customized so validation failures match the API's
  * RFC 9457 ProblemDetails error shape instead of nestjs-zod's default body.
+ *
+ * Status: 422 Unprocessable Entity (matches api-design.md — schema parsed,
+ * semantic validation failed). Use 400 only for malformed transport
+ * (unparseable JSON, missing Content-Type, etc.).
  */
 export const ZodValidationPipe = createZodValidationPipe({
   createValidationException: (error: ZodError) =>
-    new BadRequestException({
+    new UnprocessableEntityException({
       type: "https://api.example.com/errors/validation-failed",
       title: "Validation Failed",
-      status: 400,
+      status: 422,
       errors: error.issues.map((e) => ({
         field: e.path.join("."),
         code: e.code,
@@ -301,15 +379,28 @@ export class AuthorResponse {
   }
 }
 
-export class CursorPageResponse {
-  @ApiProperty({ type: [AuthorResponse] })
-  data: AuthorResponse[];
+/**
+ * Cursor pagination response shape — matches api-design.md:
+ *   { data: [...], meta: { limit, next_cursor, has_more } }
+ * Keep cursor metadata inside `meta`, never flat on the top level.
+ */
+export class CursorPageMeta {
+  @ApiProperty({ example: 20 })
+  limit: number;
 
-  @ApiProperty({ nullable: true })
+  @ApiProperty({ nullable: true, example: "eyJjcmVhdGVkQXQiOiIuLi4ifQ==" })
   next_cursor: string | null;
 
   @ApiProperty()
   has_more: boolean;
+}
+
+export class CursorPageResponse {
+  @ApiProperty({ type: [AuthorResponse] })
+  data: AuthorResponse[];
+
+  @ApiProperty({ type: CursorPageMeta })
+  meta: CursorPageMeta;
 }
 ```
 
@@ -351,8 +442,11 @@ export class AuthorsController {
     const page = await this.authorService.listAuthors(query.cursor, query.limit);
     return {
       data: page.items.map(AuthorResponse.fromDomain),
-      next_cursor: page.nextCursor,
-      has_more: page.hasMore,
+      meta: {
+        limit: query.limit,
+        next_cursor: page.nextCursor,
+        has_more: page.hasMore,
+      },
     };
   }
 
@@ -372,10 +466,17 @@ export class AuthorsController {
 
 ```typescript
 // src/inbound/http/filters/domain-exception.filter.ts
+//
+// Note (Express coupling): this filter writes directly through Express's
+// Response object (status/header/json). If you swap to Fastify
+// (@nestjs/platform-fastify), replace these calls with the Fastify reply
+// API or use NestJS's platform-agnostic HttpAdapterHost.
 import {
   Catch, ExceptionFilter, ArgumentsHost, Logger, HttpException,
 } from "@nestjs/common";
 import type { Response } from "express";
+import { DomainError } from "../../../domain/shared/errors";
+import { UnknownAuthorError } from "../../../domain/authors/errors";
 
 interface ProblemDetails {
   type: string; title: string; status: number; detail: string;
@@ -400,9 +501,11 @@ export class DomainExceptionFilter implements ExceptionFilter {
       return;
     }
 
-    if (exception instanceof Error && "tag" in exception) {
-      const tagged = exception as Error & { tag: string };
-      switch (tagged.tag) {
+    // `instanceof DomainError` rules out third-party Error objects that
+    // might happen to carry a `tag` field. Switch on the string-literal
+    // discriminant; unmapped tags fall through to the 500 below.
+    if (exception instanceof DomainError) {
+      switch (exception.tag) {
         case "DuplicateAuthorError":
           response.status(409).header("Content-Type", "application/problem+json")
             .json(problem("duplicate-author", "Conflict", 409, exception.message));
@@ -416,10 +519,12 @@ export class DomainExceptionFilter implements ExceptionFilter {
             .json(problem("not-found", "Not Found", 404, exception.message));
           return;
         case "UnknownAuthorError":
-          this.logger.error("Unexpected error:", (exception as any).cause);
+          this.logger.error("Unexpected error:", (exception as UnknownAuthorError).cause);
           break;
         default:
-          this.logger.error("Unhandled domain error:", exception);
+          // New domain errors fall through here. Add a case above before
+          // shipping; the request gets a 500 in the meantime.
+          this.logger.error(`Unhandled domain error tag "${exception.tag}":`, exception);
       }
     } else {
       this.logger.error("Unhandled error:", exception);
@@ -431,30 +536,62 @@ export class DomainExceptionFilter implements ExceptionFilter {
 }
 ```
 
-## Inbound: Auth Guard (JWT)
+## Inbound: Auth Guard (JWT with `jose`)
 
 ```typescript
 // src/inbound/http/guards/jwt-auth.guard.ts
+//
+// `jose` (https://github.com/panva/jose) is the modern JWT/JOSE library:
+// EdDSA/ES256 first-class, ESM/CJS, JWK/JWKS, no CVE backlog. Prefer it
+// over `jsonwebtoken` (CJS-only, slow-to-patch security history).
 import {
   CanActivate, ExecutionContext, Injectable, UnauthorizedException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import type { Request } from "express";
-import { verify } from "jsonwebtoken";
-import type { ConfigService } from "@nestjs/config";
+import { jwtVerify, createSecretKey, type KeyObject } from "jose";
+import { z } from "zod";
 import type { AppConfig } from "../../../config";
+
+/**
+ * Validate the decoded payload — never trust the JWT body just because
+ * the signature checks out. Refuse anything we don't recognise.
+ */
+const JwtPayload = z.object({
+  sub: z.string().min(1),
+  exp: z.number(),
+});
+
+// Augment Express's Request locally so we don't sprinkle `as any` everywhere.
+interface AuthedRequest extends Request {
+  userId?: string;
+}
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  constructor(private readonly config: ConfigService<AppConfig, true>) {}
+  private readonly secret: KeyObject;
 
-  canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest<Request>();
+  constructor(config: ConfigService<AppConfig, true>) {
+    // Encode once, reuse — createSecretKey is cheap but `jwtVerify` accepts
+    // either a KeyObject or a Uint8Array, and a stable key object is friendlier
+    // to swap to JWKS / RSA later.
+    this.secret = createSecretKey(config.get("JWT_SECRET"), "utf-8");
+  }
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<AuthedRequest>();
     const authHeader = request.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) throw new UnauthorizedException("Missing token");
+    if (!authHeader?.startsWith("Bearer ")) {
+      throw new UnauthorizedException("Missing token");
+    }
 
     try {
-      const payload = verify(authHeader.slice(7), this.config.get("JWT_SECRET"));
-      (request as any).userId = (payload as any).sub;
+      const { payload } = await jwtVerify(authHeader.slice(7), this.secret, {
+        // Tighten this to your real algorithms — never accept "none".
+        algorithms: ["HS256"],
+      });
+      const validated = JwtPayload.parse(payload);
+      request.userId = validated.sub;
       return true;
     } catch {
       throw new UnauthorizedException("Invalid token");
@@ -462,6 +599,8 @@ export class JwtAuthGuard implements CanActivate {
   }
 }
 ```
+
+For OAuth / multiple strategies in the same app, layer `@nestjs/passport` on top — the guard above stays as the JWT case.
 
 ## Inbound: Healthcheck
 
@@ -524,12 +663,52 @@ export class SyncAuthorProcessor extends WorkerHost {
 
 ---
 
-## Outbound: Outbox Adapter (transactional, TypeORM)
+## Outbound: UnitOfWork Adapter (TypeORM + nestjs-cls)
 
-The outbox row must be inserted inside the same `EntityManager.transaction` callback as the aggregate write. Application service decides when to start the tx; the adapter executes both writes against the scoped `EntityManager`.
+For cross-repository atomicity, the `UnitOfWork` port wraps `DataSource.transaction(...)` and propagates the scoped `EntityManager` to participating repositories via `nestjs-cls`. The service composes the writes; the adapter handles the plumbing.
 
 ```typescript
-// src/domain/shared/events.ts — plain data, no NestJS imports
+// src/outbound/typeorm/typeorm-unit-of-work.ts
+import { Injectable } from "@nestjs/common";
+import { DataSource } from "typeorm";
+import { ClsService } from "nestjs-cls";
+import { UnitOfWork } from "../../domain/shared/unit-of-work";
+
+/**
+ * CLS key for the active EntityManager. Every CLS-aware repository reads
+ * this — if present, the repo participates in the active tx; if absent,
+ * the repo uses its default manager (i.e. a fresh connection per call).
+ */
+export const TYPEORM_EM_KEY = "typeorm:em";
+
+@Injectable()
+export class TypeOrmUnitOfWork extends UnitOfWork {
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly cls: ClsService,
+  ) { super(); }
+
+  run<T>(fn: () => Promise<T>): Promise<T> {
+    // DataSource.transaction opens the tx and supplies the scoped EM.
+    // cls.run nests a CLS frame inside the tx so this.em() in repos sees it.
+    return this.dataSource.transaction(async (em) =>
+      this.cls.run(async () => {
+        this.cls.set(TYPEORM_EM_KEY, em);
+        return fn();
+      }),
+    );
+  }
+}
+```
+
+> **CLS scope:** the request's outer CLS frame (request_id, userId from `ClsModule.forRoot({ middleware: ... })`) propagates *into* `cls.run(...)` automatically — `nestjs-cls` runs nested frames as children of the active store. The new frame just adds the scoped `EntityManager` on top.
+
+## Outbound: Outbox via UoW
+
+The outbox row must commit atomically with the aggregate write. With UoW, the service composes both — no special repository shape needed.
+
+```typescript
+// src/domain/shared/events.ts — plain data, no infra deps
 export interface DomainEvent {
   readonly aggregateType: string;
   readonly aggregateId: string;
@@ -539,84 +718,150 @@ export interface DomainEvent {
 ```
 
 ```typescript
-// src/domain/authors/ports.ts — port carries events to persist atomically
-export abstract class AuthorRepository {
-  abstract createAuthor(
-    req: CreateAuthorRequest,
-    events: readonly DomainEvent[],
-  ): Promise<Author>;
-  // ...
+// src/domain/shared/outbox.ts — port
+import type { DomainEvent } from "./events";
+
+export abstract class OutboxRepository {
+  abstract enqueue(events: readonly DomainEvent[]): Promise<void>;
 }
 ```
 
 ```typescript
-// src/outbound/typeorm/postgres-author-repository.ts
+// src/outbound/typeorm/tracing.ts
+//
+// Format the active OTel span as a W3C `traceparent` header so the outbox
+// row carries the originating request's trace context. Returns null if no
+// span is active (test runs, scheduled jobs without auto-instrumentation).
+import { trace } from "@opentelemetry/api";
+
+export function currentTraceparent(): string | null {
+  const ctx = trace.getActiveSpan()?.spanContext();
+  if (!ctx) return null;
+  const flags = ctx.traceFlags.toString(16).padStart(2, "0");
+  return `00-${ctx.traceId}-${ctx.spanId}-${flags}`;
+}
+```
+
+```typescript
+// src/outbound/typeorm/typeorm-outbox.repository.ts
 import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
-import { AuthorEntity } from "./entities/author.entity";
+import { ClsService } from "nestjs-cls";
+import { EntityManager, Repository } from "typeorm";
 import { OutboxEntity } from "./entities/outbox.entity";
+import { TYPEORM_EM_KEY } from "./typeorm-unit-of-work";
 import { currentTraceparent } from "./tracing";
+import { OutboxRepository } from "../../domain/shared/outbox";
+import type { DomainEvent } from "../../domain/shared/events";
 
 @Injectable()
-export class PostgresAuthorRepository extends AuthorRepository {
+export class TypeOrmOutboxRepository extends OutboxRepository {
   constructor(
-    @InjectRepository(AuthorEntity)
-    private readonly repo: Repository<AuthorEntity>,
-  ) {
-    super();
+    @InjectRepository(OutboxEntity)
+    private readonly repo: Repository<OutboxEntity>,
+    private readonly cls: ClsService,
+  ) { super(); }
+
+  private em(): EntityManager {
+    return this.cls.get<EntityManager>(TYPEORM_EM_KEY) ?? this.repo.manager;
   }
 
-  async createAuthor(
-    req: CreateAuthorRequest,
-    events: readonly DomainEvent[],
-  ): Promise<Author> {
-    // Explicit tx — visible at the call site, no decorator magic.
-    return this.repo.manager.transaction(async (em) => {
-      const saved = await em.save(AuthorEntity, AuthorEntity.fromDomain(req));
-
-      if (events.length > 0) {
-        // Trace context captured at write time, not at relay time.
-        const traceparent = currentTraceparent();
-        await em.save(
-          OutboxEntity,
-          events.map((e) =>
-            OutboxEntity.fromDomainEvent(e, traceparent),
-          ),
-        );
-      }
-
-      return Author.fromEntity(saved);
-    });
+  async enqueue(events: readonly DomainEvent[]): Promise<void> {
+    if (events.length === 0) return;
+    // Trace context captured at write time, not at relay time, so the
+    // published event carries the originating request's trace.
+    const traceparent = currentTraceparent();
+    await this.em().save(
+      OutboxEntity,
+      events.map((e) => ({
+        aggregateType: e.aggregateType,
+        aggregateId: e.aggregateId,
+        eventType: e.eventType,
+        payload: e.payload,
+        traceparent,
+        publishedAt: null,
+      })),
+    );
   }
 }
 ```
 
 ```typescript
-// Application service composes the events
+// Application service — composes aggregate write + outbox enqueue inside one UoW.
 async createAuthor(req: CreateAuthorRequest): Promise<Author> {
-  const events: DomainEvent[] = [{
-    aggregateType: "author",
-    aggregateId: req.name.value,
-    eventType: "AuthorCreated",
-    payload: { name: req.name.value },
-  }];
-  const author = await this.repo.createAuthor(req, events);
-  await this.metrics.recordCreation();
-  return author;
+  try {
+    const author = await this.uow.run(async () => {
+      const saved = await this.authorRepo.createAuthor(req);
+      await this.outbox.enqueue([{
+        aggregateType: "author",
+        aggregateId: saved.id,
+        eventType: "AuthorCreated",
+        payload: { name: saved.name.value },
+      }]);
+      return saved;
+    });
+    await this.metrics.recordCreationSuccess();
+    return author;
+  } catch (error) {
+    await this.metrics.recordCreationFailure();
+    if (error instanceof DomainError) throw error;
+    throw new UnknownAuthorError(error);
+  }
 }
 ```
 
 **Outbox relay**: the most idiomatic NestJS approach is a `@Processor("outbox")` BullMQ worker scheduled by a `@Cron` task that reads `WHERE published_at IS NULL ORDER BY id LIMIT N`, publishes to the broker, then updates `published_at`. Keep the relay in its own module so it can be deployed as a separate process if traffic grows.
 
-### Why not `@Transactional` decorator?
+### Cross-aggregate orchestration (general UoW pattern)
 
-The `typeorm-transactional` package adds a `@Transactional()` decorator that uses AsyncLocalStorage to propagate a tx through the call stack. It hides the tx boundary in metadata and depends on a third-party lib. The hexagonal-friendlier choice is explicit `manager.transaction(...)`: tx boundary is visible, no extra lib, no risk of "why did this call fall outside the tx?" debugging sessions.
+The same primitive composes any cross-repo flow:
 
-### Common gotchas
+```typescript
+// Transfer post ownership between authors — three writes, one transaction.
+async transferPost(from: AuthorId, to: AuthorId, postId: PostId): Promise<void> {
+  await this.uow.run(async () => {
+    await this.authorRepo.releasePost(from, postId);
+    await this.authorRepo.acquirePost(to, postId);
+    await this.postRepo.reassign(postId, to);
+    // If any of the three throws, all three roll back together.
+  });
+}
+```
 
-- Don't make `Outbox` a separate `@Injectable` provider that opens its own `manager.transaction`. Two transactions = dual write.
-- Don't rely on TypeORM lifecycle hooks (`@AfterInsert`) to publish events — they fire per row, not per tx, and have no tx context.
+### Alternative: `@Transactional` decorator (typeorm-transactional)
+
+If your codebase is already invested in `typeorm-transactional`, its `@Transactional()` decorator gives you the same atomicity guarantee with less per-call-site wiring. It uses AsyncLocalStorage under the hood, just like UoW.
+
+```typescript
+// Same effect as uow.run(...) but the boundary is in the decorator,
+// not visible at the call site.
+@Injectable()
+export class AuthorServiceImpl extends AuthorService {
+  @Transactional()
+  async createAuthor(req: CreateAuthorRequest): Promise<Author> {
+    const author = await this.authorRepo.createAuthor(req);
+    await this.outbox.enqueue([...]);
+    return author;
+  }
+}
+```
+
+**Trade-offs to accept if you pick `@Transactional`:**
+- Tx boundary moves into decorator metadata — less visible at the call site
+- Third-party library — historically uneven maintenance, currently stable
+- Requires `initializeTransactionalContext()` at startup before any DB ops
+- Bootstrap test setup must opt into the lib's CLS wrapper
+
+**When it's a good choice:** existing codebase already uses it; team prefers the brevity; you accept the maintenance risk.
+
+**Pick one pattern and stick to it** — mixing `uow.run(...)` and `@Transactional()` in the same codebase is a debugging nightmare. Both produce the same end state; consistency is what matters.
+
+### Common gotchas (cross-repo tx)
+
+- **Don't** open a fresh `manager.transaction(...)` inside a repo method called from `uow.run()`. You'll get a *nested* tx (SAVEPOINT in Postgres), not the outer one. Repos must always go through `this.em()`.
+- **Don't** make `OutboxRepository` start its own transaction. The whole point of UoW is shared scope.
+- **Don't** rely on TypeORM lifecycle hooks (`@AfterInsert`) to publish events — they fire per row, not per tx, and have no tx context.
+- **Don't** inject `Repository<X>` directly into a service. Always go through a domain port — `Repository<X>` skips the CLS-aware `em()` and silently writes outside any active UoW.
 
 ---
 
@@ -647,20 +892,28 @@ export abstract class IdempotencyStore {
 
 ```typescript
 // src/outbound/typeorm/postgres-idempotency.ts
+//
+// Like other repos in this codebase, the store reads the active EntityManager
+// from CLS — so if the idempotency check is part of a `uow.run(...)` it
+// participates in the same tx. Most apps run it outside any UoW; both work.
 @Injectable()
 export class PostgresIdempotencyStore extends IdempotencyStore {
   constructor(
     @InjectRepository(IdempotencyEntity)
     private readonly repo: Repository<IdempotencyEntity>,
-  ) {
-    super();
+    private readonly cls: ClsService,
+  ) { super(); }
+
+  private em(): EntityManager {
+    return this.cls.get<EntityManager>(TYPEORM_EM_KEY) ?? this.repo.manager;
   }
 
   async acquire(scope: string, key: string, hash: string): Promise<Acquire> {
     // Insert-or-fetch — unique (scope, key) collapses races to one winner.
-    const result = await this.repo
+    const result = await this.em()
       .createQueryBuilder()
       .insert()
+      .into(IdempotencyEntity)
       .values({ scope, key, requestHash: hash })
       .orIgnore()
       .returning("scope")
@@ -668,17 +921,120 @@ export class PostgresIdempotencyStore extends IdempotencyStore {
 
     if (result.identifiers.length === 1) return { tag: "new" };
 
-    const row = await this.repo.findOneByOrFail({ scope, key });
+    const row = await this.em().findOneByOrFail(IdempotencyEntity, { scope, key });
     if (row.requestHash !== hash) return { tag: "conflict" };
     return row.response
       ? { tag: "replay", response: row.response }
       : { tag: "new" }; // in-flight
   }
-  // store(...) updates the row with the response bytes.
+  // store(...) updates the row with the response bytes via this.em().update(...)
 }
 ```
 
 Wire as a NestJS interceptor that checks the `Idempotency-Key` header before invoking the controller — keeps the controller body free of replay logic.
+
+### Inbound: Idempotency Interceptor
+
+```typescript
+// src/inbound/http/interceptors/idempotency.interceptor.ts
+//
+// Replay-safe POST/PATCH semantics for clients that retry on transient errors.
+// Flow:
+//   1. No Idempotency-Key header → skip (lookup-free fast path).
+//   2. Acquire (scope, key, request-hash) on the store.
+//        "replay"   → respond with the cached body, same status code.
+//        "conflict" → 409 — same key, different request body.
+//        "new"      → run the handler, then store the serialised response.
+//
+// Apply selectively (controller- or route-scoped) — not globally. GET should
+// not pay the round-trip; non-mutating endpoints don't need replay protection.
+import {
+  CallHandler, ExecutionContext, Injectable, NestInterceptor, ConflictException,
+} from "@nestjs/common";
+import { createHash } from "node:crypto";
+import { Observable, from, of, switchMap, tap } from "rxjs";
+import type { Request, Response } from "express";
+import { IdempotencyStore } from "../../../domain/shared/idempotency";
+
+@Injectable()
+export class IdempotencyInterceptor implements NestInterceptor {
+  constructor(private readonly store: IdempotencyStore) {}
+
+  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+    const req = context.switchToHttp().getRequest<Request>();
+    const res = context.switchToHttp().getResponse<Response>();
+    const key = req.header("idempotency-key");
+    if (!key) return next.handle();
+
+    // Scope per route so the same key reused on different endpoints can't collide.
+    const scope = `${req.method}:${req.route?.path ?? req.path}`;
+    const hash = createHash("sha256")
+      .update(JSON.stringify(req.body ?? null))
+      .digest("hex");
+
+    return from(this.store.acquire(scope, key, hash)).pipe(
+      switchMap((outcome) => {
+        if (outcome.tag === "conflict") {
+          throw new ConflictException({
+            type: "https://api.example.com/errors/idempotency-conflict",
+            title: "Idempotency Conflict",
+            status: 409,
+            detail: "Idempotency-Key already used with a different request body",
+          });
+        }
+        if (outcome.tag === "replay") {
+          // Replay path — short-circuit the handler, return the cached body
+          // verbatim. Stored body includes status + serialised JSON.
+          const cached = JSON.parse(outcome.response.toString("utf8")) as {
+            status: number; body: unknown;
+          };
+          res.status(cached.status);
+          return of(cached.body);
+        }
+        // "new" — run the handler, then persist the response for future replays.
+        return next.handle().pipe(
+          tap(async (body) => {
+            const status = res.statusCode;
+            const serialised = Buffer.from(JSON.stringify({ status, body }));
+            await this.store.store(scope, key, serialised);
+          }),
+        );
+      }),
+    );
+  }
+}
+```
+
+Apply at the controller (`@UseInterceptors(IdempotencyInterceptor)`) or per route. Combine with a unique `(scope, key)` constraint in the store — that's what collapses concurrent retries to a single winner.
+
+---
+
+## Inbound: Rate Limiting (`@nestjs/throttler`)
+
+Wire `ThrottlerModule` in `AppModule` and register `ThrottlerGuard` as a global `APP_GUARD`. Per-route overrides via `@Throttle({ default: { limit: 5, ttl: 60_000 } })` or `@SkipThrottle()` for public reads.
+
+```typescript
+// In app.module.ts (see examples-bootstrap.md for the full module)
+import { ThrottlerModule, ThrottlerGuard } from "@nestjs/throttler";
+import { APP_GUARD } from "@nestjs/core";
+
+@Module({
+  imports: [
+    ThrottlerModule.forRoot([
+      // Default: 100 req/min per IP. Tune per route via @Throttle().
+      { name: "default", ttl: 60_000, limit: 100 },
+    ]),
+    // ... other imports
+  ],
+  providers: [
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // ... other providers
+  ],
+})
+export class AppModule {}
+```
+
+For Redis-backed limits (multi-instance), swap the storage with `@nest-lab/throttler-storage-redis`.
 
 ---
 

@@ -63,15 +63,28 @@ export interface CursorPage<T> {
 ## Domain Errors
 
 ```typescript
+// src/domain/shared/errors.ts
+//
+// Base class for every domain error. The exception filter does
+// `instanceof DomainError` (safe inside a single bundle/repo), then
+// switches on `tag` for the exhaustive mapping to RFC 9457 ProblemDetails.
+//
+// Why both a base class AND a tag?
+//   - `instanceof DomainError` rules out third-party Error objects that
+//     happen to carry a `tag` field (otherwise the filter would match them).
+//   - `tag` as a string-literal discriminant gives TypeScript exhaustive
+//     `switch` checking and survives any future bundling split where the
+//     base class might be duplicated across chunks.
+export abstract class DomainError extends Error {
+  abstract readonly tag: string;
+}
+```
+
+```typescript
 // src/domain/authors/errors.ts
+import { DomainError } from "../shared/errors";
 
-/**
- * Use a readonly `tag` discriminant on each error class.
- * This enables exhaustive switch/case matching in exception filters
- * without relying on instanceof (which breaks across module boundaries).
- */
-
-export class AuthorNameEmptyError extends Error {
+export class AuthorNameEmptyError extends DomainError {
   readonly tag = "AuthorNameEmptyError" as const;
   constructor() {
     super("author name cannot be empty");
@@ -79,7 +92,7 @@ export class AuthorNameEmptyError extends Error {
   }
 }
 
-export class DuplicateAuthorError extends Error {
+export class DuplicateAuthorError extends DomainError {
   readonly tag = "DuplicateAuthorError" as const;
   constructor(readonly authorName: string) {
     super(`author with name "${authorName}" already exists`);
@@ -87,7 +100,7 @@ export class DuplicateAuthorError extends Error {
   }
 }
 
-export class AuthorNotFoundError extends Error {
+export class AuthorNotFoundError extends DomainError {
   readonly tag = "AuthorNotFoundError" as const;
   constructor(readonly authorId: string) {
     super(`author with id "${authorId}" not found`);
@@ -95,7 +108,7 @@ export class AuthorNotFoundError extends Error {
   }
 }
 
-export class UnknownAuthorError extends Error {
+export class UnknownAuthorError extends DomainError {
   readonly tag = "UnknownAuthorError" as const;
   constructor(readonly cause: unknown) {
     super("unexpected error");
@@ -108,6 +121,30 @@ export class UnknownAuthorError extends Error {
  * Exception filters switch on `error.tag` for exhaustive matching.
  */
 export type CreateAuthorError = DuplicateAuthorError | UnknownAuthorError;
+```
+
+## Cross-Cutting Port: UnitOfWork
+
+Domain-level abstraction for "run these writes atomically." The outbound
+adapter implements it with `DataSource.transaction(...)` + `nestjs-cls`;
+the domain doesn't know which.
+
+```typescript
+// src/domain/shared/unit-of-work.ts
+export abstract class UnitOfWork {
+  /**
+   * Run a callback inside a single database transaction. Repositories
+   * called inside the callback automatically pick up the scoped
+   * EntityManager (via CLS) and participate in the same tx.
+   * Commits on resolved promise; rolls back if the callback throws.
+   *
+   * Use this whenever a service needs cross-repository atomicity —
+   * e.g. aggregate write + outbox enqueue, or transferring state
+   * between two aggregates. For a single-repository write, the
+   * repository's internal `manager.transaction(...)` is enough.
+   */
+  abstract run<T>(fn: () => Promise<T>): Promise<T>;
+}
 ```
 
 ## Ports (Abstract Classes)
@@ -164,17 +201,25 @@ export abstract class AuthorService {
 ```typescript
 // src/domain/authors/service.ts
 //
-// NO @Injectable() — wired via useFactory in the feature module.
-// NO @nestjs/* imports — domain stays pure.
+// @Injectable() is allowed — it's a metadata-only marker, and accepting
+// one @nestjs/common import in exchange for half the wiring code is the
+// pragmatic trade-off. Pair it with `{ provide: AuthorService, useClass:
+// AuthorServiceImpl }` in the feature module.
+//
+// If you want zero NestJS imports in domain/, drop the decorator and wire
+// via `useFactory` in the module — both patterns are supported.
 
+import { Injectable } from "@nestjs/common";
 import type { Author, CreateAuthorRequest, CursorPage } from "./models";
 import type { AuthorMetrics, AuthorNotifier, AuthorRepository } from "./ports";
 import { AuthorService } from "./ports";
-import { DuplicateAuthorError, UnknownAuthorError } from "./errors";
+import { DomainError } from "../shared/errors";
+import { UnknownAuthorError } from "./errors";
 
 /**
  * Orchestrates: repo -> metrics -> notifications -> return result.
  */
+@Injectable()
 export class AuthorServiceImpl extends AuthorService {
   constructor(
     private readonly repo: AuthorRepository,
@@ -188,11 +233,18 @@ export class AuthorServiceImpl extends AuthorService {
     try {
       const author = await this.repo.createAuthor(req);
       await this.metrics.recordCreationSuccess();
+      // ⚠️ Partial-success risk: the row is committed, metrics counted
+      // "success", but if `authorCreated` throws the caller gets an error
+      // and the notification never fires. For real cross-process atomicity
+      // (DB write + event publish), move this to the Outbox port — see
+      // references/examples-adapters.md → "Outbox Adapter".
       await this.notifier.authorCreated(author);
       return author;
     } catch (error) {
       await this.metrics.recordCreationFailure();
-      if (error instanceof DuplicateAuthorError) {
+      // Re-throw any expected DomainError (DuplicateAuthorError etc) as-is;
+      // wrap anything else so the controller layer sees a single, mapped type.
+      if (error instanceof DomainError) {
         throw error;
       }
       throw new UnknownAuthorError(error);

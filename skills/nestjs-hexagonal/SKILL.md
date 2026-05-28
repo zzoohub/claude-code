@@ -91,12 +91,12 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 Abstract classes in the domain layer have zero NestJS imports — they're plain TypeScript.
 
 ### Service
-- Abstract class `AuthorService` declaring business API + plain class `AuthorServiceImpl` extending it.
+- Abstract class `AuthorService` declaring business API + class `AuthorServiceImpl` extending it.
 - Constructor takes all dependencies: `new AuthorServiceImpl(repo, metrics, notifier)`.
-- **No `@Injectable()` on the service** — wired via `useFactory` in the feature module. This keeps domain free from NestJS imports entirely.
+- **`@Injectable()` on `AuthorServiceImpl` is allowed.** Wire with `{ provide: AuthorService, useClass: AuthorServiceImpl }` in the feature module. The decorator is metadata-only — one `@nestjs/common` import in `service.ts` in exchange for half the wiring code. If you want zero NestJS imports anywhere in `domain/`, drop the decorator and use `useFactory` instead (see `references/examples-bootstrap.md`); both patterns are supported.
 - Orchestrates: repo -> metrics -> notifications -> return result.
 - Controllers call Service, never Repository directly.
-- **Evolution path:** Direct calls (repo -> metrics -> notifier) keep the flow visible in one place. As side effects grow, refactor to domain events via `@nestjs/event-emitter`.
+- **Evolution path:** Direct calls keep the flow visible in one place. As cross-cutting side effects multiply, refactor to in-process events via `@nestjs/event-emitter` (`@OnEvent` handlers); when handler logic gets heavy, move to commands/queries via `@nestjs/cqrs` (`CommandHandler`, `QueryHandler`, `Saga`). For cross-process / cross-service events, use the Outbox port (see "Reliability & Observability Ports" below) — `EventEmitter2` is in-process only and won't survive a crash between the DB write and the publish.
 
 > Full domain examples (models, errors, ports, service): `references/examples-domain.md`
 
@@ -154,24 +154,52 @@ All follow the same pattern: **parse input -> call service -> respond.**
 
 ---
 
-## TypeORM Pitfalls (Hex Discipline)
+## TypeORM + Hex: Pragmatic Rules
 
-TypeORM doesn't fight hexagonal — but its convenience features do. Six hard rules; two soft notes. Each one of these, left unchecked, walks the codebase back toward an Active Record monolith.
+TypeORM doesn't fight hexagonal — but its convenience features can. Sort each feature into one of three tiers; the tier tells you whether it's a hard rule, a default with criteria, or just style.
 
-| Pitfall | Hex violation | Rule |
-|---------|---------------|------|
-| Active Record (`entity.save()`, `Entity.find()`) | Domain learns about persistence | **Data Mapper only** — call `repo.save(entity)` from the adapter |
-| Lifecycle hooks (`@BeforeInsert`, `@AfterLoad`) | Business logic hides inside the adapter | **Forbidden** — put logic in the domain service |
-| `cascade: true` on relations | Auto-save/delete hides side effects | **Off by default** — call related saves explicitly inside a transaction |
-| TypeORM Subscribers / EventSubscribers | Competing event system inside the adapter | **Forbidden** — use `@nestjs/event-emitter` or domain events |
-| Lazy relations (`Promise<Related>`) | `Promise` leaks into the mapped domain object | **Forbidden** — eager-join in the adapter or mapper resolves before returning |
-| Returning entities to the controller | Domain ⇄ DTO boundary collapses | **Always** map entity → domain → response DTO |
+1. **Non-negotiable** — break these and hex is gone
+2. **Default off, deliberate on** — fine in narrow cases that match the criteria
+3. **Style preference** — not a hex rule, pick what your team likes
 
-> **Note (soft):** `repo.save()` infers insert vs update from the presence of an id. When the intent matters for readability or for an audit trail, prefer `repo.insert()` / `repo.update()` explicitly.
+### Tier 1: Non-negotiable
 
-> **Note (TypeORM 1.0):** A `where` field set to `null`/`undefined` on a high-level API (`findOneBy`, `findBy`, `repo.update`, …) now **throws** instead of being silently ignored. In adapters that build dynamic filters, omit the field entirely rather than passing `undefined`; match SQL `NULL` with the `IsNull()` operator. (Raw `QueryBuilder.where(...)` still passes values through as-is.)
+| Rule | What hex loses if you don't |
+|------|------------------------------|
+| Domain never imports TypeORM types | Domain couples to ORM. Swapping ORM = rewriting domain. |
+| Entity ≠ Domain model (mapper in outbound) | Renaming a DB column = breaking the domain. |
+| Controller never returns Entity | Response shape leaks DB layout to API consumers. |
+| Map `QueryFailedError` → `DomainError` at the adapter boundary | Domain catches see ORM exceptions = leaky abstraction. |
+| Data Mapper only (`repo.save(entity)`, not `entity.save()`) | Active Record means entities know about persistence. |
 
-> **One-liner to remember:** *TypeORM isn't incompatible with hex — TypeORM's conveniences make hex discipline easy to erode.*
+### Tier 2: Default off, deliberate on
+
+| Feature | Default | When it's OK to enable |
+|---------|---------|------------------------|
+| `cascade: true` on relations | off | **Inside a single aggregate** (Order ↔ OrderLines, User ↔ UserProfile). **Never across an aggregate boundary**. Test: would deleting the parent ever mean "the child still has its own life"? Yes → separate aggregates → no cascade. |
+| Lifecycle hooks (`@BeforeInsert`, `@BeforeUpdate`, `@AfterLoad`) | none | **Pure technical persistence concerns** only: uuid generation, `updated_at` stamping, soft-delete `deleted_at`. **Never** business invariants (price calculation, permission checks). Test: would this hook still make sense if the table were stored in DynamoDB / Mongo? Yes → persistence concern, OK. No → business logic, move to the domain service. |
+| TypeORM Subscribers / EventSubscribers | none | **Cross-cutting persistence concerns** only: audit log writer that observes inserts/updates, `created_by` / `updated_by` stamping from CLS. **Never for domain events** — subscribers fire per row, not per transaction, and miss the tx context. Domain events go through the Outbox port. |
+| Lazy relations (`Promise<Related>`) | eager join | Not really a hex concern — performance concern. OK when: (a) the relation is conditionally needed, (b) the mapper resolves the Promise before returning so domain never sees it, (c) you've verified no N+1 on hot paths. Eager joins (`relations: { ... }` or QueryBuilder `leftJoinAndSelect`) are the safer default. |
+
+### Tier 3: Style preference (not hex rules)
+
+| Choice | Recommendation |
+|--------|---------------|
+| `repo.save()` vs `repo.insert()/update()` | `save()` is the fine default — TypeORM infers insert vs update from id presence. Use explicit `insert`/`update` when the intent matters: audit trail, optimistic concurrency, or "this MUST be a create and reject an existing id" semantics. |
+| Cross-repo transactions: `UnitOfWork` vs `@Transactional` | **Default: `UnitOfWork` port** (see "Reliability & Observability Ports" below) — tx boundary visible at the service call site, no third-party dep. **Acceptable opt-in: `@Transactional`** (`typeorm-transactional`) — same atomicity, less wiring per call site, but the boundary moves into a decorator and you take on a third-party lib's maintenance risk. Pick one and use it consistently; don't mix. |
+
+> **TypeORM 1.0 cheatsheet** (migration from 0.3.x):
+> - **Node 20+ required.** Build target ≥ ES2023.
+> - **`null`/`undefined` in `where` now throws** on high-level APIs (`findOneBy`, `findBy`, `repo.update`). Omit the field, or use `IsNull()` for SQL NULL. (Raw `QueryBuilder.where(...)` still passes values through.)
+> - **String-form `relations` / `select` removed.** Use object syntax: `relations: { posts: true }`, `select: { id: true, name: true }`.
+> - **Removed methods** (with replacements): `repo.findByIds([...])` → `repo.findBy({ id: In([...]) })`; `repo.findOneById(id)` → `repo.findOneBy({ id })`; `repo.exist(...)` → `repo.exists(...)`; `qb.printSql()` → `qb.getSql()` / `qb.getQueryAndParameters()`; `qb.onConflict()` → `qb.orIgnore()` / `qb.orUpdate(...)`.
+> - **Removed types**: `Connection`/`ConnectionOptions` → `DataSource`/`DataSourceOptions` (already the case in 0.3.x; aliases now gone); `WhereExpression` → `WhereExpressionBuilder`.
+> - **Removed globals**: `getConnection()`, `getRepository()`, `createConnection()`, `getCustomRepository()`, `@EntityRepository`, `AbstractRepository`. Custom repos via `Repository.extend(...)`.
+> - **Removed env-var loaders**: `TYPEORM_*` env vars / `ormconfig.env` / auto `dotenv` no longer supported. Build `DataSourceOptions` from your own validated config (we do this with Zod in `config.ts`).
+> - **Non-nullable relations now `INNER JOIN`** instead of `LEFT JOIN` — double-check filter behaviour on optional relation joins.
+> - **CLI bins unchanged**: `typeorm-ts-node-commonjs` and `typeorm-ts-node-esm` are still distributed.
+
+> **One-liner:** *TypeORM isn't incompatible with hex — its conveniences make hex discipline easy to erode unless you know which ones to allow and which to refuse.*
 
 ---
 
@@ -248,13 +276,17 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
 
 ---
 
-## Logging
+## Logging & Request Context
 
-NestJS has a built-in `Logger` class. For structured logging, use `nestjs-pino`.
+NestJS has a built-in `Logger` class. For structured logging, use `nestjs-pino` — JSON output, low overhead, native trace context support.
 
 - **Domain**: log business events at info, wrap unexpected exceptions at error
 - **Inbound**: exception filters log server errors before returning generic messages
 - **Outbound**: TypeORM query logging via `logging: ["query", "error"]` (or `"all"` in dev)
+
+For **request-scoped correlation** (request_id, tenant_id, userId) without threading values through every constructor, use **`nestjs-cls`** (AsyncLocalStorage wrapper). Bind it once as a middleware, populate the store from auth guard / request_id middleware, and read from the CLS store inside adapters. Pair `nestjs-cls` with `nestjs-pino`'s `customProps` to stamp every log line with the active correlation IDs automatically.
+
+> Wiring: `references/examples-bootstrap.md`.
 
 ---
 
@@ -263,7 +295,7 @@ NestJS has a built-in `Logger` class. For structured logging, use `nestjs-pino`.
 | Item | Value |
 |------|-------|
 | Password hashing | `@node-rs/argon2` (default), `bcrypt` (fallback) |
-| JWT library | `jsonwebtoken` (simple), `@nestjs/passport` + `passport-jwt` (full-featured) |
+| JWT library | **`jose`** (default — modern, EdDSA/ES256 first-class, ESM/CJS, JWK support, no CVE backlog). Use `@nestjs/passport` + `passport-jwt` only when you also need session / OAuth strategies in the same app. **Do not use `jsonwebtoken`** — CJS-only, slow-to-patch security history (e.g. CVE-2022-23529), no native ES module support. |
 | JWT access token | 15 min |
 | JWT refresh (web) | 90 days |
 | JWT refresh (mobile) | 1 year |
@@ -306,7 +338,7 @@ The persistence module provides `AuthorRepository` — the feature module and co
 
 ### Feature Module Pattern
 
-Each domain gets a **feature module** that wires its controller, service, and repository. The service is wired via `useFactory` to keep domain free from `@Injectable()`.
+Each domain gets a **feature module** that wires its controller, service, and repository. Default wiring: `{ provide: AuthorService, useClass: AuthorServiceImpl }` with `@Injectable()` on the impl. Switch to `useFactory` only if you want zero NestJS imports inside `domain/`.
 
 ### Scaling
 
@@ -314,6 +346,7 @@ Each domain gets a **feature module** that wires its controller, service, and re
 |----------|---------|
 | 1-3 features | Feature modules at `src/*.module.ts` |
 | 4+ features | Feature modules in `src/modules/*.module.ts` |
+| 10+ bounded contexts | **NestJS monorepo** (`nest g app <name>`, `nest g library <name>`) — one Nest application per bounded context, shared `libs/` for cross-cutting code (auth, observability, common DTOs). Each app can deploy independently. |
 | Cross-domain | Import another feature module, inject its exported service |
 
 ### Global Modules
@@ -341,13 +374,16 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 
 | Port | Purpose | Where it lives |
 |---|---|---|
-| **Outbox** | Atomic state change + message publish — outbox row written inside the same `EntityManager.transaction(...)` callback as the aggregate write | Outbound (combined with the repository adapter) |
+| **UnitOfWork** | Scopes a database transaction across multiple repositories. Service composes `authorRepo` + `outboxRepo` (+ ...) inside one `uow.run(...)` callback — all writes commit or roll back together. CLS-scoped `EntityManager` propagation invisible to callers. | Outbound (TypeORM adapter); domain depends only on the abstract `UnitOfWork` class |
+| **Outbox** | Atomic state change + message publish — outbox row written inside the same `uow.run(...)` callback as the aggregate write | Outbound (`OutboxRepository`, participates in UoW via CLS-scoped `EntityManager`) |
 | **IdempotencyStore** | Replay safe responses for `Idempotency-Key`-bearing requests | Outbound; called by an interceptor or application service |
 | **Tracer** / **Meter** | OTel span / metric emission. Domain depends on the abstract class, not on `@opentelemetry/*` | Outbound (OTel adapter); no-op for tests |
 
-**Architectural rule**: domain emits **`DomainEvent`** plain objects; the outbound adapter persists the aggregate AND the outbox rows inside one `manager.transaction(async (em) => ...)` callback. A separate **outbox relay** (a `@nestjs/bullmq` worker, a `@Cron` task, or a separate process) publishes rows asynchronously.
+**Architectural rule**: domain emits **`DomainEvent`** plain objects; the application service opens a `UnitOfWork` and calls the aggregate repository + `OutboxRepository` inside the same `uow.run(...)` callback. Both writes commit together. A separate **outbox relay** (a `@nestjs/bullmq` worker, a `@Cron` task, or a separate process) publishes rows asynchronously.
 
-**Choose `EntityManager.transaction` over `@Transactional` (typeorm-transactional)**: the decorator hides the tx boundary in metadata and relies on AsyncLocalStorage magic. Explicit `manager.transaction(...)` keeps the tx boundary visible at the call site, which matches hexagonal's "side effects are explicit" stance and avoids a third-party lib whose maintenance has been spotty.
+**`UnitOfWork` over `@Transactional` — but both work**: `UnitOfWork` is the default. The `uow.run(async () => ...)` boundary is visible at the service call site, the implementation is a thin adapter that uses `nestjs-cls` to propagate the scoped `EntityManager`, and there's no third-party dependency. `@Transactional` (`typeorm-transactional`) is an acceptable opt-in trade-off if your team is already invested — same atomicity guarantee, less wiring per call site, but the tx boundary moves into decorator metadata and you take on the lib's maintenance risk. Pick one and stay consistent; don't mix.
+
+For **single-repo transactions** (no cross-repo orchestration), inline `repo.manager.transaction(...)` inside the adapter is still fine — UoW is only needed when multiple repositories must share a tx.
 
 → Adapter examples: `references/examples-adapters.md`
 
@@ -359,12 +395,11 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 |---------|-------|-----|
 | Circular dependency error | Module A imports B, B imports A | Use `forwardRef(() => ModuleB)` or rethink boundaries |
 | Service is `undefined` | Not provided in module | Add to `providers` with correct abstract class token |
-| `@Injectable()` in domain | Framework leak | Remove it, use `useFactory` in module |
 | `HttpException` in domain | Transport leak | Use domain error classes, map in exception filter |
 | TypeORM types in domain | ORM leak | Use mapper in outbound, domain has own types |
 | Entity returned to controller / used as domain model | Hex boundary collapse | Always map `Entity -> Author -> Response DTO` |
-| `@BeforeInsert` / Subscribers carry business logic | Logic hides in adapter | Move to domain service or `@nestjs/event-emitter` |
-| `cascade: true` produces surprise writes | Side effects hidden in relation graph | Off; call related saves explicitly inside a transaction |
+| `@BeforeInsert` / Subscribers carry **business** logic | Business rule hides inside the adapter | Hooks/Subscribers are OK for *technical* concerns (uuid, timestamps, audit log). Move *business* logic to the domain service. |
+| `cascade: true` reaches across aggregates | Auto-writes outside the aggregate root | OK within one aggregate (Order ↔ OrderLines). Off across aggregate boundaries — orchestrate via `UnitOfWork`. |
 | `synchronize: true` in any deployed env | Auto-altering production schema | Keep `false`; use `migration:run` |
 | `@InjectRepository(AuthorEntity)` undefined | `TypeOrmModule.forFeature([AuthorEntity])` missing in module | Add it to the persistence module's imports |
 | `enableShutdownHooks()` missing | DB disconnect not called | Add in `main.ts` before `app.listen()` |
@@ -376,39 +411,44 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 
 | Question | Answer |
 |----------|--------|
-| Transactions? | `repo.manager.transaction()` |
+| Single-repo transaction? | `repo.manager.transaction(async (em) => ...)` inside the adapter |
+| Cross-repo transaction? | `UnitOfWork` port — `await this.uow.run(async () => { ... })` in the service. CLS propagates the scoped `EntityManager`. Don't open nested transactions. |
 | Validation? | `nestjs-zod` `createZodDto` + global `ZodValidationPipe` at transport boundary, domain constructors for business rules |
 | Error mapping? | `@Catch()` exception filter in inbound |
 | Business orchestration? | Service impl |
 | Controller responsibility? | Parse -> service -> response |
 | main.ts responsibility? | Create app, global middleware, Swagger, listen |
-| DI mechanism? | Abstract classes as tokens + `useFactory` in modules |
+| DI mechanism? | Abstract classes as tokens; `useClass` (default) — switch to `useFactory` only to keep `domain/` NestJS-import-free |
 | Entity <-> domain? | `AuthorMapper.toDomain(entity)` / `toEntity(domain)` in outbound |
-| Test app? | `Test.createTestingModule().overrideProvider()` |
+| Test runner / app? | Vitest + `@nestjs/testing` `Test.createTestingModule().overrideProvider()` |
 | Background workers? | `@nestjs/bullmq` or `@nestjs/schedule` |
 | Migrations? | TypeORM CLI (`migration:generate` + `migration:run`) |
 | Healthcheck? | `@nestjs/terminus` in inbound |
-| JWT / passwords? | `@nestjs/passport` + `@node-rs/argon2` |
+| JWT / passwords? | `jose` + `@node-rs/argon2` |
 
 ---
 
 ## Checklist
 
 ### Architecture
-- [ ] Domain never imports from inbound/, outbound/, or @nestjs/*
+- [ ] Domain never imports from inbound/, outbound/, or @nestjs/* (domain service may import `@Injectable()` only, see "Service" above)
 - [ ] Ports as abstract classes, services orchestrate
 - [ ] All handlers (HTTP, jobs, events): parse -> service -> respond
-- [ ] Transactions in adapters only, entity <-> domain mapper in outbound
-- [ ] Errors: domain hierarchy -> exception filter -> RFC 9457
+- [ ] Single-repo tx via `repo.manager.transaction()` inside adapter; cross-repo tx via `UnitOfWork` port composed in the service
+- [ ] Repositories read the active `EntityManager` from CLS (`this.em()`) so they participate in any active `UnitOfWork`
+- [ ] Entity <-> domain mapper in outbound
+- [ ] Errors: domain hierarchy (`DomainError` base) -> exception filter -> RFC 9457
 
 ### Framework
 - [ ] Controllers in inbound/ with `@Controller()` decorators
-- [ ] Services wired via `useFactory` (no `@Injectable` in domain)
-- [ ] Validation via `createZodDto` classes + `ZodValidationPipe` registered through `APP_PIPE`; Swagger doc wrapped with `cleanupOpenApiDoc()`
-- [ ] Global `DomainExceptionFilter` registered in main.ts
+- [ ] Services wired via `useClass` with `@Injectable()` on the impl (or `useFactory` for stricter framework-free domain)
+- [ ] Validation via `createZodDto` classes + `ZodValidationPipe` registered through `APP_PIPE` (returns **422** on failure, matching api-design.md); Swagger doc wrapped with `cleanupOpenApiDoc()`
+- [ ] Global `DomainExceptionFilter` registered in main.ts; filter matches on `instanceof DomainError` (base class), not on a loose `"tag" in error` check
 - [ ] `enableShutdownHooks()` called in main.ts
 - [ ] `helmet()` middleware enabled
+- [ ] `@nestjs/throttler` wired as `APP_GUARD` (global rate limit)
 - [ ] CORS configured with explicit origins
+- [ ] `nestjs-pino` set as the app logger; `nestjs-cls` middleware populates request-scoped correlation IDs
 
 ### Database (TypeORM + PostgreSQL)
 - [ ] Entities in `outbound/typeorm/entities/*.entity.ts` (NEVER imported from domain)
@@ -420,8 +460,9 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 
 ### Testing
 **TDD**: Write all tests first as a spec, then implement, then verify all pass. (Tests -> Impl -> Green)
+- [ ] **Vitest** as the test runner (faster startup than Jest, native ESM, better with Bun)
 - [ ] Test helpers: `createTestModule()` factory
-- [ ] Mock strategy: Stub, Saboteur, Spy, NoOp
+- [ ] Mock strategy: Stub, Saboteur, Spy, NoOp (hand-rolled abstract-class extensions). As the port surface grows, hybrid with `vi.fn()` to avoid spy-class boilerplate explosion.
 - [ ] `overrideProvider()` for swapping adapters in tests
 > Test mocks and test module helper: `references/examples-bootstrap.md`
 
