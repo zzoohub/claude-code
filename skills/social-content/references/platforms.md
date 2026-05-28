@@ -348,7 +348,7 @@ Community-driven; each subreddit has unique norms. 116M daily active users, 443M
 1. **Launch at midnight PST** for maximum voting window
 2. Assign one person to own the PH thread and respond to ALL comments
 3. Have first comment ready: explain the "why" behind the product
-4. Activate supporters via **private DMs** (not public social media blasts)
+4. **Announce your launch to your existing audience** (newsletter, social followers, customers) — they can decide to engage or not. ⚠️ **Do NOT coordinate upvotes via private DMs or pre-arranged "helpers"** — that violates Product Hunt's community guidelines and can result in delisting or account ban. See the "Ethical vs prohibited launch tactics" box below.
 5. Respond to every comment within minutes
 
 ### Title/Positioning Formula
@@ -398,12 +398,11 @@ Community-driven; each subreddit has unique norms. 116M daily active users, 443M
 - Must feel educational, not promotional
 
 ### First 30 Minutes Playbook
-1. Post from home IP or mobile hotspot (avoid known VPN IPs)
+1. Post from a stable network (avoid known VPN IPs that can look like ban-evasion)
 2. Add a 60-word TL;DR as first comment
-3. Activate pre-selected helpers via **private Slack/DM** (not public social media)
-4. Aim for 8-10 genuine upvotes and 2-3 thoughtful comments
-5. Respond to all comments within 10 minutes
-6. Share demo/repo as a top-level comment
+3. **Share your submission with your existing audience** (newsletter, followers, mailing list) — readers choose to engage or not. ⚠️ **Do NOT coordinate votes** via DMs, Slack channels, or pre-arranged helper groups. HN's guidelines explicitly forbid this ("Please don't ask people to upvote / downvote / flag") and detect voting rings aggressively — entire domains can be banned permanently. See "Ethical vs prohibited launch tactics" below.
+4. Respond to all comments within 10 minutes
+5. Share demo/repo as a top-level comment
 
 ### What Kills Submissions
 - Duplicate content, paywalls, email gates
@@ -411,6 +410,58 @@ Community-driven; each subreddit has unique norms. 116M daily active users, 443M
 - Public upvote requests
 - Fresh accounts without comment history
 - Any paid upvote services
+- **Vote coordination via DM / Slack / chat groups** — same penalty as paid upvotes
+
+---
+
+## Ethical vs Prohibited Launch Tactics (HN & Product Hunt)
+
+These platforms both rely on community-driven ranking, and both explicitly prohibit organized voting. The line is sometimes mis-drawn — here's the clear version:
+
+| ✅ Legitimate ("ship to your audience") | ❌ Prohibited (vote manipulation) |
+|---|---|
+| Email your newsletter that your product launched, with a link | DM specific people: "please upvote my launch at 9am" |
+| Tweet "we just launched on Product Hunt" with the link | Pre-coordinate a Slack/Discord group to upvote in the first 30 minutes |
+| Mention to existing customers that you're on Show HN today | Create a list of "supporters" instructed to upvote and comment with talking points |
+| Reply to people who ask about your work | Pay for upvotes or use bot networks |
+| Build genuine HN/PH presence months before launch (comments, feedback to others) | Create fresh accounts to upvote your own submission |
+| Ask for feedback on your launch ("would love your thoughts") | Ask for upvotes ("please upvote my launch") |
+
+**Why the distinction matters:** "I shipped, here's the link" lets the recipient decide. "Please upvote me at 9am" coordinates their behavior — that's a voting ring. Both platforms' detection is sensitive to *coordinated timing*, *talking-point similarity in comments*, and *vote sources clustered to one network or org*. Soft enforcement is shadowban; hard enforcement is domain/account permanent ban.
+
+When in doubt: **announce your launch broadly, never instruct specific behavior.**
+
+---
+
+## Emerging Platforms (2025-2026)
+
+For tech / B2B / creator audiences these are real distribution channels now — worth adding to the platform mix.
+
+### Bluesky
+- AT Protocol-based; growing rapidly through 2025 as a Twitter/X alternative for tech, journalism, science, dev audiences
+- Tone: closer to early Twitter — casual, conversational, fewer hot takes
+- **Custom feeds** (algorithmic feeds anyone can publish) are the underrated leverage — get into the right feeds to multiply reach
+- No formal ad platform yet; organic-only
+- Cross-post from Twitter/X carefully — recycled Twitter content often falls flat
+
+### Threads (Meta)
+- Tied to Instagram identity; algorithmic feed favoring engagement
+- Tone: lighter than LinkedIn, more visual than Twitter
+- Image + short text posts outperform pure text
+- Federated with the fediverse (ActivityPub) but most reach is in-app
+- Good for consumer brands with existing Instagram audience
+
+### Mastodon / Fediverse
+- ActivityPub federation across many independent servers
+- Tech-leaning, anti-algorithm audience; chronological feed
+- No central "algorithm to game" — growth is via genuine threads + boosts
+- Cross-posting from Twitter/X is tolerated but native-first does better
+- Often ignored for marketing because it doesn't scale like ad platforms — but a passionate niche audience for OSS / privacy / developer tools
+
+### Substack Notes
+- Twitter-style notes attached to a Substack publication
+- Audience = your newsletter subscribers + Substack network discovery
+- Strongest for writers / thought leaders who already have a Substack
 
 ---
 

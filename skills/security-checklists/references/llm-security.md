@@ -38,6 +38,49 @@
 # LLM processes hidden instruction as legitimate content
 ```
 
+### Modern Jailbreak / Injection Techniques (2024-2026)
+
+Defenders should test against these, not just naive "ignore previous instructions":
+
+| Technique | What it does | Defense |
+|---|---|---|
+| **Many-shot jailbreaking** (Anthropic, 2024-04) | Fills context window with hundreds of fake "harmful Q&A" examples to shift model behavior | Limit context window for untrusted content; rate-limit long-context calls |
+| **Crescendo** (Microsoft, 2024) | Multi-turn gradual escalation that bypasses single-turn filters | Multi-turn behavioral monitoring; reset context on policy-edge topics |
+| **Policy puppetry** | Embeds fake "policy update" framing in user content | Treat all "policy" / "instruction" framing in user content as data, not directive |
+| **ASCII / tag smuggling** (U+E0000 plane, invisible Unicode) | Hides instructions in tag characters or whitespace | Strip/normalize Unicode tag-character ranges; canonicalize whitespace |
+| **Best-of-N sampling jailbreak** | Resamples until a harmful response gets through | Apply output classifier post-generation, not just input filter |
+| **EchoLeak** (CVE-2025-32711, M365 Copilot, 2025-06) | Zero-click prompt injection via crafted email triggering RAG to exfiltrate data | Sanitize retrieved content; never auto-fetch external resources from RAG context; XPIA/output classifier |
+| **Tool-use poisoning via MCP** (see MCP section below) | Malicious tool descriptions inject instructions into the model | Treat all third-party tool descriptions/results as untrusted |
+
+**Recommended tooling:**
+- **Garak** (red-team scanner) for adversarial probing
+- **Lakera Guard / LLM-Guard / NeMo Guardrails / Prompt Guard 2** for runtime input/output filtering
+- **Promptfoo** for eval-style regression on injection resistance
+- **PyRIT** (Microsoft) for adversarial probing pipelines
+
+---
+
+## MCP Server Security
+
+Model Context Protocol (MCP) servers expose tools and resources to LLM agents. They have their own attack surface that's distinct from the underlying SDK.
+
+| Check | Why |
+|---|---|
+| Tool descriptions from third-party MCP servers treated as untrusted input | Malicious server can inject instructions via the tool description text itself ("tool poisoning") |
+| Allowlist of installed MCP servers; no auto-install of arbitrary servers | Supply-chain via MCP server install |
+| Tool results validated against expected schema before model sees them | Server returns crafted text that steers the agent |
+| Sensitive tools (file write, exec, network) require explicit user confirmation per call | Excessive agency on untrusted tool calls |
+| MCP server runs with least-privilege filesystem/network access | Containment if server compromised |
+| Tool result size limits to prevent context-window saturation attacks | DoS / cost amplification |
+| Audit log of tool-call request, params, and result | Forensics for incident response |
+| For remote MCP servers: authenticated transport (TLS + auth token), not plaintext stdio | Network-attached MCP servers are an exposed attack surface |
+
+**Patterns to catch:**
+- MCP server tool description containing instruction-like prose ("Always also run X after this")
+- Tool that combines unrelated capabilities (read files + exec shell) in a single permission grant
+- Agent that auto-installs/auto-trusts MCP servers from the user's prompt
+- Tool result rendered directly into next turn's prompt without schema check
+
 ---
 
 ## Sensitive Data in LLM Context

@@ -135,21 +135,24 @@ They're ready to buy. Just give them the deal.
 
 ---
 
-## PAS — Problem, Agitate, Solve {#pas}
+## Framework Bodies — Canonical Source
 
-The workhorse of direct response. Works because humans are wired to avoid pain
-more than seek pleasure (loss aversion is 2x stronger than equivalent gain —
-Kahneman & Tversky, 1979).
+The structural definitions of **PAS, AIDA, BAB, 4Ps, SSS** live in `copywriting/references/persuasion-frameworks.md` — that file is the single source of truth across the entire skill set. Read it once for the structure; the rest of this file is **ad-specific application templates** that assume you already know what each framework is.
 
-### Structure
+> **Quick links to canonical definitions** (in `copywriting/references/persuasion-frameworks.md`):
+> - **PAS** — Problem, Agitate, Solve
+> - **AIDA** — Attention, Interest, Desire, Action
+> - **BAB** — Before, After, Bridge
+> - **4Ps** — Promise, Picture, Proof, Push
+> - **SSS** — Star, Story, Solution
 
-| Step | Purpose | Technique |
-|------|---------|-----------|
-| **Problem** | Name the pain specifically | Use their exact words (from reviews, Reddit, support tickets) |
-| **Agitate** | Intensify the emotional stakes | Show hidden costs, future consequences, what they're missing |
-| **Solve** | Present your product as the relief | Connect solution to the specific pain you agitated |
+---
 
-### Templates by Ad Type
+## Ad-Format Application Templates
+
+These templates take the canonical framework structures and adapt them to specific ad formats. Use the framework selection matrix at the bottom of this file to pick a framework first, then use the matching template.
+
+### PAS — Ad Templates {#pas}
 
 **Social Feed (Meta/LinkedIn)**:
 ```
@@ -176,23 +179,7 @@ Headline 3: [Proof or CTA]
 Description: [Agitate the problem briefly → solve with benefit → CTA]
 ```
 
----
-
-## AIDA — Attention, Interest, Desire, Action {#aida}
-
-The oldest framework (1898, Elias St. Elmo Lewis) and still effective for
-broad audiences where you need to create awareness and desire.
-
-### Structure
-
-| Step | Purpose | Technique |
-|------|---------|-----------|
-| **Attention** | Stop the scroll | Pattern interrupt, surprising stat, bold claim |
-| **Interest** | Engage with relevance | Connect to their world, tell them something they didn't know |
-| **Desire** | Create want | Paint the outcome, show social proof, trigger emotion |
-| **Action** | Direct the click | Single, clear CTA |
-
-### Template — Meta Feed Ad:
+### AIDA — Ad Template (Meta Feed) {#aida}
 ```
 [ATTENTION: Surprising stat or bold claim — first line must hook]
 
@@ -204,23 +191,7 @@ one proof point — testimonial quote, number, or case study.]
 [ACTION: CTA button text + reinforcing line]
 ```
 
----
-
-## BAB — Before, After, Bridge {#bab}
-
-Best for transformation-based messaging. The human brain is wired to process
-contrast — showing the gap between current pain and desired outcome creates
-motivation, and your product is the bridge.
-
-### Structure
-
-| Step | Purpose | Technique |
-|------|---------|-----------|
-| **Before** | Current painful reality | Be specific and visceral — use sensory details |
-| **After** | Dream state achieved | Make it tangible and believable |
-| **Bridge** | Your product connects the two | Explain the mechanism briefly |
-
-### Carousel Ad Application:
+### BAB — Carousel Ad Template {#bab}
 ```
 Card 1: [BEFORE — Image of the pain state + text]
 Card 2: [More pain detail or hidden costs]
@@ -229,38 +200,10 @@ Card 4: [BRIDGE — Your product + how it gets them there]
 Card 5: [Proof + CTA]
 ```
 
----
+### 4Ps — Notes for ads {#4ps}
+Best for retargeting / product-aware audiences. Lead with the **Promise** in the first line (scroll-stopping headline), use creative to deliver **Picture**, use overlays/captions for **Proof**, and end on a single **Push**.
 
-## 4Ps — Promise, Picture, Proof, Push {#4ps}
-
-Effective for product-aware audiences where you need to build trust and
-overcome skepticism. Each P builds on the last.
-
-### Structure
-
-| Step | Purpose | Technique |
-|------|---------|-----------|
-| **Promise** | Bold, specific claim | Make it concrete and measurable |
-| **Picture** | Visualize the result | Help them see themselves succeeding |
-| **Proof** | Back it up | Data, testimonials, case studies, logos |
-| **Push** | Drive action | Urgency, scarcity, or strong CTA |
-
----
-
-## SSS — Star, Story, Solution {#sss}
-
-The ideal framework for UGC and testimonial-style ads. A relatable person
-(the Star) tells their story of struggle and discovery.
-
-### Structure
-
-| Step | Purpose | Technique |
-|------|---------|-----------|
-| **Star** | Relatable protagonist | Must mirror the target audience's identity |
-| **Story** | Their struggle and journey | Authentic language, specific details |
-| **Solution** | How the product changed things | Natural, not salesy — show don't tell |
-
-### UGC Video Template (30-60s):
+### SSS — UGC Video Template (30-60s) {#sss}
 ```
 0-3s:   [Star intro — "I'm a [identity], and I used to [struggle]"]
 3-10s:  [Story — specific struggle, emotional detail]
@@ -293,22 +236,20 @@ End:    [CTA overlay]
 
 ---
 
-## Psychological Triggers Reference {#psychological-triggers}
+## Psychological Triggers — Ad Applications {#psychological-triggers}
 
-Use these sparingly and authentically. Stack 1-2 per ad, never more.
+Canonical trigger definitions are in `copywriting/references/persuasion-frameworks.md` (Loss Aversion, Social Proof, Scarcity, Urgency, Authority, Reciprocity, Curiosity Gap, Anchoring, Novelty, Identity). Stack 1-2 per ad, never more.
 
-| Trigger | Mechanism | Ad Application |
-|---------|-----------|----------------|
-| **Loss Aversion** | Pain of loss is 2x stronger than pleasure of gain | "Don't miss out" > "Get access"; frame as what they'll lose |
-| **Social Proof** | People follow the crowd | Numbers ("12,847 teams"), logos, testimonials, ratings |
-| **Scarcity** | Limited availability increases perceived value | "Only 23 spots left", "Limited batch", genuine stock limits |
-| **Urgency** | Deadlines create action pressure | "Offer ends Friday", countdown timers, seasonal windows |
-| **Authority** | Experts and credentials build trust | "Recommended by [expert]", certifications, media logos |
-| **Reciprocity** | Free value creates obligation to reciprocate | Lead magnets, free tools, valuable content before asking |
-| **Curiosity Gap** | Open loops demand closure | "The 3-step method that...", incomplete information |
-| **Anchoring** | First number frames all subsequent judgment | Show high price first, then discounted price |
-| **Novelty** | Brains stop for the unexpected | Unusual visuals, contrarian claims, pattern interrupts |
-| **Identity** | People act consistently with who they believe they are | "For founders who...", "If you're the kind of person who..." |
+**Ad-format hooks per trigger:**
+- Loss Aversion → "Don't miss" framing in headline; what-they-lose visual
+- Social Proof → numeric badge ("12,847 teams"), logo bar, testimonial overlay
+- Scarcity / Urgency → genuine deadline overlay, real stock counter
+- Authority → expert/media-logo bar, certification badge
+- Reciprocity → lead magnet / free tool ad
+- Curiosity Gap → headline with open loop, video that pays off in 8-12s
+- Anchoring → strikethrough price, bundle comparison
+- Novelty → pattern-interrupt visual, contrarian claim hook
+- Identity → "For [identity] who..." headline
 
 ### Ethical Usage
 

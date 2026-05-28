@@ -103,7 +103,7 @@ src/
 | UX states | All relevant: empty, loading, loaded, error, offline |
 | Navigation | Expo Router file-based routing per `docs/ux/ux-design.md` |
 | Design tokens | From design system — no magic numbers |
-| I18n | All user-facing text via i18n (en + ko) |
+| I18n | All user-facing text via i18n. Default to `en` only; if `AGENTS.md` / `i18n.config.*` declares additional locales, cover all of them |
 | Dark mode | Light + dark themes |
 | Performance | FlatList/FlashList, memoization, native driver for animations |
 | Platform | Handle iOS/Android differences explicitly |
@@ -120,7 +120,7 @@ src/
 
 ## UX Coverage
 - States implemented: [list of states covered]
-- I18n: [en + ko keys added]
+- I18n: [locales covered per project config]
 - Dark mode: [supported]
 - Platform: [iOS + Android considerations]
 

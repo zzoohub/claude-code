@@ -716,6 +716,8 @@ import {
 } from "../../domain/authors/errors";
 import type { AppEnv } from "./app";
 
+// At top of file: `import type { ContentfulStatusCode } from "hono/utils/http-status";`
+
 interface ProblemDetails {
   type: string;
   title: string;
@@ -741,14 +743,15 @@ export function registerErrorHandler(app: Hono<AppEnv>): void {
   app.onError((err, c) => {
     // Zod validation errors (thrown by zValidator)
     if (err instanceof HTTPException) {
+      const status = err.status as ContentfulStatusCode; // 4xx/5xx range
       return c.json(
         problem(
           "validation-error",
           err.message || "Request Error",
-          err.status,
+          status,
           err.message,
         ),
-        err.status as 400,
+        status,
       );
     }
 

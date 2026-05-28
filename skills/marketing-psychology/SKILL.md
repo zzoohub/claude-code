@@ -39,6 +39,8 @@ These models are for influence, not manipulation. The line:
 - **Preserve autonomy** — Dark patterns (hiding unsubscribe, pre-checked boxes for charges, confusing opt-out flows) are manipulation, not persuasion.
 - **The regret test** — If a customer understood exactly what you did and why, would they feel respected or deceived?
 
+**Specific dark patterns to avoid (with regulatory hooks):** see `references/mental-models-reference.md` § Dark Pattern Anti-Catalog for the 10 most-enforced patterns (pre-ticked opt-in, roach motel, confirmshaming, fake countdown, hidden subscription, friend spam, disguised ads, forced continuity, sneak into basket, misdirection) — each with GDPR / FTC / CA AB 2863 / EU DSA references.
+
 ---
 
 ## Mental Model Categories

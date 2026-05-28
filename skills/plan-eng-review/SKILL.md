@@ -119,7 +119,7 @@ List existing code/flows that already partially solve sub-problems in this plan,
 ### tasks/board.md updates
 After all review sections are complete, present each potential task as its own individual AskUserQuestion. Never batch tasks — one per question. Never silently skip this step.
 
-Use this format for each new `tasks/board.md` row + `tasks/features/*.md` detail:
+Use this format for each new `tasks/board.md` row + `tasks/features/*.md` detail. Row schema follows `task-craft/references/board-schema.md` (canonical):
 
 ```markdown
 ### <Title>
@@ -130,12 +130,16 @@ Use this format for each new `tasks/board.md` row + `tasks/features/*.md` detail
 
 **Context:** Enough detail that someone picking this up in 3 months understands the motivation, the current state, and where to start.
 
+**Type:** feature | bugfix | refactor | chore | spike | hotfix
 **Effort:** S / M / L / XL
-**Priority:** P0 / P1 / P2 / P3 / P4
+**Priority:** high | medium | low (use canonical 3-level priority — see board-schema.md)
 **Depends on:** <prerequisites, or "None">
 ```
 
-Priority definitions: P0 — Blocking (must be done before next release), P1 — Critical (should be done this cycle), P2 — Important (do when P0/P1 are clear), P3 — Nice-to-have (revisit after adoption/usage data), P4 — Someday (good idea, no urgency).
+Priority guidance:
+- **high** = blocking or critical-this-cycle (was P0/P1 in older versions)
+- **medium** = important but not urgent (was P2)
+- **low** = nice-to-have / revisit later (was P3/P4)
 
 Organize items by component/section, sorted P0 first within each section. When completing an item, move it to a `## Completed` section with a `**Completed:** vX.Y.Z (YYYY-MM-DD)` annotation.
 

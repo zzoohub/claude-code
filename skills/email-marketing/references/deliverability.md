@@ -2,11 +2,53 @@
 
 Getting emails into the inbox instead of spam. None of the copy or strategy guidance matters if your emails aren't being delivered.
 
+> **Last reviewed:** 2026-05. Deliverability rules change — verify against current Gmail Postmaster / Yahoo / Microsoft sender guidelines before any large-volume launch.
+
 ---
 
 ## Why Deliverability Matters
 
 Email providers (Gmail, Outlook, etc.) use sender reputation, authentication, and engagement signals to decide whether your email reaches the inbox, lands in the promotions tab, or goes straight to spam. A sender with bad reputation can have 30-50% of emails silently dropped. Most senders don't realize this is happening because bounce rates only measure hard bounces, not spam filtering.
+
+---
+
+## Gmail / Yahoo Sender Requirements (Feb 2024 — mandatory for bulk senders)
+
+If you send **5,000+ messages per day** to Gmail or Yahoo addresses, you must comply with these rules or get throttled/rejected. Non-bulk senders should still follow them — they're now the baseline.
+
+### Authentication (all required)
+- **SPF** + **DKIM** must both pass and be **aligned with the From: domain** (relaxed alignment is enough — same organizational domain).
+- **DMARC** policy of at least `p=none` published on the From: domain, also aligned.
+- Yahoo follows the same playbook.
+
+### One-Click Unsubscribe (RFC 8058)
+Mandatory headers for marketing/promotional mail:
+```
+List-Unsubscribe: <https://yourapp.com/unsub?u=...>, <mailto:unsub@yourapp.com>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+```
+- Unsubscribe must process the request without requiring a login or extra confirmation page.
+- Unsubscribe within **2 days** maximum.
+
+### Spam Complaint Rate Cap
+- Keep complaint rate **below 0.3%** (measured in Gmail Postmaster Tools); target **under 0.1%**.
+- Sustained > 0.3% triggers throttling; >0.5% triggers bulk rejection.
+
+### Valid From, Reply-To, return-path
+- All authenticated and resolvable.
+- No spoofed reply-to that goes nowhere.
+
+### Practical Checklist (Feb 2024 baseline)
+- [ ] SPF includes sender, aligned with From: domain
+- [ ] DKIM signs with 2048-bit key, aligned with From: domain
+- [ ] DMARC published at `p=none` (or stricter) with `rua=` reporting
+- [ ] `List-Unsubscribe` + `List-Unsubscribe-Post: List-Unsubscribe=One-Click` on every marketing email
+- [ ] One-click unsubscribe endpoint processes the POST without login
+- [ ] Gmail Postmaster Tools account set up; complaint rate monitored weekly
+- [ ] All marketing sent from a subdomain (e.g., `mail.yourapp.com`), not root
+
+### Downstream Benefit: BIMI
+Once DMARC is at `p=quarantine` or `p=reject` (and you have a Verified Mark Certificate), Gmail/Yahoo/Apple Mail can display your brand logo next to the sender — a real trust signal. Optional but cheap once DMARC is enforced.
 
 ---
 

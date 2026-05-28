@@ -35,13 +35,12 @@ export function loadConfig(): AppConfig {
 
 ```typescript
 // src/app/server.ts — no Hono, no Drizzle imports
-import { sql } from "drizzle-orm";
 import { loadConfig } from "./config";
 import { AuthorServiceImpl } from "../domain/authors/service";
 import { createApp } from "../inbound/http/app";
 import { DrizzleAuthorRepository } from "../outbound/drizzle/repository";
 import { NoOpMetrics, NoOpNotifier } from "../outbound/noop";
-import { createDb } from "../outbound/drizzle/client";
+import { createDb, makeHealthPing } from "../outbound/drizzle/client";
 
 const config = loadConfig();
 const db = createDb(config.DATABASE_URL);
@@ -49,7 +48,7 @@ const repo = DrizzleAuthorRepository.fromClient(db);
 const service = new AuthorServiceImpl(repo, new NoOpMetrics(), new NoOpNotifier());
 const app = createApp({
   authorService: service,
-  healthPing: async () => { await db.run(sql`SELECT 1`); },
+  healthPing: makeHealthPing(db), // factory lives in the outbound layer
 });
 
 export default {
@@ -57,6 +56,8 @@ export default {
   port: config.PORT,
 };
 ```
+
+> `makeHealthPing(db)` is exported from `outbound/drizzle/client.ts` and returns `() => Promise<void>` that runs `db.run(sql\`SELECT 1\`)`. This keeps `drizzle-orm` imports out of `server.ts` as the rule states.
 
 ## Bootstrap (Node.js)
 

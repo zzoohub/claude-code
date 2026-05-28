@@ -75,6 +75,8 @@ The board is the single source of truth for task state.
 
 ### Format
 
+Canonical row schema: `references/board-schema.md`. All writers (`task-craft`, `task-add`, `task-status`, `plan-ceo-review`, `plan-eng-review`) follow it.
+
 ```markdown
 # Task Board
 
@@ -84,7 +86,7 @@ The board is the single source of truth for task state.
 
 | id | feature | task | type | priority | status | assignee | touches |
 |----|---------|------|------|----------|--------|----------|---------|
-| T-001 | infra | Project scaffolding and CI setup | chore | high | done | — | package.json, tsconfig.json |
+| T-001 | infra | Project scaffolding and CI setup | chore | high | backlog | — | package.json, tsconfig.json |
 | T-002 | file-parser | Input schema type definitions | feature | high | backlog | — | src/types/input.ts |
 
 ## Phase 2 — Core (all parallel, after Phase 1)

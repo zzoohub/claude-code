@@ -71,15 +71,21 @@
 
 ## Key Derivation
 
+**Preference order (2026):** Argon2id > scrypt > PBKDF2. Use Argon2id when available; PBKDF2 only when FIPS-140 compliance forces it.
+
 | Check | Why | CWE |
 |-------|-----|-----|
-| PBKDF2 (≥600,000 iterations), scrypt, or Argon2 for password-derived keys | Brute force resistance | CWE-916 |
+| Argon2id (preferred) with `m=64MB, t=3, p=4` minimum | Memory-hard, GPU-resistant | CWE-916 |
+| scrypt with `N=2^17, r=8, p=1` (acceptable alternative) | Memory-hard | CWE-916 |
+| PBKDF2-HMAC-SHA256 ≥600,000 iterations (legacy / FIPS only) | Brute force resistance | CWE-916 |
 | HKDF for deriving multiple keys from shared secret | Proper key separation | CWE-327 |
 | High entropy salt (≥128 bits, cryptographically random) | Pre-computation resistance | CWE-916 |
-| Iteration count reviewed annually (increases with hardware) | Moore's law | CWE-916 |
+| Parameters reviewed annually against OWASP cheatsheet | Hardware advances | CWE-916 |
+
+> **Last reviewed against OWASP Password Storage Cheatsheet:** 2026-05. Current OWASP-recommended PBKDF2-SHA256 minimum is 600,000 iterations.
 
 **Patterns to catch:**
-- `PBKDF2` with <100,000 iterations (OWASP 2023 minimum: 600,000 for SHA-256)
+- PBKDF2 with <600,000 iterations (SHA-256)
 - Direct use of password as encryption key: `AES(password, data)`
 - Single-round hash as key derivation: `key = sha256(password)`
 - Salt shorter than 128 bits or non-random salt

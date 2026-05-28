@@ -18,7 +18,7 @@ Failed payments cause 30-50% of all churn but are the most recoverable.
 
 - **Card expiry alerts**: Email 30, 15, and 7 days before card expires
 - **Backup payment method**: Prompt for a second payment method at signup
-- **Card updater services**: Visa/Mastercard auto-update programs (reduces hard declines 30-50%)
+- **Network tokens** (Visa Token Service, Mastercard MDES, Amex tokenization): Visa/Mastercard now provision network tokens that auto-update on card-on-file when the underlying PAN changes (replaces the older "Account Updater" batch programs). Stripe, Braintree, Adyen, Checkout.com all wire this in by default. Reduces hard declines 20-40%.
 - **Pre-billing notification**: Email 3-5 days before charge for annual plans
 
 ---
@@ -29,18 +29,26 @@ Not all failures are the same:
 
 | Decline Type | Examples | Retry Strategy |
 |-------------|----------|----------------|
-| Soft decline (temporary) | Insufficient funds, processor timeout | Retry 3-5 times over 7-10 days |
+| Soft decline (temporary) | Insufficient funds, processor timeout | ML-driven retry (Stripe Adaptive Acceptance, Adyen Revenue Boost) or static 3-5 retries over 7-10 days |
 | Hard decline (permanent) | Card stolen, account closed | Don't retry — ask for new card |
-| Authentication required | 3D Secure, SCA | Send customer to update payment |
+| Authentication required (SCA) | 3D Secure 2 challenge required | Send customer to update payment via authenticated flow — automatic retries fail without consumer challenge |
 
-### Retry Timing Best Practices
+### Retry Timing — Prefer ML over Static Schedule
+
+Static schedule (acceptable fallback):
 - Retry 1: 24 hours after failure
 - Retry 2: 3 days after failure
 - Retry 3: 5 days after failure
 - Retry 4: 7 days after failure (with dunning email escalation)
 - After 4 retries: Hard cancel with reactivation path
 
-**Smart retry tip:** Retry on the day of the month the payment originally succeeded. Stripe Smart Retries handles this automatically.
+**ML-driven retry (preferred for >$10k MRR):** Stripe Smart Retries (within Stripe Billing), Stripe Adaptive Acceptance (across Stripe), Adyen Revenue Boost, or churn-recovery tools (Churnkey, Recover, Stunning) pick retry timing per card / per issuer / per failure code. Lifts recovery 10-30% over static schedules in industry benchmarks.
+
+### SCA / 3DS notes (mandatory in EU/UK since 2021)
+
+- Failed retries on SCA-required transactions don't recover without explicit consumer authentication
+- Send the customer to an authenticated card-update flow (Stripe's Payment Element / Checkout handles this automatically)
+- Excluding low-value or recurring exemptions is provider-specific — verify with your billing provider
 
 ---
 

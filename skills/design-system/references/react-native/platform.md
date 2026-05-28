@@ -187,7 +187,19 @@ Touch targets: Enforce `minHeight: 44, minWidth: 44` on all interactive elements
 
 ## Reduced Motion
 
-React Native has no built-in `prefers-reduced-motion` equivalent. The animation library used in the project (configured in the platform skill) should provide a reduced motion hook. When reduced motion is active, skip animation entirely — set duration to 0.
+React Native has `AccessibilityInfo.isReduceMotionEnabled()` (since RN 0.59) and a `reduceMotionChanged` listener for live updates. When reduced motion is active, skip animation entirely — set duration to 0 or render the final state.
+
+```ts
+import { AccessibilityInfo } from 'react-native';
+
+const [reduceMotion, setReduceMotion] = useState(false);
+
+useEffect(() => {
+  AccessibilityInfo.isReduceMotionEnabled().then(setReduceMotion);
+  const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
+  return () => sub.remove();
+}, []);
+```
 
 ## Icons
 

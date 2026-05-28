@@ -1,5 +1,7 @@
 # Experiment Design
 
+**Layer:** experiment **design** (hypothesis, sample size, variant build, ramp, traffic allocation). For **analysis** (significance testing, novelty/segment teardown, revenue impact, ratio-metric delta method, sequential and Bayesian inference), see `product-analytics/references/ab-test-analysis.md`.
+
 Plan, design, and implement A/B tests with statistical rigor.
 
 ---
@@ -8,8 +10,12 @@ Plan, design, and implement A/B tests with statistical rigor.
 
 1. **Start with a Hypothesis** — Specific prediction, based on reasoning or data
 2. **Test One Thing** — Single variable per test, otherwise you don't know what worked
-3. **Statistical Rigor** — Pre-determine sample size, don't peek and stop early
+3. **Pre-commit Methodology** — Frequentist (fixed-horizon: pre-determine sample size, don't peek) OR Bayesian/sequential (define stopping rule via posterior or SPRT-style boundary). **Mixing modes mid-experiment invalidates inference.**
 4. **Measure What Matters** — Primary metric tied to business value
+5. **CUPED for variance reduction** when you have pre-experiment user data — typically halves required sample size for the same MDE
+6. **A/A tests on the platform itself** before relying on any new experimentation tool
+
+**Tool landscape (2026):** Statsig, GrowthBook, Eppo, LaunchDarkly, Split, PostHog Experiments. Pick one — don't run experiments across tools without alignment on randomization unit and assignment hash.
 
 ---
 

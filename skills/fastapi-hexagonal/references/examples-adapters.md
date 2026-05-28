@@ -562,11 +562,11 @@ async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Autho
         )
         return CursorPage(items=items, next_cursor=next_cursor, has_more=has_more)
 
-# src/inbound/http/authors/router.py — handler
+# src/inbound/http/authors/router.py — handler (FastAPI 0.95+ Annotated style)
 @router.get("")
 async def list_authors(
-    cursor: str | None = Query(None),
-    limit: int = Query(20, ge=1, le=100),
+    cursor: Annotated[str | None, Query()] = None,
+    limit: Annotated[int, Query(ge=1, le=100)] = 20,
     service: AuthorService = Depends(with_author_service),
 ) -> CursorPageResponse[AuthorResponseData]:
     page = await service.list_authors(cursor, limit)

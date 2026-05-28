@@ -1,5 +1,7 @@
 # RAG: Retrieval-Augmented Generation
 
+**Layer:** design-level (chunking, retrieval strategy, ranking). For RAG **system architecture** (vector storage as component, streaming, deployment), see `software-architecture/references/ai-architecture.md` §3.
+
 RAG grounds a language model in your data. Done well, it's the difference between a model that hallucinates confidently and one that cites sources. Done poorly, it's an expensive way to serve irrelevant context.
 
 ## When RAG is right

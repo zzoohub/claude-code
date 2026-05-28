@@ -292,6 +292,28 @@ Minimum 0 per category.
 ### Final Score
 `score = Σ (category_score × weight)`
 
+### Automated Scoring (preferred over eyeballing)
+
+Two categories are unreliable when scored by human eyeballing — automate them:
+
+- **Accessibility (15%)**: run **axe-core** via `npx @axe-core/cli <url>` or `@axe-core/playwright` inline. Use the issue count + severity to compute the category score (0 violations = 100; downgrade per critical/serious).
+- **Performance (10%)**: run **Lighthouse CI** via `npx @lhci/cli@latest autorun` against the page. Use Core Web Vitals (LCP, INP, CLS) + Lighthouse Performance score for the category score.
+
+Falling back to manual screenshot inspection is OK for one-off / no-tooling environments; flag the report mode as "manual" so reviewers know.
+
+### Repro Evidence: Playwright Trace Viewer
+
+For interactive bugs (dropdown briefly opens then closes, state flicker, race conditions), screenshots are weak evidence. Capture a Playwright trace instead:
+
+```ts
+await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+// ... reproduction steps ...
+await context.tracing.stop({ path: 'qa-trace.zip' });
+// Inspect via: npx playwright show-trace qa-trace.zip
+```
+
+Include the trace zip in the QA report for any bug filed.
+
 ---
 
 ## Framework-Specific Guidance

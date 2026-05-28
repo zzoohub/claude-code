@@ -237,28 +237,34 @@ PostHog has no built-in revenue analytics. Use HogQL to build revenue retention 
 
 GRR measures revenue kept from existing customers, excluding expansion. It answers: "How much of last period's revenue did we lose?"
 
+**Event-schema assumption:** `subscription_renewed` carries the renewal amount in `properties.amount`. `subscription_cancelled` should carry `amount = 0` (or be filtered out). Adjust the WHERE clause to your schema.
+
 ```sql
 -- GRR: Monthly revenue retention excluding expansion
+-- Uses LEFT JOIN so churned users (no row in curr month) still contribute to
+-- beginning_revenue, and contribute 0 to retained_revenue via COALESCE.
 WITH monthly_revenue AS (
   SELECT
     person_id,
     DATE_TRUNC('month', timestamp) AS month,
     SUM(toFloat64(properties.amount)) AS revenue
   FROM events
-  WHERE event = 'subscription_renewed' OR event = 'subscription_cancelled'
+  WHERE event = 'subscription_renewed'
     AND timestamp >= DATE_SUB(NOW(), INTERVAL 6 MONTH)
   GROUP BY person_id, month
 ),
 cohort_revenue AS (
   SELECT
-    curr.month AS month,
+    prev.month + INTERVAL 1 MONTH AS month,
     SUM(prev.revenue) AS beginning_revenue,
-    SUM(LEAST(curr.revenue, prev.revenue)) AS retained_revenue
-  FROM monthly_revenue curr
-  JOIN monthly_revenue prev
+    -- LEAST() caps retention at prev.revenue, excluding expansion.
+    -- COALESCE() treats churned users (no curr row) as 0 retained.
+    SUM(COALESCE(LEAST(curr.revenue, prev.revenue), 0)) AS retained_revenue
+  FROM monthly_revenue prev
+  LEFT JOIN monthly_revenue curr
     ON curr.person_id = prev.person_id
     AND curr.month = DATE_ADD(prev.month, INTERVAL 1 MONTH)
-  GROUP BY curr.month
+  GROUP BY prev.month
 )
 SELECT
   month,
@@ -266,6 +272,8 @@ SELECT
 FROM cohort_revenue
 ORDER BY month
 ```
+
+> **Why LEFT JOIN matters:** with an INNER JOIN, users who churn (no `subscription_renewed` event in the next month) get dropped from BOTH `beginning_revenue` AND `retained_revenue` — making churn invisible and inflating GRR. LEFT JOIN keeps the churned user in the denominator with 0 retention.
 
 ### Net Revenue Retention (NRR)
 

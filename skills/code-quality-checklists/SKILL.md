@@ -73,6 +73,16 @@ Pick sections by what the diff actually changes — most reviews need 3-5.
 - **Token / word limits stated in multiple places** — Prompt says 500, UI copy says 300, `max_tokens` says 1000. They drift.
 - **Prompt changes without eval** — Any prompt change should be paired with a benchmark run.
 
+## Migration Safety
+
+- **Schema change without expand → migrate → contract** — Rename / drop column in one deploy = outage.
+- **Full-table `UPDATE` without batching** — Locks + WAL bloat.
+- **`CREATE INDEX` without `CONCURRENTLY`** — Blocks writes during build.
+- **`ADD FOREIGN KEY` without `NOT VALID` + `VALIDATE CONSTRAINT`** — Full table scan with share lock.
+- **No rollback SQL** — Every migration must include reversal or "non-reversible, restore from backup".
+
+Full patterns: `references/migrations.md`.
+
 ---
 
 ## Review Output Contract

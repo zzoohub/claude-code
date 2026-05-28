@@ -85,9 +85,30 @@ These are different mechanisms with overlapping use cases.
 
 **Structured output** (JSON mode, schema-constrained decoding) — the model's direct response is a structured object. One call, no tool. Use when you want a single structured answer.
 
+- **OpenAI `response_format=json_schema`** — strict schema-enforced JSON. Native, recommended over `json_object` mode.
+- **Anthropic** — tool-use is the canonical structured-output mechanism (define a tool with the target schema; force the model to call it). Pure JSON mode also works.
+- **Local / OSS models** — `xgrammar`, `llguidance`, `outlines`, `guidance` enforce JSON Schema, regex, or context-free grammars at the token-sampling layer. Free correctness at the cost of some latency.
+
+Even with constrained decoding, **validate every output**. The schema can be satisfied while the *content* is wrong (right shape, wrong category).
+
 **Tool use** — the model decides to call a function, and the function's return shape is a structured object. Use when the model might also respond directly, or might need to call multiple tools.
 
 For "classify this ticket into a JSON schema", structured output is simpler. For "help the user, and sometimes classify tickets", tool use is correct.
+
+## MCP (Model Context Protocol) — when tools live outside your app
+
+MCP standardizes how external tool servers expose tools/resources/prompts to LLM hosts (Claude Desktop, Claude Code, Cursor, etc.). If your tools are reusable across multiple hosts, ship them as an MCP server instead of an in-app function registry.
+
+When MCP is the right fit:
+- The same tool will be called from multiple hosts (your app + Claude Desktop + Cursor)
+- You want users to bring their own tool servers
+- You're building a third-party integration to expose to LLM-host users
+
+When in-app function calling is still right:
+- Tools are tightly coupled to your app's auth, DB, and business logic
+- You don't want third-party MCP servers in your trust boundary
+
+**Security**: MCP server tool descriptions are part of the prompt context — treat untrusted MCP servers as a prompt-injection surface. See `security-checklists/references/llm-security.md` § MCP Server Security.
 
 ## Security: model-sourced inputs
 

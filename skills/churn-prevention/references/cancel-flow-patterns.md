@@ -90,14 +90,16 @@ Trigger → Survey → Dynamic Offer → Confirmation → Post-Cancel
 
 ---
 
-## Cancel Flow UI Pattern
+## Cancel Flow UI Pattern (compliance-safe)
+
+> **Compliance note:** Under California AB 2863 (eff. 2025-07-01) and New York Click-to-Cancel Act (eff. 2025-11-05), the survey and save-offer screens must be **skippable**. A user who signed up online must be able to cancel online with no required multi-step process. The "Skip — cancel now" link below is non-negotiable for US-regulated subscriptions. See `SKILL.md` § Compliance & Click-to-Cancel.
 
 ```
 ┌─────────────────────────────────────┐
 │  We're sorry to see you go          │
 │                                     │
-│  What's the main reason you're      │
-│  cancelling?                        │
+│  (Optional) What's the main reason  │
+│  you're cancelling?                 │
 │                                     │
 │  ○ Too expensive                    │
 │  ○ Not using it enough              │
@@ -108,11 +110,12 @@ Trigger → Survey → Dynamic Offer → Confirmation → Post-Cancel
 │  ○ Other: [____________]            │
 │                                     │
 │  [Continue]                         │
+│  [Skip — cancel now]      ← REQUIRED│
 │  [Never mind, keep my subscription] │
 └─────────────────────────────────────┘
-         ↓ (selects "Too expensive")
+         ↓ (selects "Too expensive" — survey is optional)
 ┌─────────────────────────────────────┐
-│  What if we could help?             │
+│  Before you go — one option         │
 │                                     │
 │  ┌───────────────────────────────┐  │
 │  │  25% off for the next 3 months│  │
@@ -123,16 +126,26 @@ Trigger → Survey → Dynamic Offer → Confirmation → Post-Cancel
 │  Or switch to [Basic Plan] at       │
 │  $X/month →                         │
 │                                     │
-│  [No thanks, continue cancelling]   │
+│  [No thanks, cancel now]  ← REQUIRED│
+└─────────────────────────────────────┘
+         ↓ (one click)
+┌─────────────────────────────────────┐
+│  ✓ Your subscription is cancelled.  │
+│  Effective: [date]                  │
+│  Confirmation email sent to you.    │
 └─────────────────────────────────────┘
 ```
 
 ### UI Principles
-- Keep "continue cancelling" option visible (no dark patterns)
+- **"Skip — cancel now" must be visible on every screen** between intent and final cancellation (CA AB 2863 / NY 2025 compliance)
+- Survey questions must be **optional** — no required answer to proceed
+- Save-offer screen must show a direct "cancel now" path, not just "continue cancelling"
 - One primary offer + one fallback, not a wall of options
 - Show specific dollar savings, not abstract percentages
 - Use customer's name and account data when possible
 - Mobile-friendly (many cancellations happen on mobile)
+- Cancellation completes in ≤ 3 clicks from intent
+- Confirmation email sent automatically with effective date
 
 ---
 

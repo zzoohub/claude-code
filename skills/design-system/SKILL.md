@@ -147,13 +147,14 @@ Internal structure is always the same:
 └── patterns/        # FormField, ConfirmDialog (compositions)
 ```
 
-When using shadcn, `styled/` is replaced by `ui/` (shadcn CLI target) and `headless/` is unnecessary (Radix is bundled).
+When using shadcn, `styled/` is replaced by `ui/` (shadcn CLI target) and `headless/` is unnecessary (Radix is bundled). Full shadcn + cva + Radix Primitives integration (cn helper, Slot/asChild, Tailwind v4 token wiring): `references/shadcn.md`.
 
 Headless hooks own behavior: ARIA, keyboard, focus, state. Styled components own appearance: tokens, variants, sizing. This separation means a Button's click/keyboard/focus logic is written once and reused whether it looks like a primary button, ghost button, or icon button.
 
 → Framework-agnostic patterns: `references/components.md`
 → React implementations (JSX, hooks, Context): `references/react/components.md`
 → React 19 API changes: `references/react/react-19.md`
+→ shadcn/ui + cva + Radix: `references/shadcn.md`
 
 ## Icons
 

@@ -1,5 +1,7 @@
 # Agent Architecture
 
+**Layer:** system-level (protocols, durable execution, multi-agent orchestration, state management, infrastructure). For agent **design** (when an agent is the right shape vs a pipeline, agent evaluation, context engineering at the prompt layer), see `llm-app-design/references/agents.md`.
+
 Architecture patterns, protocols, and infrastructure for LLM-powered autonomous agents. This reference is language-agnostic — it covers architectural decisions, not implementation details.
 
 **Important**: The agent ecosystem evolves rapidly. This document covers **stable architectural patterns and emerging standards**. For specific framework comparisons and SDK features, verify current state via web search before committing.

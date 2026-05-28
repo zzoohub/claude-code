@@ -227,7 +227,11 @@ Rule: tap area size is measured in logical points, not visual pixels. A 24px ico
 
 ## Accessibility Requirements
 
-### Non-Negotiable (WCAG 2.1 AA Minimum)
+### Baseline (WCAG 2.2 AA — design target)
+
+> **Status (2026-05):** WCAG 2.2 is W3C Recommendation (Oct 2023). EAA enforcement began **2025-06-28** but EN 301 549 currently still maps to **WCAG 2.1 AA**; WCAG 2.2 incorporation is expected during 2026. Design to 2.2 to be safe; 2.1 is the current legal floor in the EU.
+
+**WCAG 2.1 AA (current legal floor):**
 
 | Requirement | Specification | Test Method |
 |-------------|---------------|-------------|
@@ -237,6 +241,17 @@ Rule: tap area size is measured in logical points, not visual pixels. A 24px ico
 | Touch targets | 44×44pt minimum | Layout inspection |
 | Text resizing | Content usable at 200% zoom | Browser zoom test |
 | Keyboard access | All functions via keyboard | Tab through everything |
+
+**WCAG 2.2 additions (design these in now):**
+
+| Requirement | Specification |
+|---|---|
+| 2.4.11 / 2.4.12 — Focus appearance | Focus indicator ≥ 2px solid outline, 3:1 contrast against adjacent colors; not obscured by other content |
+| 2.5.7 — Dragging movements | Any drag interaction must have a single-point alternative (e.g., tap to reorder via buttons) |
+| 2.5.8 — Target size (minimum) | 24×24 CSS px for non-essential targets; 44×44 still recommended |
+| 3.2.6 — Consistent help | Help controls (contact link, FAQ) appear in the same relative location across pages |
+| 3.3.7 — Redundant entry | Don't re-ask info the user already provided in the same flow |
+| 3.3.8 / 3.3.9 — Accessible authentication | No cognitive-function test for auth (no puzzles); allow paste of passwords / passkey use |
 
 ### Color
 - **Never** use color as the only indicator of state

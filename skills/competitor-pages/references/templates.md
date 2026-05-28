@@ -310,9 +310,46 @@ Frame weaknesses as scope decisions, not failures:
 
 ---
 
-## FAQ Schema Template
+## Schema Templates
 
-Add FAQ schema for common questions:
+> **FAQ schema (Google Aug 2023):** Rich snippets restricted to authoritative health/gov sites. For SaaS comparison pages, FAQPage rarely triggers rich results — keep it only for AI-platform extractability if relevant. Prefer Product + ItemList + Review schema below.
+
+### Product + Offer (per product compared)
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "[Your Product]",
+  "description": "...",
+  "offers": {
+    "@type": "Offer",
+    "price": "29.00",
+    "priceCurrency": "USD",
+    "availability": "https://schema.org/InStock"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.7",
+    "reviewCount": "1247"
+  }
+}
+```
+
+### ItemList (ranked alternatives)
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "[Your Product]", "url": "https://yoursite.com" },
+    { "@type": "ListItem", "position": 2, "name": "[Competitor B]", "url": "https://competitor-b.com" }
+  ]
+}
+```
+
+### FAQPage (use sparingly — see caveat above)
 
 ```json
 {
@@ -322,18 +359,7 @@ Add FAQ schema for common questions:
     {
       "@type": "Question",
       "name": "What is the best alternative to [Competitor]?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "[Your answer — be helpful, not just promotional]"
-      }
-    },
-    {
-      "@type": "Question",
-      "name": "Is [Your Product] better than [Competitor]?",
-      "acceptedAnswer": {
-        "@type": "Answer",
-        "text": "[Balanced answer with use-case recommendations]"
-      }
+      "acceptedAnswer": { "@type": "Answer", "text": "[Balanced answer with use-case recommendations]" }
     }
   ]
 }

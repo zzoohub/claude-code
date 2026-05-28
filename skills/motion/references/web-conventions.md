@@ -67,16 +67,34 @@ Tailwind owns **layout and styling**. GSAP owns **motion**. They never overlap. 
 </section>
 ```
 
-## Custom Text Splitter
+## Text Splitting — Use GSAP SplitText (free since 2025)
 
-Do not import `SplitText` from GSAP — it requires a paid Club membership. Instead, create a `lib/split-text.ts` utility that splits an element's `textContent` into individually animatable `<span>` elements, preserving the original text in an `aria-label` for accessibility. API contract:
+> **Important update (2026):** Webflow acquired GSAP in Fall 2024. As of April 2025, **all GSAP plugins — including SplitText, MorphSVG, DrawSVG, MotionPath, ScrollTrigger, ScrollSmoother, Inertia — are 100% free for commercial use.** No Club membership required.
+>
+> SplitText was also **completely rewritten** in 2025: ~50% smaller, built-in screen-reader accessibility (`aria-label` preserved automatically), easy masking for advanced reveals, and improved cross-browser stability.
+
+Use `SplitText` directly:
 
 ```ts
-const { chars, words, revert } = splitText(element, "chars");
-// chars: HTMLElement[] of individual characters
-// words: HTMLElement[] of word groups
-// revert(): restores original textContent
+import { gsap } from "gsap";
+import { SplitText } from "gsap/SplitText";
+
+gsap.registerPlugin(SplitText);
+
+const split = SplitText.create(element, {
+  type: "chars,words",
+  // a11y handled automatically via aria-label
+});
+
+// split.chars / split.words / split.lines available
+// Animate:
+gsap.from(split.chars, { y: 100, opacity: 0, stagger: 0.02, duration: 0.6 });
+
+// Cleanup:
+split.revert();
 ```
+
+> **Old custom-splitter pattern (deprecated):** Earlier versions of this skill recommended building a custom `lib/split-text.ts` to avoid the paid plugin. That workaround is no longer needed — and the rewritten official SplitText is now smaller and more accessible than any hand-rolled splitter.
 
 ## Lenis + GSAP Integration
 
@@ -155,20 +173,25 @@ For responsive charts, wrap with `ResizeObserver` to re-render on container size
 
 Add `role="img"` + `aria-label` to every chart SVG. For interactive charts, include a visually-hidden `<table>` as screen-reader fallback.
 
-## CSS Native APIs
+## CSS Native APIs (prefer for simple cases)
 
-Use CSS native only when zero-JS is genuinely advantageous (GSAP not already loaded on page).
+CSS-native animation is now the **default** for simple reveals and route transitions in 2026. Reach for GSAP only when you need timeline choreography, callbacks, or stagger that CSS can't express.
 
 | CSS Feature | Use For | Skip When |
 |-------------|---------|-----------|
 | `animation-timeline: scroll()` | Scroll progress bar | Need callbacks or stagger |
 | `animation-timeline: view()` | Single element reveal on scroll | Need stagger or sequencing |
-| View Transitions API | Page route transitions, shared elements | Need complex overlay wipes |
+| View Transitions API (same-document) | SPA route transitions, shared elements | Need complex overlay wipes |
+| View Transitions API (cross-document) | MPA route transitions across pages | Firefox (no support yet) |
 | `@starting-style` | Simple element enter/exit (modal, toast) | Need sequenced/staggered enter/exit |
 
-Browser support: scroll-driven (Chrome 115+, Safari 18.4+), View Transitions (Chrome 111+, Safari 18+), @starting-style (Chrome 117+, Safari 17.5+). All degrade gracefully -- elements visible instantly without animation.
+**Browser support (2026-05):**
+- Same-document View Transitions: Baseline (Chrome 111+, Safari 18+, Firefox 144+ since Sept 2025)
+- **Cross-document View Transitions** (`@view-transition` at-rule for MPAs): Chrome 126+ (June 2024), Safari 18.2+; **Firefox: not yet** — falls back to instant nav, no animation
+- Scroll-driven animations: Chrome 115+, Safari 18.4+; Firefox in progress
+- `@starting-style`: Chrome 117+, Safari 17.5+; Firefox 129+
 
-Use `@supports (animation-timeline: view())` for feature detection.
+Use `@supports (animation-timeline: view())` and `@supports at-rule(@view-transition)` for feature detection.
 
 ## View Transitions API
 
@@ -211,21 +234,40 @@ Import only what you use -- never `import "gsap/all"`.
 
 If a page only needs a scroll progress bar or simple reveals, CSS native saves ~35KB of GSAP. But if GSAP is already loaded for other animations, just use GSAP for everything.
 
-## Reduced Motion (JS)
+## Reduced Motion (JS) — listen for live OS toggle changes
+
+Users can toggle the OS reduced-motion preference while your page is open. A one-shot check at init goes stale. Use `matchMedia` + `change` listener:
 
 ```ts
-function prefersReducedMotion(): boolean {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
+const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+let reduce = mq.matches;
+mq.addEventListener("change", (e) => {
+  reduce = e.matches;
+  // Re-evaluate active timelines: kill / skip-to-end, or rebuild without motion.
+});
 
-// Check before initializing animations
 function initAnimatedSection(el: HTMLElement) {
-  if (prefersReducedMotion()) return () => {};
+  if (reduce) return () => {}; // render final state, no animation
   return createFullAnimation(el);
 }
 ```
 
-For GSAP globally: `gsap.globalTimeline.timeScale(100)` makes everything effectively instant.
+> Don't speed-up to fake reduced-motion. The spec says "remove or replace motion" — flashing through an animation 100× fast still triggers vestibular issues. Skip the animation entirely and render the final state.
+
+For GSAP boundary-style control: prefer `gsap.matchMedia()` with `(prefers-reduced-motion: reduce)` to scope animations cleanly.
+
+## Consume design-system motion tokens
+
+Don't hardcode `duration: 0.6` or `ease: 'power3.out'` in every animation — read from project tokens defined in `design-system/references/motion.md` (durations like `--duration-fast/normal/slow` and easings) so GSAP / Motion / CSS / native animations all share one timing vocabulary.
+
+```ts
+const css = getComputedStyle(document.documentElement);
+const fast = parseFloat(css.getPropertyValue('--duration-fast')) / 1000;
+const normal = parseFloat(css.getPropertyValue('--duration-normal')) / 1000;
+gsap.to(el, { duration: normal, opacity: 1 });
+```
+
+Or import a typed `tokens.ts` shared with the design system. Either way, swap from literal numbers to token references early — retroactive consolidation is painful.
 
 ## Performance Rules
 
@@ -250,4 +292,4 @@ For GSAP globally: `gsap.globalTimeline.timeScale(100)` makes everything effecti
 4. **ScrollTrigger + dynamic content**: call `ScrollTrigger.refresh()` after content changes that affect layout.
 5. **Multiple GSAP contexts on same element**: later context doesn't auto-clean earlier one. Each needs its own cleanup.
 6. **Custom cursor on touch devices**: always guard with `"ontouchstart" in window` or `@media (pointer: fine)`.
-7. **GSAP paid plugins**: `SplitText`, `MorphSVG`, `DrawSVG`, `MotionPath`, `InertiaPlugin` require GSAP Club membership. Never import these — use free alternatives or build custom utilities.
+7. **GSAP plugins (all free since April 2025)**: `SplitText`, `MorphSVG`, `DrawSVG`, `MotionPath`, `InertiaPlugin`, `ScrollTrigger`, `ScrollSmoother` are all 100% free for commercial use after the Webflow acquisition. Older docs referencing "GSAP Club" or "paid plugins" are outdated.

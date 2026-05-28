@@ -7,7 +7,7 @@
 | **Branch** | {BRANCH} |
 | **Commit** | {COMMIT_SHA} ({COMMIT_DATE}) |
 | **PR** | {PR_NUMBER} ({PR_URL}) or "—" |
-| **Tier** | Quick / Standard / Exhaustive |
+| **Mode** | diff-aware / full / quick / regression |
 | **Scope** | {SCOPE or "Full app"} |
 | **Duration** | {DURATION} |
 | **Pages visited** | {COUNT} |

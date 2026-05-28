@@ -107,14 +107,14 @@ Use connecting words sparingly but effectively:
 
 ## Scannable Flow (Eyeball Monkey Bars)
 
-73% of internet readers need scannable content. Copy must feel effortless — like swinging from one monkey bar to the next.
+Most internet readers scan rather than read (Nielsen Norman Group). Copy must feel effortless — like swinging from one monkey bar to the next.
 
 - Break up text frequently. Short paragraphs reign supreme.
 - Use bullet brigades: bold text, numbered lists to highlight key points.
 - Keep sentences snappy: aim for 13 words or less about 80% of the time.
 - Spend disproportionate time on hooks: 10-15 minutes on the headline is not overkill.
 
-Long copy still works, but boring or overwhelming copy doesn't. A 9,600-word sales page can convert at 8.8% — if it's scannable and engaging at every step. People visit your site to sleuth out info, not to read. Make the sleuthing effortless.
+Long copy still works — but only when every paragraph earns its place by being scannable and engaging. Length isn't what converts; "people can find what they need without effort" is. Make the finding effortless.
 
 ---
 

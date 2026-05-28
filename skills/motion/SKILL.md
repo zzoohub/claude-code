@@ -88,7 +88,7 @@ What platform?
 
 GSAP is the default animation engine for web. It outperforms alternatives for interactive work: ScrollTrigger (pin, scrub, snap, stagger), timeline sequencing, text splitting, cursor/mouse tracking. It operates directly on the DOM — framework-agnostic.
 
-**Do not use Motion (formerly Framer Motion).** Always use GSAP as the sole animation engine on web. Motion and GSAP animate the same transform properties through different systems, causing conflicts and flickering. One engine means one mental model, no property collisions, and smaller bundles. If the project already has Motion, migrate to GSAP — don't maintain two animation systems.
+**Default to GSAP; use Motion (formerly Framer Motion) selectively.** GSAP for timeline choreography, scroll-pinning, SVG morph, page-level sequences. Motion for component enter/exit, layout (FLIP) animations, gesture/drag, simple state-tied tweens — especially in shadcn-heavy React projects where Motion is already a dep. **Never animate the same property on the same element with both engines** — they will fight. Pick per-component, not per-project.
 
 ### Web Decision Flowchart
 
@@ -176,7 +176,7 @@ Need animation?
 | **Stagger > 10 items** | After ~6, brain predicts pattern and stops noticing | Stagger first 4-6, batch-reveal the rest. |
 | **Porting web hover to mobile** | Mobile has no hover | Rethink: magnetic hover -> spring tap, hover reveal -> always visible. |
 | **Timing-based everything (RN)** | `withTiming` can't be interrupted mid-flight | Default to `withSpring` for touch-related animations. |
-| **Multiple animation engines** | Property conflicts, bundle bloat, mental overhead | GSAP only on web, Reanimated only on mobile. No Motion (formerly Framer Motion). |
+| **Same property animated by two engines** | Property conflicts, flickering | Pick GSAP or Motion per component (not per project). Reanimated only on mobile. |
 
 ## Accessibility — Non-Negotiable
 

@@ -98,16 +98,19 @@ For strategy-only requests (no copy), produce the overview table with timing, pu
 
 ## Diagnosing Email Problems
 
+> **Open-rate caveat (Apple Mail Privacy Protection, since iOS 15 / 2021):** Apple Mail pre-fetches tracking pixels for ~50%+ of recipients on Apple devices, inflating open rates and making them an **unreliable** primary signal. Treat open rate as directional only; **prioritize click rate, reply rate, and conversion rate** for diagnosis.
+
 When metrics are underperforming, the problem usually lives in a specific layer. Work top-down:
 
 | Symptom | Likely cause | What to check |
 |---------|-------------|---------------|
-| Low open rate (<20%) | Subject line or deliverability | Are you landing in spam? Check `references/deliverability.md`. If deliverability is fine, the subject lines aren't earning opens — test curiosity and benefit hooks. |
-| Opens but low clicks (<2%) | Copy or CTA mismatch | The email isn't delivering on the subject line's promise, or the CTA is unclear/high-friction. Check body copy relevance and CTA placement. |
+| Low click rate (<2% of sent) | Subject line, deliverability, OR copy | Click rate is the most reliable engagement signal post-MPP. Check inbox placement via Gmail Postmaster / mail-tester. If deliverable, the subject + preview text + body aren't earning attention. |
+| Opens reported but no clicks | Copy or CTA mismatch (or MPP false opens) | The email isn't delivering on the subject line's promise, the CTA is unclear/high-friction — or "opens" are MPP pre-fetches and the email was never actually read. Cross-check with reply rate / link clicks. |
 | Clicks but no conversion | Landing page or offer | The email did its job — the problem is downstream. Check landing page alignment with email promise. |
 | High unsubscribe (>0.5%) | Frequency or relevance | Sending too often, or content doesn't match what they signed up for. Segment harder or reduce frequency. |
 | Low reply rate on cold (<5%) | Personalization or ask | The email reads like a template or asks too much. See `references/cold-outreach.md`. |
-| Declining open rates over time | List fatigue | Re-engagement sequence needed. Sunset non-openers after 90 days. |
+| Declining click rates over time | List fatigue | Re-engagement sequence needed. Sunset non-clickers after 90 days (don't rely on opens). |
+| Spam complaint rate > 0.1% | Relevance, frequency, or consent | At 0.3% Gmail throttles; at 0.5% bulk rejects. Audit how recipients consented and how often you send. See `references/deliverability.md` Gmail/Yahoo Sender Requirements section. |
 
 ---
 

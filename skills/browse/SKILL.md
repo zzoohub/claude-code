@@ -158,6 +158,10 @@ Refs are invalidated on navigation — run `snapshot` again after `goto`.
 
 ## Full Command List
 
+> **⚠️ High-trust commands (review before use):**
+> - **`cookie-import-browser`** copies cookies from your real browsers (Chrome / Arc / Brave / Edge / Comet) into the headless session. **Effect:** the agent now acts authenticated as YOU on whichever sites those cookies cover. Treat this as the equivalent of handing your active sessions to the agent — only run on domains you intentionally want to dogfood as your logged-in self. Prefer `--domain` to scope cookies; never run unscoped in untrusted contexts.
+> - **`eval <file>`** executes arbitrary JavaScript in the page context. Restricted to `/tmp/` or the working directory, but still: review the script, and never `eval` content that came from an untrusted source (web scrape, user-submitted file). Same risk class as page XSS.
+
 ### Navigation
 | Command | Description |
 |---------|-------------|

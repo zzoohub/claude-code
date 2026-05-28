@@ -72,7 +72,7 @@ DECLARE
     affected INT;
 BEGIN
     LOOP
-        WITH batch AS (
+        WITH batches AS (
             SELECT id FROM user_accounts
             WHERE new_column IS NULL
             LIMIT batch_size
@@ -99,7 +99,7 @@ DROP PROCEDURE backfill_new_column;
 **Alternative (simple loop from application code)** — if your migration framework doesn't support procedures, loop from the app:
 ```sql
 -- Run this in a loop from application code, each call in its own transaction:
-WITH batch AS (
+WITH batches AS (
     SELECT id FROM user_accounts
     WHERE new_column IS NULL
     LIMIT 5000

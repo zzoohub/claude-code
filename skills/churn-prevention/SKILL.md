@@ -8,8 +8,11 @@ description: |
   "failed payment", "payment recovery", "save offer", "cancel flow", "downgrade",
   "customer health", "at-risk customers", "subscription cancellation", "reduce churn rate",
   "churn analysis", "why are users leaving", "customer at risk".
-  Do NOT use for: onboarding optimization (use cro skill), email sequences including
-  win-back campaigns (use email-marketing skill), or pricing changes (use pricing skill).
+  Do NOT use for: onboarding optimization (use cro skill), general marketing
+  email sequences including win-back campaigns (use email-marketing skill), or
+  pricing changes (use pricing skill). Carve-out: dunning emails (payment-failure
+  recovery) ARE owned here in `references/dunning-playbook.md` because they're
+  tightly coupled to retry logic and billing state, not general marketing.
 ---
 
 # Churn Prevention
@@ -63,6 +66,48 @@ Exit survey data should drive save offer design. Don't offer a discount to someo
 
 ### Involuntary Churn is the Easiest Win
 Payment failures are mechanical problems with mechanical solutions. Fix these first before tackling harder voluntary churn.
+
+---
+
+## Compliance & Click-to-Cancel (2025-2026 landscape)
+
+> **Not legal advice — verify against current law in every region you serve before launching any cancel flow.**
+
+### US — FTC
+- The FTC's federal "Click to Cancel" Rule was **vacated by the 8th Circuit on 2025-07-08** on procedural grounds (no preliminary regulatory analysis).
+- The FTC submitted a draft Advance Notice of Proposed Rulemaking (ANPRM) on 2026-01-30 to restart the rulemaking with proper procedure.
+- **Enforcement under existing unfair/deceptive-practices doctrine continues.** State AGs have also stepped up enforcement.
+
+### California — AB 2863 (Automatic Renewal Law amendments)
+- **Effective 2025-07-01.** Applies to contracts entered into, amended, or extended on or after that date.
+- **Same-medium cancellation** required: if a consumer signs up online, they must be able to cancel online with equal ease. No phone-only or in-person-only cancellation paths.
+- "Click-to-cancel" button required for online cancellations; cannot obstruct or delay.
+- Expanded definitions of "automatic renewal" and "continuous service" cover **free trials and free-to-pay conversions**.
+- **Express affirmative consent** to renewal terms required; records retained ≥3 years (or 1 year post-termination, whichever is longer).
+- Enforcement by California AG, district attorneys, and private plaintiffs.
+
+### New York — Click-to-Cancel Act (2025 Budget Bill)
+- Signed 2025-05-09 as part of the state budget; **effective 2025-11-05**.
+- Simple cancellation mechanism **as easy as the one used to consent, in the same medium**. If consent was online, cancellation must be online; in-person consent must also offer online or phone cancellation.
+- Companies cannot impose unreasonable or unlawful conditions, refuse, obstruct, or unreasonably delay cancellation.
+
+### Other US states with auto-renewal rules
+Colorado, Vermont, Illinois, and others have analogous 2025 laws — confirm requirements in every state you serve.
+
+### EU/UK
+GDPR + the Digital Services Act / Digital Markets Act framework already restrict "dark patterns" around cancellation. Consumer protection authorities (e.g., France's DGCCRF) have started enforcement on subscription-trap patterns from 2024-2025.
+
+### Practical cancel-flow checklist (compliance-safe)
+- [ ] **Same-medium cancellation** — if signup was online, cancellation is online (no phone-only)
+- [ ] **One-click path** — explicit "Cancel my subscription" button visible without forced multi-step survey
+- [ ] **No required survey before cancellation** — surveys must be skippable
+- [ ] **No required save-offer view** — offers are skippable, not blocking
+- [ ] **Cancellation confirmed by email** with effective date
+- [ ] **No re-enrollment without fresh affirmative consent**
+- [ ] **Records of consent and cancellation retained** per applicable law (CA: 3 years minimum)
+- [ ] **Clear cost disclosure** before any save offer
+
+See `references/cancel-flow-patterns.md` for compliant UI patterns.
 
 ---
 

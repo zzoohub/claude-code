@@ -51,37 +51,27 @@ If your project keeps architecture docs elsewhere, see `AGENTS.md`.
 - Does not produce diagrams unless the decision adds a new container
 - Does not produce database schema changes
 
-## ADR Template
+## ADR Template (Y-statement, aligned with `software-architecture`)
 
 ```markdown
-## ADR-{NNN}: {Title}
+## ADR-{NNN}: {Title} — YYYY-MM-DD
 
-**Date:** YYYY-MM-DD
-**Status:** Accepted | Proposed | Superseded by ADR-NNN
-
-### Context
-
-What is the issue motivating this decision? Cite the ASRs from
-`docs/arch/context.md` §3 that drive it. Cite the feature spec at
-`docs/prd/features/{feature}.md` if the decision is feature-driven.
-
-### Options Considered
-
-1. **{Option A}** — pros / cons.
-2. **{Option B}** — pros / cons.
-3. **Do nothing / keep current** — pros / cons (always include this option).
-
-### Decision
-
-We chose Option {X} because {reason tied to ASR or constraint}.
-
-### Consequences
-
-- **Enables:** ...
-- **Costs:** ...
-- **Risks / mitigations:** ...
-- **Affected components:** {list from system.md §2, or "none"}
+- **Status:** Accepted | Proposed | Superseded by ADR-{NNN}
+- **Door:** One-way (irreversible) | Two-way (reversible)
+- **Context:** Issue motivating this decision. Cite ASRs from `docs/arch/context.md` §3, and the feature spec at `docs/prd/features/{feature}.md` if feature-driven.
+- **Options:**
+  1. **{Option A}** — pros / cons
+  2. **{Option B}** — pros / cons
+  3. **Keep current / do nothing** — pros / cons (always include)
+- **Decision:** Chose {X}.
+- **Why:** Reason tied to ASR or constraint.
+- **Rejected:** Why other options were rejected.
+- **Tradeoff:** Positive and negative consequences. Affected components from `system.md` §2 (or "none").
+- **Revisit when:** Trigger conditions that should prompt reconsideration (scale threshold, library deprecation, new ASR, etc.).
 ```
+
+**One-way doors** (analyze carefully): database choice, primary language, auth architecture, core domain model.
+**Two-way doors** (decide fast): library choice, caching strategy, log format, CI tool.
 
 ## Workflow
 

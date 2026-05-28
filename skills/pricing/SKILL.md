@@ -11,6 +11,8 @@ description: |
   This skill should trigger broadly — pricing touches everything from product design to growth.
   Do NOT use for: paywall UI optimization (use cro), copy on pricing page (use copywriting),
   psychological principles only (use marketing-psychology), revenue analytics (use product-analytics).
+  Output scope: public-facing tier strategy goes to `biz/marketing/pricing.md` (marketer agent).
+  In-app paywall/upgrade pricing tactics go to `biz/growth/paywall-pricing.md` (growth-optimizer agent).
 ---
 
 # Pricing Strategy

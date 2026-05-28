@@ -24,6 +24,8 @@ Web (Vite-based): Paraglide JS v2 compiles translation files into tree-shakable 
 
 Mobile: react-i18next provides runtime i18n with React Native constraints (no Suspense, localStorage persistence, RTL via I18nManager).
 
+> **Variable syntax differs between platforms.** Web/Next (ICU MessageFormat via next-intl/Paraglide) uses single braces: `Hello, {name}`. Expo/mobile (i18next) uses double braces: `Hello, {{name}}`. Same string sources across web + mobile require either a syntax-conversion build step or maintaining separate message files. Most teams keep them separate.
+
 ---
 
 ## Core Principles
@@ -80,6 +82,10 @@ export function createFormatters(locale: string) {
       new Intl.NumberFormat(locale, { style: 'currency', currency: cur }).format(v),
     date: (d: Date, opts?: Intl.DateTimeFormatOptions) =>
       new Intl.DateTimeFormat(locale, { dateStyle: 'medium', ...opts }).format(d),
+    list: (items: string[], type: Intl.ListFormatOptions['type'] = 'conjunction') =>
+      new Intl.ListFormat(locale, { type, style: 'long' }).format(items),
+    duration: (parts: Intl.DurationInput) =>
+      new (Intl as any).DurationFormat(locale, { style: 'long' }).format(parts),
     relativeTime: (d: Date) => {
       const diffSec = Math.floor((Date.now() - d.getTime()) / 1000);
       const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
@@ -88,7 +94,28 @@ export function createFormatters(locale: string) {
       if (Math.abs(diffSec) < 86400) return rtf.format(-Math.floor(diffSec / 3600), 'hour');
       return rtf.format(-Math.floor(diffSec / 86400), 'day');
     },
+    // Word/grapheme segmentation for ja/ko/zh/th (which don't space-separate)
+    segment: (text: string, granularity: 'word' | 'sentence' | 'grapheme' = 'word') =>
+      Array.from(new Intl.Segmenter(locale, { granularity }).segment(text)),
   };
+}
+```
+
+`Intl.ListFormat` (all browsers), `Intl.Segmenter` (Chrome 87+, Safari 14.1+, Firefox 125+), `Intl.DurationFormat` (Chrome 129+, Safari 18.4+; polyfill for older).
+
+### 6. RTL / Bidi Support
+
+For locales like ar, he, fa, ur:
+
+- Set `<html lang="..." dir="rtl">` (or `auto`) based on the active locale's `Intl.Locale.prototype.textInfo.direction`
+- Use **CSS logical properties** instead of physical: `margin-inline-start` not `margin-left`, `padding-block-end` not `padding-bottom`, `inset-inline` not `left/right`. Tailwind v4 has `ps-*`/`pe-*`/`ms-*`/`me-*` utilities.
+- Mirror icons that imply direction (arrows, chevrons) — leave content-meaningful icons alone (clock, search)
+- Test with `dir="rtl"` on a few pages even if you don't ship RTL today — catches physical-property bugs early
+- React Native: `I18nManager.forceRTL(true)` + `I18nManager.allowRTL(true)`; requires app restart to apply
+
+```ts
+function isRtl(locale: string) {
+  return new Intl.Locale(locale).textInfo?.direction === 'rtl';
 }
 ```
 

@@ -1,8 +1,10 @@
 # A/B Test Results Analysis
 
+**Layer:** experiment **analysis** (significance testing, segments, novelty, revenue impact, ratio metrics). For experiment **design** (hypothesis, sample size, variant build, ramp), see `cro/references/experiments.md`.
+
 ## When to Use This Reference
 
-Use when analyzing experiment results from PostHog (or any A/B testing tool). This covers the analysis methodology — experiment design and setup is handled by growth-optimizer / cro.
+Use when analyzing experiment results from PostHog (or any A/B testing tool). This covers the analysis methodology — experiment design and setup is handled by `cro/references/experiments.md`.
 
 ---
 

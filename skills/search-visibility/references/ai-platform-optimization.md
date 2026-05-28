@@ -222,3 +222,22 @@ Monthly manual check:
 - **Keyword stuffing** — Actively reduces AI visibility by 10%
 - **Blocking AI bots** — Prevents those platforms from citing you
 - **Generic content without data** — "We're the best" won't get cited
+
+---
+
+## 2025-2026 AI Search Landscape Updates
+
+The AI search surface is fragmenting. Optimize per platform — not just for "AI" in general.
+
+| Surface | What changed (2025-2026) | What to do |
+|---|---|---|
+| **Google AI Mode** (separate from AI Overviews) | New AI-driven SERP launched early 2025; distinct ranking signals from classic SERP / Overviews | Check both surfaces; AI Mode favors structured, source-able content |
+| **Google AI Overviews** | ~45% of Google searches; appearance volatile | Optimize for citation, not click — measure mentions, not just CTR |
+| **ChatGPT Search** (search.chatgpt.com) | Launched late 2024; distinct from ChatGPT-with-browsing | Source-citation behavior differs from Perplexity; track separately |
+| **Perplexity Spaces / Shopping** | Product-recommendation surfaces with structured product data | Product schema (Offer, Review, AggregateRating) is now key for product visibility |
+| **Apple Intelligence / Siri 2.0** (iOS 18.x +) | Uses ChatGPT for complex queries by default | Apple device queries route through ChatGPT — your ChatGPT visibility = your iOS visibility |
+| **Reddit Answers** | Reddit's own AI answer feature launched 2024 | Reddit presence (genuine, not spam) matters even more |
+| **llms.txt** | Proposed standard for declaring LLM-relevant content (akin to robots.txt) | Adopt opportunistically; adoption is uneven but cheap to publish |
+| **Cloudflare AI bot blocking** | Cloudflare ships default AI-bot blocking in 2024-2025 | Audit your CDN settings — you may be blocking the bots you want to be cited by |
+
+**Practical implication:** measure citation share across at least Google AI Mode, AI Overviews, ChatGPT (Search + browsing), Perplexity, and Gemini. A tool like Profound, Peec AI, or Otterly will cover the spread; rolling your own monthly check works for smaller sites.

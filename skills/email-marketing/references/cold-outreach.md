@@ -4,6 +4,29 @@ B2B cold email writing, personalization, and follow-up sequences.
 
 ---
 
+## Legal & Compliance First
+
+Cold email is restricted differently in different jurisdictions. **Verify the rules for every region you send into before launching.** Non-compliance risks fines, sender-reputation damage, and platform bans. Below is a 2026 baseline summary — not legal advice.
+
+| Jurisdiction | Key Rule (B2B cold email) |
+|---|---|
+| **US — CAN-SPAM** | Allowed without prior consent. Must include: accurate From/Reply-To, identifiable subject, physical postal address, working opt-out (process within 10 business days), no header forgery. |
+| **Canada — CASL** | **Explicit or implied consent required** even for B2B. "Implied consent" includes existing business relationships or publicly-posted business addresses (with limits). Penalties up to CAD $10M. |
+| **EU/UK — GDPR + PECR** | B2B cold to corporate addresses (e.g. `john@company.com`) may rely on **legitimate interest** if: (a) the recipient's role suggests they'd want the message, (b) you offer easy opt-out, (c) you document your legitimate-interest assessment (LIA). B2C cold without prior consent is generally not permitted. |
+| **Australia — Spam Act 2003** | Express or inferred consent required. Penalties scale with volume. |
+| **Brazil — LGPD** | Treats email outreach to natural persons as personal data; needs lawful basis (consent, legitimate interest with LIA, etc.). |
+
+**Common requirements across most jurisdictions:**
+- Identify yourself and your company truthfully
+- Provide a working, no-friction opt-out (one click; honored within days)
+- Don't disguise commercial intent in the subject or body
+- Maintain a suppression list across all your sending tools
+- Document your basis for sending (LIA, consent record, business relationship evidence)
+
+> **Mailbox-rotation warning:** Tools that send via many fresh mailboxes/subdomains to scale cold outreach increasingly trip Gmail/Microsoft anti-spam heuristics (and may violate provider ToS). Treat rotation as a deliverability *bandaid*, not a strategy — and verify provider ToS before adopting.
+
+---
+
 ## Writing Principles
 
 ### Write Like a Peer, Not a Vendor
@@ -104,9 +127,13 @@ Before sending, gut-check:
 
 ## Benchmarks
 
-| Metric | Average | Good |
-|--------|---------|------|
-| Open rate | 30-40% | 50%+ |
-| Reply rate | 5-10% | 10%+ |
-| Positive reply rate | 2-5% | 5%+ |
-| Meeting booked rate | 1-3% | 3%+ |
+> **Open rate caveat (post-MPP, post-Gmail/Yahoo enforcement 2024):** Open rate is unreliable for ~50%+ Apple-device recipients (pre-fetched pixels) and lower in absolute terms than pre-2022 numbers. Prioritize **reply rate and meeting-booked rate** for cold-outreach health.
+
+| Metric | Realistic (2026) | Good |
+|--------|------------------|------|
+| Open rate (directional only) | 15-30% | 30%+ |
+| **Reply rate (primary signal)** | 3-8% | 10%+ |
+| Positive reply rate | 1-3% | 3-5%+ |
+| Meeting booked rate | 0.5-2% | 2-3%+ |
+
+> Pre-2022 "30-40% open / 5-10% reply" benchmarks no longer apply — Gmail/Yahoo enforcement (Feb 2024) tightened bulk sender rules, MPP inflated/distorted opens, and inbox saturation grew. The numbers above match late-2025 / 2026 industry data.

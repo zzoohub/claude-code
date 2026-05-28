@@ -271,6 +271,27 @@ Token-based pricing is standard for LLM APIs. Key dynamics:
 
 Per-seat pricing for AI features creates a perverse incentive: you're hoping customers don't use your product heavily, because power users cost more to serve (compute) but pay the same as light users. This is why seat-based pricing is evolving toward seat + credits or seat + usage caps.
 
+### AI Pricing: Cost Variance & Rug-Pull Risk (2025-2026)
+
+The biggest pricing failure mode of 2025 was unsustainable AI launch pricing → mid-year repricing. Cursor (June 2025), Replit, Lovable, and others sharply repriced after launching with subsidized credits, eroding user trust.
+
+**Defensive design:**
+
+| Risk | Mitigation |
+|---|---|
+| Per-user inference cost varies 100×+ | Gross-margin floor per request; hard caps on long-context / agentic loops |
+| Provider price changes mid-quarter | Multi-provider routing, or contract pricing if locked in |
+| Power users absorbing margin | Tiered credits with overage; transparent usage meter in product |
+| "Unlimited" feels generous but is fiction | Don't promise unlimited unless you have a real cap behind it |
+
+**Metering stack (2026):** **Stigg, Metronome, Orb, m3ter** (commercial), **Lago** (OSS). All handle usage event ingestion, tiered pricing, credits, overage, invoicing. Don't build your own — billing infra has subtle correctness traps (idempotency, late events, refunds).
+
+**Honest defaults:**
+- Publish realistic cost-per-action examples ("a typical workflow uses ~5 credits")
+- Spend-limit UX (soft cap + hard cap) — match what Vercel, Cloudflare R2, OpenAI API do
+- Grandfather existing customers for at least 90 days on any price increase
+- If you must rug-pull, communicate it directly; offer migration assistance to legacy customers
+
 ### Pricing AI Features: Decision Flow
 
 1. Is AI the core product or an add-on feature?

@@ -147,7 +147,9 @@ People prefer the current state of affairs. Change requires effort and feels ris
 ### Default Effect
 People tend to accept pre-selected options. Defaults are powerful.
 
-**Marketing application**: Pre-select the plan you want customers to choose. Opt-out beats opt-in for subscriptions (ethically applied).
+**Marketing application (legitimate)**: Pre-select the *plan tier* most users will benefit from (e.g., "Most popular" highlighted). Pre-select annual vs monthly billing where annual is clearly better value. Disclose the default transparently before checkout.
+
+**⚠️ NOT a legitimate use — see Dark Pattern Anti-Catalog below**: Pre-selecting subscription opt-in, add-on opt-in, post-trial billing acceptance, or paid-upgrade consent. These are regulated dark patterns under GDPR Art. 7, FTC negative-option enforcement, and CA AB 2863.
 
 ### Paradox of Choice
 Too many options overwhelm and paralyze. Fewer choices often lead to more decisions.
@@ -307,10 +309,8 @@ Decision time increases with the number and complexity of choices. More options 
 
 **Marketing application**: Simplify choices. One clear CTA beats three. Fewer form fields beat more.
 
-### AIDA Funnel
-Attention → Interest → Desire → Action. The classic customer journey model.
-
-**Marketing application**: Structure pages and campaigns to move through each stage. Capture attention before building desire.
+### AIDA / PAS / BAB / 4Ps / SSS (copywriting frameworks)
+These are channel-application frameworks, not standalone mental models. Canonical definitions in `copywriting/references/persuasion-frameworks.md`. Reference here for completeness; apply via the channel skills (`copywriting`, `ad-creative`, `social-content`, `email-marketing`).
 
 ### Rule of 7
 Prospects need roughly 7 touchpoints before converting. One ad rarely converts; sustained presence does.
@@ -397,4 +397,40 @@ The threshold after which growth becomes self-sustaining.
 Focusing on successes while ignoring failures that aren't visible.
 
 **Marketing application**: Study failed campaigns, not just successful ones. The viral hit you're copying had 99 failures you didn't see.
+
+---
+
+## Dark Pattern Anti-Catalog
+
+> **Not legal advice — verify with counsel in each jurisdiction.**
+
+This catalog distinguishes **persuasion** (psychology applied transparently to help users decide) from **manipulation / dark patterns** (psychology weaponized to override informed consent). The mental models in this reference can be misused for the latter. Below are the most-enforced patterns to **avoid**, with the regulatory hooks.
+
+### Why this matters
+- **FTC** has pursued companies for "negative option" and dark-pattern practices (Amazon Prime case, 2023-2025; rule-making continued after the 8th Circuit vacatur in July 2025 — see `churn-prevention/SKILL.md`)
+- **GDPR Art. 7** requires consent to be freely given, specific, informed, and unambiguous, with affirmative action (Recital 32). Pre-ticked boxes are explicitly invalid.
+- **California AB 2863** (eff. 2025-07-01) requires express affirmative consent + same-medium cancellation for subscriptions.
+- **EU Digital Services Act / Digital Markets Act** prohibit dark patterns affecting consumer decisions on platforms.
+
+### The Anti-Catalog
+
+| Dark pattern | What it is | Why it's prohibited | Use instead |
+|---|---|---|---|
+| **Pre-ticked subscription opt-in** | Default-on auto-renewal, mailing list, or add-on at checkout | GDPR Art. 7 invalid consent; FTC negative-option enforcement | Default-off; require affirmative click to enroll |
+| **Roach motel** | Easy signup, deliberately hard cancellation (phone-only, multi-step, hidden) | CA AB 2863 / NY 2025; FTC unfair-practices | Same-medium cancel; one-click cancel button |
+| **Confirmshaming** | "No thanks, I don't want to save money" as the decline button | EU DSA dark-pattern provisions | Neutral language: "Skip" / "Not now" |
+| **Fake countdown / scarcity** | Timer that resets, "only 2 left" when stock is unlimited | FTC deceptive-practice; consumer protection laws | Honest scarcity if real; remove if not |
+| **Hidden subscription** | "Free trial" auto-converts to paid without clear disclosure | FTC; CA AB 2863 free-trial provisions; UK CMA enforcement | Disclose trial → paid transition, charge amount, and date prominently before consent |
+| **Friend spam** | Service uploads/contacts user's address book to email "invitations" without separate consent | GDPR; CAN-SPAM | Separate explicit consent per contact; user-initiated only |
+| **Disguised ads** | Ads styled as native content / search results without "Sponsored" label | FTC endorsement guides; ASA (UK); EU DSA | Clear "Ad" / "Sponsored" label |
+| **Forced continuity** | Trial signup that requires credit card and silently bills after | CA AB 2863; FTC | Trial without card OR clear pre-charge reminder email + easy cancel |
+| **Sneak into basket** | Auto-add items (insurance, donation, warranty) at checkout | EU DSA; consumer protection | Opt-in only, default off |
+| **Misdirection / visual hierarchy abuse** | Decline option grey/tiny, accept option huge/colored | EU DSA; multiple consumer protection regimes | Equal visual weight for accept/decline |
+
+### Quick test
+If your application of a mental model requires the user **not noticing** what's happening, it's a dark pattern. Persuasion survives the test of "would the user still choose this if they fully understood what was happening?"
+
+### Cross-references
+- Cancel-flow compliance: see `churn-prevention/SKILL.md` § Compliance & Click-to-Cancel
+- Pricing/checkout dark patterns: see `cro/references/checkout-cro.md` and `cro/references/paywall-upgrade-cro.md`
 

@@ -93,3 +93,18 @@ Structured (JSON schema, regex-parseable) or free-form? Structured outputs cost 
 **Mixing design and implementation.** Deciding "we'll figure out the prompt while we code" leads to prompts shaped like the first thing that compiled. Design the prompt, the output contract, and the eval set *before* opening the SDK.
 
 This skill's job ends where the implementation SDK begins.
+
+---
+
+## Output Location
+
+Save the LLM feature design to `docs/arch/ai-features/{feature}.md` (default). Override via `AGENTS.md` if your project uses a different layout. Each file is one feature; reference the originating PRD feature in `docs/prd/features/{feature}.md` if applicable.
+
+Structure (≤200 lines):
+1. **Task** — one-sentence X → Y → Z
+2. **Shape** — single-prompt / RAG / tool use / agent / multi-agent (from the table in this skill)
+3. **Context** — system prompt outline, retrieval sources, tool list
+4. **Output contract** — structured (JSON schema) or free-form; validation strategy
+5. **Eval set** — link to golden examples, metric, judging strategy
+6. **Production concerns** — latency budget, cost ceiling, caching, rate limits, observability
+7. **Open questions / risks**

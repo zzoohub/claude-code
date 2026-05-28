@@ -256,12 +256,9 @@ For price point testing, use cohort testing (week A sees price X, week B sees pr
 
 ### Testing Cadence
 
-Run 5-6 pricing page tests per year. Each averages 12-18% improvement. Compounded over a year, this can double pricing page conversion:
+Run 4-6 pricing page tests per year, focused on the highest-leverage decisions (value metric, anchor, billing toggle, headline).
 
-```
-Baseline: 3% conversion
-After 5 tests at +15% each: 3% × 1.15^5 = 6.0% conversion
-```
+> **Don't compound lift estimates multiplicatively.** "5 tests × +15% each = +101%" is the well-known CRO compounding myth (Ronny Kohavi has published on it). Winning variants regress toward the mean after launch (publication-style bias + novelty + interaction effects). Treat the compounded number as an upper bound; realistic year-over-year pricing-page lift is rarely above +20-30% even with a strong testing program.
 
 ---
 

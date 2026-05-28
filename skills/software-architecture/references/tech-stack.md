@@ -82,9 +82,10 @@ Deviation is fine when justified. Unjustified deviation is tech debt.
 | Crawlers | AI Crawl Control, Firecrawl |
 | Browser | Browser Rendering, Playwright (CF Containers) |
 | Agent (Workers) | CF Agents SDK |
-| Agent (Python)  | PydanticAI, LangGraph |
-| Agent (durable) | CF Workflows + PydanticAI or LangGraph |
-| Agent (protocol) | MCP on Workers |
+| Agent (TypeScript) | **Claude Agent SDK**, **Mastra** (1.0 since 2026-01), Vercel AI SDK Agent |
+| Agent (Python)  | Claude Agent SDK (Python), PydanticAI, LangGraph |
+| Agent (durable) | CF Workflows + (Mastra | PydanticAI | LangGraph) |
+| Agent (protocol) | MCP on Workers; Claude Managed Agents (hosted) |
 
 ---
 

@@ -118,7 +118,8 @@ For key elements (headlines, CTAs), provide 2-3 alternatives with rationale.
 |-----------|------------------------|------|-----------|
 | Landing page (paid traffic) | 2-5% | 5-10% | 10%+ |
 | Homepage → signup | 1-3% | 3-7% | 7%+ |
-| Pricing page → trial/purchase | 5-15% | 15-25% | 25%+ |
+| Pricing page → free trial | 3-5% | 5-8% | 10%+ |
+| Pricing page → paid signup | 2-3% | 3-5% | 5%+ |
 | Feature page → CTA click | 3-8% | 8-15% | 15%+ |
 | Blog → CTA click | 0.5-2% | 2-5% | 5%+ |
 

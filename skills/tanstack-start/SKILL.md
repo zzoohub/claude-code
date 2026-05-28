@@ -1,14 +1,13 @@
 ---
 name: tanstack-start
 description: |
-  TanStack Start full-stack framework — file-based routing, server functions, middleware, SSR.
-  Supports React (`@tanstack/react-start`) and SolidJS (`@tanstack/solid-start`).
+  TanStack Start full-stack framework (React) — file-based routing, server functions, middleware, SSR.
   Use when: building full-stack apps with TanStack Start, using TanStack Router file-based routing,
   writing createServerFn or createMiddleware, deploying TanStack Start apps.
-  Also use when user mentions TanStack Start, TanStack Router, or @tanstack/solid-start.
-  Do not use for: Next.js (use nextjs skill), standalone SolidJS without TanStack Start.
+  Also use when user mentions TanStack Start or TanStack Router.
+  Do not use for: Next.js (use nextjs skill). For SolidJS apps, prefer SolidStart (the Solid team's
+  own framework) — the TanStack Solid adapter is experimental and not covered here.
   For React-specific patterns, also read `references/react.md`.
-  For SolidJS-specific patterns, also read `references/solidjs.md`.
 ---
 
 # TanStack Start
@@ -16,8 +15,7 @@ description: |
 Explicit over magic. End-to-end type safety. URL as first-class state.
 
 **Package manager**: `bun`.
-**Packages**: `@tanstack/{react,solid}-start` + `@tanstack/{react,solid}-router` + `@tanstack/zod-adapter` + `zod`.
-APIs are identical between React and SolidJS — only import source differs.
+**Packages**: `@tanstack/react-start` + `@tanstack/react-router` + `@tanstack/zod-adapter` + `zod`.
 
 > For latest APIs, use context7 MCP: resolve `tanstack/router` → query.
 
@@ -230,7 +228,7 @@ await deletePost({ data: { id } })
 router.invalidate()
 ```
 
-For TanStack Query: use `useMutation` (React) / `createMutation` (Solid) with `queryClient.invalidateQueries()`.
+For TanStack Query: use `useMutation` with `queryClient.invalidateQueries()`.
 
 ---
 
@@ -243,20 +241,24 @@ For TanStack Query: use `useMutation` (React) / `createMutation` (Solid) with `q
 | URL state (filters, tabs, pagination) | `validateSearch` + `useSearch()` |
 | Form validation | Server function + Zod |
 | Complex form (dynamic fields) | TanStack Form → server function |
-| Global client state | Zustand (React) / createStore (SolidJS) |
-| Local UI | useState (React) / createSignal (SolidJS) |
+| Global client state | Zustand |
+| Local UI | useState |
 
 ---
 
 ## Auth Pattern
 
-Session via server function + pathless layout guard:
+Session via server function + pathless layout guard. `getSession()` and `db.*` calls in this skill are placeholders — wire them to your actual auth and ORM stack.
+
+**Common stacks for the placeholders:**
+- Auth: `better-auth`, `lucia`, `clerk`, or your own session store on top of cookies
+- DB: `drizzle-orm`, `prisma`, `kysely`
 
 ```tsx
 // features/auth/api/session.ts
 const fetchUser = createServerFn({ method: 'GET' })
   .handler(async () => {
-    const session = await getSession()
+    const session = await getSession() // TODO: wire to your auth (better-auth, lucia, clerk, ...)
     return session?.user ?? null
   })
 
@@ -318,4 +320,3 @@ export const Route = createFileRoute('/_auth')({
 
 ### Framework-Specific
 → React: `references/react.md`
-→ SolidJS: `references/solidjs.md`

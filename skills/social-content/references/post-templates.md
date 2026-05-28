@@ -46,20 +46,14 @@ Hormozi's three-part formula optimized for social media content consumption:
    - Over-deliver on the promise (give 10x more value than expected)
    - Frictionless next steps (free templates, resources)
 
-### PAS (Problem-Agitation-Solution)
-Best for sales-oriented content, emails, product-focused posts:
+### PAS / AIDA / BAB / 4Ps / SSS
 
-1. **Problem**: Identify the reader's pain point
-2. **Agitation**: Heighten urgency -- make them feel the pain
-3. **Solution**: Present your answer
+Canonical definitions: `copywriting/references/persuasion-frameworks.md`.
 
-### AIDA (Attention-Interest-Desire-Action)
-Best for longer-form content, carousels, landing pages:
-
-1. **Attention**: Engaging headline/visual that stands out
-2. **Interest**: Storytelling and highlighting benefits
-3. **Desire**: Emotional connection, demonstrating value
-4. **Action**: Clear, compelling CTA
+**Social application notes:**
+- **PAS** — sales/product posts; works for short copy (1 paragraph)
+- **AIDA** — carousels and longer threads where you can pace 4 beats
+- **BAB / 4Ps / SSS** — see copywriting; BAB pairs well with before/after carousels, SSS with creator-style threads
 
 ### Berger's STEPPS — Quick Checklist
 

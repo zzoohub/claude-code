@@ -26,6 +26,18 @@
 - Lock file diverges from manifest (edited manually to pin different version)
 - `postinstall` scripts in dependencies that execute arbitrary code
 
+### Post-xz lessons (CVE-2024-3094)
+
+The xz-utils backdoor (March 2024) was inserted by a multi-year social-engineering campaign targeting an under-maintained OSS project. Mitigations beyond standard CVE scanning:
+
+- **Disable install scripts by default**: `npm ci --ignore-scripts`, `npm config set ignore-scripts true`. For pnpm 9.4+: use `onlyBuiltDependencies` allowlist to permit scripts only for vetted packages.
+- **Watch for sole-maintainer / new-maintainer packages**: a recently transferred maintainership on a foundational dep is a red flag.
+- **Verify package provenance**: npm provenance attestations are GA (since June 2024) — prefer packages with attested provenance, especially for security-critical deps. Use `npm install --foreground-scripts` to make any executed install script visible.
+- **For container images**: prefer minimal base images (distroless / chainguard); sign artifacts with **Sigstore cosign** and verify on deploy.
+- **Sandbox CI builds**: run dependency install in network-restricted/ephemeral environments where install-time exfiltration has no destination.
+
+**Recommended scanner stack (2026):** `osv-scanner` (Google), `trivy fs/image/repo` (Aqua), `grype` (Anchore), `socket` for npm pre-install scanning, `dependabot` + `renovate` for automated rollups. `gitleaks` + `trufflehog` for committed secrets.
+
 ---
 
 ## Dependency Confusion & Typosquatting

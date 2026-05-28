@@ -1,5 +1,7 @@
 # Agent Patterns
 
+**Layer:** design-level (when to use an agent, what defines one, evaluation, context engineering). For agent **system architecture** (protocols, durable execution, multi-agent orchestration), see `software-architecture/references/ai-agents.md`.
+
 An "agent" is an LLM that runs in a loop, calling tools and deciding its next action until a goal is reached. Agents are powerful and expensive. Most LLM apps don't need one.
 
 ## What makes something an agent

@@ -65,7 +65,7 @@ tests/
 └── mocks.ts                    # Stub, Saboteur, Spy, NoOp
 ```
 
-**Rule:** `domain/` never imports from `inbound/`, `outbound/`, or `@nestjs/*`.
+**Rule:** `domain/` never imports from `inbound/` or `outbound/`. Domain may import a **single** `@nestjs/common` symbol — `@Injectable()` — on the service implementation only, as a DI-metadata concession (see § Service below). Everything else (`HttpException`, decorators, modules) stays out of `domain/`. If you want a zero-`@nestjs/*`-in-domain stance, drop `@Injectable()` and use `useFactory` wiring — both patterns are supported.
 
 ---
 
@@ -188,7 +188,7 @@ TypeORM doesn't fight hexagonal — but its convenience features can. Sort each 
 | `repo.save()` vs `repo.insert()/update()` | `save()` is the fine default — TypeORM infers insert vs update from id presence. Use explicit `insert`/`update` when the intent matters: audit trail, optimistic concurrency, or "this MUST be a create and reject an existing id" semantics. |
 | Cross-repo transactions: `UnitOfWork` vs `@Transactional` | **Default: `UnitOfWork` port** (see "Reliability & Observability Ports" below) — tx boundary visible at the service call site, no third-party dep. **Acceptable opt-in: `@Transactional`** (`typeorm-transactional`) — same atomicity, less wiring per call site, but the boundary moves into a decorator and you take on a third-party lib's maintenance risk. Pick one and use it consistently; don't mix. |
 
-> **TypeORM 1.0 cheatsheet** (migration from 0.3.x):
+> **TypeORM 1.0 cheatsheet** (verified against TypeORM 1.0.0 released 2026-05-19 — migration from 0.3.x):
 > - **Node 20+ required.** Build target ≥ ES2023.
 > - **`null`/`undefined` in `where` now throws** on high-level APIs (`findOneBy`, `findBy`, `repo.update`). Omit the field, or use `IsNull()` for SQL NULL. (Raw `QueryBuilder.where(...)` still passes values through.)
 > - **String-form `relations` / `select` removed.** Use object syntax: `relations: { posts: true }`, `select: { id: true, name: true }`.

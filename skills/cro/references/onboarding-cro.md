@@ -30,23 +30,21 @@ Show advancement. Celebrate completions. Make the path visible.
 
 ## Defining Activation
 
-### Find Your Aha Moment
+### Aha Moment
 
-The action that correlates most strongly with retention:
-- What do retained users do that churned users don't?
-- What's the earliest indicator of future engagement?
+The Aha Moment methodology (discovery process, retention-predictive-value metric, FDR controls, examples by product type) is canonical in **`product-analytics/references/aha-moment-discovery.md`**. Run that analysis to find your Aha Moment before designing onboarding.
 
-**Examples by product type:**
-- Project management: Create first project + add team member
-- Analytics: Install tracking + see first report
-- Design tool: Create first design + export/share
-- Marketplace: Complete first transaction
+For onboarding CRO, you need only the outcome: a specific user action that predicts retention. Common shapes:
+- Project management: create first project + add team member
+- Analytics: install tracking + see first report
+- Design tool: create first design + export/share
+- Marketplace: complete first transaction
 
-### Activation Metrics
-- % of signups who reach activation
-- Time to activation
-- Steps to activation
-- Activation by cohort/source
+### Activation Metrics (onboarding-side)
+- % of signups who reach the Aha Moment
+- Time-to-Aha (median + p90)
+- Steps-to-Aha (drop-off per step)
+- Activation rate by acquisition cohort / source
 
 ---
 

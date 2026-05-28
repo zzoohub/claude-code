@@ -199,8 +199,21 @@ import('@dimforge/rapier3d').then(async (RAPIER) => {
     }
   }
 
+  // Fixed-step accumulator — keeps timing stable even if tick body is slow.
+  const STEP_MS = 1000 / 60
+  let last = performance.now()
+
   function tick() {
-    world.step()
+    const now = performance.now()
+    const elapsed = now - last
+    last = now
+
+    // Catch up if we drifted (cap to avoid spiral-of-death on tab resume).
+    let acc = Math.min(elapsed, STEP_MS * 5)
+    while (acc >= STEP_MS) {
+      world.step()
+      acc -= STEP_MS
+    }
 
     // Write results into SharedArrayBuffer
     world.bodies.forEach((body, i) => {
@@ -216,8 +229,10 @@ import('@dimforge/rapier3d').then(async (RAPIER) => {
       transforms[offset + 6] = r.w
     })
 
-    setTimeout(tick, 1000 / 60)
+    // Schedule next frame relative to start of this tick to minimize drift.
+    setTimeout(tick, Math.max(0, STEP_MS - (performance.now() - now)))
   }
+  // Worker context — no requestAnimationFrame; setTimeout / setInterval only.
 })
 ```
 

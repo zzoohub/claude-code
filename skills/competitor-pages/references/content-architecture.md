@@ -119,11 +119,16 @@ Aim for **1,500–3,000 words** for comparison pages. Shorter pages struggle to 
 - Link from blog posts that mention competitors to the comparison page
 
 ### Schema Markup
-Add FAQ schema for common questions — see `templates.md` for the JSON-LD template. Good FAQ candidates:
-- "What is the best alternative to [Competitor]?"
-- "Is [Your Product] better than [Competitor]?"
-- "How much does [Competitor] cost?"
-- "Can I migrate from [Competitor] to [Your Product]?"
+
+> **FAQ schema caveat (Google, Aug 2023):** FAQ rich results are now limited to authoritative health and government sites. For SaaS comparison pages, FAQPage schema rarely yields rich snippets — implement it only if you want AI-platform extractability, not for SERP rich results.
+
+Higher-value schema for comparison pages:
+- **`Product`** + **`Offer`** on each product compared — surfaces in Perplexity Shopping and Google AI Overview product cards
+- **`ItemList`** for the ranked alternatives list
+- **`Review`** / **`AggregateRating`** if you have genuine review data (Google enforces real reviews — don't fake)
+- **`Article`** / **`BreadcrumbList`** for general SEO hygiene
+
+See `templates.md` for JSON-LD examples.
 
 ### Priority Order
 1. Highest search volume competitor terms first

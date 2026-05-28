@@ -125,7 +125,8 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.34",
     "sqlalchemy[asyncio]>=2.0",
-    "aiosqlite>=0.20",
+    "aiosqlite>=0.20",  # SQLite async driver (dev/test)
+    "asyncpg>=0.30",    # Postgres async driver (production); or use "psycopg[binary]>=3.2" instead
     "pydantic-settings>=2.7",
     "PyJWT>=2.9",
     "pwdlib[argon2]>=0.2",

@@ -29,7 +29,7 @@ Key principles (Hopkins, 1923 — still true 100 years later):
 2. **Let data decide** — Gut feeling is the starting hypothesis, not the conclusion
 3. **Test big ideas first** — Hook category and angle matter more than word choice
 4. **Keep losses small, multiply gains** — Kill fast, scale slow
-5. **Creative is 47% of ad effectiveness** (Nielsen) — More than reach, targeting, or brand combined
+5. **Creative is the dominant lever** — ~47% of brand sales lift (Nielsen) / 70-80% of mobile UA performance (AppsFlyer). Either framing: invest top-down in creative before targeting or budget.
 
 ### Testing Hierarchy
 

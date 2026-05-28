@@ -174,8 +174,7 @@ The core loop:
 ## Platform-Native Creative Philosophy
 
 Each platform has a native content style. Ads that match this style outperform
-those that don't — often dramatically. The key insight from 2025-2026 data:
-**creative quality drives 70-80% of ad performance** (AppsFlyer), not budget or targeting.
+those that don't — often dramatically. **Creative is the dominant lever in paid media** — Nielsen's classic study attributed ~47% of sales-effect to creative; AppsFlyer's 2024-2025 mobile-acquisition data attributes 70-80%. The numbers measure different things (Nielsen: brand sales lift; AppsFlyer: performance UA) — use creative as your top investment in either framing.
 
 ### Meta (Facebook/Instagram)
 - **Video dominates**: 60%+ of user time is video; 4:5 vertical outperforms 1:1 by ~15%
@@ -207,6 +206,14 @@ those that don't — often dramatically. The key insight from 2025-2026 data:
 - **Mobile-first**: Most impressions are mobile; design for small screens
 - **Legibility**: Text must be readable at banner sizes (300x250 is most common)
 
+### Reddit, Pinterest, Snap, X, YouTube Shorts, CTV (added 2026)
+- **Reddit**: Native subreddit-style copy; AMA-format works; avoid corporate tone. Conversion ads work for B2B.
+- **Pinterest**: Lifestyle / aspirational visuals; 2:3 vertical pins; women + commerce-heavy audience. Idea Pins for organic-ad hybrid.
+- **Snap**: Vertical full-screen video; first 2s is everything; AR Lens / Sponsored Filters for brand lift.
+- **X (Twitter)**: Hot-take copy + image / short video; engagement signals matter for placement. Currently underpriced for B2B reach.
+- **YouTube Shorts**: Vertical, hook in 1s, captions on. Skippable vs unskippable affects message length.
+- **CTV (Netflix Ads, Disney+, Roku, Hulu, FAST channels)**: 15-30s spots; pair with frequency caps; pixel-based attribution is weak — use lift studies.
+
 ### Cross-Platform Adaptation
 
 When adapting a winning concept across platforms, transform — don't just resize.
@@ -234,8 +241,34 @@ and modern performance data all converge on the same truths:
 6. **Emotion drives action** — Loss aversion is 2x stronger than gain; use it
 7. **Hook earns attention, body earns the click** — Without the hook, nothing else matters
 8. **Platform-native beats platform-agnostic** — Reformat for each platform, don't just resize
-9. **Creative quality > budget or targeting** — 47% of ad effectiveness is creative (Nielsen)
+9. **Creative quality > budget or targeting** — ~47% of brand sales lift (Nielsen) / 70-80% of performance UA (AppsFlyer)
 10. **Design for sound-off** — Most social video is watched muted; captions/text overlays required
+
+---
+
+## Attribution & Measurement (2026)
+
+Platform-reported ROAS lies post-iOS 14.5. Build a real measurement stack:
+
+| Layer | What it does | Tools |
+|---|---|---|
+| Server-side conversion API | Bypasses ITP/ETP cookie loss; deduplicates with pixel | **Meta CAPI**, **Google Enhanced Conversions**, **TikTok Events API**, **LinkedIn CAPI**, **Reddit CAPI**, **Pinterest Conversions API** |
+| Mobile attribution | SKAdNetwork + AppsFlyer / Adjust / Singular postback | SKAN 4.0, AEM |
+| Blended / cross-channel | MER (Marketing Efficiency Ratio) = total revenue / total ad spend | **Triple Whale**, **Northbeam**, **Polar**, **Lifesight**, **Rockerbox** |
+| Incrementality | Geo holdouts, ghost-ad tests, conversion lift studies | Meta Conversion Lift, Google Geo Experiments, in-house geo splits |
+| Marketing Mix Modeling | Bayesian / classical MMM at scale | Robyn (Meta OSS), LightweightMMM (Google OSS), Recast |
+
+**Default modern stack:** server-side conversion API on every platform + a blended-ROAS dashboard (Triple Whale / Northbeam / in-house) + at least quarterly geo or conversion-lift incrementality tests. Platform ROAS alone is no longer trustworthy.
+
+### Generative Ad Creative
+
+- **Meta Advantage+ Creative** (auto-generates background variations, image expansion, video versions) — give it a strong source asset, not all the variations yourself
+- **TikTok Symphony** (TikTok's generative ad creative tool, 2024) — Creative Center + script generation
+- **Google Asset Studio** — automated asset generation for PMax campaigns
+- **Midjourney / Flux / Ideogram** for static creative; **Sora / Runway / Pika / Veo** for video shots
+- **Foreplay / Motion App / Atria** for creative analytics + competitive ad library tracking
+
+Tradeoff: generative speeds up *iteration*, not *strategy*. Brief still has to be human; without an angle, generative just produces faster slop.
 
 ---
 

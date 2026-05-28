@@ -4,6 +4,10 @@
 
 Use when deciding whether to add GA4/GTM to your analytics stack, designing UTM strategy, or configuring a dual PostHog + GA4 setup. For PostHog-first stacks, GA4 is optional — use it primarily for SEO attribution and Google Ads integration where PostHog falls short.
 
+> **EEA / UK compliance (mandatory since March 2024):** Any site serving Google ad / measurement traffic from the European Economic Area must implement **Consent Mode v2**. GA4 + Google Ads will drop data from non-consenting EEA users without it. See "Consent Mode v2" section below before going live in EU/UK.
+
+> **Server-side GTM:** For accurate conversion tracking post-iOS 14.5 (ITP/ETP) and to reduce client-side script load, prefer **server-side GTM** for any production deployment. Client-side GTM still works for low-stakes setups.
+
 ---
 
 ## GA4 vs PostHog: When to Use Which
@@ -159,3 +163,32 @@ After setup, verify everything works:
 - [ ] PostHog and GA4 are not double-counting (compare session counts)
 - [ ] No PII leaking in event parameters
 - [ ] Cookie consent banner works correctly with GTM consent mode (if required)
+
+---
+
+## Consent Mode v2 (mandatory for EEA/UK ad+measurement traffic since March 2024)
+
+Without Consent Mode v2, GA4 drops EEA data from non-consenting users and Google Ads loses conversion signal — which usually shows up as a sudden 30-50% reporting drop.
+
+**Required signals from your consent banner to Google's consent state:**
+
+| Signal | Granted = | Denied = |
+|---|---|---|
+| `ad_storage` | Ads cookies allowed | No ad cookies; conversion modeling only |
+| `analytics_storage` | GA cookies allowed | No analytics cookies; behavioral modeling only |
+| `ad_user_data` (v2) | Send user data to Google for ads | No user data sent |
+| `ad_personalization` (v2) | Personalized ads allowed | Non-personalized only |
+
+Implementation:
+- Default all to `denied` before consent
+- Update to `granted` only after explicit user opt-in
+- Most CMPs (Cookiebot, OneTrust, Iubenda, Termly, Klaro, Cookieyes) ship Consent Mode v2 templates for GTM
+- Use **Advanced Consent Mode** (sends cookieless pings to Google for behavioral modeling); Basic Consent Mode blocks pings entirely until consent
+
+## Server-Side GTM (recommended for production)
+
+Why: moves tag execution off the client (better Core Web Vitals), bypasses ITP/ETP cookie limits, and gives you a server-side data-layer you control before forwarding to GA4/Ads/Meta CAPI/etc.
+
+Setup: deploy a Server Container (App Engine, Cloud Run, or self-host) → point your subdomain (e.g., `gtm.yourapp.com`) at it → switch your client GTM to send to the server container instead of directly to Google.
+
+Pairs naturally with **Meta Conversions API (CAPI)** for ad attribution recovery.

@@ -103,14 +103,14 @@ Why: The human brain processes one concept at a time. If the reader has to parse
 
 ### Principle 7: Write for the Skimmer (Eyeball Monkey Bars)
 
-73% of internet readers need scannable content. Your copy must feel effortless for the reader's eyes to navigate — like swinging from one monkey bar to the next.
+Most internet readers scan rather than read top-to-bottom (Nielsen Norman Group's web-reading research is the classic source). Copy must feel effortless to navigate — like swinging from one monkey bar to the next.
 
 - Break up text frequently. Short paragraphs reign supreme.
 - Use bullet brigades: emojis, numbered lists, or bolded text to highlight key points.
 - Keep sentences snappy: aim for 13 words or less about 80% of the time.
 - Spend disproportionate time on hooks: 10-15 minutes on the headline or opening sentence is not overkill.
 
-Why: Long copy still works, but boring or overwhelming copy doesn't. A 9,600-word sales page can convert at 8.8% — if it's scannable and engaging at every step. People visit your site to sleuth out info, not to read. Make the sleuthing effortless.
+Why: Long copy still works — but only when every paragraph earns its place. Long-form sales pages that convert well (the kind that get cited in case studies) succeed because they're scannable *and* engaging at each step, not because of length itself. People visit your site to find info, not to read prose. Make the finding effortless.
 
 ### Principle 8: Specificity Over Kitchen-Sink Promises
 

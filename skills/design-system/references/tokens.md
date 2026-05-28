@@ -1,6 +1,8 @@
 # Token Definitions
 
-W3C Design Token Community Group (DTCG) format. Single source of truth for all platforms.
+DTCG-inspired format. Single source of truth for all platforms.
+
+> **Note on DTCG conformance:** The `shadow` token below uses a raw CSS string for `$value` (not the strict DTCG object form of `{color, offsetX, offsetY, blur, spread}`). If you need strict DTCG conformance for Style Dictionary v4 / Terrazzo / Tokens Studio, expand shadow tokens to the structured object format per the DTCG 2025.10 spec. Otherwise, this CSS-string variant ships fine through custom Style Dictionary transforms.
 
 ## File Structure
 

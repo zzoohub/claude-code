@@ -435,18 +435,23 @@ export function LocaleSwitcher() {
 | Old `declare global` type augmentation | v4 uses `declare module 'next-intl'` with `AppConfig` interface |
 | Passing `null`/`undefined` as ICU args | v4 disallows — use empty string or omit |
 
-### Reducing Client Bundle with `pick()`
+### Reducing Client Bundle by Picking Namespaces
 
-By default, passing all messages to `NextIntlClientProvider` sends every translation to the client. Use `pick()` to send only the namespaces Client Components need:
+By default, passing all messages to `NextIntlClientProvider` sends every translation to the client. Pick only the namespaces Client Components need:
 
 ```tsx
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
-import pick from 'lodash/pick';
 
 const messages = await getMessages();
+const needed = ['Auth', 'common'] as const;
+const clientMessages = Object.fromEntries(
+  Object.entries(messages).filter(([k]) => (needed as readonly string[]).includes(k))
+);
 
-<NextIntlClientProvider messages={pick(messages, ['Auth', 'common'])}>
+<NextIntlClientProvider messages={clientMessages}>
   {children}
 </NextIntlClientProvider>
 ```
+
+No external dependency needed — native `Object.fromEntries` / `filter` does the job.

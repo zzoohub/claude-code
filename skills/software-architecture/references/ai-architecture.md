@@ -1,5 +1,7 @@
 # AI/LLM Architecture Decision Framework
 
+**Layer:** system-level architecture (gateways, components, data flow, deployment). For LLM **design discipline** (when to use an agent at all, prompt structure, eval methodology, output contracts), see `llm-app-design` skill.
+
 Architecture patterns for systems that integrate Large Language Models. Use this reference when the PRD includes AI-powered features — generation, summarization, search, agents, or any LLM-driven capability.
 
 **Important**: The AI landscape evolves rapidly. This document covers **stable architectural patterns** that remain valid across model generations. For specific model choices, pricing, and benchmarks, **always verify current state via WebSearch** before committing.

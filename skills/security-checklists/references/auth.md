@@ -35,7 +35,10 @@
 | MFA cannot be silently disabled without re-authentication | MFA bypass via settings | CWE-306 |
 | MFA challenge cannot be skipped by modifying client flow | Step-skipping attack | CWE-304 |
 | Backup authentication method doesn't weaken MFA | Weakest link bypass | CWE-308 |
-| SMS-based MFA discouraged (SIM swap vulnerability) | SIM swapping | CWE-308 |
+| SMS-based MFA = **restricted authenticator** (NIST SP 800-63B-4, finalized mid-2025) | SIM swap; phishing | CWE-308 |
+| Passkeys (FIDO2/WebAuthn) preferred over TOTP where supported | Phishing-resistant by design | CWE-308 |
+
+> **NIST SP 800-63B-4 status (finalized mid-2025):** SMS/PSTN OTP is now formally a "restricted authenticator" — use requires offering alternatives, informing users of risks, and maintaining a migration plan. Passkeys (syncable) are explicitly approved at AAL2; device-bound passkeys at AAL3.
 
 **Patterns to catch:**
 - TOTP secret transmitted to client after setup (should only display once during enrollment)
@@ -43,6 +46,32 @@
 - MFA status stored only in JWT/client without server-side verification
 - Recovery flow that bypasses MFA entirely (e.g., email-only reset disables MFA)
 - No re-authentication required before changing MFA settings
+
+---
+
+## Passkeys / WebAuthn
+
+Default to passkeys for new auth systems where supported (Chrome, Safari, Edge, Firefox all support since 2023). Two flavors:
+
+| Flavor | AAL (NIST 800-63B-4) | Notes |
+|---|---|---|
+| **Syncable passkeys** (iCloud Keychain, Google Password Manager, 1Password) | AAL2 | Recovery via the platform's sync ecosystem. Survives device loss. |
+| **Device-bound passkeys** (security keys, platform attestations) | AAL3 | Cannot be exfiltrated. Required for high-assurance. Plan recovery carefully. |
+
+| Check | Why | CWE |
+|-------|-----|-----|
+| Use COSE algorithm allowlist (ES256, EdDSA); reject weak algs | Algorithm confusion | CWE-327 |
+| Verify origin and RP ID on attestation/assertion | Phishing | CWE-290 |
+| User verification (UV) required for sensitive operations | Stolen-device replay | CWE-308 |
+| Recovery flow does NOT downgrade to SMS / email-only | Recovery downgrade defeats phishing resistance | CWE-308 |
+| For syncable passkeys: surface "this credential is synced across your devices" to users | Informed consent | — |
+| Attestation verified for AAL3 / device-bound deployments | Counterfeit authenticator | CWE-290 |
+
+**Patterns to catch:**
+- Accepting `none` attestation when policy requires AAL3
+- RP ID matching relaxed across subdomains
+- Password fallback enabled by default alongside passkeys (defeats phishing resistance)
+- No mechanism to enumerate / revoke passkeys per user
 
 ---
 
@@ -55,7 +84,9 @@
 | Concurrent session limits or notification | Account sharing, stolen sessions | CWE-613 |
 | Idle timeout (15-30 min) + absolute timeout (8-24 hours) | Abandoned session hijack | CWE-613 |
 | Separate long-lived token for remember-me | Reduced exposure window | CWE-613 |
-| Session bound to user-agent and/or IP range | Session theft detection | CWE-384 |
+| Session bound to user-agent (and IP only for high-security contexts) | Session theft detection | CWE-384 |
+
+> **IP binding caveat:** Pinning sessions to IP breaks mobile users on cellular networks and any user behind CGNAT. Recommend only for high-security contexts (banking, admin panels, gov) where false-positive logouts are acceptable. Consumer apps should rely on UA + behavioral signals instead.
 
 **Patterns to catch:**
 - Logout only clears client state, server still accepts token

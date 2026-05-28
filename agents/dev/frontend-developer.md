@@ -125,7 +125,7 @@ src/
 | UX states | All 7: empty, loading, loaded, error, partial, refreshing, offline |
 | FSD imports | `app → views → widgets → features → entities → shared` — never upward |
 | Design tokens | Colors, spacing, typography from system — no magic numbers |
-| I18n | All user-facing text via i18n (en + ko) |
+| I18n | All user-facing text via i18n. Default to `en` only; if `AGENTS.md` / `i18n.config.*` declares additional locales, cover all of them |
 | Responsive | Mobile-first, all breakpoints |
 | Dark mode | Light + dark via design system tokens |
 | Accessibility | Semantic HTML, ARIA, keyboard nav, focus management |
@@ -142,7 +142,7 @@ src/
 
 ## UX Coverage
 - States implemented: [list of 7 states covered]
-- I18n: [en + ko keys added]
+- I18n: [locales covered per project config]
 - Responsive: [breakpoints verified]
 - Dark mode: [supported / not applicable]
 

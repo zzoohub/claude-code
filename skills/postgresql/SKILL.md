@@ -119,3 +119,30 @@ Key checks:
 - **Keyset pagination over OFFSET** — OFFSET scans and discards rows with O(n) cost that worsens with page depth; keyset is O(1)
 - **CONCURRENTLY for production indexes** — `CREATE INDEX` without CONCURRENTLY takes a write lock on the entire table, blocking inserts/updates until done
 - **Use PROCEDURE for batched backfills** — DO blocks run in a single transaction and cannot COMMIT between batches; use `CREATE PROCEDURE` + `CALL` for incremental commits (see `references/production-ops.md`)
+
+## Recent Postgres Versions (use when available)
+
+| Version | Released | Notable additions |
+|---|---|---|
+| **PG 18** | 2025-09-25 | Built-in `uuidv7()`; async I/O improvements; explicit `uuidv4()` alias |
+| **PG 17** | 2024-09 | `MERGE ... RETURNING`; `JSON_TABLE`; incremental sort improvements; faster `vacuum` |
+| **PG 16** | 2023-09 | `pg_stat_io` (per-IO-type stats — supersedes raw `BUFFERS` for diagnosis); logical replication for partitioned tables; parallel `VACUUM` |
+| **PG 15** | 2022-10 | `MERGE` statement |
+
+Practical implications:
+- Prefer `uuidv7()` (PG 18) over app-generated UUIDv4 for new primary keys — better B-tree clustering.
+- For diagnostics on PG 16+, supplement `EXPLAIN (BUFFERS)` with `pg_stat_io` for per-backend / per-IO-type breakdown.
+- `JSON_TABLE` (PG 17) replaces ad-hoc JSONB-to-rows lateral joins for many use cases.
+- **PgBouncer 1.21+ supports prepared statements in transaction mode** — earlier prohibitions ("PgBouncer breaks prepared statements") no longer apply post-1.21.
+
+### DDL portability (PG18 vs ≤PG17)
+
+The DDL skeletons in this skill default to PG 18 (`DEFAULT uuidv7()`). For PG 17 and below, generate UUIDs at the application layer or use `gen_random_uuid()` (UUIDv4 via `pgcrypto`):
+
+```sql
+-- PG 18+ (preferred)
+id UUID PRIMARY KEY DEFAULT uuidv7()
+
+-- PG 17 and below (UUIDv4 — random, not time-ordered)
+id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+```

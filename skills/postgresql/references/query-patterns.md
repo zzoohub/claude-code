@@ -269,7 +269,7 @@ CREATE TABLE events_2025_02 PARTITION OF events
 CREATE INDEX idx_events_brin ON events USING BRIN (created_at);
 
 -- Drop old data instantly (vs DELETE which generates dead tuples)
-DROP TABLE event_2024_01;
+DROP TABLE events_2025_01;
 ```
 
 **Rule**: Queries MUST include the partition key (`created_at`) in WHERE for partition pruning to work.
@@ -431,11 +431,11 @@ ORDER BY h.hour;
 ### Filter Early with CTEs
 ```sql
 -- Reduce intermediate data before joining
-WITH recent_order AS (
+WITH recent_orders AS (
     SELECT id, user_id, total FROM orders
     WHERE created_at > now() - interval '30 days'
 ),
-target_product AS (
+target_products AS (
     SELECT id FROM products WHERE category = 'electronics'
 )
 SELECT ro.id, ro.total

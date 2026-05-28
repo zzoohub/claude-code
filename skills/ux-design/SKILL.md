@@ -130,6 +130,10 @@ Camera interaction, object interaction, depth as hierarchy, product configurator
 Comfort zones, interaction models (gaze, hand, voice, controller), text input, passthrough MR design, content persistence, spatial UI patterns, multi-user/social XR, cybersickness prevention, onboarding, privacy, platform design languages (visionOS 26, Quest, Android XR), accessibility.
 → `references/xr-design.md`
 
+### 9. AI Feature UX
+Streaming output, citations/provenance, agent transparency (action logs, confirmation gates), trust calibration, AI-specific error states (refusal, hallucinated tool, RAG miss), regeneration UX, accessibility for streaming and live regions.
+→ `references/ai-feature-ux.md`
+
 ---
 
 ## Feature-Aware Design

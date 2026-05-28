@@ -4,7 +4,7 @@ description: |
   Build 3D and immersive web experiences with Three.js (WebGPU-first), TSL shaders, Koota ECS, Rapier physics, Rust WASM, and WebXR.
   Use this skill whenever the user works on: 3D scenes, WebGL/WebGPU rendering, Three.js shaders (TSL/node materials), VR/AR/XR/mixed reality, spatial computing, immersive experiences, 3D physics simulation, ECS game architecture, particle systems, procedural geometry, glTF models, spatial audio, hand tracking, controller input, head-mounted displays, or any task involving three/webgpu, three/tsl, koota, @dimforge/rapier3d, or WebXR.
   Also trigger when the user mentions "three.js", "webxr", "webgpu", "TSL", "node material", "shader", "ECS", "rapier", or "wasm" in a 3D/game context.
-  Framework-specific implementations (React/R3F, Solid, Svelte) are in `references/<framework>/`.
+  Framework-specific implementations live in `references/<framework>/` — currently only React/R3F is covered. Solid (solid-three) and Svelte (threlte) are out of scope.
 ---
 
 # Web 3D & XR Development
