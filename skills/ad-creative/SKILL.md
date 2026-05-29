@@ -27,7 +27,7 @@ decision is testable.
 For each ad brief, produce:
 
 1. **3-5 fully written ads** (the hero concepts across different angles/formats)
-2. **A test matrix** showing all hook/body/CTA/format combinations to test
+2. **A test plan** showing the hook/body/CTA/format variations to test (run them in isolation rounds — see Step 5)
 3. **Landing page headline recommendation** for message-match
 
 Each fully written ad must include:
@@ -55,6 +55,28 @@ For video ads, include a timestamped script table:
 
 ## The Creative Development Process
 
+### Step 0: Gather the Brief (Intake)
+
+Before diagnosing anything, collect the raw materials an ad needs. If the user's brief
+is missing these, **ask 2-4 targeted clarifying questions first** — or state
+clearly-labeled assumptions and flag any invented proof as `[INSERT REAL STAT]` so the
+user knows what must be substantiated. **Never fabricate proof, offers, or numbers.**
+
+Collect:
+- **Product & core value prop** — what it does, the one transformation it delivers
+- **Offer & price** — the specific offer, price, trial/guarantee terms
+- **Audience & awareness level** — who they are and where they sit on the spectrum (Step 1)
+- **Proof assets on hand** — testimonials, case studies, stats, logos, awards (use only real, substantiable proof)
+- **Brand voice & visual constraints** — tone, do's/don'ts, mandatory elements
+- **Mandatory disclosures/claims** — regulated-vertical rules, legal lines (see `references/ad-policy-compliance.md`)
+- **Campaign objective & primary metric** — awareness, leads, or sales; how success is measured
+- **Prior learnings** — past winners/losers
+
+**Competitive / ad-library research**: before choosing an angle (Step 2), scan the Meta
+Ad Library and TikTok Creative Center for the category — catalog competitor angles,
+hooks, and formats; note saturated messages to avoid and white-space angles to exploit.
+(Tools: Foreplay, Atria, Motion App.)
+
 ### Step 1: Diagnose the Audience's Awareness Level
 
 Before writing a single word, determine where the audience sits on Eugene Schwartz's
@@ -63,7 +85,7 @@ structure, CTA intensity, and creative format.
 
 | Level | Audience State | Lead With | Example |
 |-------|---------------|-----------|---------|
-| **Unaware** | Doesn't know they have a problem | Story, pattern interrupt, identity | "Most founders waste 10h/week on tasks AI could do" |
+| **Unaware** | Doesn't know they have a problem | Story, pattern interrupt, identity | "Being the bottleneck isn't a badge of honor." |
 | **Problem-Aware** | Feels the pain, no solution yet | Empathy + agitation of the problem | "Tired of manually sorting 200 support tickets daily?" |
 | **Solution-Aware** | Knows solutions exist, hasn't chosen | Differentiation, mechanism, proof | "The only AI that reads context, not just keywords" |
 | **Product-Aware** | Knows your product, hasn't bought | Social proof, risk reversal, offer | "Join 12,000 teams already saving 15h/week" |
@@ -144,40 +166,63 @@ your dollar"), then body, then CTA.
 
 ### Step 5: Generate Variations Systematically
 
-Every ad brief should produce a test matrix:
+Test **one variable at a time** so you can attribute the result (see
+`references/creative-testing.md`). Build the full pool of options you *could* test,
+but launch them in **isolation rounds** — not all at once:
 
 ```
-Hook variations:     3-5 (different angles or emotional triggers)
-Body variations:     2-3 (different value props or proof types)
-CTA variations:      2   (direct vs soft)
-Format variations:   2-3 (static, video, carousel)
-------------------------------------------------------
-Total test matrix:   12-30 unique ads from one brief
+Hook options:    3-5 (different angles or emotional triggers)
+Body options:    2-3 (different value props or proof types)
+CTA options:     2   (direct vs soft)
+Format options:  2-3 (static, video, carousel)
+
+Round 1 — Hooks:  3-5 hooks × 1 body × 1 CTA × 1 format        = 3-5 ads
+Round 2 — Body:   winning hook × 2-3 bodies × 1 CTA × 1 format
+Round 3 — CTA/format: winning combo × the remaining variables
 ```
+
+(Running all combinations at once is full-factorial multivariate testing — the
+cross-product is 24-90 ads, which needs a large budget AND makes it hard to tell
+which element won. Reserve it for the exception below.)
+
+**Exception — algorithmic diversity (Meta Advantage+, Google PMax):** when the
+platform assembles and distributes the creative, upload maximum diversity at once and
+let the algorithm find winners — here breadth beats isolation. See "Creative Diversity
+Testing" in `references/creative-testing.md`.
 
 For each variation, write a one-line hypothesis: "This hook works because
 [psychological principle] for [awareness level] audience."
 
-### Step 6: Test, Learn, Iterate
+### Step 6: Compliance Pass (before launch)
+
+Ad creative is what platforms review and regulators scrutinize. Before launching,
+run every ad through the compliance checklist in `references/ad-policy-compliance.md`:
+FTC disclosure on UGC/testimonial/creator ads (#ad, Paid Partnership, in-creative),
+platform prohibited/restricted content (personal attributes, before/after, health,
+finance), regulated-vertical rules (Special Ad Categories change available angles),
+claims substantiation (every stat has proof on file — never fabricate), and
+accessibility (alt text, captions, legibility).
+
+### Step 7: Test, Learn, Iterate
 
 See `references/creative-testing.md` for the full testing methodology.
 The core loop:
 
 1. Launch with equal budget across variations
-2. Kill underperformers after sufficient data (48-72h, $300+ spend per variant)
+2. Kill underperformers after sufficient data — spend/runtime is audience-specific (cold ~$300-500 / 5-7d, warm ~$100-200 / 3-5d; see `references/creative-testing.md`)
 3. Analyze winners — identify the winning ELEMENT (hook? body? CTA? format?)
 4. Create next batch: keep winning elements, vary the rest
-5. Refresh every 2-4 weeks before fatigue kills performance
+5. Refresh before fatigue — cadence is platform-specific (TikTok ~weekly, Meta bi-weekly, Google/LinkedIn 4-6 weeks; see the fatigue tables)
 
 ---
 
 ## Platform-Native Creative Philosophy
 
 Each platform has a native content style. Ads that match this style outperform
-those that don't — often dramatically. **Creative is the dominant lever in paid media** — Nielsen's classic study attributed ~47% of sales-effect to creative; AppsFlyer's 2024-2025 mobile-acquisition data attributes 70-80%. The numbers measure different things (Nielsen: brand sales lift; AppsFlyer: performance UA) — use creative as your top investment in either framing.
+those that don't — often dramatically. **Creative is the dominant lever in paid media** — Nielsen Catalina Solutions (2017, ~500 CPG campaigns) attributed ~47% of advertising-driven sales lift to creative, the single largest factor; Google puts ~70% of campaign performance on creative, and AppsFlyer calls it the single biggest driver of UA performance. Whatever the exact figure, invest in creative before targeting or budget.
 
 ### Meta (Facebook/Instagram)
-- **Video dominates**: 60%+ of user time is video; 4:5 vertical outperforms 1:1 by ~15%
+- **Video dominates**: 60%+ of user time is video; Meta recommends 4:5 for Feed (fills ~20% more screen than 1:1)
 - **UGC outperforms polished**: Creator-shot clips beat studio productions on hook rate by 5-10 points
 - **Front-load the hook**: First 125 chars of primary text (before "See more") are everything
 - **Advantage+ and Andromeda**: Creative diversity matters more than creative volume; don't just iterate on winners — repurpose winning messages across new formats
@@ -226,6 +271,13 @@ When adapting a winning concept across platforms, transform — don't just resiz
 | Meta Feed ad | LinkedIn | Rewrite in professional/insight tone, add thought-leadership framing, adjust CTA from consumer to B2B |
 | Meta carousel | Display banner | Distill to single strongest card's message, one image, one CTA, minimal text |
 
+When adapting across **languages/markets**, transcreate — translate the *intent* of
+hooks/headlines (not the words), adapt humor/proof norms per market, and re-check
+character limits after translation (see the `i18n` skill for the structural side).
+
+For full specs, character limits, and 2026 benchmarks per platform, see
+`references/platform-specs.md`.
+
 ---
 
 ## Core Principles (The Non-Negotiables)
@@ -237,11 +289,11 @@ and modern performance data all converge on the same truths:
 2. **Benefits beat features** — "Fall asleep in 8 minutes" not "Contains melatonin"
 3. **One message per ad** — Trying to say two things means saying nothing
 4. **Message match is mandatory** — Ad headline must match landing page headline
-5. **Test, don't guess** — Write 16+ headlines before picking (Ogilvy's rule)
+5. **Test, don't guess** — Write 15-25+ headlines before picking (a direct-response discipline; Ogilvy's point was to *test* them, not a fixed count)
 6. **Emotion drives action** — Loss aversion is 2x stronger than gain; use it
 7. **Hook earns attention, body earns the click** — Without the hook, nothing else matters
 8. **Platform-native beats platform-agnostic** — Reformat for each platform, don't just resize
-9. **Creative quality > budget or targeting** — ~47% of brand sales lift (Nielsen) / 70-80% of performance UA (AppsFlyer)
+9. **Creative quality > budget or targeting** — ~47% of CPG sales lift (Nielsen Catalina, 2017); ~70% of campaign performance (Google). Invest in creative first.
 10. **Design for sound-off** — Most social video is watched muted; captions/text overlays required
 
 ---
@@ -281,6 +333,7 @@ Tradeoff: generative speeds up *iteration*, not *strategy*. Brief still has to b
 | Creative testing methodology and fatigue management | `references/creative-testing.md` |
 | Platform specs, character limits, image dimensions | `references/platform-specs.md` |
 | AI tools for image/video/audio generation | `references/generative-tools.md` |
+| Ad policy, FTC disclosure, platform/vertical compliance | `references/ad-policy-compliance.md` |
 
 ---
 
@@ -310,5 +363,15 @@ Tradeoff: generative speeds up *iteration*, not *strategy*. Brief still has to b
 - **Format**: Banner images in standard sizes
 - **Key**: Simple message, clear CTA, brand visible
 - **Framework**: Direct offer or single benefit claim
+
+### Catalog / Dynamic Product Ads (Meta Advantage+ Shopping/DPA, Google Shopping)
+- **Format**: Feed-driven — the platform assembles the ad from your product catalog
+- **Key**: Optimize feed copy (product titles/descriptions), image quality, and overlays (sale / free-shipping badges); test dynamic vs single-product formats
+- **Framework**: Direct benefit + price/offer; proof via in-feed reviews/ratings
+
+### Retail Media (Amazon Ads, Walmart Connect, Instacart)
+- **Format**: Sponsored Products, Sponsored Brands (headline + logo + image/video), Sponsored Display, Brand Store / A+ content
+- **Key**: Intent-driven and conversion-proximate (closer to Google Search than social) — keyword/title relevance + tight-headline copywriting
+- **Framework**: Direct benefit/offer; Product/Most-Aware audiences
 
 ---

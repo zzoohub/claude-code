@@ -110,9 +110,13 @@ They know your product. They haven't converted yet. Something is holding them ba
 ```
 
 **Example** (retargeting ad):
-> "Still thinking about it? Here's what happened to 847 teams
-> who started their free trial last month: 91% are still customers.
+> "Still thinking about it? Last quarter, 847 teams started a free trial —
+> 38% upgraded, and of those, 91% are still with us 6 months later.
 > 14-day trial. No credit card. Cancel anytime."
+
+*(Note how the proof separates trial→paid conversion from retention and uses a
+cohort old enough to be meaningful — don't dress up a one-week-old number as
+long-term loyalty.)*
 
 ### Level 5: Most Aware
 They're ready to buy. Just give them the deal.
@@ -132,6 +136,9 @@ They're ready to buy. Just give them the deal.
 **Example**:
 > "Annual plan: 40% off. Ends midnight Friday.
 > [Get Started →]"
+
+*(Only use a dated deadline if the offer genuinely expires — recurring "ends Friday"
+ads erode trust and violate platform policies. Tie urgency to a real event where possible.)*
 
 ---
 
@@ -162,13 +169,14 @@ Solve:    [Your product + one key proof point]
 CTA:      [Single action]
 ```
 
-**Video Script (15-30s)**:
+**Video Script (15-30s)** — get the product on screen by ~5s (matches the "value by 5s" rule):
 ```
-0-3s:   [State the problem — viewer should immediately relate]
-3-8s:   [Agitate: "And the worst part is..." or "What most people don't realize..."]
-8-12s:  [Introduce the solution — show the product]
-12-15s: [One proof point — number, testimonial, demo clip]
-15s:    [CTA — text overlay + voiceover]
+0-2s:   [State the problem — viewer should immediately relate]
+2-5s:   [Agitate the worst hidden cost — "And the worst part is..."]
+5-9s:   [Solution on screen — show the product doing the thing]
+9-13s:  [One proof point — number, testimonial, demo clip]
+13-15s: [CTA — text overlay + voiceover]
+(30s cut: expand agitation with a 2nd hidden cost, add a 3-4s demo before the proof)
 ```
 
 **Search Ad (Google RSA)**:

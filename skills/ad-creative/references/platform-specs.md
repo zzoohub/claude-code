@@ -65,7 +65,7 @@ Detailed character limits, image dimensions, and format variations for each ad p
 |---------|-------|-------|
 | Primary text | 125 chars visible (2,200 max) | Front-load hook |
 | Headline | 40 chars recommended (255 max) | Below image |
-| Description | 30 chars recommended (2,200 max) | Below headline, not always shown |
+| Description | ~30 chars max | Below headline; often hidden on mobile; Meta recommends ~25 |
 | URL display link | 40 characters | Optional custom |
 
 **Image specs:**
@@ -173,13 +173,13 @@ Same specs as Feed, but test separately — performance varies significantly.
 
 ---
 
-## Twitter/X Ads
+## X (formerly Twitter) Ads
 
-### Promoted Tweets
+### Promoted Posts
 
 | Element | Limit | Notes |
 |---------|-------|-------|
-| Tweet text | 280 characters | The ad copy |
+| Post text | 280 characters | The ad copy |
 | Card headline | 70 characters | Below media |
 | Card description | 200 characters | Below headline |
 
@@ -221,7 +221,7 @@ Same specs as Feed, but test separately — performance varies significantly.
 | Meta | First 125 chars of primary text are critical — rest hidden behind "See more" |
 | LinkedIn | Desktop shows more text than mobile — optimize for mobile length |
 | TikTok | Text overlay on video matters more than caption text |
-| Twitter/X | Thread ads auto-expand — first tweet is the hook |
+| X (Twitter) | Thread ads auto-expand — first post is the hook |
 
 ---
 
@@ -235,7 +235,7 @@ Same specs as Feed, but test separately — performance varies significantly.
 | Meta Stories | 125 chars* | 40 chars | — | 1080×1920 |
 | LinkedIn | 150 chars* | 70 chars | 100 chars | 1200×627 |
 | TikTok | 80 chars | — | — | 1080×1920 |
-| Twitter/X | 280 chars | 70 chars | 200 chars | 1200×675 |
+| X (Twitter) | 280 chars | 70 chars | 200 chars | 1200×675 |
 
 *Recommended visible length; max is higher.
 
@@ -255,9 +255,9 @@ Same specs as Feed, but test separately — performance varies significantly.
 | Hook Rate (video) | 20-25% | 25-30% | 30%+ |
 
 **Key 2025-2026 insights**:
-- 70-80% of ad performance is creative quality (AppsFlyer report)
-- 4:5 vertical outperforms 1:1 by ~15% in Feed
-- Poster videos (still + short clips) lift watch time by ~18%
+- ~70% of campaign performance is driven by creative (Google); Nielsen Catalina (2017) attributes ~47% of CPG sales lift to creative
+- Meta recommends 4:5 for Feed (fills ~20% more screen than 1:1; ~+1% CTR in Meta's tests)
+- Poster videos (still + short clips) can lift watch time (~18% reported in beauty/fashion; vendor data, not Meta first-party)
 - 60%+ of user time on FB/IG is spent watching video
 - Andromeda algorithm update: creative diversity > creative volume
 - Advantage+ Shopping Campaigns use AI to auto-optimize creative delivery
@@ -281,7 +281,7 @@ Same specs as Feed, but test separately — performance varies significantly.
 ### Google Ads
 
 **Key 2025-2026 insights**:
-- PMax with video-enabled asset groups: 25-40% better performance
+- PMax with at least one video: ~+12% more conversions on average (up to ~+20% on YouTube with all orientations) — Google internal data
 - Asset Studio (genAI tools) now free for all advertisers
 - Brand guidelines let you control colors/fonts for AI-generated ads
 - Asset-level reporting now shows impressions, clicks, cost (not just conversions)
@@ -293,13 +293,14 @@ Same specs as Feed, but test separately — performance varies significantly.
 |--------|---------|------|-------------|
 | CTR (Sponsored) | 0.4-0.6% | 0.7-1.0% | 1.0%+ |
 | CPC | $5-8 | $3-5 | <$3 |
-| CPL | $50-80 | $30-50 | <$30 |
+| CPL (Lead Gen Form) | $75-150 | $40-60 | <$40 |
 
 **Key 2025-2026 insights**:
 - Thought Leader Ads: 1.7x higher CTR, 1.6x more engagement
 - B2B creator content outperforms brand content
 - Algorithm weights meaningful interactions (comments > likes)
 - Refresh every 4-6 weeks; narrow B2B audiences fatigue faster
+- CPL varies ~2x by capture method (Lead Gen Form vs landing page, ~$100-200+) and heavily by industry/geo (Software/Healthcare often $125+)
 
 ---
 

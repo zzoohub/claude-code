@@ -13,8 +13,11 @@ AI tools for generating ad images, videos, and audio at scale.
 | **Gemini (Nano Banana Pro)** | Quick iterations, product mockups | High | Low (API pricing) |
 | **Flux (Black Forest Labs)** | Photorealistic, text-in-image | Very High | Medium |
 | **Ideogram** | Text rendering, logos | High (text) | Medium |
-| **Midjourney** | Artistic, lifestyle imagery | Very High | $10-60/mo |
-| **DALL-E 3** | Conceptual, illustrative | High | API pricing |
+| **Midjourney** | Artistic, lifestyle imagery | Very High | $10-120/mo (Basic→Mega) |
+| **GPT Image** (OpenAI, `gpt-image-1`) | Conceptual, illustrative, strong in-image text | High | API pricing |
+
+> Note: DALL·E 3 was removed from the OpenAI API on **May 12, 2026** — use GPT Image
+> (`gpt-image-1` / GPT Image 1.5) instead.
 
 ### Image Generation Workflow
 
@@ -43,7 +46,7 @@ AI tools for generating ad images, videos, and audio at scale.
 | Meta/TikTok Stories | 1080×1920 | 9:16 |
 | Google Display | 1200×628 | 1.91:1 |
 | LinkedIn | 1200×627 | 1.91:1 |
-| Twitter/X | 1200×675 | 16:9 |
+| X (Twitter) | 1200×675 | 16:9 |
 
 ---
 
@@ -53,12 +56,15 @@ AI tools for generating ad images, videos, and audio at scale.
 
 | Tool | Best For | Duration | Quality |
 |------|----------|----------|---------|
-| **Veo (Google)** | Realistic scenes, product demos | Up to 8s | Very High |
-| **Kling** | Motion, action sequences | Up to 10s | High |
-| **Runway Gen-3** | Creative control, motion brush | Up to 10s | High |
-| **Sora (OpenAI)** | Complex scenes, narrative | Up to 60s | Very High |
-| **Seedance** | Dance/movement, character animation | Up to 10s | High |
+| **Veo (Google)** | Realistic scenes, product demos | Up to 8s/clip | Very High |
+| **Kling 3.0** | Motion, action sequences | Up to 15s native (longer via Extend) | Very High |
+| **Runway Gen-4 / Gen-4.5** | Creative control, world/character consistency | ~10s/clip | High |
+| **Sora 2 (OpenAI)** | Complex scenes, narrative | ~15-25s native (extendable) | Very High |
+| **Seedance 2.0** (ByteDance) | Narrative/cinematic video + synced audio | Up to 15s | Very High |
 | **Higgsfield** | Character-driven, social style | Up to 10s | Medium-High |
+
+> Durations are single-clip native limits as of mid-2026 and move fast — verify against
+> the vendor before quoting to a client. Sora's Videos API is scheduled to sunset Sep 2026.
 
 ### Video Ad Workflow
 
@@ -85,8 +91,8 @@ AI tools for generating ad images, videos, and audio at scale.
 
 | Tool | Best For | Features |
 |------|----------|----------|
-| **ElevenLabs** | Most natural TTS, voice cloning | 29+ languages, cloning, dubbing |
-| **OpenAI TTS** | Simple voiceover, API integration | 6 voices, streaming, affordable |
+| **ElevenLabs** | Most natural TTS, voice cloning | 70+ languages (Eleven v3), cloning, dubbing |
+| **OpenAI TTS** | Simple voiceover, API integration | 11+ steerable voices (`gpt-4o-mini-tts`), streaming, affordable |
 | **Cartesia** | Low-latency, real-time | Fast generation, emotion control |
 | **Murf** | Commercial voiceover | Brand voice consistency |
 
@@ -106,7 +112,7 @@ AI tools for generating ad images, videos, and audio at scale.
 - Keep a library of approved voice profiles
 
 ### Multilingual Production
-- ElevenLabs supports 29+ languages with natural accents
+- ElevenLabs supports 70+ languages (Eleven v3) with natural accent preservation
 - Generate same ad in multiple languages from one script
 - Review with native speakers — AI translation isn't perfect
 - Adjust timing — some languages are longer/shorter
@@ -197,7 +203,7 @@ src/
 - Retire bottom 20% of creatives
 - Generate new variations of top 20%
 - Test 1-2 new concepts each cycle
-- Refresh all creative every 4-6 weeks (ad fatigue)
+- Refresh before fatigue — cadence is platform-specific (TikTok ~weekly, Meta bi-weekly, Google/LinkedIn 4-6 weeks); see `creative-testing.md` fatigue tables
 
 ---
 

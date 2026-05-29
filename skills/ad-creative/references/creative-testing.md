@@ -29,7 +29,7 @@ Key principles (Hopkins, 1923 — still true 100 years later):
 2. **Let data decide** — Gut feeling is the starting hypothesis, not the conclusion
 3. **Test big ideas first** — Hook category and angle matter more than word choice
 4. **Keep losses small, multiply gains** — Kill fast, scale slow
-5. **Creative is the dominant lever** — ~47% of brand sales lift (Nielsen) / 70-80% of mobile UA performance (AppsFlyer). Either framing: invest top-down in creative before targeting or budget.
+5. **Creative is the dominant lever** — ~47% of CPG sales lift (Nielsen Catalina, 2017); ~70% of campaign performance (Google). Invest top-down in creative before targeting or budget.
 
 ### Testing Hierarchy
 
@@ -112,7 +112,7 @@ For click-based decisions (CTR):
 1. **Calling winners too early** — 24 hours is almost never enough
 2. **Ignoring day-of-week effects** — Run tests for full weeks when possible
 3. **Comparing different time periods** — Run variants simultaneously
-4. **Not accounting for learning phase** — Meta/Google ads need 24-48h to optimize
+4. **Not accounting for learning phase** — wait 24-48h before reading early results, but the algorithm's full learning phase is event-driven and longer: Meta exits after ~50 optimization events per ad set (~3-7 days); Google takes ~7 days to 2 weeks
 5. **Conflating correlation with causation** — A variant that wins in week 1 may lose in week 2
 
 ---
@@ -159,7 +159,7 @@ Once you find the winning hook, test bodies with the winning hook:
 - [ ] Same placements (or Advantage+ for Meta)
 - [ ] Tracking pixels and UTMs verified
 - [ ] Landing page message-matches the ad
-- [ ] Allow 24-48h learning phase before any decisions
+- [ ] Allow the learning phase before decisions (≥24-48h to read signals; full learning ~7 days / ~50 events on Meta)
 
 **Daily monitoring**:
 - Check hook rate (video) or CTR (static) — the leading indicator

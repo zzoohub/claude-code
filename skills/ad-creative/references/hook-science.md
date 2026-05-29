@@ -1,9 +1,10 @@
 # Hook Science: Categories, Formulas, and Benchmarks
 
 The hook is the single most important element of any ad. Ogilvy said writing
-the headline spends "80 cents of your dollar." Modern data confirms this:
-ads with optimized hooks see 30-50% lower CPA because they feed more qualified
-traffic into the funnel.
+the headline spends "80 cents of your dollar." Modern practice bears this out:
+the hook is the highest-leverage element to test — a stronger hook feeds more
+qualified attention into the funnel, and well-tested creative routinely beats
+baselines on CPA.
 
 This reference covers: hook metrics, 12 hook categories with templates, and
 platform-specific hook strategy.
@@ -43,8 +44,8 @@ platform-specific hook strategy.
 ### Why Hook Rate Matters
 
 - 90% of TikTok ad recall impact occurs in the first 6 seconds
-- Memory embedding requires 2.5 seconds of attention (research from The Research Agency)
-- 60% higher total retention leads to delivery boosts and cheaper impressions
+- Memory embedding requires ~2.5 seconds of attention (research from The Research Agency)
+- Higher retention/watch-time raises the creative's quality score, which boosts delivery and lowers effective CPM
 - Strong hook + weak hold = fix the body; Weak hook = nothing else matters
 
 ### Diagnostic Table
@@ -76,9 +77,11 @@ Lead with a number that challenges assumptions. Creates a cognitive pause.
 **Pattern**: "[Unexpected number] + [what it means for them]"
 
 **Examples**:
-- "70% of startups fail because of premature scaling — not bad products"
-- "The average person sees 10,000 ads per day. Only 3 get clicked."
+- "70% of startups fail because of premature scaling — not bad products" (Startup Genome, 2011 — illustrative)
+- "B2B buyers complete ~70% of their journey before they ever contact sales"
 - "Teams waste 31 hours per month in unnecessary meetings"
+
+*(Examples are illustrative hook structures — substantiate any stat before using it in a live ad.)*
 
 ### 3. Curiosity Gap
 Open a loop that demands closure. The brain cannot leave a gap unfilled.
@@ -99,7 +102,7 @@ to disagree). Best in saturated markets where differentiation is hard.
 **Examples**:
 - "Forget A/B testing. Here's what top marketers do instead."
 - "Posting daily on LinkedIn is killing your reach. Here's why."
-- "Your morning routine is not the problem"
+- "Your morning routine isn't the problem — your 2pm calendar is"
 
 ### 5. Before/After Transformation
 Show the contrast between pain and outcome. Visual for video/carousel,
@@ -133,8 +136,9 @@ Call out the specific person. People stop scrolling when they feel seen.
 - "Solo developers: stop building auth from scratch"
 
 ### 8. Story/Narrative
-Open with a personal story. The brain processes narrative 22x more memorably
-than facts alone (Stanford research).
+Open with a personal story. Narrative aids recall — a classic Stanford study
+(Bower & Clark, 1969) found story-based recall several times stronger than rote
+memorization.
 
 **Pattern**: "I [personal situation] until [discovery]..."
 
@@ -245,12 +249,12 @@ Works for Unaware audiences who need to be jolted out of autopilot.
 
 ### Headline Writing Rules (Ogilvy + Modern Data)
 
-1. **Write 15+ before picking**: Ogilvy wrote "at least 16 headlines" for every ad
+1. **Write 15-25+ before picking**: top direct-response copywriters draft many headlines and test them — Ogilvy's documented point was to *test* your headlines, not a fixed count
 2. **Include a benefit**: Unless your headline sells, you've wasted 90% of your money
 3. **Use specific numbers**: "127% increase" beats "huge increase"
 4. **Include news when possible**: Headlines with news are "surefire" (Ogilvy)
 5. **Avoid cleverness**: Clear beats clever every time. No puns in headlines.
-6. **Quote marks boost recall**: Headlines in quotation marks get 28% more recall
+6. **Quote marks can lift attention**: Quotation marks cue a testimonial and draw the eye (a recognized technique, though the effect isn't rigorously quantified)
 7. **Front-load the important words**: Mobile users scan the first 4-5 words
 
 ### Power Words for Hooks
