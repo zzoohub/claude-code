@@ -12,15 +12,16 @@ Cold email is restricted differently in different jurisdictions. **Verify the ru
 |---|---|
 | **US — CAN-SPAM** | Allowed without prior consent. Must include: accurate From/Reply-To, identifiable subject, physical postal address, working opt-out (process within 10 business days), no header forgery. |
 | **Canada — CASL** | **Explicit or implied consent required** even for B2B. "Implied consent" includes existing business relationships or publicly-posted business addresses (with limits). Penalties up to CAD $10M. |
-| **EU/UK — GDPR + PECR** | B2B cold to corporate addresses (e.g. `john@company.com`) may rely on **legitimate interest** if: (a) the recipient's role suggests they'd want the message, (b) you offer easy opt-out, (c) you document your legitimate-interest assessment (LIA). B2C cold without prior consent is generally not permitted. |
+| **UK — UK GDPR + PECR** | PECR's electronic-mail marketing rule does **not** apply to corporate subscribers (limited companies, LLPs, Scottish partnerships, public bodies) — no consent needed under PECR to email a corporate body. UK GDPR still applies because a named individual's address (`john@company.com`) is personal data, so document a legitimate-interest basis (LIA) and offer easy opt-out. Sole traders and most partnerships count as individual subscribers — PECR consent (or the soft opt-in exemption) is required. |
+| **EU — GDPR + national ePrivacy** | ePrivacy is transposed per member state and varies materially. Several states (e.g. Germany via UWG §7, with double opt-in the de facto standard; France/CNIL; Netherlands) require **prior consent** even for B2B email to named individuals. A GDPR legitimate-interest basis does **not** cure an ePrivacy consent requirement. Verify the specific country before sending — don't assume legitimate interest is available. |
 | **Australia — Spam Act 2003** | Express or inferred consent required. Penalties scale with volume. |
 | **Brazil — LGPD** | Treats email outreach to natural persons as personal data; needs lawful basis (consent, legitimate interest with LIA, etc.). |
 
 **Common requirements across most jurisdictions:**
 - Identify yourself and your company truthfully
-- Provide a working, no-friction opt-out (one click; honored within days)
+- Provide a working, no-friction opt-out — honor it within the CAN-SPAM legal maximum of 10 business days (and, for bulk marketing mail subject to Gmail/Yahoo/Microsoft rules, process one-click List-Unsubscribe within 2 days; see `references/deliverability.md`)
 - Don't disguise commercial intent in the subject or body
-- Maintain a suppression list across all your sending tools
+- Maintain a suppression list across all your sending tools (see `references/deliverability.md` — Suppression-List Management)
 - Document your basis for sending (LIA, consent record, business relationship evidence)
 
 > **Mailbox-rotation warning:** Tools that send via many fresh mailboxes/subdomains to scale cold outreach increasingly trip Gmail/Microsoft anti-spam heuristics (and may violate provider ToS). Treat rotation as a deliverability *bandaid*, not a strategy — and verify provider ToS before adopting.
@@ -110,6 +111,7 @@ Before sending, gut-check:
 - Does every sentence serve the reader, not the sender?
 - Is the personalization connected to the problem?
 - Is there one clear, low-friction ask?
+- If drafted with AI then scaled, has a human reviewed this exact send? (AI tells — "I hope this finds you well," "leverage," "synergy" — and near-identical mass copy both read as spam.)
 
 ---
 

@@ -2,7 +2,7 @@
 
 Getting emails into the inbox instead of spam. None of the copy or strategy guidance matters if your emails aren't being delivered.
 
-> **Last reviewed:** 2026-05. Deliverability rules change — verify against current Gmail Postmaster / Yahoo / Microsoft sender guidelines before any large-volume launch.
+> **Last reviewed:** 2026-05. Deliverability rules change — verify against current Google Postmaster Tools / Yahoo / Microsoft sender guidelines before any large-volume launch.
 
 ---
 
@@ -12,14 +12,15 @@ Email providers (Gmail, Outlook, etc.) use sender reputation, authentication, an
 
 ---
 
-## Gmail / Yahoo Sender Requirements (Feb 2024 — mandatory for bulk senders)
+## Gmail / Yahoo / Microsoft Sender Requirements (mandatory for bulk senders)
 
-If you send **5,000+ messages per day** to Gmail or Yahoo addresses, you must comply with these rules or get throttled/rejected. Non-bulk senders should still follow them — they're now the baseline.
+If you send **5,000+ messages per day** to a given provider's addresses (Gmail and Yahoo since Feb 2024; Microsoft consumer mailboxes since May 5, 2025), you must comply with these rules or get throttled/rejected. The 5,000+/day threshold is evaluated per-provider. Non-bulk senders should still follow them — they're now the baseline.
 
 ### Authentication (all required)
-- **SPF** + **DKIM** must both pass and be **aligned with the From: domain** (relaxed alignment is enough — same organizational domain).
-- **DMARC** policy of at least `p=none` published on the From: domain, also aligned.
-- Yahoo follows the same playbook.
+- **SPF** and **DKIM** must both be set up and pass, and the From: domain must be **aligned with at least one of them** (DMARC alignment — relaxed alignment, i.e. same organizational domain, is enough). Aligning both is recommended, but only one is required.
+- **DMARC** policy of at least `p=none` published on the From: domain.
+- Yahoo follows the same playbook. **Microsoft** (Outlook.com, Hotmail.com, Live.com) enforces the same SPF + DKIM + DMARC (p=none minimum, aligned with SPF or DKIM) for senders of 5,000+/day to its **consumer** mailboxes as of May 5, 2025 — non-compliant mail is rejected with `550 5.7.515 Access denied`. This does not apply to enterprise Microsoft 365 tenants.
+- As of late 2025, Gmail moved from soft enforcement to active SMTP-level deferrals/rejections (4xx/5xx) of non-compliant bulk mail — compliance is no longer optional.
 
 ### One-Click Unsubscribe (RFC 8058)
 Mandatory headers for marketing/promotional mail:
@@ -30,21 +31,24 @@ List-Unsubscribe-Post: List-Unsubscribe=One-Click
 - Unsubscribe must process the request without requiring a login or extra confirmation page.
 - Unsubscribe within **2 days** maximum.
 
+> **Transactional vs marketing:** transactional/relationship mail (receipts, password resets, security alerts, account/billing notices) is exempt from the opt-out / one-click-unsubscribe requirement and from marketing consent — which is why these headers are scoped to marketing/promotional mail. **Warning:** under the FTC "primary purpose" test, a receipt or reset that carries a promotion is reclassified as commercial and loses the exemption. Send transactional and marketing on separate streams/subdomains so a marketing reputation problem can't sink critical transactional delivery like password resets.
+
 ### Spam Complaint Rate Cap
-- Keep complaint rate **below 0.3%** (measured in Gmail Postmaster Tools); target **under 0.1%**.
-- Sustained > 0.3% triggers throttling; >0.5% triggers bulk rejection.
+- Keep the complaint rate **below 0.1%** (target) and **never let it reach 0.3% or higher** (measured in Google Postmaster Tools).
+- Spam-rate impact is graduated — there is no single clean cutoff. Reaching 0.3% or higher sharply degrades inbox delivery and makes you ineligible for Gmail delivery mitigation until you stay under 0.3% for 7 consecutive days (per Google's Email sender guidelines).
 
 ### Valid From, Reply-To, return-path
 - All authenticated and resolvable.
 - No spoofed reply-to that goes nowhere.
 
-### Practical Checklist (Feb 2024 baseline)
-- [ ] SPF includes sender, aligned with From: domain
-- [ ] DKIM signs with 2048-bit key, aligned with From: domain
+### Practical Checklist (Gmail/Yahoo/Microsoft baseline)
+- [ ] SPF set up and passing for the sending domain
+- [ ] DKIM signs with a 2048-bit key
+- [ ] From: domain DMARC-aligned with SPF or DKIM (at least one)
 - [ ] DMARC published at `p=none` (or stricter) with `rua=` reporting
 - [ ] `List-Unsubscribe` + `List-Unsubscribe-Post: List-Unsubscribe=One-Click` on every marketing email
 - [ ] One-click unsubscribe endpoint processes the POST without login
-- [ ] Gmail Postmaster Tools account set up; complaint rate monitored weekly
+- [ ] Google Postmaster Tools account set up; complaint rate monitored weekly
 - [ ] All marketing sent from a subdomain (e.g., `mail.yourapp.com`), not root
 
 ### Downstream Benefit: BIMI
@@ -93,9 +97,22 @@ New sending domains and IPs have no reputation. Email providers are suspicious o
 
 ### Warm-Up Rules
 - Only send to opted-in, engaged contacts during warm-up
-- Monitor bounce rate (<2%), spam complaints (<0.1%), and open rates during each phase
+- Monitor bounce rate (<2%), spam complaints (keep below the List Hygiene healthy bar of < 0.05%, and lower still during warm-up since you're sending only to engaged contacts), and click/engagement rates during each phase (treat opens as directional only, since Apple MPP inflates them)
 - If metrics dip, slow down — don't push through bad signals
 - Use a subdomain for marketing email (e.g., `mail.yourapp.com`) to protect your root domain reputation
+
+---
+
+## Consent Capture
+
+Permission quality upstream determines complaint rate and deliverability downstream.
+
+- **Single vs double opt-in:** double opt-in costs signup-conversion friction but yields cleaner lists, lower complaint rates, and stronger deliverability/legal footing (effectively expected for EU/CASL audiences). Single opt-in maximizes list growth where deliverability risk is low. Validate addresses at signup either way.
+- **Separate consent by stream** — transactional vs product/lifecycle vs marketing newsletter. Don't fold marketing into transactional consent.
+- **Record proof of consent** — timestamp, source/form, the opt-in text shown, and IP where applicable — for audit and compliance.
+- **Re-permission stale or acquired lists** before mailing them; never import a purchased list.
+
+(Opt-in form UI/conversion is the cro skill's domain; detailed legal bases live in `references/cold-outreach.md`.)
 
 ---
 
@@ -105,7 +122,7 @@ A dirty list tanks deliverability because bounces and spam complaints are the st
 
 ### Regular Maintenance
 - **Remove hard bounces immediately** — most providers do this automatically
-- **Sunset inactive subscribers** — if someone hasn't opened in 90 days, move to re-engagement sequence. If they still don't engage, remove them.
+- **Sunset inactive subscribers** — if someone hasn't clicked or engaged (replies, site activity) in ~60 days, move them to the re-engagement sequence (see `references/sequence-templates.md`); if they still don't engage by ~90 days, remove them. Don't sunset on opens alone — Apple Mail Privacy Protection inflates/auto-triggers opens, so opens are at best a fallback signal where click data is sparse.
 - **Watch for spam traps** — recycled email addresses that ISPs use to catch senders with bad practices. They never click, never open. Regular list cleaning catches them.
 - **Validate emails on signup** — use double opt-in or email validation APIs to prevent typos and fake addresses from entering your list
 
@@ -116,6 +133,12 @@ A dirty list tanks deliverability because bounces and spam complaints are the st
 | Spam complaint rate | < 0.05% | > 0.1% |
 | Unsubscribe rate | < 0.3% | > 0.5% |
 | List growth rate | Positive | Shrinking |
+
+### Suppression-List Management
+- Maintain a **single global suppression list** as the source of truth, synced across every ESP and your product DB.
+- Distinguish **global suppression** (unsubscribes, complaints, hard bounces — apply everywhere, including transactional unless legally exempt) from **per-stream suppression** (e.g. opted out of nurture but still receives onboarding).
+- Propagate complaints, unsubscribes, and hard bounces to **all** tools, not just the one that sent the message.
+- Hard rule: no tool may import or re-add a suppressed address.
 
 ---
 
@@ -150,14 +173,14 @@ Modern spam filters are sophisticated — they look at sender reputation, engage
 | Spam complaint rate | Subscribers marking you as spam (most damaging signal) |
 | Engagement rate | Opens + clicks — high engagement improves future deliverability |
 
-### Google Postmaster Tools
-Free tool from Google that shows your domain's reputation with Gmail. Monitor:
-- Domain reputation (High/Medium/Low/Bad)
-- Spam rate
-- Authentication success rates
-- Delivery errors
+### Google Postmaster Tools (v2)
+Free tool from Google that reports how Gmail treats mail from your domain. Note: the old Domain/IP Reputation dashboards (the High/Medium/Low/Bad rating) were retired in the v1→v2 transition (rollout/redirect from late 2025) — Gmail still evaluates reputation internally but no longer exposes that rating to senders. Monitor instead:
+- **Compliance status** — whether your domain meets Gmail's bulk-sender requirements
+- **Spam rate** — your most important signal: keep below 0.10% and never let it reach 0.30%
+- **Authentication results** (SPF / DKIM / DMARC pass rates)
+- **Encryption (TLS)** and **delivery errors**
 
-If your Gmail reputation drops to "Low" or "Bad", reduce volume immediately and focus on sending only to engaged segments until it recovers.
+If spam rate trends toward 0.30% or compliance status flags an issue, reduce volume immediately and send only to your most engaged segments until the metrics recover.
 
 ---
 

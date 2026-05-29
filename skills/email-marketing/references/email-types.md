@@ -2,6 +2,8 @@
 
 Complete catalog of email types by category for SaaS lifecycle marketing.
 
+*This is a catalog of email **types** — the email vehicle (timing, subject, copy) is owned by this skill. The substance some emails carry is owned elsewhere: offer economics for "Switch to annual" / "Upgrade to higher plan" (annual discount %, tier targeting, expansion strategy) belong to the **pricing** skill; "Failed payment (dunning)" and the in-flow cancel survey/save offer belong to the **churn-prevention** skill (`references/dunning-playbook.md`, `references/cancel-flow-patterns.md`).*
+
 ---
 
 ## Onboarding Emails
@@ -38,9 +40,9 @@ Complete catalog of email types by category for SaaS lifecycle marketing.
 | Email | Trigger | Goal |
 |-------|---------|------|
 | Switch to annual | After 3+ months on monthly | Increase LTV |
-| Failed payment (dunning) | Payment failure | Recover revenue |
+| Failed payment (dunning) → **owned by churn-prevention** | Payment failure | Recover revenue — see churn-prevention `references/dunning-playbook.md`; do not build here |
 | Card expiring | 30/15/7 days before expiry | Prevent failure |
-| Cancellation survey | Cancel initiated | Feedback + save |
+| Cancellation survey → **owned by churn-prevention** | Cancel initiated | Feedback (save-offer logic owned by churn-prevention — see its `references/cancel-flow-patterns.md`) |
 | Renewal reminder | 30 days before annual renewal | Set expectations |
 | Receipt/invoice | After payment | Transaction record |
 
@@ -53,7 +55,7 @@ Complete catalog of email types by category for SaaS lifecycle marketing.
 | Daily/weekly summary | Scheduled | Show value, drive return |
 | Key event notification | Specific event | Real-time value |
 | Milestone celebration | User reaches milestone | Positive reinforcement |
-| Inactivity alert | X days inactive | Re-engage |
+| Inactivity alert | 14-30 days of product inactivity | Re-engage |
 
 ---
 

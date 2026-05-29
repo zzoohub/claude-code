@@ -118,8 +118,9 @@ Email 5: Check-in (Day 7)
 ## Re-Engagement Sequence
 
 **Length**: 3-4 emails over 2 weeks
-**Trigger**: 30-60 days of inactivity
+**Trigger**: 30-60 days of **product** inactivity (no logins/usage); list-fatigue variant triggers at ~60 days of no email opens
 **Goal**: Win back or clean list
+**Audience**: still-subscribed but disengaged users — *not* cancelled customers (those go to the Win-Back Sequence below)
 
 | # | Email | Timing | Purpose |
 |---|-------|--------|---------|
@@ -128,31 +129,28 @@ Email 5: Check-in (Day 7)
 | 3 | Incentive | Day 7-8 | Special offer to re-engage |
 | 4 | Last chance | Day 14 | Stay or unsubscribe (clean list) |
 
-**Exit rule:** If the user re-engages at any point (opens + clicks), exit this sequence and route them back to the appropriate active sequence based on their lifecycle stage.
+**Exit rule:** If the user re-engages at any point (clicks or replies), exit this sequence and route them back to the appropriate active sequence based on their lifecycle stage.
 
 ---
 
-## Output Template
+## Win-Back Sequence (Post-Cancel)
 
-### Sequence Overview
-```
-Sequence Name: [Name]
-Trigger: [What starts the sequence]
-Goal: [Primary conversion goal]
-Length: [Number of emails]
-Timing: [Delay between emails]
-Exit Conditions: [When they leave the sequence]
-Branch Points: [Key decision points based on user behavior]
-```
+**Length**: 4 emails over ~90 days
+**Trigger**: Subscription cancelled / churned customer (distinct from the inactivity-triggered Re-Engagement Sequence above — different consent and lifecycle context)
+**Goal**: Reactivate
 
-### Per-Email Template
-```
-Email [#]: [Name/Purpose]
-Send: [Timing]
-Subject: [Subject line]
-Preview: [Preview text]
-Body: [Full copy]
-CTA: [Button text] → [Link destination]
-Branch: [If action → next email / If no action → alternative]
-Segment/Conditions: [If applicable]
-```
+| # | Email | Timing | Purpose | Branch |
+|---|-------|--------|---------|--------|
+| 1 | Cancellation acknowledgment | Immediate | Confirm, leave the door open, capture reason | — |
+| 2 | "We miss you" | Day 30 | Re-establish the relationship, remind of value | — |
+| 3 | What's new | Day 60 | Show improvements / what they've missed | — |
+| 4 | Special offer | Day 90 | Final re-engagement incentive | — |
+
+**Exit rule:** Reactivated → exit and route to onboarding/expansion. No response by Day 90 → suppress/sunset.
+**Boundary:** Dunning / payment-failure recovery is owned by the **churn-prevention** skill (`references/dunning-playbook.md`), not here.
+
+---
+
+## Output Format
+
+Use the **Default Output Format** in `SKILL.md` for all sequence deliverables — it is the single source of truth (Sequence Overview + Per-Email blocks). Don't redefine the structure here.

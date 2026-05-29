@@ -43,6 +43,8 @@ Once opened, the first line does the heaviest lifting. On mobile (where 60%+ of 
 
 ## Email Copy Structure
 
+> For the underlying persuasion frameworks (PAS, AIDA, BAB, 4Ps, SSS) applied within these emails — e.g. PAS for a problem-aware nurture email — see the **copywriting** skill, `references/persuasion-frameworks.md` (the single source of truth). This file covers email-specific structure only.
+
 1. **Hook** — First line grabs attention. This is the most important line in the email because it's visible in the preview and it determines whether the reader keeps going. Lead with something relevant to them, not about you.
 2. **Context** — Why this matters to them right now
 3. **Value** — The useful content, insight, or offer
@@ -62,6 +64,18 @@ Email rendering is unpredictable — different clients strip styles, break layou
 - **Left-aligned text** — centered text is harder to read beyond a headline
 - **Single-column layout** — multi-column breaks on mobile
 - **Dark mode consideration** — avoid images with transparent backgrounds on dark colors; text-based emails perform more consistently
+
+---
+
+## Accessibility
+
+Many clients block images by default and some readers use screen readers — write for that worst case:
+
+- **Meaningful alt text on every image** — it's the fallback that keeps the message readable when images don't load (and it helps spam filters and screen readers). Ties to the 60% text ratio in `references/deliverability.md`.
+- **Descriptive link/button text** ("Start your free trial", not "click here") — reinforces the CTA guidance below.
+- **Logical reading order** — content should make sense read linearly (the single-column rule already helps).
+- **Sufficient color contrast** for body text and CTA buttons; **readable sizes** (~14px+ body, ~22px+ headings on mobile).
+- **Don't rely on color alone** to convey meaning.
 
 ---
 
@@ -102,6 +116,21 @@ Email rendering is unpredictable — different clients strip styles, break layou
 - Behavior-based personalization is far more powerful than name insertion: "I noticed you set up your first project" beats "Hi [First name]"
 - Reference their specific actions or segments
 - Dynamic content blocks for different audiences (e.g., show different case studies by industry)
+- **Validate every merge token before send** and set a graceful fallback for missing fields — default to a neutral greeting rather than rendering "Hi {FirstName}," or an empty token. Broken merge data destroys trust instantly.
+- When generating per-recipient variations at scale, ensure **genuine variation** in body content — near-identical mass sends look like bulk/spam to filters regardless of how they were produced (see `references/deliverability.md` and `references/cold-outreach.md`).
+
+---
+
+## A/B Testing
+
+Design only — analyzing results (significance, lift, retention) belongs to the product-analytics skill.
+
+- **Test hierarchy (impact order):** subject line > preview text > from-name > offer/CTA > body > send-time. Test the highest-leverage variable first.
+- **One variable at a time** so the result is attributable. Hypothesis template: "I believe [variant] beats [control] because [audience insight], measured by [click/reply/conversion]."
+- **Run variants simultaneously** (not sequentially) to avoid day-of-week confounds.
+- **Small-list caveat:** below a few thousand sends per variant, statistical significance is usually unreachable — test only the single highest-leverage variable (subject) and treat results as directional.
+- **Never judge subject-line tests on open rate** — MPP inflates opens. Use click, reply, or conversion as the success metric.
+- Decide **kill / keep / scale** on the winning metric, then fold the winner into the template.
 
 ---
 
