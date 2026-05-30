@@ -56,7 +56,7 @@ fi
 ```
 
 If `NEEDS_SETUP`, build browse first (one-time, ~10s) per the **browse skill's SETUP section** —
-ask the user before building, then:
+ask the user before building (see **Non-interactive callers** below if you can't prompt), then:
 
 ```bash
 cd "$_ROOT/.claude/skills/browse" 2>/dev/null \
@@ -71,6 +71,15 @@ Re-run the check above after building.
 browser fallback** — it is a browse driver by design. Stop and report `browse unavailable` to the
 caller. Any browser fallback (e.g. Playwright or claude-in-chrome MCP) is owned by the calling
 context, not by this skill.
+
+**Non-interactive callers.** This skill is written for an interactive host that can prompt the user
+and write report files. When a non-interactive caller drives it — e.g. a subagent that preloaded this
+skill via its `skills:` field, with no `Write` or `AskUserQuestion` tool — degrade gracefully:
+- **Don't block on user prompts.** Steps that wait on a human (browse build consent, 2FA/OTP, CAPTCHA)
+  can't run; skip them and, if that blocks progress, report the blocker to the caller instead of waiting.
+- **Don't assume `Write`.** If you can't persist the markdown report / `baseline.json`, return your
+  findings to the caller in your own format. Screenshots are unaffected — the browse binary writes those
+  itself via Bash.
 
 **Create output directories:**
 

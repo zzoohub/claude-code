@@ -58,12 +58,16 @@ Note: Server actions (`'use server'` in `.ts`/`.tsx`) are part of web — they'r
 
 **Skip if no web changes detected.**
 
-**Use the qa skill for all browser verification.** It is preloaded into your context via the `skills:` field — its full body is already available, so no `Skill()` call is needed. The qa skill handles browse binary setup, dev server detection, auth, and systematic page testing. It runs in diff-aware mode automatically on feature branches:
+**Use the qa skill for all browser verification.** It is preloaded into your context via the `skills:` field — its full body is already available, so no `Skill()` call is needed. The qa skill handles browse binary resolution, dev server detection, diff-aware page selection, and the systematic per-page methodology (orient → explore → per-page checklist → evidence capture). It runs in diff-aware mode automatically on feature branches:
 - It analyzes the git diff, finds affected pages, and tests them
-- It produces a structured report with screenshots, console errors, and issue evidence
+- It captures screenshots, console errors, and issue evidence as you go
 - If the qa skill reports `NEEDS_SETUP` for the browse binary, follow its setup instructions
 
-**If the qa skill's browse binary is unavailable and setup fails**, fall back to claude-in-chrome (see Fallback section).
+**Use qa for its browser-driving methodology — not its host-oriented bookkeeping.** You run with a restricted toolset (`Read, Bash, Grep, Glob` + browser MCPs) and **non-interactively**. So while following the qa body, adapt these two things:
+- **Reporting:** Do **not** write qa's markdown report, `baseline.json`, or regression diff to disk — you have no `Write` tool. Report findings in **this agent's** format (Phase 5), returned to the caller. Screenshots still save fine: the browse binary writes them itself via `-o`/`screenshot <path>` through Bash.
+- **No user prompts:** You cannot ask the user (no `AskUserQuestion`). Any qa step that waits on a human — browse build consent, 2FA/OTP, CAPTCHA — cannot run here. Attempt the one-time browse build non-interactively; if it needs consent or fails, **don't block — fall back**.
+
+**If the qa skill reports `NEEDS_SETUP` and a non-interactive build fails, or the browse binary is otherwise unavailable**, fall back to claude-in-chrome (see Fallback section).
 
 **If Playwright is available** (`mcp__plugin_playwright_playwright__*`), prefer it over claude-in-chrome as fallback — it's headless and doesn't require the Chrome extension to be active. Use `browser_navigate` → `browser_snapshot` → `browser_click`/`browser_fill_form` for the same verification steps.
 
