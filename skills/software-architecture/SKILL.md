@@ -10,7 +10,10 @@ description: |
   system", "ASR", "utility tree", "domain model", "ATAM", "event storming", or
   provides a PRD and asks for technical architecture. Also trigger when the system
   involves AI/LLM features (RAG, agents, chat, copilot, semantic search). Use this
-  skill whenever the user wants to plan or structure a NEW project.
+  skill whenever the user wants to plan or structure a NEW project. Also use to
+  "review", "audit", or "diagnose" an EXISTING architecture — a read-only pass
+  that critiques `docs/arch/*.md` against the ASRs and ATAM gate and never
+  regenerates the docs (see Review / Diagnose Mode below).
   Do NOT use for: a single architectural decision on an existing system (use
   arch-decision instead — it appends one ADR without rewriting the full design).
   Do NOT use for: table schemas, column types, indexes, or migrations (use
@@ -38,6 +41,13 @@ Architecture for **system correctness**, not for persuasion.
 ## Philosophy
 
 Great architecture documents are **decision records, not implementation manuals**. Every section must answer *why* a choice was made, not just *what* was chosen. If there are no trade-offs to discuss, the section doesn't belong.
+
+---
+
+## Two Modes
+
+- **Build Mode (default)** — produce or extend the full architecture from a PRD via the Design Flow below. This is everything in this file except the Review / Diagnose Mode section.
+- **Review / Diagnose Mode** — a **read-only** audit of an *existing* architecture. Triggered when `docs/arch/context.md` already exists and the user asks to review / audit / diagnose rather than build. It critiques the docs and never regenerates `context.md` or `system.md`. Jump to the [Review / Diagnose Mode](#review--diagnose-mode) section and follow it instead of the Design Flow.
 
 ---
 
@@ -191,6 +201,56 @@ Before finalizing, verify:
 - [ ] AI (if applicable): cost ceiling defined, guardrail layers specified, model versions pinned
 
 **The "6-Month Test"**: If you come back to this project after 6 months away, can you read these docs and understand the system well enough to start making changes within 10 minutes?
+
+---
+
+## Review / Diagnose Mode
+
+Use this mode when the user asks to **review, audit, or diagnose an existing
+architecture** — not to build a new one. Trigger: `docs/arch/context.md`
+already exists and the intent is to critique, not create.
+
+**Hard rule — never regenerate.** Do NOT run the Design Flow and do NOT rewrite
+`context.md` or `system.md` wholesale. A review that silently overwrites the
+design it was asked to critique is a failure. The only writes allowed are:
+
+- **Targeted patch** of a specific, named defect, in place — and only after you
+  have stated the finding it fixes. One surgical edit per finding, never a
+  section-wide rewrite or a "consolidate" pass.
+- **Additive append** to the Risk Register or Open Questions in `decisions.md`.
+- **A new ADR** via the `arch-decision` skill.
+
+If the user wants a full redesign rather than an audit, stop and run Build Mode
+instead — but say so explicitly first.
+
+### Procedure
+
+1. Read all of `docs/arch/*.md` — `context.md`, `system.md`, `decisions.md`,
+   and `database.md` if it exists.
+2. Audit against the **Self-Review checklist** above, the utility tree's
+   `[H,H]` ASRs, and the ATAM gate. Those checklist items *are* the review
+   criteria — you are checking whether the existing design still passes them.
+3. Rank every finding with the severity rubric below.
+4. Disposition each finding:
+   - 🔴 / 🟠 fixable now and unambiguous → targeted patch to the affected doc.
+   - Accepted risk / won't-fix → append to the Risk Register in `decisions.md`.
+   - Needs user input → append to Open Questions in `decisions.md`.
+   - Implies a new decision → new ADR via `arch-decision`.
+5. **Never** create a separate `review.md` — findings live in the docs they
+   concern. Return a severity-ranked summary of what you found and did.
+
+### Severity rubric
+
+- 🔴 **Critical** — correctness / security / data-loss; ATAM gate failure; an
+  `[H,H]` ASR from the utility tree has no covering pattern.
+- 🟠 **High** — deviates from a recorded ADR without justification; an external
+  dependency missing a timeout / retry / degradation strategy; an N+1 or
+  thundering-herd baked into the data flow.
+- 🟡 **Medium** — structural improvement; a doc gap that fails the 6-Month Test.
+- 🟢 **Low** — wording, nits, optional consistency fixes.
+
+For data-model and schema findings, also apply the `database-design` skill's
+"When Reviewing an Existing Schema" checklist rather than re-deriving criteria here.
 
 ---
 
