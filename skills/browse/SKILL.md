@@ -26,12 +26,16 @@ State persists between calls (cookies, tabs, login sessions).
 ## SETUP (run this check BEFORE any browse command)
 
 ```bash
+# Resolve the browse binary via the bundled resolver (bin/find-browse → dist/find-browse,
+# source: src/find-browse.ts). It owns all path/layout logic; this block only locates the
+# resolver across the 3 standard skill roots, then derives the READY/NEEDS_SETUP contract.
 _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-B=""
-[ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/browse/dist/browse" ] && B="$_ROOT/.claude/skills/browse/dist/browse"
-[ -z "$B" ] && [ -n "$_ROOT" ] && [ -x "$_ROOT/skills/browse/dist/browse" ] && B="$_ROOT/skills/browse/dist/browse"
-[ -z "$B" ] && B=~/.claude/skills/browse/dist/browse
-if [ -x "$B" ]; then
+FIND=""
+[ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/browse/bin/find-browse" ] && FIND="$_ROOT/.claude/skills/browse/bin/find-browse"
+[ -z "$FIND" ] && [ -n "$_ROOT" ] && [ -x "$_ROOT/skills/browse/bin/find-browse" ] && FIND="$_ROOT/skills/browse/bin/find-browse"
+[ -z "$FIND" ] && [ -x ~/.claude/skills/browse/bin/find-browse ] && FIND=~/.claude/skills/browse/bin/find-browse
+B=$([ -n "$FIND" ] && "$FIND" 2>/dev/null)
+if [ -n "$B" ] && [ -x "$B" ]; then
   echo "READY: $B"
 else
   echo "NEEDS_SETUP"

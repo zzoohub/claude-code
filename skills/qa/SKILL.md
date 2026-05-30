@@ -33,21 +33,22 @@ You are a QA engineer. Test web applications like a real user — click everythi
 
 **If no URL is given and you're on a feature branch:** Automatically enter **diff-aware mode** (see Modes below). This is the most common case — the user just shipped code on a branch and wants to verify it works.
 
-**Find the browse binary.** This skill only *drives* the browse tool; `browse` owns its own
-build and binary resolution. The check below mirrors the canonical resolver in
-`skills/browse/SKILL.md` — if you change one, change both (or replace both with a shared
-`find-browse` call).
+**Find the browse binary.** This skill only *drives* the browse tool; `browse` owns its
+build and binary resolution. Delegate to browse's bundled resolver (`bin/find-browse`) so
+there is a single source of truth — no binary-path logic is duplicated here.
 
 ## SETUP (run this check BEFORE any browse command)
 
 ```bash
-# Mirror of browse/SKILL.md SETUP. Single source of truth: the browse skill.
+# Single source of truth for binary resolution: browse's bin/find-browse. This block
+# only bootstrap-locates that resolver across the 3 standard skill roots.
 _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-B=""
-[ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/browse/dist/browse" ] && B="$_ROOT/.claude/skills/browse/dist/browse"
-[ -z "$B" ] && [ -n "$_ROOT" ] && [ -x "$_ROOT/skills/browse/dist/browse" ] && B="$_ROOT/skills/browse/dist/browse"
-[ -z "$B" ] && B=~/.claude/skills/browse/dist/browse
-if [ -x "$B" ]; then
+FIND=""
+[ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/browse/bin/find-browse" ] && FIND="$_ROOT/.claude/skills/browse/bin/find-browse"
+[ -z "$FIND" ] && [ -n "$_ROOT" ] && [ -x "$_ROOT/skills/browse/bin/find-browse" ] && FIND="$_ROOT/skills/browse/bin/find-browse"
+[ -z "$FIND" ] && [ -x ~/.claude/skills/browse/bin/find-browse ] && FIND=~/.claude/skills/browse/bin/find-browse
+B=$([ -n "$FIND" ] && "$FIND" 2>/dev/null)
+if [ -n "$B" ] && [ -x "$B" ]; then
   echo "READY: $B"
 else
   echo "NEEDS_SETUP"
@@ -68,8 +69,8 @@ Re-run the check above after building.
 
 **If browse cannot run** (no `bun`, sandboxed, or the build fails): this skill has **no built-in
 browser fallback** — it is a browse driver by design. Stop and report `browse unavailable` to the
-caller. When `/qa` runs under the `verifier` agent, that agent owns the Playwright-MCP /
-claude-in-chrome fallback (see `agents/dev/verifier.md`).
+caller. Any browser fallback (e.g. Playwright or claude-in-chrome MCP) is owned by the calling
+context, not by this skill.
 
 **Create output directories:**
 

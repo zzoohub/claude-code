@@ -9,6 +9,8 @@ fi
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 if [ -n "$ROOT" ] && test -x "$ROOT/.claude/skills/browse/dist/browse"; then
   echo "$ROOT/.claude/skills/browse/dist/browse"
+elif [ -n "$ROOT" ] && test -x "$ROOT/skills/browse/dist/browse"; then
+  echo "$ROOT/skills/browse/dist/browse"
 elif test -x "$HOME/.claude/skills/browse/dist/browse"; then
   echo "$HOME/.claude/skills/browse/dist/browse"
 else

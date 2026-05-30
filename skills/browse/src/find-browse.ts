@@ -28,10 +28,14 @@ export function locateBinary(): string | null {
   const root = getGitRoot();
   const home = homedir();
 
-  // Workspace-local takes priority (for development)
+  // Workspace-local takes priority (for development). Two dev layouts:
   if (root) {
-    const local = join(root, '.claude', 'skills', 'browse', 'dist', 'browse');
-    if (existsSync(local)) return local;
+    // (1) skill installed under .claude/ (plugin / managed layout)
+    const localDotClaude = join(root, '.claude', 'skills', 'browse', 'dist', 'browse');
+    if (existsSync(localDotClaude)) return localDotClaude;
+    // (2) skill checked out directly under the repo (this repo's dev layout)
+    const localBare = join(root, 'skills', 'browse', 'dist', 'browse');
+    if (existsSync(localBare)) return localBare;
   }
 
   // Global fallback

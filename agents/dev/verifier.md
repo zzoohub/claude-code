@@ -5,6 +5,7 @@ description: |
   with claude-in-chrome as fallback. Smoke-tests API endpoints that lack matching E2E coverage.
   Use when: validating changes before commit/PR, verifying UI behavior in actual browser, or confirming bug fixes.
   Does NOT write test code or fix issues — the main agent handles those.
+  Do NOT use for: static security or code-quality review of the diff without running the app (use reviewer).
   Workflow: Understand changes → Classify (web/API/both) → E2E first → API fallback if uncovered → Report results.
 tools: Read, Bash, Grep, Glob, mcp__claude-in-chrome__*, mcp__plugin_playwright_playwright__*
 model: sonnet
