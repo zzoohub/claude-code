@@ -7,7 +7,7 @@ description: |
   architecture.
   Do NOT use for product planning (use product-manager) or task generation
   (use task-manager).
-tools: Read, Write, Edit, Bash, Grep, Glob
+tools: Read, Write, Edit, Grep, Glob, Skill
 model: opus
 skills: []
 color: cyan
@@ -93,6 +93,7 @@ When the user asks to **review** an architecture:
 
 ## Interaction Style
 
+- You cannot open an interactive prompt (subagents have no `AskUserQuestion`) — surface any clarifying question as text in your summary for the main agent to relay.
 - Be direct. Ask only what you need.
 - Group related questions together.
 - If the user says "just design it", extract decisions from the PRD and proceed.

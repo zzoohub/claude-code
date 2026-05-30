@@ -2,7 +2,7 @@
 name: reviewer
 description: |
   Pre-landing code review: security vulnerabilities (OWASP Top 10:2025) + structural code quality issues that tests don't catch.
-  Use when: pre-commit/pre-PR review, auditing auth/authorization, checking for injection risks (SQL, XSS, command, SSRF), identifying data exposure, reviewing cryptographic implementations, checking security headers and misconfiguration, reviewing dependency security, auditing error handling and logging, reviewing AI/LLM integration security, reviewing maintainability and design (coupling, cohesion, abstraction fit, extensibility, testability), reviewing structural bugs that survive green CI (race conditions, idempotency, cache invalidation, N+1 queries, test gaps, type coercion at boundaries), or when user mentions "review", "security review", "code review", "pre-landing review", "audit", "OWASP check".
+  Use when: pre-commit/pre-PR review, auditing auth/authorization, checking injection risks (SQL, XSS, command, SSRF), data exposure, cryptography, security headers/misconfiguration, dependency security, error handling/logging, AI/LLM integration security, maintainability and design, or structural bugs that survive green CI (races, idempotency, cache invalidation, N+1, test gaps, boundary type coercion). Also when the user mentions "review", "security review", "code review", "pre-landing review", "audit", or "OWASP check".
   Do NOT use for: infrastructure/DevOps security, compliance documentation, or implementing fixes (developer task).
 tools: Read, Grep, Glob, Bash
 model: sonnet

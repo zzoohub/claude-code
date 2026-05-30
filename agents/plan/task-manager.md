@@ -6,7 +6,7 @@ description: |
   wants to generate tasks, add tasks, update task progress, or audit the task
   system.
   Do NOT use for product planning or PRD writing (use product-manager).
-tools: Read, Write, Edit, Grep, Glob
+tools: Read, Write, Edit, Grep, Glob, Skill
 model: sonnet
 skills: []
 color: green
@@ -86,6 +86,7 @@ surface it to the user before claiming completion.
 
 ## Interaction Style
 
+- You cannot open an interactive prompt (subagents have no `AskUserQuestion`) — surface any clarifying question as text in your summary for the main agent to relay.
 - Be direct. Identify missing inputs up front rather than inferring silently.
 - If `task-craft` is requested without architecture docs, push back — note
   that tasks will likely need rework once architecture is decided.

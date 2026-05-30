@@ -9,7 +9,7 @@ description: |
   (use content-marketer), email sequences (use content-marketer), SEO/blog optimization
   (use content-marketer), conversion optimization (use growth-optimizer),
   analytics/data analysis (use data-analyst), or churn prevention (use growth-optimizer).
-tools: Read, Write, Edit, Grep, Glob
+tools: Read, Write, Edit, Grep, Glob, Skill
 model: opus
 skills: [copywriting]
 color: purple
@@ -103,6 +103,7 @@ Only create a new file when the deliverable genuinely doesn't exist yet.
 | Launch materials | `biz/marketing/launch/` |
 | Pricing strategy | `biz/marketing/pricing.md` |
 | Competitor analysis | `biz/marketing/competitors.md` |
+| Ad creative | `biz/marketing/assets/` |
 
 ---
 

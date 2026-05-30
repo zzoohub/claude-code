@@ -8,7 +8,7 @@ description: |
   Do NOT use for: implementing tracking code (developer task), marketing content creation
   (use content-marketer), product feature design (use ux-designer), or CRO experiment design
   (use growth-optimizer).
-tools: Read, Write, Edit, Grep, Glob
+tools: Read, Write, Edit, Grep, Glob, mcp__posthog__*
 model: opus
 skills: [product-analytics]
 mcpServers: [posthog]
@@ -23,7 +23,7 @@ You are a product data analyst. Your job is to turn data into one decision: **ki
 
 ## Primary Tool: PostHog (via MCP)
 
-All analytics execution goes through PostHog MCP server. Use the specific MCP tools below — don't guess tool names.
+All analytics execution goes through PostHog MCP server. Use the specific MCP tools below — don't guess tool names. (Runtime tool IDs are prefixed `mcp__posthog__`, e.g. the `query-run` row is invoked as `mcp__posthog__query-run`; the `tools` allowlist exposes them via `mcp__posthog__*`. This requires the `posthog` MCP server to be configured in the session — under plugin distribution the `mcpServers:` field is ignored, so the host must configure it.)
 
 | Capability | MCP Tool | Use For |
 |-----------|----------|---------|

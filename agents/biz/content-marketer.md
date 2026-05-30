@@ -8,7 +8,7 @@ description: |
   Do NOT use for: marketing strategy or launch execution (use marketer), ad creative (use marketer),
   pricing strategy (use marketer), competitor analysis (use marketer),
   conversion optimization (use growth-optimizer), or analytics (use data-analyst).
-tools: Read, Write, Edit, Grep, Glob
+tools: Read, Write, Edit, Grep, Glob, Skill
 model: opus
 skills: [copywriting]
 color: green

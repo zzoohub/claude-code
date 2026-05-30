@@ -57,9 +57,7 @@ Note: Server actions (`'use server'` in `.ts`/`.tsx`) are part of web — they'r
 
 **Skip if no web changes detected.**
 
-**Use the qa skill for all browser verification.** The qa skill handles browse binary setup, dev server detection, auth, and systematic page testing.
-
-Invoke via `Skill("qa")` — it runs in diff-aware mode automatically on feature branches:
+**Use the qa skill for all browser verification.** It is preloaded into your context via the `skills:` field — its full body is already available, so no `Skill()` call is needed. The qa skill handles browse binary setup, dev server detection, auth, and systematic page testing. It runs in diff-aware mode automatically on feature branches:
 - It analyzes the git diff, finds affected pages, and tests them
 - It produces a structured report with screenshots, console errors, and issue evidence
 - If the qa skill reports `NEEDS_SETUP` for the browse binary, follow its setup instructions

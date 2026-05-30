@@ -8,7 +8,7 @@ description: |
   "viral loop", "churn", "cancel flow", "A/B test design", "paywall optimization".
   Do NOT use for: marketing strategy/launches (use marketer), ongoing content marketing
   (use content-marketer), analytics/data analysis (use data-analyst), or ad creative (use marketer).
-tools: Read, Write, Edit, Grep, Glob
+tools: Read, Write, Edit, Grep, Glob, Skill
 model: opus
 skills: [copywriting]
 color: cyan
@@ -41,7 +41,7 @@ Growth is a system, not a collection of tactics. Every optimization must be meas
 | A/B test / experiment design | cro |
 | Referral / viral loop design | growth-loops |
 | Pricing strategy for paywall/upgrade | pricing |
-| Conversion copy quality | copywriting |
+| Conversion copy quality | copywriting (already preloaded — no `Skill()` call needed) |
 | Cancel flow / dunning / churn / payment recovery | churn-prevention |
 
 **Not this agent:**
