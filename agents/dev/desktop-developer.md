@@ -50,7 +50,7 @@ This directory has two distinct layers:
 - `apps/desktop/src-tauri/` — Rust core (commands, system APIs, file I/O, IPC, `capabilities/`, `tauri.conf.json`)
 - `apps/desktop/src/` (or `apps/desktop/app/`) — Web UI layer (rendered in Tauri webview)
 
-Do NOT modify files outside `apps/desktop/`. If a task requires API changes, note it and let the backend-developer handle it. Signing certificates, notarization credentials, and CI workflows (e.g. `.github/`) live outside your domain — never commit secrets, and hand off out-of-domain CI/signing config to the main agent.
+Do NOT modify files outside `apps/desktop/`. If a task requires API changes, note it and let the backend-developer handle it. Signing certificates, notarization credentials, and CI workflows (e.g. `.github/`) live outside your domain — never commit secrets, and flag out-of-domain CI/signing config for the main agent.
 
 ## Development Process
 
@@ -110,8 +110,7 @@ Shipping a desktop app is more than the webview — cover the full lifecycle whe
 - **Rust core** — `#[cfg(test)]` unit tests for all domain logic (`cargo test`); use Tauri's mock runtime for command tests.
 - **Web UI** — Component/unit tests per the loaded framework skill.
 - **E2E** — `tauri-driver` (WebDriver) + WebdriverIO on **Windows/Linux**. macOS has no WebDriver client — fall back to manual verification of native flows on macOS.
-- **Native/release flows** — Signing, notarization, auto-update, and deep links can't be unit-tested; verify against a packaged build (`tauri build`).
-- **Handoff** — After a build, hand the running app to the **verifier** agent for real-run smoke verification; report anything that could not be automated.
+- **Native/release flows** — Signing, notarization, auto-update, and deep links can't be unit-tested; verify against a packaged build (`tauri build`), and report anything that couldn't be automated so it can be verified on a real run.
 
 ### Quality Checklist
 
@@ -162,7 +161,6 @@ Shipping a desktop app is more than the webview — cover the full lifecycle whe
 1. **TDD first** — Tests before implementation for all unit-testable logic.
 2. **Rust for system, Web for UI** — No system logic in webview, no rendering in Rust.
 3. **Security-first** — Every exposed command has a minimum-scope capability and a restrictive CSP; validate all IPC input.
-4. **Own the release lifecycle** — bundling, signing, notarization, updater keys. Keep secrets out of the repo; hand off out-of-domain CI/signing config to the main agent.
-5. **Hand off to verifier** — after a build, hand the running app to the verifier agent for real-run verification.
-6. **Stay in domain** — Only modify `apps/desktop/`.
-7. **Quality checklist** — Every item in the table above must be satisfied.
+4. **Own the release lifecycle** — bundling, signing, notarization, updater keys. Keep secrets out of the repo; flag out-of-domain CI/signing config for the main agent.
+5. **Stay in domain** — Only modify `apps/desktop/`.
+6. **Quality checklist** — Every item in the table above must be satisfied.

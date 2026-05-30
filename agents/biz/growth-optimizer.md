@@ -63,18 +63,11 @@ Use the **`growth-loops` skill** (separate skill, `references/loops.md`) for the
 
 **Growth Audit:** Map full funnel → find biggest drop-off → diagnose root cause (friction, value, trust, motivation?) → design experiment → iterate → move to next drop-off when improvement plateaus.
 
-**Measurement prerequisite:** Funnel diagnosis and experiments depend on `biz/analytics/tracking-plan.md`. If it's absent, flag the instrumentation gap and hand off to data-analyst to design the tracking plan before promising measurable results — don't run experiments you can't measure.
+**Measurement prerequisite:** Funnel diagnosis and experiments depend on `biz/analytics/tracking-plan.md`. If it's absent, flag the instrumentation gap before promising measurable results — designing the tracking plan is data-analyst's domain (see AGENTS.md). Don't run experiments you can't measure.
 
 ### 3. Experiment Results
 
-When experiments produce data, log results in `biz/growth/experiments.md` and include in your return summary:
-
-```
-## Suggested Next
-- Run data-analyst: experiment "{name}" has data ready for significance testing
-```
-
-The main agent will route to data-analyst for statistical analysis, cohort comparison, retention impact, and CC estimation.
+When experiments produce data, log results in `biz/growth/experiments.md` and note in your return summary which experiments now have data ready. Statistical analysis (significance testing, cohort comparison, retention impact, CC estimation) is data-analyst's domain — see the growth optimization cycle in AGENTS.md.
 
 ---
 

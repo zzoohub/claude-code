@@ -6,12 +6,14 @@
 !.gitignore
 !README.md
 !CLAUDE.md
+!AGENTS.md
 !agents/
 !agents/**
 !commands/
 !commands/**
 !skills/
 !skills/**
+
 # skills 빌드 산출물 제외
 skills/**/dist/
 skills/**/node_modules/
