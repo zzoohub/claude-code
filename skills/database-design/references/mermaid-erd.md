@@ -1,6 +1,6 @@
 # Mermaid ERD Quick Reference
 
-Use this syntax when producing the ERD output file (`docs/erd.mermaid`).
+Use this syntax for the ERD section embedded in `docs/arch/database.md` (see SKILL.md → Output). The ERD is not a standalone file.
 
 ## Basic Structure
 
@@ -49,7 +49,7 @@ erDiagram
 ||--||   exactly one to exactly one
 ||--o{   exactly one to zero or more
 ||--|{   exactly one to one or more
-o|--o{   zero or one to zero or more
+|o--o{   zero or one to zero or more
 ```
 
 Read left to right: left side of `--` describes left entity, right side describes right entity.

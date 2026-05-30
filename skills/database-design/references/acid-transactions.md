@@ -98,7 +98,7 @@ SELECT pg_advisory_unlock(12345);  -- release
 SELECT pg_advisory_xact_lock(12345);
 
 -- Try lock (non-blocking, returns boolean)
-SELECT pg_try_advisory_lock(12345);  -- true if acquired, false if already held
+SELECT pg_try_advisory_lock(12345);  -- true if acquired (or already held by THIS session — advisory locks are re-entrant and stack, needing one matching unlock each); false ONLY if another session holds it
 ```
 
 Use cases: rate limiting, singleton job execution, distributed coordination.
@@ -185,6 +185,11 @@ for attempt in range(MAX_RETRIES):
             raise
         time.sleep(0.1 * (2 ** attempt))  # exponential backoff
 ```
+
+> Deadlock (40P01) can occur at **any** isolation level, including the Read Committed default;
+> serialization_failure (40001) is expected only under Repeatable Read / Serializable. On either, the
+> transaction is **fully aborted and must be replayed from `BEGIN`** (re-doing its reads, not just the
+> failing statement) — which the loop above accomplishes by re-entering the transaction block.
 
 ### Avoid Long-Running Transactions
 - They prevent VACUUM from cleaning dead tuples

@@ -94,8 +94,9 @@ and reverted to defaults afterward.
 
 ## 3. Connection Pooling
 
-PostgreSQL forks a new process per connection (~10MB each).
-Without pooling, 500 connections = 5GB of memory just for processes.
+PostgreSQL forks a new process per connection (roughly a few MB to tens of MB each — it grows
+with the work_mem an operation touches and with cached catalog/prepared statements).
+Without pooling, 500 idle connections is already gigabytes of RAM just for backend processes.
 
 ```
 # PgBouncer configuration (recommended)
@@ -108,9 +109,17 @@ reserve_pool_size = 5          # emergency extra connections
 
 | Pool Mode | Description | When to Use |
 |-----------|-------------|-------------|
-| session | Connection held for entire session | Legacy apps, PREPARE |
+| session | Connection held for entire session | Legacy apps; session state (see below) |
 | transaction | Released after each transaction | **Recommended default** |
-| statement | Released after each statement | Simple read-only queries |
+| statement | Released after each statement | Forbids multi-statement transactions; niche (sharding/PL-proxy), rarely needed |
+
+⚠️ **Transaction mode releases the backend between transactions, so anything session-scoped breaks:**
+- **Server-side/protocol-level prepared statements** fail (`prepared statement "S_1" already exists` / `does not exist`) unless PgBouncer ≥1.21 with `max_prepared_statements > 0`, or the driver disables them.
+- Use **`pg_advisory_xact_lock()`**, not session-level `pg_advisory_lock()` — the session variant can be acquired and released on different backends and leak. (The advisory-lock examples in `references/acid-transactions.md` use the session form; switch to `_xact` under transaction pooling.)
+- Use **`SET LOCAL`** (transaction-scoped), not `SET` — a session GUC leaks across reused backends (including the `work_mem` `SET` shown above).
+- Avoid session-lifetime **`LISTEN`/`NOTIFY`**, **`WITH HOLD`** cursors, and **temp tables**. Fall back to **session** pool mode if the app needs any of these.
+
+**Sizing:** total server connections used = sum over pools of (`default_pool_size` + `reserve_pool_size`); keep that under PostgreSQL `max_connections` (a common misconfiguration is many pools each sized 20 overshooting the server limit).
 
 ## 4. Partitioning
 
@@ -353,3 +362,16 @@ ON CONFLICT (sku) DO UPDATE SET
 - Generates dead tuples → requires aggressive VACUUM strategy
 - Consider per-table autovacuum tuning (see section 7)
 - Monitor dead tuple ratios closely
+
+## 10. Read Replicas (read scaling)
+
+Routing reads to physical replicas scales read throughput, but introduces **replication lag**: a read
+issued right after a write may not yet see that write (read-after-write inconsistency). Design for it:
+
+- Route **read-after-write** flows ("show the thing I just created") to the **primary**; send only
+  lag-tolerant reads (dashboards, search, analytics, reports) to replicas.
+- `synchronous_commit` / synchronous-replica quorum is the knob trading write latency for read freshness.
+- A materialized view on the primary can beat a replica when you need a consistent, pre-aggregated read.
+
+Whether to add replicas at all is usually a **system-level** decision (see `docs/arch/system.md` read/write
+separation); the lag and read-after-write consequences are the DB-domain concern to flag and design around.

@@ -18,6 +18,7 @@ SELECT
     attname AS column_name,
     n_distinct,
     CASE
+        WHEN reltuples <= 0 THEN NULL  -- reltuples is -1 on never-analyzed tables (PG14+); NULL = "run ANALYZE first" instead of a bogus negative
         WHEN n_distinct > 0 THEN n_distinct / reltuples
         WHEN n_distinct < 0 THEN abs(n_distinct)
         ELSE 0
@@ -62,7 +63,7 @@ CREATE INDEX idx_products_attrs ON products USING GIN (attributes);
 CREATE INDEX idx_articles_fts ON articles USING GIN (to_tsvector('english', title || ' ' || body));
 ```
 
-For JSONB, the default GIN opclass (jsonb_ops) supports containment (@>) and key-existence (?, ?|, ?&); `USING GIN (attributes jsonb_path_ops)` is smaller/faster but supports only containment (@>). For substring/fuzzy matching, `CREATE EXTENSION pg_trgm;` then `USING GIN (col gin_trgm_ops)` makes `ILIKE '%term%'` and similarity (%) indexable.
+For JSONB, the default GIN opclass (jsonb_ops) supports key-existence (?, ?|, ?&), containment (@>), and the jsonpath operators (@?, @@); `USING GIN (attributes jsonb_path_ops)` is smaller/faster and supports @>, @? and @@ but NOT the key-existence operators — that lack is the only difference between the two opclasses. For substring/fuzzy matching, `CREATE EXTENSION pg_trgm;` then `USING GIN (col gin_trgm_ops)` makes `ILIKE '%term%'` and similarity (%) indexable.
 
 ### GiST (Generalized Search Tree)
 ```sql
@@ -216,7 +217,7 @@ Key indicators:
 - **Seq Scan**: reads the whole table — expected and optimal when a query returns a large fraction of rows (low-selectivity/analytics); a problem only when a selective predicate should have used an index but didn't (stale stats, non-sargable predicate, or missing index)
 - **Index Scan**: Finds rows via index, reads data from table (good)
 - **Index Only Scan**: Completes entirely from index (best)
-- **Bitmap Index Scan**: Combines multiple index conditions (acceptable)
+- **Bitmap Index Scan**: Builds a bitmap of matching rows, then reads the heap in physical order — chosen when a single index matches many rows (avoids random I/O), or to combine multiple indexes via BitmapAnd/BitmapOr. Often the optimal plan, not a warning sign
 - **actual time**: Real execution time (ms)
 - **Buffers: shared hit**: Pages read from cache (more = better)
 - **Buffers: shared read**: Pages read from disk (less = better)

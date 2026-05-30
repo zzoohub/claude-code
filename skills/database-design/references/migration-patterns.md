@@ -43,8 +43,11 @@ SET lock_timeout = '2s';  -- optionally also a bounded statement_timeout
 -- Forward: Adding a nullable column does NOT lock the table
 ALTER TABLE user_accounts ADD COLUMN phone TEXT;
 
--- PostgreSQL 11+: Adding with DEFAULT is also safe (no table rewrite)
+-- PostgreSQL 11+: adding with a CONSTANT/non-volatile DEFAULT is also safe (no table rewrite)
 ALTER TABLE user_accounts ADD COLUMN is_verified BOOLEAN NOT NULL DEFAULT false;
+-- ⚠️ A VOLATILE default forces a FULL table rewrite under ACCESS EXCLUSIVE for the whole rewrite —
+-- e.g. ADD COLUMN ... uuid NOT NULL DEFAULT uuidv7() (or gen_random_uuid()/now() evaluated per row).
+-- For those, add the column nullable, backfill in batches, then SET NOT NULL (see below).
 
 -- Rollback
 ALTER TABLE user_accounts DROP COLUMN phone;
@@ -222,7 +225,7 @@ For tables with millions+ rows, batch all data modifications:
 DO $$
 DECLARE
     batch_size INT := 5000;
-    rows_updated INT;
+    rows_scanned INT;
     last_id UUID := '00000000-0000-0000-0000-000000000000';
 BEGIN
     LOOP
@@ -241,11 +244,15 @@ BEGIN
             WHERE u.id = batch.id AND u.phone IS NULL
             RETURNING u.id
         )
-        SELECT count(*), max(id) INTO rows_updated, last_id FROM batch;
+        -- Carry the cursor forward from the ordered batch. Do NOT use max(id): PostgreSQL has no
+        -- max(uuid)/min(uuid) aggregate (UUID has btree comparison operators, so id > last_id and
+        -- ORDER BY id work, but the aggregate does not exist — max(uuid) raises an error).
+        SELECT count(*), (SELECT id FROM batch ORDER BY id DESC LIMIT 1)
+        INTO rows_scanned, last_id FROM batch;
 
         EXIT WHEN last_id IS NULL;  -- no more rows past the cursor
 
-        RAISE NOTICE 'Scanned % rows', rows_updated;
+        RAISE NOTICE 'Scanned % rows', rows_scanned;
         COMMIT;
         PERFORM pg_sleep(0.1);  -- brief pause to reduce load
     END LOOP;

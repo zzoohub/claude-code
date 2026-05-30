@@ -128,17 +128,30 @@ For most practical applications, 3NF is sufficient. BCNF is only relevant in edg
 
 ```sql
 -- Safe denormalization via Materialized View
+-- ⚠️ products has TWO independent one-to-many relationships here (reviews AND order_items).
+-- Joining both before aggregating fans out to N_reviews × M_order_items rows per product, which
+-- inflates COUNT(r.id) to N×M and SUM(oi.quantity) by a factor of N. (AVG survives only because
+-- each rating is duplicated uniformly, which hides the bug.) Aggregate each 1:N branch
+-- INDEPENDENTLY first, then join the per-product rollups.
 CREATE MATERIALIZED VIEW mv_product_stats AS
+WITH rev AS (
+    SELECT product_id,
+           COUNT(*) AS review_count,
+           AVG(rating)::NUMERIC(3,2) AS avg_rating  -- NUMERIC(3,2) assumes a single-digit rating scale (e.g. 1-5); widen to NUMERIC(4,2) for 0-10/0-100 scales
+    FROM reviews GROUP BY product_id
+), sold AS (
+    SELECT product_id, SUM(quantity) AS total_sold
+    FROM order_items GROUP BY product_id
+)
 SELECT
     p.id AS product_id,
     p.name,
-    COUNT(r.id) AS review_count,
-    AVG(r.rating)::NUMERIC(3,2) AS avg_rating,  -- NUMERIC(3,2) assumes a single-digit rating scale (e.g. 1-5); widen to NUMERIC(4,2) for 0-10/0-100 scales
-    SUM(oi.quantity) AS total_sold
+    COALESCE(rev.review_count, 0) AS review_count,
+    rev.avg_rating,
+    COALESCE(sold.total_sold, 0) AS total_sold
 FROM products p
-LEFT JOIN reviews r ON r.product_id = p.id
-LEFT JOIN order_items oi ON oi.product_id = p.id
-GROUP BY p.id, p.name;
+LEFT JOIN rev  ON rev.product_id = p.id
+LEFT JOIN sold ON sold.product_id = p.id;
 
 CREATE UNIQUE INDEX idx_mv_product_stats_id ON mv_product_stats (product_id);
 

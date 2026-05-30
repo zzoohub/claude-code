@@ -15,7 +15,10 @@ WHERE c.contype = 'f'
 AND NOT EXISTS (
     SELECT 1 FROM pg_index i
     WHERE i.indrelid = c.conrelid
-    -- leading-column coverage per FK column; composite FKs may need ordered-prefix checks
+    -- Leading-column coverage, checked per FK column. NOTE for COMPOSITE FKs: an index on (a, b)
+    -- fully covers a FK on (a, b), but this per-column query still emits a FALSE-POSITIVE row for
+    -- the trailing column b (no index has b as its leading column). Only the leading-column row is
+    -- meaningful — for a composite FK, ignore the trailing-column rows (don't add a redundant index).
     AND i.indkey[0] = a.attnum
 )
 ORDER BY table_name, fk_column;

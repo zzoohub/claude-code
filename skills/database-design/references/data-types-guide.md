@@ -88,6 +88,17 @@ CREATE TABLE user_accounts (
 );
 ```
 
+> **CHAR(n) caveat:** CHAR blank-pads a too-short value to width rather than rejecting it (`'US'` is
+> stored as `'US '`) and strips trailing blanks on read, so `CHAR(3)` does NOT guarantee three
+> meaningful characters. For currency/ISO codes prefer `CHAR(3)`/`TEXT` with a real check, e.g.
+> `CHECK (currency ~ '^[A-Z]{3}$')`.
+
+> **Case-insensitive identity (email, username):** a plain `UNIQUE` on `TEXT` is case-sensitive, so
+> `Alice@x.com` and `alice@x.com` both insert — a classic auth footgun. Enforce a **partial unique
+> index on `lower(email)`** (see `references/indexing-strategy.md`), or use the `citext` extension or a
+> nondeterministic ICU collation
+> (`CREATE COLLATION ... (provider = icu, locale = 'und-u-ks-level2', deterministic = false)`, PG12+).
+
 ## Date/Time Types
 
 | Type | Description | When to Use |
@@ -185,7 +196,7 @@ SELECT * FROM products WHERE attributes->>'brand' = 'Apple';
 **JSONB rules**:
 - Core data that can be modeled relationally → use proper columns
 - JSONB is for supplementary data, metadata, flexible attributes only
-- Never store FK-like IDs inside JSONB (no referential integrity)
+- Never store an ID inside JSONB as the *live system of record* for a relationship — PostgreSQL cannot enforce a FOREIGN KEY into a JSONB value, so there is no referential integrity. (Snapshotted IDs in immutable audit/event payloads are the deliberate exception.)
 
 ## Boolean
 
@@ -257,6 +268,10 @@ CREATE TABLE invoices (
 **When to use domains**: When the same constrained type appears in 3+ columns across different tables. It avoids duplicating CHECK constraints and ensures consistent validation.
 
 **When NOT to use**: For one-off constraints on a single column — just use inline CHECK.
+
+**Caveats** (PostgreSQL does not make domains airtight):
+- A domain's CHECK/NOT NULL is **not** applied to the elements of an array of that domain — a column typed `email[]` does not validate each element. Validate array contents at the application or trigger layer.
+- Domain `NOT NULL` can be bypassed by NULLs introduced without a direct insert (e.g. a `LEFT JOIN` or a scalar subquery yielding NULL). Still put an explicit `NOT NULL` on the column where null is invalid — don't rely on the domain alone.
 
 ## Generated Columns (PostgreSQL 12+; VIRTUAL added in 18)
 

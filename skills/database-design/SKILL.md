@@ -267,6 +267,7 @@ Enable these when the design requires their capabilities:
 |-----------|---------|-------------|
 | `btree_gist` | GiST operator support for B-tree types | Exclusion constraints (temporal data, reservations) |
 | `pg_trgm` | Trigram-based similarity | Fuzzy text search, `LIKE '%keyword%'` optimization |
+| `citext` | Case-insensitive text type | Case-insensitive UNIQUE columns (email, username) without `lower()` expression indexes |
 | `pgcrypto` | Cryptographic functions | Hashing passwords, generating UUIDs (pre-PG13) |
 | `pg_stat_statements` | Query performance tracking | Production monitoring (enable always) |
 | `pg_partman` | Automated partition management | Time-series partitioning in production |
@@ -286,11 +287,29 @@ These prevent data corruption, loss, or major regressions. Not negotiable.
 - **Never use FLOAT for monetary values** → `NUMERIC(precision, scale)`. FLOAT cannot represent decimals exactly; you will lose money.
 - **Always use TIMESTAMPTZ** for timestamps. `TIMESTAMP` (without tz) silently strips timezone info — a footgun across regions/clients.
 - **Index every FK you JOIN or filter on.** PostgreSQL does not auto-create FK indexes. Missing FK indexes turn parent-row updates/deletes into full table scans. Intentionally unindexed FKs must be documented.
-- **`ON DELETE` behavior must be explicit on every FK** (`CASCADE` / `RESTRICT` / `SET NULL` / `SET DEFAULT` / `NO ACTION`). The default differs by tool/intent and propagates surprises silently. (`NO ACTION`, the SQL default, can be deferred to end-of-transaction; `RESTRICT` cannot.)
+- **`ON DELETE` behavior must be explicit on every FK** (`CASCADE` / `RESTRICT` / `SET NULL` / `SET DEFAULT` / `NO ACTION`). The default differs by tool/intent and propagates surprises silently. (`NO ACTION`, the SQL default, can be deferred to end-of-transaction; `RESTRICT` cannot.) `ON UPDATE` is moot for immutable surrogate PKs (the default), but matters (`ON UPDATE CASCADE` vs `RESTRICT`) whenever a FK references a **mutable natural or composite key**.
 - **`CREATE INDEX CONCURRENTLY`** for any index added to a table that already serves production traffic. Plain `CREATE INDEX` takes a write lock for the duration.
 - **Destructive ops (`DROP COLUMN`, `RENAME`) follow expand-contract**, never direct. Direct DDL mid-deploy breaks rolling deployments.
 - **Auto-DDL (`synchronize: true` and friends) is forbidden in any deployed environment.** Migrations are the only sanctioned schema-mutation path.
 - **Never store secrets or PII carelessly.** Hash passwords with `pgcrypto` (`crypt()`/`gen_salt()`) — don't encrypt them. For reversible PII, prefer app-layer/envelope encryption (encrypted columns lose B-tree indexability and range/equality search). The audit-trail and event-sourcing patterns dump whole-row `to_jsonb(OLD/NEW)` — mask or exclude sensitive columns there or they leak into `audit_logs`. See `references/design-patterns.md` §3.
+
+## Roles & Least Privilege
+
+DDL produced by this skill is owned by a **migration/owner role**; the application connects as a separate **least-privilege role**. This separation is also what RLS depends on — policies don't apply to the table owner unless `FORCE ROW LEVEL SECURITY` is set, and never to superusers/`BYPASSRLS` roles (see Multi-tenancy below and `references/design-patterns.md` §6).
+
+```sql
+-- Owner role owns the schema/tables and runs migrations; app role only does DML.
+CREATE ROLE app_owner NOLOGIN;
+CREATE ROLE app_rw LOGIN PASSWORD '...';        -- the role the application connects as
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;        -- no implicit access to the schema
+GRANT USAGE ON SCHEMA app TO app_rw;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA app TO app_rw;
+-- Cover tables created by future migrations too:
+ALTER DEFAULT PRIVILEGES IN SCHEMA app GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO app_rw;
+```
+
+The app role must be **non-owner and non-superuser** (no `BYPASSRLS`) for tenant isolation to hold. Record the owner/app split and grants alongside the schema (this is the artifact behind review checklist item 7, "Security: access control").
 
 ## Conventions — Defensible Defaults
 

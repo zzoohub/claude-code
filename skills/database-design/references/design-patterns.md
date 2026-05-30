@@ -137,6 +137,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- ⚠️ to_jsonb(OLD/NEW) serializes the WHOLE row with no redaction. Applied to tables holding
+-- password hashes, MFA secrets, API tokens, or regulated PII, this silently copies those into
+-- audit_logs — which usually carries broader read access and longer retention than the source
+-- table. Strip sensitive keys before storing, e.g. to_jsonb(NEW) - 'password_hash' - 'mfa_secret'
+-- (the jsonb "- text" operator drops a key), or keep a per-table column allowlist. audit_logs must
+-- inherit at least the access restrictions and retention/redaction policy of the most sensitive
+-- column it records.
+
 -- Apply trigger to a table
 CREATE TRIGGER trg_orders_audit
     AFTER INSERT OR UPDATE OR DELETE ON orders
@@ -238,7 +246,10 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders FORCE ROW LEVEL SECURITY;  -- without FORCE, the table owner bypasses RLS; superusers and BYPASSRLS roles always bypass. Have the app connect as a non-owner, non-superuser role.
 
 CREATE POLICY tenant_isolation ON orders
-    USING (tenant_id = current_setting('app.current_tenant', true)::UUID);
+    -- Scalar subquery → current_setting() evaluates once per query, not per row (it is STABLE,
+    -- not IMMUTABLE). NULLIF(..., '') degrades an unset OR empty-string GUC to NULL, so the
+    -- predicate fails CLOSED (zero rows) instead of erroring on ''::UUID.
+    USING (tenant_id = (SELECT NULLIF(current_setting('app.current_tenant', true), ''))::UUID);
 ```
 
 ## 7. Polymorphic Association
