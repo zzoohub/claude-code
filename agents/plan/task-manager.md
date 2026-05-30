@@ -13,7 +13,7 @@ description: |
   product-manager), architecture decisions (use architect), or IMPLEMENTING a
   task's code (use the developer agents — backend/frontend/mobile/desktop).
 tools: Read, Write, Edit, Grep, Glob, Skill
-model: inherit
+model: opus
 skills: []
 color: green
 ---
