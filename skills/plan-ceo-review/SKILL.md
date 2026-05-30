@@ -77,7 +77,7 @@ git diff main --stat                           # What's already changed
 git stash list                                 # Any stashed work
 grep -r "TODO\|FIXME\|HACK\|XXX" --include="*.ts" --include="*.tsx" --include="*.rs" --include="*.py" -l
 ```
-Then read `CLAUDE.md` (or `AGENTS.md`), the plan itself, `tasks/board.md`, `tasks/features/*.md`, and existing architecture docs. When reading `tasks/`: note tasks this plan touches/blocks/unlocks; check deferred work related to this plan; map known pain points to this plan's scope.
+Then read `CLAUDE.md` (project conventions), the plan itself, `tasks/board.md`, `tasks/features/*.md`, and existing architecture docs. When reading `tasks/`: note tasks this plan touches/blocks/unlocks; check deferred work related to this plan; map known pain points to this plan's scope.
 
 Map: current system state · what's already in flight (open PRs, branches, stashes) · existing pain points relevant to this plan · FIXME/TODO in files this plan touches.
 

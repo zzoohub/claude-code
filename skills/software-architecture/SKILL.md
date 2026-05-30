@@ -91,8 +91,6 @@ See `references/design-flow.md` for detailed methodology for each stage.
 - `docs/prd/features/*.md` (per-feature requirements)
 - `docs/prd/product-brief.md` (upstream brief, if present)
 
-If your project keeps PRDs elsewhere, see `AGENTS.md` for the override.
-
 Then analyze the PRD content and classify the software automatically. No user questions — derive everything from the PRD.
 
 ### Software Type Classification
@@ -133,8 +131,6 @@ The design flow produces three output files:
 | `docs/arch/context.md` | 0-3 | What and why — problem, ASRs, domain model, constraints, assumptions | `templates/context.md` |
 | `docs/arch/system.md` | 4-8 | How — patterns, components, data, deployment, cross-cutting | `templates/system.md` |
 | `docs/arch/decisions.md` | All | Decisions and risks — ADRs, risk register, tech debt | `templates/decisions.md` |
-
-If your project keeps architecture docs elsewhere, see `AGENTS.md` at the repo root.
 
 Read the template files before writing output. Follow their structure.
 

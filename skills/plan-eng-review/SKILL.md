@@ -37,7 +37,7 @@ Before anything else, find the plan/design doc under review:
 
 ## Pre-review context (before Step 0)
 You will be asked to cite `file:line`, name realistic production failure modes, and flag DRY violations — all of which require having actually read the code. Gather context first:
-* Read `CLAUDE.md` (or `AGENTS.md`) for conventions, plus the plan/design doc itself.
+* Read `CLAUDE.md` (project conventions), plus the plan/design doc itself.
 * `git log --oneline -20` on this branch. If prior commits show a previous review cycle (review-driven refactors, reverts), note what changed and review those areas MORE aggressively — recurring problem areas are architectural smells.
 * `grep` the files the plan touches for existing patterns and `TODO`/`FIXME`.
 

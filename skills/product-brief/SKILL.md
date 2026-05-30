@@ -162,9 +162,6 @@ Save to `docs/prd/product-brief.md`, updating that file in place. When the user
 explicitly explores a second, distinct direction, use
 `docs/prd/product-brief-{slug}.md` so a new direction does not overwrite a prior one.
 
-If your project keeps the brief elsewhere, see `AGENTS.md` at the repo root for the
-override; falls back to the default path above.
-
 <!-- Author housekeeping: keep this skill under ~175 lines and keep description
 ≤1024 chars. If it grows past that, consolidate — tighten wording, merge redundant
 content, remove resolved questions. -->

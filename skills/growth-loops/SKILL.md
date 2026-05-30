@@ -36,4 +36,4 @@ For loop types, K factor math, the 5-stage design framework, amplification techn
 
 ## Output
 
-When this skill produces a referral or loop design, write it to `biz/growth/referral-program.md` (default) or the path defined in `AGENTS.md`.
+When this skill produces a referral or loop design, write it to `biz/growth/referral-program.md` (default).

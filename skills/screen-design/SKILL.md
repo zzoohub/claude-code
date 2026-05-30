@@ -26,8 +26,7 @@ Designs one screen against an existing app-level UX without rewriting
 
 `docs/ux/ux-design.md` must already exist (defines IA, global patterns, shared
 interactions). **If it does not exist, stop — this is greenfield; use
-`ux-design` instead.** If your project keeps UX docs elsewhere, see `AGENTS.md`
-at the repo root.
+`ux-design` instead.**
 
 **Methodology lives in the `ux-design` skill.** This skill is lean by design and
 has no reference files of its own. For the depth behind each quality bar —

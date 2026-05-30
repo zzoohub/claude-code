@@ -109,7 +109,7 @@ This skill's job ends where the implementation SDK begins.
 
 ## Output Location
 
-Save the LLM feature design to `docs/arch/ai-features/{feature}.md` (default). Override via `AGENTS.md` if your project uses a different layout. Each file is one feature; reference the originating PRD feature in `docs/prd/features/{feature}.md` if applicable.
+Save the LLM feature design to `docs/arch/ai-features/{feature}.md` (default). Each file is one feature; reference the originating PRD feature in `docs/prd/features/{feature}.md` if applicable.
 
 Structure (≤200 lines):
 1. **Task** — one-sentence X → Y → Z

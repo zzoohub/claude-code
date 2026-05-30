@@ -21,8 +21,7 @@ rewriting the vision PRD.
 
 ## Prerequisites
 
-`docs/prd/prd.md` must already exist. If your project keeps PRDs elsewhere,
-see `AGENTS.md` at the repo root.
+`docs/prd/prd.md` must already exist.
 
 **If no PRD exists yet**, stop — this is the wrong skill. A single feature spec
 with no product vision to anchor it has nothing to tie back to. Tell the user
@@ -42,7 +41,7 @@ and route to `prd-craft` (which creates the full PRD plus feature specs), or to
    dependencies). Skip what's already clear from prd.md or the user's request.
 4. Writes one new `docs/prd/features/{feature}.md` following the template below.
 5. Patches `docs/prd/prd.md` in place. Locate sections by **role**, not by fixed
-   number (a hand-written or AGENTS.md-overridden PRD may number or title them
+   number (a hand-written or differently-organized PRD may number or title them
    differently; §5/§6 are just the prd-craft default layout):
    - Find the **Feature Overview** table and add a row for the feature. If a row
      for it already exists, **update it in place** — don't append a duplicate.

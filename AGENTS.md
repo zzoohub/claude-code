@@ -1,12 +1,20 @@
-# AGENTS.md
+# AGENTS.md — human reference map (not auto-loaded)
 
-The map for this agent + skill library. Read this first. It tells you **which agent to call
-for a given intent**, **how the agents chain end to end**, **where each agent reads and writes
-files**, and **what external tools the system depends on**.
+**What this file is:** a human-readable reference map of this agent + skill library — a
+maintainer's guide to **which agent to call for a given intent**, **how the agents chain end to
+end**, **where each agent reads and writes files by convention**, and **what external tools the
+system depends on**.
 
-This file is also the override point: agents read `AGENTS.md` at boot, so anything you change in
-the **Path configuration** or **Project conventions** sections below overrides their defaults
-for this repo.
+**What this file is NOT:** it is **not auto-loaded by Claude Code** (Claude Code reads
+`CLAUDE.md`, not `AGENTS.md`), and the agents and skills **do not depend on it** at runtime.
+Nothing here is read at boot. Editing this file does not change agent behavior.
+
+**For runtime project conventions or path overrides**, use the consuming project's `CLAUDE.md` —
+that is the file Claude Code actually loads. Treat the tables below as a description of the
+*default* conventional layout, not a runtime contract.
+
+> The plan agents are the domain owners of their doc trees: `product-manager` owns `docs/prd/`,
+> `architect` owns `docs/arch/`, `ux-designer` owns `docs/ux/`, `task-manager` owns `tasks/`.
 
 ---
 
@@ -20,9 +28,10 @@ for this repo.
   the next agent consumes it.
 - **Skills load on demand.** An agent pulls a skill into context only when the task needs it.
   Skills hold the method, the format, and the quality bar; agents hold the routing and judgment.
-- **Files are the handoff contract.** product-manager writes `docs/prd/`, architect reads it and
-  writes `docs/arch/`, and so on. The **Path configuration** table is the shared filesystem
-  contract that lets a later agent pick up where an earlier one left off.
+- **Files are the handoff medium.** product-manager writes `docs/prd/`, architect reads it and
+  writes `docs/arch/`, and so on. The **Default doc locations** table records the conventional
+  layout these agents follow, so a later agent can find where an earlier one left off. It is a
+  reference of where things live by default, not a contract this file enforces.
 
 ---
 
@@ -82,8 +91,9 @@ not owned by an agent.
 
 ## Workflow chains
 
-Run these as ordered sequences. Each arrow is a handoff: the next agent reads the file the prior
-one wrote (see **Path configuration**). Check each output before continuing.
+Suggested sequences for the human or main session to run step by step. Each arrow is a handoff:
+the next agent reads the file the prior one wrote (see **Default doc locations**). Check each
+output before continuing.
 
 ### 1. Full product launch (idea → production)
 ```
@@ -137,12 +147,13 @@ marketing around a product gap.
 
 ---
 
-## Path configuration
+## Default doc locations
 
-Default file locations. Override here to change them for this repo — agents read this section.
-
-This is the single override point for paths — every file an agent reads or writes
-has a row here. A trailing `/` denotes a directory family authored by one agent.
+The conventional file locations the agents follow by default — a reference map of where each
+artifact lives, not a runtime override point. Agents do **not** read this table at boot; to
+change paths for a real project, set the conventions in that project's `CLAUDE.md`. Every file
+an agent reads or writes has a row here. A trailing `/` denotes a directory family authored by
+one agent.
 
 | Artifact | Path | Written by | Read by |
 |---|---|---|---|

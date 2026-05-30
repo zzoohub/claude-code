@@ -29,10 +29,11 @@ cleared.
 
 Before any release work, read context in this order. Later context overrides earlier when they conflict.
 
-1. **Project conventions.** Read `AGENTS.md` at the repo root first, then any `CLAUDE.md` — they
-   own inter-agent handoff and may override the base branch, deploy target, env-var names,
-   migration commands, or release process. Resolve the base branch and any path overrides from
-   here *before* the reads below.
+1. **Project conventions.** Read `CLAUDE.md` (and any project-convention docs) at the repo root
+   first. Project conventions may override the default paths used below; resolve all later paths
+   against them — including the base branch, deploy target, env-var names, migration commands, or
+   release process. Resolve the base branch and any path overrides from here *before* the reads
+   below.
 2. **What's shipping.** Read the diff (`git diff` against the base branch resolved above) and, if
    the task system is in use, `tasks/board.md` for release scope/status plus the referenced
    `tasks/features/{feature}.md`. Know exactly what's going out and whether it includes
@@ -79,10 +80,10 @@ picking one silently.
 ## Release Rules
 
 - **Assume review and verification already passed.** You run only after reviewer and verifier
-  have cleared the change — the orchestrator sequences that per the workflow chains in
-  `AGENTS.md`, and their verdicts go to the caller, not to disk, so don't try to look one up. If
-  the caller hasn't stated that review and verification passed — and nothing in the task/diff
-  context shows it — treat that as blocking: surface it and don't deploy until it's confirmed.
+  have cleared the change — the main session / caller sequences that, and their verdicts go to the
+  caller, not to disk, so don't try to look one up. If the caller hasn't stated that review and
+  verification passed — and nothing in the task/diff context shows it — treat that as blocking:
+  surface it and don't deploy until it's confirmed.
 - **Environment & secrets.** Set/confirm required env vars per environment *before* deploying.
   Never print secret values, never commit them to the repo, never echo them in logs — reference
   names only. Before promoting, confirm the target environment has every var the build/code
@@ -177,7 +178,7 @@ Before handing back, confirm:
 ## Rules
 
 1. **Reviewed and verified first** — ship only what reviewer and verifier already cleared; if the
-   caller hasn't confirmed it (per the `AGENTS.md` chains), surface that and stop.
+   caller hasn't confirmed it, surface that and stop.
 2. **Never expose secrets** — set/reference env vars by name only; never print, commit, or log values.
 3. **Additive-first migrations** — backward-compatible schema before code; destructive/contract
    steps go in a separate later release. Never edit a shipped migration — add a new one.

@@ -25,8 +25,7 @@ specs for every screen in the initial design.
 ## Context Check
 
 If `docs/prd/prd.md` or `docs/prd/features/*.md` exists, read it first. Use as
-input, not constraint. If your project keeps PRDs elsewhere, see `AGENTS.md` at
-the repo root.
+input, not constraint.
 
 **If `docs/ux/ux-design.md` already exists**, this is not a fresh greenfield
 pass — do not rewrite it blindly. Branch:
@@ -266,8 +265,6 @@ One file per screen or distinct view. Each screen file covers:
 **Naming:** Use kebab-case matching the screen name (e.g., `account-settings.md`, `project-dashboard.md`, `onboarding-welcome.md`).
 
 **When to create a new file vs. add to an existing one:** Each independently navigable screen gets its own file. Modals, drawers, and sheets that belong to a specific screen go in that screen's file. If a flow spans multiple screens, each screen still gets its own file — cross-reference between them.
-
-If your project keeps UX docs elsewhere, see `AGENTS.md` at the repo root.
 
 ### Line Limits
 

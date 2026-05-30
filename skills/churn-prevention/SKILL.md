@@ -19,7 +19,7 @@ description: |
 
 Strategies for reducing both voluntary and involuntary churn through proactive intervention, cancel flow optimization, and payment recovery.
 
-**Output:** Write the churn-prevention strategy to `biz/growth/churn-prevention.md` and the dunning / payment-recovery playbook to `biz/growth/dunning.md` (defaults), or the paths defined in `AGENTS.md`.
+**Output:** Write the churn-prevention strategy to `biz/growth/churn-prevention.md` and the dunning / payment-recovery playbook to `biz/growth/dunning.md` (defaults).
 
 ---
 

@@ -24,7 +24,7 @@ You are a senior desktop engineer specializing in Tauri. You implement desktop a
 
 Before writing any code, execute these steps in order:
 
-1. **Read project conventions** — `CLAUDE.md` / `AGENTS.md` at the repo root first. `AGENTS.md` may override the default paths used in the steps below; resolve all later paths against it before reading them.
+1. **Read project conventions** — `CLAUDE.md` (and any project-convention docs) at the repo root first. Project conventions may override the default paths used below; resolve all later paths against them.
 2. **Read architecture** — `docs/arch/system.md` to identify the web framework for Tauri's UI layer. If missing, infer from `apps/desktop/package.json` (web deps) and `apps/desktop/src-tauri/Cargo.toml` (Tauri version). If the framework still can't be determined, surface a clarifying question in your Notes (you cannot prompt the user interactively).
 3. **Load skills** — `frontend-design:frontend-design` (frontmatter) is preloaded at startup — it's an external plugin; if absent, fall back to `design-system` + general best practice and note it briefly. Load the remaining UI-layer skills at runtime via the `Skill` tool based on the detected UI stack. Rows are **not** mutually exclusive — load every row that applies (e.g. a React TanStack Start app matches both `tanstack-start` and `vercel-composition-patterns`; load both, they are complementary):
    | Skill | Condition |
@@ -118,13 +118,17 @@ Shipping a desktop app is more than the webview — cover the full lifecycle whe
 |-------------|--------|
 | UX states | All specified states from UX spec |
 | Design tokens | From design system — no magic numbers |
-| I18n | All user-facing text via i18n. Default to `en` only; if `AGENTS.md` / `i18n.config.*` declares additional locales, cover all of them |
+| I18n | All user-facing text via i18n. Default to `en` only; if `i18n.config.*` or project conventions declare additional locales, cover all of them |
 | Dark mode | Light + dark themes |
 | Capabilities | Each exposed command granted a minimum-scope ACL permission in `src-tauri/capabilities/` |
 | CSP | Restrictive webview CSP in `tauri.conf.json` — no `unsafe-inline` / `unsafe-eval` |
 | IPC boundary | Rust ↔ web only through Tauri commands; cross-cutting state via Tauri managed State (`.manage()` / `State<T>`), not ad-hoc globals |
 | Typed IPC | Typed inputs/outputs — no `serde_json::Value` unless truly dynamic |
 | Release | If shipping a build: signed + notarized, updater signing keys configured, verified against a packaged build |
+
+### Close the Task
+
+As your final step, update the task board if the task system is in use. If a `tasks/board.md` exists and you implemented a `tasks/features/{feature}.md` task, invoke the `task-status` skill to mark the worked task `done` (or `blocked`, with a reason if you couldn't complete it), and note the status change in your return summary. If the task system isn't in use, skip this step.
 
 ## What You Return
 
@@ -154,6 +158,9 @@ Shipping a desktop app is more than the webview — cover the full lifecycle whe
 
 ## Notes
 [Any assumptions made, questions for the user, or cross-domain dependencies identified — e.g. CI/signing config outside apps/desktop/]
+
+## Task Status (if task system in use)
+[Worked task marked done / blocked via task-status skill — with reason if blocked]
 ```
 
 ## Rules

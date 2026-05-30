@@ -27,8 +27,6 @@ Record one decision, tied to the existing system's ASRs, without rewriting
 `docs/arch/context.md` and `docs/arch/system.md` should exist. You can still
 record an ADR against a missing context, but flag the gap.
 
-If your project keeps architecture docs elsewhere, see `AGENTS.md`.
-
 ## What This Skill Does
 
 1. Reads existing `docs/arch/context.md` (problem, ASRs, domain) and

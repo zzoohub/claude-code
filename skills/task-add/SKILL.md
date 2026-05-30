@@ -24,8 +24,7 @@ definition — picking the right group and the next available ID.
 
 ## Prerequisites
 
-`tasks/board.md` must already exist. If your project keeps tasks elsewhere,
-see `AGENTS.md` at the repo root.
+`tasks/board.md` must already exist.
 
 ## What This Skill Does
 

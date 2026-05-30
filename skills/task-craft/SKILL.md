@@ -33,8 +33,6 @@ Read before generating tasks:
 If architecture docs don't exist, flag it. Tasks without architecture decisions
 tend to need rework.
 
-If your project keeps these elsewhere, see `AGENTS.md` at the repo root.
-
 ---
 
 ## Output Structure

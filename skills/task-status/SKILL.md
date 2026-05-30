@@ -30,8 +30,6 @@ Brownfield skill for status and light single-field updates. Touches one row of
 The single source of truth for the row format and the `status`/`priority` enums
 is `task-craft/references/board-schema.md`.
 
-If your project keeps tasks elsewhere, see `AGENTS.md`.
-
 ## Status Lifecycle
 
 ```

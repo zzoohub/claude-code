@@ -47,8 +47,6 @@ docs/prd/
 
 **Every file is a single source of truth (SSOT).** If a file already exists, update it in place — never create duplicates. The file should always reflect the latest state. Note: when `prd.md` already exists, "update in place" is honored by the `feature-spec` skill (which patches it) or Review Mode — not by re-running prd-craft to rewrite the vision (see Phase 0).
 
-If your project keeps PRDs elsewhere, see `AGENTS.md` at the repo root.
-
 ### Role of Each File
 
 | File | Contains | When Read | When Modified |
