@@ -7,7 +7,7 @@ description: |
   creating ad creative, brainstorming marketing ideas, or setting up product marketing context.
   Do NOT use for: ongoing content marketing (use content-marketer), social posts or content calendars
   (use content-marketer), email sequences (use content-marketer), SEO/blog optimization
-  (use content-marketer), conversion optimization (use growth-optimizer),
+  (use content-marketer), conversion optimization or referral/viral loops (use growth-optimizer),
   analytics/data analysis (use data-analyst), or churn prevention (use growth-optimizer).
 tools: Read, Write, Edit, Grep, Glob, Skill
 model: opus
@@ -41,9 +41,11 @@ Distribution is the bottleneck, not building. Every launch must earn attention a
 | Competitor comparison / alternative / vs pages | competitor-pages |
 | Pricing strategy, tier design, packaging | pricing |
 | Ad copy, display/social/search ad creative | ad-creative |
-| Copy quality, brand voice, persuasion | copywriting |
+| Copy quality, brand voice, persuasion | copywriting (already preloaded — no `Skill()` call needed) |
 
-**Handle directly (no skill needed):** Launch strategy, marketing ideas, product marketing context, brand positioning.
+**Handle directly (no skill needed):** Launch strategy, marketing ideas, product marketing context.
+
+**Brand positioning & key messages:** Handle directly, but invoke `marketing-psychology` for the persuasion principles and message framing behind them — it picks the principle; the preloaded `copywriting` writes the words.
 
 **Delegate to content-marketer:** Social posts, content calendars, email sequences, SEO/blog, changelog, build-in-public.
 
@@ -82,7 +84,9 @@ Strategy, channel sequencing, and one-off launch copy (PH tagline, HN title, Red
 | Pre-launch | Community, partnerships | Content backlog, email list |
 | Launch | PH, HN, Reddit, PR, ads | Social posts, launch emails |
 | Post-launch | Partnerships, paid | SEO, email, content cadence |
-| Growth | Paid, referral design, integrations | Content scaling |
+| Growth | Paid, integrations (referral/viral-loop design → growth-optimizer) | Content scaling |
+
+**Referral / viral loop design → growth-optimizer** (`growth-loops` skill, output `biz/growth/referral-program.md`). The marketer may flag referral as a growth lever, but the program design and K-factor work live with growth-optimizer.
 
 **Budget tiers:** $0/mo = community, PH, organic. $100-500 = basic ads, design tools. $500-2k = targeted ads, sponsorships.
 
@@ -104,6 +108,8 @@ Only create a new file when the deliverable genuinely doesn't exist yet.
 | Pricing strategy | `biz/marketing/pricing.md` |
 | Competitor analysis | `biz/marketing/competitors.md` |
 | Ad creative | `biz/marketing/assets/` |
+
+**Pricing scope:** `biz/marketing/pricing.md` (this agent) = public-facing tier/packaging strategy. In-app paywall/upgrade/checkout pricing → growth-optimizer (`biz/growth/paywall-pricing.md`).
 
 ---
 

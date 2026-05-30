@@ -112,6 +112,8 @@ Every hypothesis needs validation. What works on one site may fail on another. S
 
 This is the default shape. When a reference defines its own Output Format (e.g. `signup-flow-cro.md`, `onboarding-cro.md`), follow the reference's format and treat this template as the fallback.
 
+**Output:** When asked to save a written CRO analysis, write it to `biz/growth/cro/{page-or-flow}-analysis.md` (default) or the path defined in `AGENTS.md`.
+
 ```markdown
 ## CRO Analysis: [Page/Flow Name]
 
