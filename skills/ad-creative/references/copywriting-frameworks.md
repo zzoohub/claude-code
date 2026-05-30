@@ -8,18 +8,14 @@ not a rigid template. The best ads often blend elements from multiple frameworks
 
 ## Table of Contents
 
-1. [Schwartz's 5 Awareness Levels (The Master Framework)](#awareness-levels)
-2. [PAS — Problem, Agitate, Solve](#pas)
-3. [AIDA — Attention, Interest, Desire, Action](#aida)
-4. [BAB — Before, After, Bridge](#bab)
-5. [4Ps — Promise, Picture, Proof, Push](#4ps)
-6. [SSS — Star, Story, Solution](#sss)
-7. [Framework Selection Matrix](#selection-matrix)
-8. [Psychological Triggers Reference](#psychological-triggers)
+1. [Schwartz's 5 Awareness Levels (The Master Framework)](#schwartzs-5-awareness-levels-the-master-framework)
+2. [Framework Bodies — Canonical Source](#framework-bodies--canonical-source)
+3. [Ad-Format Application Templates](#ad-format-application-templates)
+4. [Framework Selection Matrix](#framework-selection-matrix)
+5. [Psychological Triggers — Ad Applications](#psychological-triggers--ad-applications)
 
----
 
-## Schwartz's 5 Awareness Levels (The Master Framework) {#awareness-levels}
+## Schwartz's 5 Awareness Levels (The Master Framework)
 
 Eugene Schwartz's *Breakthrough Advertising* (1966) established the foundational
 insight: you don't create desire — you channel existing desire by meeting the
@@ -159,7 +155,7 @@ The structural definitions of **PAS, AIDA, BAB, 4Ps, SSS** live in `copywriting/
 
 These templates take the canonical framework structures and adapt them to specific ad formats. Use the framework selection matrix at the bottom of this file to pick a framework first, then use the matching template.
 
-### PAS — Ad Templates {#pas}
+### PAS — Ad Templates
 
 **Social Feed (Meta/LinkedIn)**:
 ```
@@ -187,7 +183,7 @@ Headline 3: [Proof or CTA]
 Description: [Agitate the problem briefly → solve with benefit → CTA]
 ```
 
-### AIDA — Ad Template (Meta Feed) {#aida}
+### AIDA — Ad Template (Meta Feed)
 ```
 [ATTENTION: Surprising stat or bold claim — first line must hook]
 
@@ -199,7 +195,7 @@ one proof point — testimonial quote, number, or case study.]
 [ACTION: CTA button text + reinforcing line]
 ```
 
-### BAB — Carousel Ad Template {#bab}
+### BAB — Carousel Ad Template
 ```
 Card 1: [BEFORE — Image of the pain state + text]
 Card 2: [More pain detail or hidden costs]
@@ -208,10 +204,10 @@ Card 4: [BRIDGE — Your product + how it gets them there]
 Card 5: [Proof + CTA]
 ```
 
-### 4Ps — Notes for ads {#4ps}
+### 4Ps — Notes for ads
 Best for retargeting / product-aware audiences. Lead with the **Promise** in the first line (scroll-stopping headline), use creative to deliver **Picture**, use overlays/captions for **Proof**, and end on a single **Push**.
 
-### SSS — UGC Video Template (30-60s) {#sss}
+### SSS — UGC Video Template (30-60s)
 ```
 0-3s:   [Star intro — "I'm a [identity], and I used to [struggle]"]
 3-10s:  [Story — specific struggle, emotional detail]
@@ -223,7 +219,7 @@ End:    [CTA overlay]
 
 ---
 
-## Framework Selection Matrix {#selection-matrix}
+## Framework Selection Matrix
 
 | Awareness Level | Best Framework | Angle | Copy Length |
 |----------------|---------------|-------|------------|
@@ -244,7 +240,7 @@ End:    [CTA overlay]
 
 ---
 
-## Psychological Triggers — Ad Applications {#psychological-triggers}
+## Psychological Triggers — Ad Applications
 
 Canonical trigger definitions are in `copywriting/references/persuasion-frameworks.md` (Loss Aversion, Social Proof, Scarcity, Urgency, Authority, Reciprocity, Curiosity Gap, Anchoring, Novelty, Identity). Stack 1-2 per ad, never more.
 

@@ -2,17 +2,19 @@
 name: prd-craft
 description: |
   Write a complete Product Requirements Document (PRD) for a new product, using
-  proven frameworks from top product leaders. Creates the full vision PRD
-  (problem, target users, success metrics, feature overview, dev order, scope)
-  PLUS feature specs for every feature listed in the PRD.
+  proven frameworks (Jobs-to-be-Done, MoSCoW, value/usability/feasibility/viability
+  risk quadrant). Creates the full vision PRD (problem, target users, success
+  metrics, feature overview, dev order, scope) PLUS feature specs for every
+  feature listed in the PRD.
   Use when: user asks to "write a PRD", "create a product requirements
   document", "draft product specs", "define product requirements", "create a
   product proposal", "spec out a product". Also when the user describes a new
   product and needs structured requirements.
   Also use to "review a PRD", "improve my PRD", "audit my PRD".
   Do NOT use for: a single feature on an existing product (use feature-spec
-  instead — it's lighter and won't rewrite the vision PRD). Do NOT use for user
-  stories, sprint tickets, API documentation, or architecture decision records.
+  instead — it's lighter and won't rewrite the vision PRD; adding one feature is
+  not a PRD review). Do NOT use for user stories, sprint tickets, API
+  documentation, or architecture decision records.
 ---
 
 # PRD Craft — Vision PRD for a New Product

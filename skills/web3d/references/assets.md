@@ -2,6 +2,15 @@
 
 glTF is the only asset format. All 3D models, animations, and scenes use `.glb` (binary glTF).
 
+## Table of Contents
+
+1. [Optimization Pipeline](#optimization-pipeline)
+2. [Loading with Three.js](#loading-with-threejs)
+3. [Texture Best Practices](#texture-best-practices)
+4. [Animation](#animation)
+5. [Dispose Pattern](#dispose-pattern)
+
+
 ## Optimization Pipeline
 
 1. **Author** in Blender/Maya/etc, export as `.glb`

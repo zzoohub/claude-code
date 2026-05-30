@@ -4,6 +4,16 @@ How AI systems identify, categorize, and evaluate your brand, and how to make th
 
 ---
 
+## Table of Contents
+
+1. [What Entity Clarity Means](#what-entity-clarity-means)
+2. [Entity Ambiguity](#entity-ambiguity)
+3. [Brand Consistency Across Platforms](#brand-consistency-across-platforms)
+4. [Structured Data for Entity Clarity](#structured-data-for-entity-clarity)
+5. [Building Entity Authority on Specific Topics](#building-entity-authority-on-specific-topics)
+6. [Entity Clarity Audit Checklist](#entity-clarity-audit-checklist)
+
+
 ## What Entity Clarity Means
 
 AI systems do not just read text. They build a structured understanding of entities: brands, products, people, organizations, and concepts.

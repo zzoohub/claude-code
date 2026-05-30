@@ -2,6 +2,26 @@
 
 Inbound (createApp, handlers, task handlers, auth, errors) and outbound (Drizzle, SQLite, mapper).
 
+## Table of Contents
+
+1. [Outbound: Drizzle Schema + Mapper](#outbound-drizzle-schema--mapper)
+2. [Outbound: Cursor Helpers (composite + base64)](#outbound-cursor-helpers-composite--base64)
+3. [Outbound: Drizzle Adapter (ORM + mapper)](#outbound-drizzle-adapter-orm--mapper)
+4. [Outbound: Drizzle Postgres Adapter with Transactions](#outbound-drizzle-postgres-adapter-with-transactions)
+5. [Outbound: Raw SQL Adapter (no ORM)](#outbound-raw-sql-adapter-no-orm)
+6. [Inbound: createApp (wraps Hono)](#inbound-createapp-wraps-hono)
+7. [Inbound: DI Middleware](#inbound-di-middleware)
+8. [Inbound: Auth Middleware](#inbound-auth-middleware)
+9. [Inbound: Request / Response Schemas](#inbound-request--response-schemas)
+10. [Inbound: Handlers (Routes with OpenAPI)](#inbound-handlers-routes-with-openapi)
+11. [Inbound: API Error Handler (RFC 9457)](#inbound-api-error-handler-rfc-9457)
+12. [Inbound: Response Helpers](#inbound-response-helpers)
+13. [Inbound: Healthcheck](#inbound-healthcheck)
+14. [Inbound: Task Handler (non-HTTP inbound adapter)](#inbound-task-handler-non-http-inbound-adapter)
+15. [Outbound: Outbox Adapter (transactional, Drizzle)](#outbound-outbox-adapter-transactional-drizzle)
+16. [Outbound: Idempotency Store](#outbound-idempotency-store)
+17. [Outbound: Tracer Port (OTel)](#outbound-tracer-port-otel)
+
 ---
 
 ## Outbound: Drizzle Schema + Mapper
@@ -696,7 +716,7 @@ import {
 import { fromDomain } from "./response";
 
 const AuthorSchema = z.object({
-  id: z.string().openapi({ example: "01HX9G..." }),
+  id: z.string().openapi({ example: "f47ac10b-58cc-4372-a567-0e02b2c3d479" }),
   name: z.string().openapi({ example: "Ada Lovelace" }),
 }).openapi("Author");
 
@@ -731,7 +751,7 @@ const ProblemSchema = z.object({
 // Ids are opaque server-generated UUIDs — constrain so a malformed id 400s at
 // the boundary instead of reaching the service and returning a misleading 404.
 const authorParams = z.object({
-  id: z.string().uuid().openapi({ param: { name: "id", in: "path" } }),
+  id: z.uuid().openapi({ param: { name: "id", in: "path" } }),
 });
 
 const createAuthorRoute = createRoute({

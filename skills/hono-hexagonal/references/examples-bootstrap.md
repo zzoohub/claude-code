@@ -2,6 +2,19 @@
 
 Config, server entry points, multi-runtime adapters, Drizzle Kit setup, and hex-specific test mocks.
 
+## Table of Contents
+
+1. [Config](#config)
+2. [Bootstrap (Bun)](#bootstrap-bun)
+3. [Bootstrap (Node.js)](#bootstrap-nodejs)
+4. [Bootstrap (Cloudflare Workers)](#bootstrap-cloudflare-workers)
+5. [Drizzle Client Factory](#drizzle-client-factory)
+6. [NoOp Adapters](#noop-adapters)
+7. [Drizzle Kit Migrations](#drizzle-kit-migrations)
+8. [package.json](#packagejson)
+9. [Testing: Hex-Specific Mocks](#testing-hex-specific-mocks)
+10. [tsconfig.json](#tsconfigjson)
+
 ---
 
 ## Config
@@ -467,7 +480,7 @@ import { DuplicateAuthorError } from "../src/domain/authors/errors";
 
 describe("POST /authors", () => {
   it("creates an author and returns 201", async () => {
-    const author = { id: "123", name: AuthorName.create("Alice") };
+    const author = { id: "0b8e3c1a-2d4f-4a6b-9c7e-1f2a3b4c5d6e", name: AuthorName.create("Alice") };
     const repo = new MockAuthorRepository(author);
     const app = buildTestApp(repo);
 
@@ -478,7 +491,7 @@ describe("POST /authors", () => {
     });
 
     expect(res.status).toBe(201);
-    expect(res.headers.get("Location")).toBe("/v1/authors/123");
+    expect(res.headers.get("Location")).toBe("/v1/authors/0b8e3c1a-2d4f-4a6b-9c7e-1f2a3b4c5d6e");
     const body = await res.json();
     expect(body.data.name).toBe("Alice");
     expect(repo.createCalls).toHaveLength(1);

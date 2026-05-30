@@ -3,21 +3,17 @@ name: product-analytics
 description: |
   Product analytics methodology for SaaS: Aha Moment discovery, retention cohort analysis,
   Carrying Capacity modeling, PMF assessment, and Kill/Keep/Scale decisions.
-  Use when: finding or validating Aha Moments, analyzing retention curves, calculating Carrying Capacity,
-  assessing product-market fit, making Kill/Keep/Scale decisions, diagnosing activation bottlenecks,
-  building cohort tables, segmenting retained vs churned users, evaluating CC trends,
-  designing event tracking plans, setting up GA4/GTM, analyzing A/B test results,
+  Use when: finding/validating Aha Moments, making Kill/Keep/Scale calls,
+  diagnosing activation bottlenecks, segmenting retained vs churned users, evaluating CC trends,
   or when user mentions "Aha Moment", "retention curve", "cohort analysis", "Carrying Capacity",
   "PMF", "product-market fit", "kill criteria", "activation rate", "retention plateau",
-  "retention/revenue churn analysis (GRR/NRR, cohort curves)", "user segmentation",
-  "tracking plan", "GA4", "UTM", "A/B test results",
+  "user segmentation", "tracking plan", "GA4", "UTM", "A/B test results",
   "Sean Ellis survey", "GRR", "NRR", "revenue retention".
   Do NOT use for: tracking code implementation (developer task),
   CRO experiment design (use cro skill), marketing content (use copywriting skill),
-  referral/viral loop design or the K-factor model and targets (use growth-loops skill —
-  this skill measures live K from event data, growth-loops designs the loop and sets the K target),
-  or churn intervention/prevention — cancel-flow, save-offer, dunning/payment-recovery,
-  and at-risk health-scoring design (use churn-prevention skill).
+  referral/viral loop design or the K-factor model and targets (use growth-loops skill),
+  or churn intervention — cancel-flow, save-offer, dunning, at-risk health-scoring
+  (use churn-prevention skill).
 ---
 
 # Product Analytics Methodology
@@ -59,9 +55,11 @@ These are not independent. Aha Moment drives activation rate, activation rate dr
 ```
 Plot cohort retention curves (D1, D7, D14, D30, D60, D90)
 ├── Curve keeps declining without flattening → No PMF. Fix product.
-├── Curve flattens but plateau < 10% → Weak PMF. Improve activation.
-└── Curve flattens with plateau > 15% → PMF exists. Optimize growth.
+├── Curve flattens but plateau < 10% → Weak/early PMF. Improve activation.
+└── Curve flattens with plateau ≥ 10% → PMF exists. Optimize growth.
 ```
+
+Plateau height bands (the single authoritative scale): <5% No PMF · 5-10% Weak · 10-20% Early PMF · 20-40% Solid PMF · >40% Strong PMF. See `references/retention-analysis.md` for the full benchmark table and per-band actions.
 
 ### What to fix first?
 
@@ -74,7 +72,7 @@ Always in this order (most teams do it backwards):
 
 | Signal | Kill | Keep | Scale |
 |--------|------|------|-------|
-| Retention plateau | None | Emerging (<15%) | Established (>15%) |
+| Retention plateau | None (<5%) | Emerging (5-20%) | Established (>20%) |
 | CC trend (30d) | Declining | Flat | Rising |
 | Activation rate | <10% | 10-30% | >30% |
 | Organic inflow | Near zero | Steady | Growing |

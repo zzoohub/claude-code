@@ -8,8 +8,7 @@ ADRs are written immediately when decisions occur, not batched at the end.
 
 ---
 
-## Contents
-
+## Table of Contents
 - Stage 1 — Problem Definition
 - Stage 2 — ASR Extraction & Utility Tree
 - Stage 3 — Domain Model

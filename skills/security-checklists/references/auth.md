@@ -2,6 +2,20 @@
 
 > OWASP: A01 (Broken Access Control), A07 (Authentication Failures)
 
+## Table of Contents
+
+1. [Password Security](#password-security)
+2. [Multi-Factor Authentication (MFA)](#multi-factor-authentication-mfa)
+3. [Passkeys / WebAuthn](#passkeys--webauthn)
+4. [Session Management](#session-management)
+5. [Cookie Security](#cookie-security)
+6. [Cross-Site Request Forgery (CSRF)](#cross-site-request-forgery-csrf)
+7. [JWT Security](#jwt-security)
+8. [OAuth / SSO](#oauth--sso)
+9. [SAML 2.0 SSO](#saml-20-sso)
+10. [Authorization (Access Control)](#authorization-access-control)
+11. [Rate Limiting & Brute Force](#rate-limiting--brute-force)
+
 ---
 
 ## Password Security

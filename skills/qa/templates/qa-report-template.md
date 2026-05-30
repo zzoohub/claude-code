@@ -13,7 +13,6 @@
 | **Pages visited** | {COUNT} |
 | **Screenshots** | {COUNT} |
 | **Framework** | {DETECTED or "Unknown"} |
-| **Index** | [All QA runs](./index.md) |
 
 ## Health Score: {SCORE}/100
 
@@ -25,6 +24,7 @@
 | Functional | {0-100} |
 | UX | {0-100} |
 | Performance | {0-100} |
+| Content | {0-100} |
 | Accessibility | {0-100} |
 
 ## Top 3 Things to Fix

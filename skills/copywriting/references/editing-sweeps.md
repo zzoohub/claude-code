@@ -2,6 +2,20 @@
 
 Systematic editing through seven sequential passes, each focusing on one dimension. After each sweep, loop back to check previous sweeps aren't compromised.
 
+## Table of Contents
+
+1. [Sweep 1: Clarity](#sweep-1-clarity)
+2. [Sweep 2: Voice and Tone](#sweep-2-voice-and-tone)
+3. [Sweep 3: So What](#sweep-3-so-what)
+4. [Sweep 4: Prove It](#sweep-4-prove-it)
+5. [Sweep 5: Specificity](#sweep-5-specificity)
+6. [Sweep 6: Heightened Emotion](#sweep-6-heightened-emotion)
+7. [Sweep 7: Zero Risk](#sweep-7-zero-risk)
+8. [Quick-Pass Editing Checks](#quick-pass-editing-checks)
+9. [Copy Editing Checklist](#copy-editing-checklist)
+10. [Common Copy Problems & Fixes](#common-copy-problems--fixes)
+11. [Working with Copy Sweeps](#working-with-copy-sweeps)
+
 ---
 
 ## Sweep 1: Clarity

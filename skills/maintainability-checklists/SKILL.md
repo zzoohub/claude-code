@@ -9,14 +9,13 @@ description: |
   Use when: reviewing a diff before commit/PR for design smells, high coupling,
   low cohesion, leaky or wrong abstractions, hard-to-extend or hard-to-test code.
   Complements security-checklists (OWASP) and correctness-checklists. Trigger on
-  "code review", "maintainability", "coupling", "cohesion", "modularity",
-  "refactor smell", "is this extensible", "design review".
-  Do NOT use for: security vulnerabilities (use security-checklists); the
-  correctness bugs that survive CI — races, idempotency, cache invalidation,
-  partial failure (use correctness-checklists); style, formatting, unused
-  variables, or unreachable code (linters and formatters own those); behavioral
-  correctness of deterministic logic (tests own that); reuse/simplification
-  micro-cleanups (use /simplify or /code-review); or implementing the fixes.
+  "code review", "maintainability", "refactor smell", "is this extensible".
+  Do NOT use for: security vulnerabilities (use security-checklists);
+  correctness bugs that survive CI (use correctness-checklists); formatting,
+  unused variables, or unreachable code (linters/formatters own
+  those); behavioral correctness of deterministic logic (tests own that);
+  reuse/simplification micro-cleanups (use /simplify or /code-review); or
+  implementing the fixes.
 ---
 
 # Maintainability Checklists
@@ -62,8 +61,8 @@ This skill is for **staff-level design judgment** and the **survive-prod bugs** 
 
 ## Readability & Cognitive Load
 
-- **Deep nesting / arrow code** — prefer guard clauses and early returns.
-- **Long parameter lists** — group into a value object; order-dependent args invite silent mistakes.
+- **Deep nesting / arrow code** — prefer guard clauses and early returns (suspect nesting ≥3 levels).
+- **Long parameter lists** — group into a value object; order-dependent args invite silent mistakes (suspect ≥4 params).
 - **Naming that lies or hides** — `data`, `tmp`, `manager`, `process()`; names that no longer match what the code does.
 - **Magic values** — unexplained literals; intent buried in a number.
 - **Comment/code drift** — comments describing behavior the code no longer has (no tool catches this).
@@ -102,4 +101,4 @@ Coverage % says lines ran, not that they're guarded. Tests are code too; review 
   - Fix: [specific — "extract X behind interface Y", not "improve the design"]
 ```
 
-These are Pass 2 (informational). Don't block a PR on them unless project policy says so — but raise high coupling and missing abstractions early, because they get exponentially more expensive to fix the longer they live.
+These are Pass 2 (informational). This is the non-blocking layer within the reviewer gate — security/correctness findings block, these inform (unless project policy escalates them). Don't block a PR on them unless project policy says so — but raise high coupling and missing abstractions early, because they get exponentially more expensive to fix the longer they live.

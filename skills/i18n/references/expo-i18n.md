@@ -2,6 +2,17 @@
 
 Stack: `expo-localization` + `i18next` + `react-i18next`. TypeScript 5+.
 
+## Table of Contents
+
+1. [Setup](#setup)
+2. [Type Safety](#type-safety)
+3. [Usage](#usage)
+4. [Lazy Loading Namespaces](#lazy-loading-namespaces)
+5. [Language Switching](#language-switching)
+6. [Native Locale Config (app.json)](#native-locale-config-appjson)
+7. [Android Language Detection](#android-language-detection)
+8. [Common Pitfalls](#common-pitfalls)
+
 ---
 
 ## Setup

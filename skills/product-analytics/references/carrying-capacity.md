@@ -1,5 +1,19 @@
 # Carrying Capacity & Kill/Keep/Scale
 
+## Table of Contents
+
+1. [What Is Carrying Capacity?](#what-is-carrying-capacity)
+2. [Components](#components)
+3. [Calculating CC](#calculating-cc)
+4. [CC as a Decision-Making Tool](#cc-as-a-decision-making-tool)
+5. [Kill/Keep/Scale Framework](#killkeepscale-framework)
+6. [Sean Ellis Survey (PMF Test)](#sean-ellis-survey-pmf-test)
+7. [Advanced CC Concepts](#advanced-cc-concepts)
+8. [Dashboard Design for CC Monitoring](#dashboard-design-for-cc-monitoring)
+9. [Weekly Report Template](#weekly-report-template)
+10. [CC and Revenue Metrics](#cc-and-revenue-metrics)
+11. [Common Mistakes](#common-mistakes)
+
 ## What Is Carrying Capacity?
 
 Carrying Capacity (CC) is the natural equilibrium MAU a product settles at without paid marketing. It's borrowed from ecology — just as an ecosystem can only sustain a certain population, a product can only sustain a certain user base given its organic inflow and churn rate.
@@ -115,7 +129,7 @@ This is the master decision. Every product should be assessed regularly (weekly 
 
 | Signal | Kill | Keep (Fix) | Scale |
 |--------|------|------------|-------|
-| **Retention plateau** | None after 8+ weeks | Emerging but weak (<15%) | Established (>15%) |
+| **Retention plateau** | None after 8+ weeks | Emerging (5-20%) | Established (>20%) |
 | **CC trend (30d)** | Declining or zero | Flat or slowly rising | Consistently rising |
 | **Activation rate** | <10% | 10-30% | >30% |
 | **Organic inflow** | Near zero or declining | Steady | Growing without paid push |
@@ -137,7 +151,7 @@ A product should be killed (or pivoted) when:
 ### Keep (Fix) Criteria
 
 The product shows some promise but isn't ready to scale:
-- Retention plateau exists but is low (<15%)
+- Retention plateau exists but is low (5-20%)
 - CC is flat — not declining, but not growing
 - Some user segment retains well but overall numbers are weak
 
@@ -149,7 +163,7 @@ The product shows some promise but isn't ready to scale:
 ### Scale Criteria
 
 Scale only when:
-- Retention plateau >15% and stable
+- Retention plateau >20% and stable
 - CC is rising consistently (30d trend)
 - Activation rate >30%
 - Organic inflow is growing

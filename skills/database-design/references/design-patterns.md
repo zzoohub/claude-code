@@ -2,6 +2,18 @@
 
 > Examples use the skill's PK default `UUID DEFAULT uuidv7()` (PG18+); on PG ≤17 generate v7 at the application layer — see SKILL.md.
 
+## Table of Contents
+
+1. [Table Inheritance](#1-table-inheritance)
+2. [Soft Delete](#2-soft-delete)
+3. [Audit Trail](#3-audit-trail)
+4. [Event Sourcing](#4-event-sourcing)
+5. [CQRS (Command Query Responsibility Segregation)](#5-cqrs-command-query-responsibility-segregation)
+6. [Multi-Tenant Patterns](#6-multi-tenant-patterns)
+7. [Polymorphic Association](#7-polymorphic-association)
+8. [Temporal Data](#8-temporal-data)
+9. [Auto-Updated Timestamps](#9-auto-updated-timestamps)
+
 ## 1. Table Inheritance
 
 Model multiple entity types that share common attributes.

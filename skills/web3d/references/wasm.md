@@ -4,6 +4,17 @@ Use Rust WASM for compute-heavy tasks: particle systems, terrain generation, pat
 
 > For framework-specific integration patterns (R3F components, hooks): `react/wasm.md`
 
+## Table of Contents
+
+1. [Setup](#setup)
+2. [wasm-bindgen Patterns](#wasm-bindgen-patterns)
+3. [Typed Array Patterns](#typed-array-patterns)
+4. [Memory Safety Rules (Critical)](#memory-safety-rules-critical)
+5. [Web Workers + WASM](#web-workers--wasm)
+6. [Parallel Computation (wasm-bindgen-rayon)](#parallel-computation-wasm-bindgen-rayon)
+7. [Performance Rules](#performance-rules)
+8. [Key Crates](#key-crates)
+
 ## Setup
 
 ### Prerequisites

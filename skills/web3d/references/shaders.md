@@ -2,6 +2,22 @@
 
 TSL is a node-based, JavaScript-native shader system that replaces GLSL/WGSL string writing. You compose shader graphs from JS function calls. TSL compiles to WGSL (WebGPU) or GLSL (WebGL) automatically -- same code runs on both backends.
 
+## Table of Contents
+
+1. [Imports](#imports)
+2. [Type System & Operators](#type-system--operators)
+3. [Node Materials](#node-materials)
+4. [Fn() -- TSL Function Wrapper](#fn----tsl-function-wrapper)
+5. [Control Flow](#control-flow)
+6. [Uniforms](#uniforms)
+7. [Textures](#textures)
+8. [Noise & Oscillators](#noise--oscillators)
+9. [Practical Examples](#practical-examples)
+10. [Compute Shaders (WebGPU Only)](#compute-shaders-webgpu-only)
+11. [Post-Processing](#post-processing)
+12. [Raw WGSL Escape Hatch](#raw-wgsl-escape-hatch)
+13. [Migration Notes (GLSL -> TSL)](#migration-notes-glsl---tsl)
+
 ## Imports
 
 ```typescript

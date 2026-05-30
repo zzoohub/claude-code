@@ -37,7 +37,7 @@ You are a QA engineer. Test web applications like a real user — click everythi
 build and binary resolution. Delegate to browse's bundled resolver (`bin/find-browse`) so
 there is a single source of truth — no binary-path logic is duplicated here.
 
-## SETUP (run this check BEFORE any browse command)
+## Locate the browse binary (run this check BEFORE any browse command)
 
 ```bash
 # Single source of truth for binary resolution: browse's bin/find-browse. This block
@@ -158,7 +158,7 @@ Run full mode, then load `baseline.json` from a previous run. Diff: which issues
 
 1. Find browse binary (see Setup above)
 2. Create output directories
-3. Copy report template from `qa/templates/qa-report-template.md` to output dir
+3. Copy report template from `templates/qa-report-template.md` to output dir
 4. Start timer for duration tracking
 
 ### Phase 2: Authenticate (if needed)
@@ -214,7 +214,7 @@ $B snapshot -i -a -o "$REPORT_DIR/screenshots/page-name.png"
 $B console --errors
 ```
 
-Then follow the **per-page exploration checklist** (see `qa/references/issue-taxonomy.md`):
+Then follow the **per-page exploration checklist** (see `references/issue-taxonomy.md`):
 
 1. **Visual scan** — Look at the annotated screenshot for layout issues
 2. **Interactive elements** — Click buttons, links, controls. Do they work?
@@ -261,7 +261,7 @@ $B snapshot -D
 $B snapshot -i -a -o "$REPORT_DIR/screenshots/issue-002.png"
 ```
 
-**Write each issue to the report immediately** using the template format from `qa/templates/qa-report-template.md`.
+**Write each issue to the report immediately** using the template format from `templates/qa-report-template.md`.
 
 ### Phase 6: Wrap Up
 

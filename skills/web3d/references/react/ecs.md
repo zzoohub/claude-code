@@ -2,6 +2,13 @@
 
 > For core Koota API (traits, queries, systems): `../ecs.md`
 
+## Table of Contents
+
+1. [WorldProvider](#worldprovider)
+2. [Hooks](#hooks)
+3. [R3F Integration Patterns](#r3f-integration-patterns)
+
+
 ## WorldProvider
 
 ```tsx

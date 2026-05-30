@@ -6,6 +6,16 @@ For how services communicate *with each other* (event-driven, CQRS, saga, etc.),
 
 **Default: Hexagonal Architecture (Ports & Adapters).** Choose an alternative only with clear rationale documented as an ADR.
 
+## Table of Contents
+
+1. [Hexagonal Architecture (Ports & Adapters) — Default](#hexagonal-architecture-ports--adapters--default)
+2. [Clean Architecture](#clean-architecture)
+3. [Vertical Slice Architecture](#vertical-slice-architecture)
+4. [Functional Core, Imperative Shell](#functional-core-imperative-shell)
+5. [Service Architecture Decision Guide](#service-architecture-decision-guide)
+6. [Cross-Cutting Patterns](#cross-cutting-patterns)
+7. [Anti-Patterns](#anti-patterns)
+
 ---
 
 ## Hexagonal Architecture (Ports & Adapters) — Default

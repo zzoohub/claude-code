@@ -2,6 +2,20 @@
 
 shadcn isn't a library — it's a code-gen tool that copies components into your repo. Tokens flow through CSS variables; variants are built with `class-variance-authority` (cva); accessibility comes from Radix Primitives.
 
+## Table of Contents
+
+1. [Stack](#stack)
+2. [File layout (FSD-aware)](#file-layout-fsd-aware)
+3. [CLI config — components.json](#cli-config--componentsjson)
+4. [The cn helper](#the-cn-helper)
+5. [Button with cva (reads design tokens via Tailwind classes)](#button-with-cva-reads-design-tokens-via-tailwind-classes)
+6. [Why asChild via Radix Slot](#why-aschild-via-radix-slot)
+7. [Token integration with Tailwind v4](#token-integration-with-tailwind-v4)
+8. [Forms — pair with react-hook-form + zod](#forms--pair-with-react-hook-form--zod)
+9. [When NOT to use shadcn](#when-not-to-use-shadcn)
+10. [Alternatives](#alternatives)
+
+
 ## Stack
 
 | Layer | Tool |

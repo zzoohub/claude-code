@@ -4,6 +4,13 @@ Koota is an archetype-based ECS (Entity Component System) state management libra
 
 > For React integration (WorldProvider, hooks, R3F patterns): `react/ecs.md`
 
+## Table of Contents
+
+1. [Core Concepts](#core-concepts)
+2. [Systems as Plain Functions](#systems-as-plain-functions)
+3. [Separating ECS from UI State](#separating-ecs-from-ui-state)
+
+
 ## Core Concepts
 
 ### World

@@ -2,6 +2,14 @@
 
 Step-by-step guide for designing user flows and screens. Follow these steps in order. Do not skip or reorder.
 
+## Table of Contents
+
+1. [Step 1: Research and Define](#step-1-research-and-define)
+2. [Step 2: Map the Critical Path](#step-2-map-the-critical-path)
+3. [Step 3: Design Each Screen](#step-3-design-each-screen)
+4. [Step 4: Remove](#step-4-remove)
+5. [Step 5: Validate](#step-5-validate)
+
 ---
 
 ## Step 1: Research and Define
@@ -235,6 +243,8 @@ Run every screen against:
 - [ ] UX writing rules (`references/ux-writing.md`)
 - [ ] Interaction patterns (`references/interaction-patterns.md`)
 - [ ] IA principles (`references/information-architecture.md`)
+
+These references are all linked directly from `SKILL.md` — load them from there, not through this file (these are cross-references, not a nested chain).
 
 ### 5c. Five-User Usability Test Protocol
 

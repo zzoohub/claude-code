@@ -4,6 +4,15 @@ Models, errors, ports (abstract classes), and service implementation.
 
 ---
 
+## Table of Contents
+
+1. [Domain Models](#domain-models)
+2. [Domain Errors](#domain-errors)
+3. [Cross-Cutting Port: UnitOfWork](#cross-cutting-port-unitofwork)
+4. [Ports (Abstract Classes)](#ports-abstract-classes)
+5. [Service Implementation](#service-implementation)
+
+
 ## Domain Models
 
 ```typescript
@@ -119,6 +128,8 @@ export class UnknownAuthorError extends DomainError {
 /**
  * Union type for all create-author failures.
  * Exception filters switch on `error.tag` for exhaustive matching.
+ * Scoped to the create path: find/list path errors (e.g. AuthorNotFoundError)
+ * belong to their own per-operation union.
  */
 export type CreateAuthorError = DuplicateAuthorError | UnknownAuthorError;
 ```

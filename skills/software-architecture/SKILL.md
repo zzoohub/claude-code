@@ -1,26 +1,21 @@
 ---
 name: software-architecture
 description: |
-  Produce a full Software Architecture Design Document from a PRD: system context, ASRs,
-  domain model, pattern selection, component design, data architecture, deployment,
-  cross-cutting concerns, and decision records. Produces D2 architecture diagrams.
-  Use when: user says "design doc", "software architecture", "system design",
-  "architect this", "architecture design", "tech spec", "how should I build this",
-  "what's the right architecture for", "help me plan the backend", "design the
-  system", "ASR", "utility tree", "domain model", "ATAM", "event storming", or
-  provides a PRD and asks for technical architecture. Also trigger when the system
-  involves AI/LLM features (RAG, agents, chat, copilot, semantic search). Use this
-  skill whenever the user wants to plan or structure a NEW project. Also use to
-  "review", "audit", or "diagnose" an EXISTING architecture — a read-only pass
-  that critiques `docs/arch/*.md` against the ASRs and ATAM gate and never
-  regenerates the docs (see Review / Diagnose Mode below).
+  Produce a full Software Architecture Design Document from a PRD: context, system
+  design, decision records, and D2 diagrams.
+  Use when: "design doc", "software architecture", "system design", "architect
+  this", "tech spec", "how should I build this", "what's the right architecture
+  for", "help me plan the backend", "ASR", "utility tree", "domain model", "ATAM",
+  "event storming", or a PRD needs technical architecture for a NEW project. Also
+  trigger on AI/LLM features (RAG, agents, chat, copilot, semantic search). Also
+  use to "review", "audit", or "diagnose" an EXISTING architecture, read-only (see
+  Review / Diagnose Mode).
   Do NOT use for: a single architectural decision on an existing system (use
-  arch-decision instead — it appends one ADR without rewriting the full design).
-  Do NOT use for: table schemas, column types, indexes, or migrations (use
-  database-design); folder structure, code conventions, or linting rules (CLAUDE.md
-  concern); concrete UI component trees or page layouts (use ux-design +
-  design-system); implementation-level LLM app details like prompts, tool schemas,
-  or eval harnesses (use llm-app-design after architecture is set).
+  arch-decision); table schemas, columns, indexes, or migrations (use
+  database-design); folder structure, code conventions, or linting (CLAUDE.md);
+  concrete UI component trees or page layouts (use ux-design + design-system);
+  implementation-level LLM details like prompts, tool schemas, or evals (use
+  llm-app-design).
 ---
 
 # Software Architecture — Full Design Pass
@@ -200,7 +195,7 @@ Before finalizing, verify:
 - [ ] No section exists just because "a design doc should have it" — every section earns its place
 - [ ] AI (if applicable): cost ceiling defined, guardrail layers specified, model versions pinned
 
-**The "6-Month Test"**: If you come back to this project after 6 months away, can you read these docs and understand the system well enough to start making changes within 10 minutes?
+**The "6-Month Test"**: Do these docs still pass the [6-Month Test](#premise) — readable enough to resume changes within 10 minutes after 6 months away?
 
 ---
 
@@ -269,6 +264,10 @@ For data-model and schema findings, also apply the `database-design` skill's
 - Stage 8 (Cross-cutting Concerns) -> `observability.md`
 
 **Skip if PRD has no AI/LLM features**: `ai-architecture.md`, `ai-agents.md`
+
+Every reference is linked directly from here, so read only what a stage needs.
+Cross-links between reference files are optional pointers for going deeper — not
+a required reading chain.
 
 ### Index
 

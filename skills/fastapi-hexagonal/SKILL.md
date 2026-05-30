@@ -307,7 +307,7 @@ Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 
 ## Reliability & Observability Ports
 
-Cross-cutting infrastructure that must not leak into the domain. Define each as a `Protocol`; implement as adapters. Architecture-level pattern lives in `software-architecture/references/reliability-patterns.md` and `observability.md`.
+Cross-cutting infrastructure that must not leak into the domain. Define each as a `Protocol`; implement as adapters. Architecture-level pattern lives in `software-architecture/references/reliability-patterns.md` and `software-architecture/references/observability.md`.
 
 | Port | Purpose | Where it lives |
 |---|---|---|
@@ -337,7 +337,7 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 | HTTPException in domain | Transport leak | Use domain error classes |
 | ORM model in handler | Missing mapper | Translate in adapter via mapper |
 | `utcnow()` deprecation | Python 3.12+ | Use `datetime.now(UTC)` |
-| jose/passlib issues | Unmaintained deps | Use `PyJWT` + `bcrypt` |
+| jose/passlib issues | Unmaintained deps | Use `PyJWT` + `pwdlib[argon2]` (bcrypt fallback) |
 | No migrations | Missing Alembic | Set up `alembic/` alongside app |
 
 ---
@@ -360,7 +360,7 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 | Migrations? | Alembic, lives alongside app (not in hex layers) |
 | Healthcheck? | `/healthz` + `/readyz` in inbound, no domain |
 | Pagination? | `CursorPageResponse[T]` wrapper, cursor in adapter |
-| JWT / passwords? | `PyJWT` + `bcrypt` (not jose/passlib) |
+| JWT / passwords? | `PyJWT` + `pwdlib[argon2]` (bcrypt fallback; not jose/passlib) |
 
 ---
 
@@ -383,7 +383,7 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 
 ### Dependencies
 - [ ] `PyJWT` for JWT (not `python-jose`)
-- [ ] `bcrypt` for passwords (not `passlib`)
+- [ ] `pwdlib[argon2]` for passwords (bcrypt fallback; not `passlib`)
 - [ ] `datetime.now(UTC)` everywhere (not `utcnow()`)
 
 ### Database

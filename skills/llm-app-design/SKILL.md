@@ -2,8 +2,8 @@
 name: llm-app-design
 description: |
   Provider-neutral LLM application design: prompt engineering, tool use, RAG, agent patterns, evaluation, and production concerns.
-  Use when: designing an AI feature or product (chatbot, copilot, agent, RAG system, semantic search, classification, extraction), deciding whether to use an LLM at all, structuring system prompts, designing tool/function-calling schemas, planning a RAG pipeline, choosing between an agent and a fixed pipeline/workflow, picking an agent architecture, setting up evals before shipping, or reasoning about latency/cost/reliability of LLM features. Also trigger on "AI feature", "LLM app", "chatbot", "copilot", "agent", "agentic", "agentic pipeline", "agentic workflow", "LLM workflow", "agent workflow", "RAG", "retrieval augmented", "prompt engineering", "eval", "LLM-as-judge", "tool use", "function calling", "semantic search", "fine-tune vs prompt".
-  Do not use for: system-level AI architecture — LLM gateways, streaming/deployment topology, vector-store and infrastructure choice, multi-agent orchestration infrastructure, protocols (MCP/A2A/AG-UI), durable execution, model lifecycle (use software-architecture; this skill is the design-discipline layer that runs alongside and after it); provider-specific SDK mechanics (use claude-api for Anthropic, vercel:ai-sdk for multi-provider Vercel apps); tracing/observability setup (use posthog:instrument-llm-analytics or sentry:sentry-setup-ai-monitoring); or pure ML/training.
+  Use when: designing an AI feature (chatbot, copilot, agent, RAG, classification, extraction), deciding whether to use an LLM, choosing an agent vs a fixed workflow, or setting up evals. Also trigger on "AI feature", "LLM app", "agentic pipeline/workflow", "LLM/agent workflow", "retrieval augmented", "prompt engineering", "system prompt", "eval", "LLM-as-judge", "tool use", "function calling", "semantic search", "fine-tune vs prompt", "LLM latency/cost".
+  Do not use for: system-level AI architecture — LLM gateways, deployment topology, vector-store/orchestration, protocols (MCP/A2A/AG-UI), durable execution, model lifecycle (use software-architecture); provider-specific SDK mechanics (use claude-api for Anthropic, vercel:ai-sdk for multi-provider); observability setup (use posthog:instrument-llm-analytics or sentry:sentry-setup-ai-monitoring); or ML/training.
 ---
 
 # LLM Application Design
@@ -66,7 +66,7 @@ Read `references/prompting.md` before designing any shape — prompt structure u
 
 **Not every "AI" task needs generation.** Semantic search, clustering, dedup, and some classification are embedding problems, not generation problems — an embedding model + vector index (or a small classifier) is often cheaper, faster, and more reliable than an LLM call. Use the embedding/hybrid-search primitives in `references/rag.md` for the retrieval mechanics; reserve a generation call for when you actually need synthesized language out.
 
-**System-level AI architecture lives elsewhere.** LLM gateways, streaming and deployment topology, vector-store and infrastructure choice, multi-agent orchestration infrastructure, protocols (MCP/A2A/AG-UI), durable execution, and model lifecycle are owned by the `software-architecture` skill (`references/ai-architecture.md`, `references/ai-agents.md`). This skill is the design-discipline layer that runs alongside and after it.
+**System-level AI architecture lives elsewhere.** LLM gateways, streaming and deployment topology, vector-store and infrastructure choice, multi-agent orchestration infrastructure, protocols (MCP/A2A/AG-UI), durable execution, and model lifecycle are owned by the `software-architecture` skill (`software-architecture/references/ai-architecture.md`, `software-architecture/references/ai-agents.md`). This skill is the design-discipline layer that runs alongside and after it.
 
 ## The design flow
 

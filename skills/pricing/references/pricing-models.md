@@ -118,7 +118,7 @@ Enterprise buyers prioritize budget certainty over getting the cheapest deal. Ma
 
 ### Current Adoption
 
-Only ~9% of SaaS companies have fully implemented outcome-based pricing, but 47% are actively exploring or piloting. Gartner projects 30%+ adoption by 2025-2026.
+Only ~9% of SaaS companies have fully implemented outcome-based pricing, but 47% are actively exploring or piloting. Outcome-based pricing remains an emerging model, and Gartner projects continued shift toward usage-, agent-, and outcome-based models through 2030 (see Timeline below).
 
 ### Strengths
 
@@ -262,7 +262,7 @@ When adding AI capabilities to an existing product (a16z framework):
 
 Token-based pricing is standard for LLM APIs. Key dynamics:
 
-- **Massive price deflation**: GPT-4o mini at $0.15/$0.60 per million tokens — costs dropping 50%+ annually
+- **Massive price deflation**: frontier-class "mini" models keep getting cheaper each quarter (e.g., GPT-4o mini launched at $0.15/$0.60 per million tokens) — token costs have been dropping 50%+ annually, so re-check current provider pricing rather than anchoring on any one model
 - **Input vs. output tokens**: Most APIs price output tokens 3-4x higher than input tokens
 - **Caching discounts**: Cached/prompt tokens at 50-75% discount
 - **Cost may surpass performance as chief competitive factor** by 2026 (Gartner)

@@ -2,6 +2,24 @@
 
 Inbound (HttpServer, handlers, task handlers, webhooks, auth, errors) and outbound (SQLite, Postgres, mapper).
 
+## Table of Contents
+
+1. [Outbound: SQLite Adapter](#outbound-sqlite-adapter)
+2. [Outbound: Postgres Adapter (same trait, swap in main)](#outbound-postgres-adapter-same-trait-swap-in-main)
+3. [Outbound: Row ↔ Domain Mapper (for complex rows or ORM)](#outbound-row--domain-mapper-for-complex-rows-or-orm)
+4. [Inbound: Task Handler (non-HTTP inbound adapter)](#inbound-task-handler-non-http-inbound-adapter)
+5. [Composition Root](#composition-root)
+6. [Inbound: HttpServer Wrapper](#inbound-httpserver-wrapper)
+7. [Inbound: Multi-Service AppState with FromRef](#inbound-multi-service-appstate-with-fromref)
+8. [Inbound: Auth Middleware](#inbound-auth-middleware)
+9. [Inbound: Request / Response](#inbound-request--response)
+10. [Inbound: Handlers](#inbound-handlers)
+11. [Inbound: API Error (RFC 9457)](#inbound-api-error-rfc-9457)
+12. [Inbound: Response Wrappers](#inbound-response-wrappers)
+13. [Outbound: Outbox Adapter (transactional, sqlx)](#outbound-outbox-adapter-transactional-sqlx)
+14. [Outbound: Idempotency Store](#outbound-idempotency-store)
+15. [Outbound: Tracer Port (OTel)](#outbound-tracer-port-otel)
+
 ---
 
 ## Outbound: SQLite Adapter
@@ -472,8 +490,11 @@ impl FromRef<AppState> for sqlx::SqlitePool {
 }
 
 // Handlers depend on the concrete service alias — still hides adapter combination
-// behind a single name in `composition.rs`. Both extract `State<Arc<AppAuthorService>>`
-// (NOT the whole `AppState`) — one consistent convention across the section.
+// behind a single name in `composition.rs`. State-extraction rule for this skill:
+// 1-2 services → extract `State<AppState>` and reach through it (the single-service
+// `Handlers` section above does this). 3+ services → add `FromRef` impls and extract
+// only the needed alias, `State<Arc<AppAuthorService>>` (NOT the whole `AppState`),
+// as both handlers below do.
 async fn create_author(
     State(service): State<Arc<AppAuthorService>>,
     Json(body): Json<CreateAuthorHttpRequestBody>,
@@ -1007,7 +1028,7 @@ impl IntoResponse for NoContent {
 }
 ```
 
-> The earlier draft carried separate `Created<T>` / `Ok<T>` marker types alongside `ApiSuccess`. They emitted a **bare** body (no `data` wrapper) and didn't set `Location`, so they conflicted with the envelope contract. `ApiSuccess` is now the single carrier: `ApiSuccess::created(data, id)` for 201 (sets `Location`), `ApiSuccess::new(StatusCode::OK, data)` for 200, `NoContent` for 204. The `Location` path is hardcoded to `/v1/authors/{id}` for the worked example — generalize it (pass the full path, or a `resource: &str` segment) when you have more than one resource.
+> `ApiSuccess` is the single response carrier — don't add separate `Created<T>` / `Ok<T>` marker types. A bare-body marker (no `data` wrapper) that skips `Location` would conflict with the envelope contract. Use `ApiSuccess::created(data, id)` for 201 (sets `Location`), `ApiSuccess::new(StatusCode::OK, data)` for 200, `NoContent` for 204. The `Location` path is hardcoded to `/v1/authors/{id}` for the worked example — generalize it (pass the full path, or a `resource: &str` segment) when you have more than one resource.
 
 ---
 
@@ -1082,10 +1103,13 @@ impl AuthorRepository for Postgres {
             id, req.name().to_string(),
         )
         .execute(&mut **tx).await
-        .map_err(|e| match e {
-            sqlx::Error::Database(ref db) if db.is_unique_violation() =>
-                CreateAuthorError::Duplicate { name: req.name().clone() },
-            other => anyhow!(other).context("insert author").into(),
+        .map_err(|e| {
+            // Same idiom as the canonical adapters: as_database_error().map_or(...).
+            if e.as_database_error().map_or(false, |d| d.is_unique_violation()) {
+                CreateAuthorError::Duplicate { name: req.name().clone() }
+            } else {
+                anyhow!(e).context("insert author").into()
+            }
         })?;
 
         // Trace context captured at write time, not at relay time —

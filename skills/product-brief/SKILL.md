@@ -1,23 +1,20 @@
 ---
 name: product-brief
 description: |
-  Creates lean product briefs — strategic one-pagers that define the problem,
-  direction, and success signal for a NEW product or product direction. Sits
-  upstream of the PRD. Focuses on "what" and "why", not features, detailed
-  metrics, or scope boundaries.
+  Creates lean product briefs — one-pagers that define the problem, direction, and
+  success signal for a NEW product or direction. Sits upstream of the PRD; focuses
+  on "what" and "why", not features.
   Use when: the user asks to "write a product brief", "create a product one-pager",
   "product pitch", "product concept", or wants to validate/explore whether to build
-  a NEW product idea (the why, before requirements exist). Also trigger on "I have
-  an idea for a new product", "I want to build a new product/app X", or a described
-  product concept without a named document type. Also use when reviewing or
-  improving an existing product brief / one-pager.
+  a NEW product idea before requirements exist. Also trigger on "I have an idea for
+  a new product", "I want to build a new product/app X", or a described concept
+  without a named doc type. Also use when reviewing or improving an existing
+  product brief.
   Do NOT use for: a single feature on an existing product (use feature-spec); a full
-  PRD or structured requirements, or reviewing/auditing a PRD (use prd-craft);
-  detailed success metrics with timeframes, scope boundaries, feature specs, user
-  journeys, timelines; UI/UX design (use ux-design); technical architecture (use
-  software-architecture); investor pitch decks, business plans, market sizing /
-  TAM-SAM-SOM, fundraising or go-to-market documents — a product brief is an
-  internal strategic one-pager, not any of these.
+  PRD, detailed success metrics with timeframes, scope boundaries, feature specs,
+  user journeys, timelines, or reviewing/auditing a PRD (use prd-craft); UI/UX
+  design (use ux-design); technical architecture (use software-architecture);
+  investor decks, business plans, market sizing (TAM-SAM-SOM), or GTM docs.
 ---
 
 # Product Brief — Strategic One-Pager
@@ -161,12 +158,13 @@ Grounded in evidence, names a specific situation, quantifies the pain.
 
 ## Output
 
-Save to `docs/prd/product-brief.md`, updating that file in place. When a repo
-explores multiple distinct directions, use `docs/prd/product-brief-{slug}.md` so a
-new direction does not overwrite a prior one.
+Save to `docs/prd/product-brief.md`, updating that file in place. When the user
+explicitly explores a second, distinct direction, use
+`docs/prd/product-brief-{slug}.md` so a new direction does not overwrite a prior one.
 
 If your project keeps the brief elsewhere, see `AGENTS.md` at the repo root for the
 override; falls back to the default path above.
 
-<!-- Author housekeeping: keep this skill under ~175 lines. If it grows past that,
-consolidate — tighten wording, merge redundant content, remove resolved questions. -->
+<!-- Author housekeeping: keep this skill under ~175 lines and keep description
+≤1024 chars. If it grows past that, consolidate — tighten wording, merge redundant
+content, remove resolved questions. -->

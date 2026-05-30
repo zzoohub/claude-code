@@ -5,8 +5,9 @@ description: |
   Use when: creating "[Competitor] alternative" pages, "vs" comparison pages, competitor
   comparison tables, migration guides, or when user mentions "competitor page", "alternative page",
   "vs page", "comparison page", "switching from", "migrate from", "competitor alternative".
-  Do NOT use for: general competitive analysis strategy (use marketer agent), pricing strategy or competitor-pricing
-  analysis (use pricing skill — this skill only renders a pricing-comparison table from prices you already have),
+  Do NOT use for: general competitive analysis strategy (use marketer agent — this skill produces the published
+  page artifact; competitive analysis is the internal strategy doc biz/marketing/competitors.md), pricing strategy
+  or competitor-pricing analysis (use pricing skill — this skill only renders a pricing-comparison table from prices you already have),
   standalone SEO/AEO/GEO strategy, keyword research, or site-wide technical SEO (use search-visibility skill — it
   layers deeper optimization on top of the page this skill produces), or page conversion optimization (use cro skill).
 ---

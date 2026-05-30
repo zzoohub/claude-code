@@ -4,6 +4,19 @@ Canonical copywriting frameworks. Single source of truth for the structures — 
 
 ---
 
+## Table of Contents
+
+1. [Framework Selection Matrix](#framework-selection-matrix)
+2. [PAS — Problem, Agitate, Solve](#pas--problem-agitate-solve)
+3. [AIDA — Attention, Interest, Desire, Action](#aida--attention-interest-desire-action)
+4. [BAB — Before, After, Bridge](#bab--before-after-bridge)
+5. [4Ps — Promise, Picture, Proof, Push](#4ps--promise-picture-proof-push)
+6. [SSS — Star, Story, Solution](#sss--star-story-solution)
+7. [Psychological Triggers Reference](#psychological-triggers-reference)
+8. [Applying These Frameworks](#applying-these-frameworks)
+9. [Related Files](#related-files)
+
+
 ## Framework Selection Matrix
 
 | Audience State | Best Framework | Copy Length | Why |
@@ -141,6 +154,8 @@ When writing copy:
 ---
 
 ## Related Files
+
+These are side pointers only (each is also linked directly from SKILL.md — no nested reference chain):
 
 - `copy-frameworks.md` — Page structure and CTA formulas (different scope — page-level layout, not persuasion framework)
 - `editing-sweeps.md` — Editing discipline applied to any framework's output

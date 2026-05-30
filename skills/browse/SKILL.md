@@ -7,6 +7,8 @@ description: |
   ~100ms per command. Use when you need to test a feature, verify a deployment, dogfood a
   user flow, or file a bug with evidence. For a full systematic QA pass (health score +
   structured report), use the qa skill, which drives this tool.
+  Do NOT use for: writing code or implementing APIs, or producing a structured
+  health-score QA report (use the qa skill).
 allowed-tools:
   - Bash
   - Read
@@ -18,7 +20,7 @@ allowed-tools:
 
 # browse: QA Testing & Dogfooding
 
-> **Tool-skill notice**: Unlike most skills in this repo, `browse` ships a compiled binary (TypeScript + Playwright via Bun). Run `./setup` once before use. Source lives in `src/`; build emits `dist/browse`.
+> **Tool-skill notice**: Unlike most skills in this repo, `browse` ships a compiled binary (TypeScript + Playwright via Bun). Run `./setup` once before use. Source lives in `src/`; build emits `dist/browse`. For fork/upstream policy, see [UPSTREAM.md](UPSTREAM.md).
 
 Persistent headless Chromium. First call auto-starts (~3s), then ~100ms per command.
 State persists between calls (cookies, tabs, login sessions).
@@ -166,8 +168,8 @@ Refs are invalidated on navigation — run `snapshot` again after `goto`.
 ## Full Command List
 
 > **⚠️ High-trust commands (review before use):**
-> - **`cookie-import-browser`** copies cookies from your real browsers (Chrome / Arc / Brave / Edge / Comet) into the headless session. **Effect:** the agent now acts authenticated as YOU on whichever sites those cookies cover. Treat this as the equivalent of handing your active sessions to the agent — only run on domains you intentionally want to dogfood as your logged-in self. Prefer `--domain` to scope cookies; never run unscoped in untrusted contexts.
-> - **`eval <file>`** executes arbitrary JavaScript in the page context. Restricted to `/tmp/` or the working directory, but still: review the script, and never `eval` content that came from an untrusted source (web scrape, user-submitted file). Same risk class as page XSS.
+> - **`cookie-import-browser`** (macOS only — relies on `~/Library/Application Support` paths and the macOS Keychain) copies cookies from your real browsers (Chrome / Arc / Brave / Edge / Comet) into the headless session. **Effect:** the agent now acts authenticated as YOU on whichever sites those cookies cover. Treat this as the equivalent of handing your active sessions to the agent — only run on domains you intentionally want to dogfood as your logged-in self. Prefer `--domain` to scope cookies; never run unscoped in untrusted contexts.
+> - **`eval <file>`** executes arbitrary JavaScript in the page context. Restricted to `/tmp/` or the working directory, but still: review the script, and never `eval` content that came from an untrusted source (web scrape, user-submitted file). Same risk class as page XSS. The same risk class applies to **`js <expr>`**, which runs an arbitrary inline JavaScript expression in the page context (no file-path restriction) — never pass it untrusted input.
 
 ### Navigation
 | Command | Description |
@@ -193,7 +195,7 @@ Refs are invalidated on navigation — run `snapshot` again after `goto`.
 | `click <sel>` | Click element |
 | `cookie <name>=<value>` | Set cookie on current page domain |
 | `cookie-import <json>` | Import cookies from JSON file |
-| `cookie-import-browser [browser] [--domain d]` | Import cookies from Comet, Chrome, Arc, Brave, or Edge (opens picker, or use --domain for direct import) |
+| `cookie-import-browser [browser] [--domain d]` | Import cookies from Comet, Chrome, Arc, Brave, or Edge (opens picker, or use --domain for direct import). macOS only |
 | `dialog-accept [text]` | Auto-accept next alert/confirm/prompt. Optional text is sent as the prompt response |
 | `dialog-dismiss` | Auto-dismiss next dialog |
 | `fill <sel> <val>` | Fill input |
@@ -206,7 +208,7 @@ Refs are invalidated on navigation — run `snapshot` again after `goto`.
 | `upload <sel> <file> [file2...]` | Upload file(s) |
 | `useragent <string>` | Set user agent |
 | `viewport <WxH>` | Set viewport size |
-| `wait <sel|--networkidle|--load>` | Wait for element, network idle, or page load (timeout: 15s) |
+| `wait <sel|--networkidle|--load|--domcontentloaded>` | Wait for element, network idle, or page load (timeout: 15s) |
 
 ### Inspection
 | Command | Description |

@@ -1,12 +1,25 @@
 # GA4 & GTM Setup Guide
 
+## Table of Contents
+
+1. [When to Use This Reference](#when-to-use-this-reference)
+2. [GA4 vs PostHog: When to Use Which](#ga4-vs-posthog-when-to-use-which)
+3. [GA4 Setup Essentials](#ga4-setup-essentials)
+4. [GTM: When It's Worth It](#gtm-when-its-worth-it)
+5. [UTM Parameter Strategy](#utm-parameter-strategy)
+6. [GA4 + PostHog Dual Setup Tips](#ga4--posthog-dual-setup-tips)
+7. [Validation Checklist](#validation-checklist)
+8. [Consent Mode v2 (mandatory for EEA/UK ad+measurement traffic since March 2024)](#consent-mode-v2-mandatory-for-eeauk-admeasurement-traffic-since-march-2024)
+9. [Server-Side GTM (recommended for production)](#server-side-gtm-recommended-for-production)
+
+
 ## When to Use This Reference
 
 Use when deciding whether to add GA4/GTM to your analytics stack, designing UTM strategy, or configuring a dual PostHog + GA4 setup. For PostHog-first stacks, GA4 is optional — use it primarily for SEO attribution and Google Ads integration where PostHog falls short.
 
 > **EEA / UK compliance (mandatory since March 2024):** Any site serving Google ad / measurement traffic from the European Economic Area must implement **Consent Mode v2**. GA4 + Google Ads will drop data from non-consenting EEA users without it. See "Consent Mode v2" section below before going live in EU/UK.
 
-> **Server-side GTM:** For accurate conversion tracking post-iOS 14.5 (ITP/ETP) and to reduce client-side script load, prefer **server-side GTM** for any production deployment. Client-side GTM still works for low-stakes setups.
+> **Server-side GTM:** For accurate conversion tracking under post-ATT (iOS 14.5) app-tracking limits and browser tracking prevention (Safari ITP / Firefox ETP), and to reduce client-side script load, prefer **server-side GTM** for any production deployment. Client-side GTM still works for low-stakes setups.
 
 ---
 

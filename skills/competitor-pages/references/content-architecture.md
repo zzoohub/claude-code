@@ -2,6 +2,16 @@
 
 Structure, data management, and SEO approach for competitor comparison pages.
 
+## Table of Contents
+
+1. [Page Formats and URLs](#page-formats-and-urls)
+2. [Centralized Competitor Data](#centralized-competitor-data)
+3. [Research Process](#research-process)
+4. [Handling Incomplete Data](#handling-incomplete-data)
+5. [Keeping Data Accurate](#keeping-data-accurate)
+6. [SEO Considerations](#seo-considerations)
+7. [Section Types](#section-types)
+
 ---
 
 ## Page Formats and URLs

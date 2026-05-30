@@ -9,13 +9,12 @@ description: |
   Use when: designing or redesigning one screen on an existing app. Trigger
   phrases: "design the X screen", "redesign the X page", "spec out the X
   modal", "fix the X flow".
-  Do NOT use for: a new product's entire app structure (use ux-design — it
-  produces the app-level UX plus all initial screens). Do NOT use for:
-  conversion/funnel-driven flow optimization (use cro — it diagnoses the fix,
-  this skill specs the resulting screen) or animation/motion polish (use
-  motion); this skill owns structural layout, states, and copy. Do NOT use for:
-  visual styling, color palettes, design tokens (use design-system). Do NOT use
-  for: frontend/UI implementation code.
+  This skill owns structural layout, states, and copy. Do NOT use for: a new
+  product's entire app structure (use ux-design — it produces the app-level UX
+  plus all initial screens); conversion/funnel-driven flow optimization (use
+  cro — it diagnoses the fix, this skill specs the resulting screen);
+  animation/motion polish (use motion); visual styling, color palettes, design
+  tokens (use design-system); or frontend/UI implementation code.
 ---
 
 # Screen Design — Single Screen on Existing App
@@ -40,20 +39,18 @@ not duplicated here).
 
 ## What This Skill Does
 
-1. Reads `docs/ux/ux-design.md` to learn IA, navigation pattern, global
-   conventions (toast, modal, error handling), accessibility standards.
-2. Reads the feature spec at `docs/prd/features/{feature}.md` if applicable,
-   to learn requirements and user journeys for the screen.
-3. Asks the minimum questions needed (user goal, entry points, edge cases).
-4. Writes one `docs/ux/screens/{screen}.md` covering:
-   - Screen purpose (JTBD)
-   - Layout and content hierarchy (1 primary action)
-   - All 7 states: empty, loading, loaded, error, partial, refreshing, offline
-   - Interactions specific to this screen
-   - UX copy (labels, errors, empty states, tooltips)
-   - Accessibility notes
-5. Updates `docs/ux/ux-design.md` ONLY if IA changes (e.g., new nav entry, new
-   route). Otherwise leaves it alone.
+Produces one `docs/ux/screens/{screen}.md` covering:
+
+- Screen purpose (JTBD)
+- Layout and content hierarchy (1 primary action)
+- All 7 states: empty, loading, loaded, error, partial, refreshing, offline
+- Interactions specific to this screen
+- UX copy (labels, errors, empty states, tooltips)
+- Accessibility notes
+
+It updates `docs/ux/ux-design.md` ONLY if IA changes (e.g., new nav entry, new
+route); otherwise it leaves that file alone. See **Workflow** below for the
+procedure.
 
 ## What This Skill Does NOT Do
 
@@ -69,7 +66,9 @@ approved, use `task-add` to break it into implementation tasks, and
 ## Workflow
 
 1. **Read app UX** — `docs/ux/ux-design.md` for IA, conventions, accessibility
-2. **Read feature spec** (if applicable) — `docs/prd/features/{feature}.md`
+2. **Read feature spec** (if applicable) — `docs/prd/features/{feature}.md`. If
+   no feature spec exists, source requirements from the discovery questions in
+   step 3 and the relevant `docs/ux/ux-design.md` flows.
 3. **Discover the screen** — minimum questions:
    - What is the user's ONE goal on this screen?
    - Where do they arrive from? Where do they go next?
@@ -83,8 +82,9 @@ approved, use `task-add` to break it into implementation tasks, and
 
 ## Quality Bar
 
-This is the relevant subset of `ux-design`'s Quick Checklist; keep it in sync
-with that canonical list when either changes.
+`ux-design`'s Quick Checklist (its Screen Design, Interaction, Copy, and
+Platform sections) is canonical. The list below is a convenience copy of that
+subset — if the two ever diverge, defer to `ux-design`.
 
 - [ ] User's ONE goal stated as JTBD
 - [ ] Primary action is ONE and visually dominant

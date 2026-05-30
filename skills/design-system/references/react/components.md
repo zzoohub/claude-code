@@ -2,6 +2,13 @@
 
 React-specific implementations of the component patterns defined in `../components.md`.
 
+## Table of Contents
+
+1. [Pattern 1: Flat API](#pattern-1-flat-api)
+2. [Pattern 2: Explicit Variant Components](#pattern-2-explicit-variant-components)
+3. [Pattern 3: Compound API](#pattern-3-compound-api)
+4. [Pattern 4: Headless Hook](#pattern-4-headless-hook)
+
 ## Pattern 1: Flat API
 
 ```tsx

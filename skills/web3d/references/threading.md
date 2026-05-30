@@ -4,6 +4,16 @@
 
 > For framework-specific main thread consumer patterns (R3F useFrame sync): `react/performance.md`
 
+## Table of Contents
+
+1. [Browser Multithreading Options](#browser-multithreading-options)
+2. [Decision Guide: What Goes Where](#decision-guide-what-goes-where)
+3. [Data Transfer Patterns](#data-transfer-patterns)
+4. [COOP/COEP Headers](#coopcoep-headers)
+5. [SharedArrayBuffer Layout Convention](#sharedarraybuffer-layout-convention)
+6. [Race Conditions and Synchronization](#race-conditions-and-synchronization)
+7. [Performance Rules](#performance-rules)
+
 ## Browser Multithreading Options
 
 ### 1. Dedicated Worker (`new Worker()`)

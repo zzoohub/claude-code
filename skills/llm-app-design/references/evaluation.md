@@ -4,6 +4,17 @@
 
 You cannot ship an LLM feature responsibly without evals. Prompts look fine on three test cases and fail on the fourth. Model updates silently change behavior. A "small" prompt tweak breaks 20% of cases you didn't think to check. Evals catch all of this.
 
+## Table of Contents
+
+1. [What an eval is](#what-an-eval-is)
+2. [Types of evals](#types-of-evals)
+3. [LLM-as-judge: getting it right](#llm-as-judge-getting-it-right)
+4. [Anti-patterns](#anti-patterns)
+5. [The eval workflow](#the-eval-workflow)
+6. [Structuring the eval set](#structuring-the-eval-set)
+7. [Eval infrastructure](#eval-infrastructure)
+8. [When to stop iterating](#when-to-stop-iterating)
+
 ## What an eval is
 
 An eval is a triple: `(input, expected_behavior, metric)`. You run the system on the input, observe behavior, compare to expected, produce a score.

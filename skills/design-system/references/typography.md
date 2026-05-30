@@ -80,7 +80,7 @@ Display and heading sizes adapt to the viewport. Body text stays the same — 16
 
 ### React Native
 
-> See `references/react-native/typography.md` for responsive typography hook and font loading.
+> See `references/react-native/typography.md` for responsive typography hook and font loading. (also linked directly from SKILL.md)
 
 > **Cross-platform note:** The two platforms scale type in opposite directions relative to the token. On web, `clamp(24px, 4vw, 30px)` treats the 30px token as the desktop **ceiling** and shrinks toward 24px on small viewports. On React Native, the 30px token is the phone **baseline** and tablets bump it up ~10%. So the same named token does not render at an identical px on every platform/breakpoint — the token defines the reference size, not a fixed rendered size. If you need pixel parity across platforms, pick one convention per token (e.g. treat 30px as the desktop/tablet ceiling everywhere and step phones down).
 

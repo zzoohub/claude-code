@@ -4,7 +4,7 @@ description: |
   Hono with hexagonal architecture patterns in TypeScript.
   Use when: building TypeScript/JavaScript APIs with Hono — for multi-runtime backends (Bun, Node.js, Cloudflare Workers, Deno).
   Covers: API design (@hono/zod-openapi), domain modeling, ports & adapters, service layer, Zod validation, error handling, DI via context variables, testing, Drizzle ORM migrations, pagination, healthcheck endpoints.
-  Do not use for: database schema design (use database-design skill). Use fastapi-hexagonal for Python-only APIs. Use axum-hexagonal for Rust APIs.
+  Do not use for: database schema design (use database-design skill). Use nestjs-hexagonal for modular NestJS apps with built-in DI. Use fastapi-hexagonal for Python-only APIs. Use axum-hexagonal for Rust APIs.
 ---
 
 # Hono + Hexagonal Architecture

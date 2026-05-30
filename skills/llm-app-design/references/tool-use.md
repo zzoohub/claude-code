@@ -4,6 +4,19 @@
 
 Tool use lets the model call your functions during a conversation. Well-designed tools turn LLMs from talkers into doers — badly designed ones turn them into expensive random-function-call generators.
 
+## Table of Contents
+
+1. [When tools are right](#when-tools-are-right)
+2. [Tool design principles](#tool-design-principles)
+3. [The tool-calling loop](#the-tool-calling-loop)
+4. [Error handling in tool results](#error-handling-in-tool-results)
+5. [Parallel vs sequential tool calls](#parallel-vs-sequential-tool-calls)
+6. [Streaming and tool use](#streaming-and-tool-use)
+7. [Tool use vs structured output](#tool-use-vs-structured-output)
+8. [MCP (Model Context Protocol) — when tools live outside your app](#mcp-model-context-protocol--when-tools-live-outside-your-app)
+9. [Security: model-sourced inputs](#security-model-sourced-inputs)
+10. [Common anti-patterns](#common-anti-patterns)
+
 ## When tools are right
 
 Use tools when the model needs to:

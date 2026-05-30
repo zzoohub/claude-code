@@ -2,6 +2,16 @@
 
 R3F v9 + React 19. React Three Fiber is a React renderer for Three.js -- every JSX element maps directly to a Three.js class.
 
+## Table of Contents
+
+1. [Setup](#setup)
+2. [JSX Maps to Three.js](#jsx-maps-to-threejs)
+3. [useFrame -- The Render Loop](#useframe----the-render-loop)
+4. [Loading Assets](#loading-assets)
+5. [Event System](#event-system)
+6. [Common Imports](#common-imports)
+
+
 ## Setup
 
 ```bash

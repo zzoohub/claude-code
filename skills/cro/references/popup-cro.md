@@ -2,6 +2,19 @@
 
 Optimize popups, modals, overlays, slide-ins, and banners for conversion.
 
+## Table of Contents
+
+1. [Core Principles](#core-principles)
+2. [Trigger Strategies](#trigger-strategies)
+3. [Popup Types](#popup-types)
+4. [Design Best Practices](#design-best-practices)
+5. [Copy Formulas](#copy-formulas)
+6. [Frequency and Rules](#frequency-and-rules)
+7. [Compliance and Accessibility](#compliance-and-accessibility)
+8. [Benchmarks](#benchmarks)
+9. [Common Strategies by Business Type](#common-strategies-by-business-type)
+10. [Experiment Ideas](#experiment-ideas)
+
 ---
 
 ## Core Principles
@@ -129,6 +142,8 @@ Optimize popups, modals, overlays, slide-ins, and banners for conversion.
 | Email popup | 2-5% |
 | Exit intent | 3-10% |
 | Click-triggered | 10%+ (self-selected) |
+
+These figures are directional and vary by industry, traffic, and period — validate against your own data.
 
 ---
 

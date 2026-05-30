@@ -13,16 +13,15 @@ platform-specific hook strategy.
 
 ## Table of Contents
 
-1. [Hook Metrics & Benchmarks](#metrics)
-2. [12 Hook Categories](#categories)
-3. [Platform-Specific Hook Strategy](#platform-hooks)
-4. [Video Hook Structure](#video-hooks)
-5. [Static/Text Hook Patterns](#text-hooks)
-6. [Hook Testing Protocol](#testing)
+1. [Hook Metrics & Benchmarks](#hook-metrics--benchmarks)
+2. [12 Hook Categories](#12-hook-categories)
+3. [Platform-Specific Hook Strategy](#platform-specific-hook-strategy)
+4. [Video Hook Structure](#video-hook-structure)
+5. [Static/Text Hook Patterns](#statictext-hook-patterns)
+6. [Hook Testing Protocol](#hook-testing-protocol)
 
----
 
-## Hook Metrics & Benchmarks {#metrics}
+## Hook Metrics & Benchmarks
 
 ### Definitions
 
@@ -59,7 +58,7 @@ platform-specific hook strategy.
 
 ---
 
-## 12 Hook Categories {#categories}
+## 12 Hook Categories
 
 ### 1. Problem Call-Out
 Name the audience's pain directly. Works for Problem-Aware audiences.
@@ -192,7 +191,7 @@ Works for Unaware audiences who need to be jolted out of autopilot.
 
 ---
 
-## Platform-Specific Hook Strategy {#platform-hooks}
+## Platform-Specific Hook Strategy
 
 ### TikTok
 - Hook must land in first 1-2 seconds (before skip)
@@ -226,7 +225,7 @@ Works for Unaware audiences who need to be jolted out of autopilot.
 
 ---
 
-## Video Hook Structure {#video-hooks}
+## Video Hook Structure
 
 ### The 3-Second Rule
 
@@ -245,7 +244,7 @@ Works for Unaware audiences who need to be jolted out of autopilot.
 
 ---
 
-## Static/Text Hook Patterns {#text-hooks}
+## Static/Text Hook Patterns
 
 ### Headline Writing Rules (Ogilvy + Modern Data)
 
@@ -266,7 +265,7 @@ Works for Unaware audiences who need to be jolted out of autopilot.
 
 ---
 
-## Hook Testing Protocol {#testing}
+## Hook Testing Protocol
 
 ### Process
 1. Write 5+ hooks for every brief (different categories from the 12 above)

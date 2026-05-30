@@ -4,6 +4,16 @@ Completely rewritten in v6. Uses `createXRStore` + `<XR>` component architecture
 
 > For raw WebXR Device API: `../web-xr.md`
 
+## Table of Contents
+
+1. [Setup](#setup)
+2. [Hooks](#hooks)
+3. [Components](#components)
+4. [Interaction System](#interaction-system)
+5. [Spatial UI](#spatial-ui)
+6. [Haptic Feedback](#haptic-feedback)
+
+
 ## Setup
 
 ```tsx
@@ -90,7 +100,7 @@ function HitTestReticle() {
   return (
     <mesh ref={ref}>
       <ringGeometry args={[0.08, 0.1, 32]} />
-      <meshBasicMaterial color="white" />
+      <meshBasicNodeMaterial color="white" />
     </mesh>
   )
 }
@@ -174,7 +184,7 @@ const [pos, setPos] = useState<[number, number, number]>([0, 0, 0])
   <TeleportTarget onTeleport={setPos}>
     <mesh rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[10, 10]} />
-      <meshStandardMaterial color="green" />
+      <meshStandardNodeMaterial color="green" />
     </mesh>
   </TeleportTarget>
 </>

@@ -1,27 +1,24 @@
 ---
 name: pricing
 description: |
-  SaaS pricing strategy, tier design, packaging, pricing model selection, and pricing page optimization.
+  SaaS pricing strategy: tiers, packaging, models, and pricing-page optimization.
   Use when: setting prices, designing tiers, choosing pricing models (seat/usage/outcome/hybrid/credits),
-  creating pricing pages, analyzing competitor pricing, running pricing research, choosing value metrics,
-  optimizing expansion revenue, pricing AI/LLM products, or when user mentions "pricing", "price", "tier",
-  "plan", "freemium", "trial", "subscription", "packaging", "value metric", "pricing page", "upgrade",
-  "annual vs monthly", "usage-based", "per-seat", "credits", "tokens", "ARPU", "NRR", "expansion revenue",
-  "price localization", "PPP", "willingness to pay".
-  This skill should trigger broadly — pricing touches everything from product design to growth.
-  Do NOT use for: paywall UI optimization (use cro), copy on pricing page (use copywriting),
-  psychological principles only (use marketing-psychology), revenue analytics (use product-analytics),
-  or referral incentive structure and viral loop design (use growth-loops — this skill only sets
-  the dollar value of a referral reward, growth-loops picks the incentive structure).
-  Output scope: public-facing tier strategy goes to `biz/marketing/pricing.md` (marketer agent).
-  In-app paywall/upgrade pricing tactics go to `biz/growth/paywall-pricing.md` (growth-optimizer agent).
+  analyzing competitor pricing, running pricing research, optimizing expansion revenue, pricing AI/LLM
+  products, or when user mentions "pricing", "tier", "plan", "freemium", "trial",
+  "subscription", "packaging", "value metric", "upgrade", "annual vs monthly", "ARPU", "NRR",
+  "price localization", "PPP", "willingness to pay". Trigger broadly within Do NOT boundaries.
+  Do NOT use for: paywall UI optimization (use cro), pricing-page copy (use copywriting),
+  psychology principles only (use marketing-psychology), revenue analytics (use product-analytics),
+  or referral incentive structure (use growth-loops; pricing sets only the referral reward $).
+  Output scope: public tier strategy → `biz/marketing/pricing.md` (marketer agent); in-app
+  paywall/upgrade pricing → `biz/growth/paywall-pricing.md` (growth-optimizer agent).
 ---
 
 # Pricing Strategy
 
 Pricing is the single most powerful growth lever — yet the most neglected.
 
-A 1% improvement in pricing yields an **11% increase in profit**. Monetization has **4-8x the impact of acquisition** on bottom-line growth, yet the average SaaS company spends fewer than 10 hours per year on pricing. Companies that review pricing quarterly see 30% higher growth rates.
+A 1% improvement in pricing yields an **11% increase in profit** (McKinsey). Monetization has **~7.5x the impact of acquisition** on revenue (Patrick Campbell / ProfitWell), yet the average SaaS company spends fewer than 10 hours per year on pricing. Companies that review pricing quarterly see 30% higher growth rates.
 
 This skill provides the frameworks, data, and decision tools to get pricing right.
 

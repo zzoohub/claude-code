@@ -2,6 +2,19 @@
 
 Every word in the interface is a design decision. UX writing guides users through actions, builds trust, and prevents errors.
 
+## Table of Contents
+
+1. [Core Principle](#core-principle)
+2. [Voice and Tone](#voice-and-tone)
+3. [Button Labels](#button-labels)
+4. [Error Messages](#error-messages)
+5. [Empty States](#empty-states)
+6. [Onboarding Copy](#onboarding-copy)
+7. [Confirmation Dialogs](#confirmation-dialogs)
+8. [Placeholder Text](#placeholder-text)
+9. [Progress and Status](#progress-and-status)
+10. [Writing Checklist](#writing-checklist)
+
 ---
 
 ## Core Principle

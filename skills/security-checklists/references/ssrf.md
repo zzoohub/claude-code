@@ -6,6 +6,16 @@
 
 ---
 
+## Table of Contents
+
+1. [URL Input Handling](#url-input-handling)
+2. [Internal Network Protection](#internal-network-protection)
+3. [Cloud Metadata Exploitation](#cloud-metadata-exploitation)
+4. [Webhook & Callback URLs](#webhook--callback-urls)
+5. [Image/File Proxy & Processing](#imagefile-proxy--processing)
+6. [DNS Rebinding Defense](#dns-rebinding-defense)
+
+
 ## URL Input Handling
 
 | Check | Why | CWE |

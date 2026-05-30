@@ -1,5 +1,13 @@
 # EXPLAIN ANALYZE Reading Guide
 
+## Table of Contents
+
+1. [Running EXPLAIN](#running-explain)
+2. [Scan Types (typical cost order — NOT absolute; depends on selectivity)](#scan-types-typical-cost-order--not-absolute-depends-on-selectivity)
+3. [Key Indicators](#key-indicators)
+4. [Common EXPLAIN Anti-Patterns](#common-explain-anti-patterns)
+5. [Diagnostic Queries](#diagnostic-queries)
+
 ## Running EXPLAIN
 
 ```sql
@@ -122,6 +130,21 @@ LIMIT 20;
 ```
 
 ### Current locks and blocking
+
+Simplest version (PG 9.6+) — `pg_blocking_pids()` returns the PIDs blocking a given backend:
+```sql
+SELECT
+    blocked.pid AS blocked_pid,
+    LEFT(blocked.query, 80) AS blocked_query,
+    blocked.wait_event_type,
+    pg_blocking_pids(blocked.pid) AS blocking_pids,
+    now() - blocked.query_start AS blocked_duration
+FROM pg_stat_activity blocked
+WHERE cardinality(pg_blocking_pids(blocked.pid)) > 0
+ORDER BY blocked_duration DESC;
+```
+
+Detailed version (explicit `pg_locks` self-join — shows the exact blocking query per lock):
 ```sql
 SELECT
     blocked.pid AS blocked_pid,

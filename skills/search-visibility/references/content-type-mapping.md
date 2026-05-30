@@ -2,6 +2,16 @@
 
 Which optimization strategies to apply to which content. Not every page needs every optimization. Applying the wrong optimization to the wrong content wastes effort and can hurt the content's primary purpose.
 
+## Table of Contents
+
+1. [Core Principle: Purpose First, Optimization Second](#core-principle-purpose-first-optimization-second)
+2. [Optimization Intensity Scale](#optimization-intensity-scale)
+3. [Master Mapping Table: Page Types](#master-mapping-table-page-types)
+4. [Content Purpose Mapping](#content-purpose-mapping)
+5. [Decision Flowchart](#decision-flowchart)
+6. [Common Mistakes](#common-mistakes)
+7. [Quick Reference: When in Doubt](#quick-reference-when-in-doubt)
+
 ---
 
 ## Core Principle: Purpose First, Optimization Second
@@ -45,7 +55,7 @@ Each content type is mapped using a four-level scale for each optimization layer
 | Blog post (personal story / narrative) | Moderate | None | Light | Connect emotionally, build brand | Do not force answer formatting on narrative content. Light GEO if it contains quotable expertise. |
 | Ultimate guide / pillar page | Full | Full | Full | Comprehensive topic coverage | Top priority for all three layers. Hub of topic cluster. |
 | Glossary / definition page | Full | Full | Full | Define terms, capture informational queries | Perfect AEO target (paragraph snippets for definitions). |
-| FAQ page (standalone) | Full | Full | Moderate | Answer common questions | AEO primary purpose (answer extraction / AI citation). NOTE: FAQ rich results were removed by Google (gov/health-only 2023, all sites May 2026), so FAQPage markup no longer wins a SERP rich result — keep FAQ content for answer extraction, not a rich-result win. GEO moderate (shallow per topic). |
+| FAQ page (standalone) | Full | Full | Moderate | Answer common questions | AEO primary purpose (answer extraction / AI citation). NOTE: FAQ rich results were removed by Google, so FAQPage markup no longer wins a SERP rich result — keep FAQ content for answer extraction, not a rich-result win (timeline in `technical-seo.md` §6). GEO moderate (shallow per topic). |
 | Knowledge base / help article | Full | Full | Light | Help users solve problems | AEO full for step-by-step and answer snippets. GEO light because help content is product-specific. |
 | Documentation (technical) | Moderate | Moderate | Light | Provide technical reference | SEO/AEO moderate for discoverability. Do not sacrifice technical accuracy for optimization. |
 | Research report / whitepaper | Full | Moderate | Full | Present original findings | GEO full because AI heavily cites original research. AEO moderate for key finding snippets. |

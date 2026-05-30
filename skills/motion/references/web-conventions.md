@@ -7,18 +7,18 @@ Setup patterns, cleanup conventions, and integration gotchas for the web animati
 1. [GSAP Setup](#gsap-setup)
 2. [Cleanup Pattern](#cleanup-pattern)
 3. [Tailwind + GSAP Workflow](#tailwind--gsap-workflow)
-4. [Custom Text Splitter](#custom-text-splitter)
+4. [Text Splitting — Use GSAP SplitText (free since 2025)](#text-splitting--use-gsap-splittext-free-since-2025)
 5. [Lenis + GSAP Integration](#lenis--gsap-integration)
 6. [GSAP + D3 Integration](#gsap--d3-integration)
 7. [D3 Chart Factory Contract](#d3-chart-factory-contract)
-8. [CSS Native APIs](#css-native-apis)
+8. [CSS Native APIs (prefer for simple cases)](#css-native-apis-prefer-for-simple-cases)
 9. [View Transitions API](#view-transitions-api)
 10. [Bundle Strategy](#bundle-strategy)
-11. [Reduced Motion (JS)](#reduced-motion-js)
-12. [Performance Rules](#performance-rules)
-13. [Common Gotchas](#common-gotchas)
+11. [Reduced Motion (JS) — listen for live OS toggle changes](#reduced-motion-js--listen-for-live-os-toggle-changes)
+12. [Consume design-system motion tokens](#consume-design-system-motion-tokens)
+13. [Performance Rules](#performance-rules)
+14. [Common Gotchas](#common-gotchas)
 
----
 
 ## GSAP Setup
 
@@ -168,6 +168,53 @@ type ChartFactory<T> = (
 ) => { update: (newData: T[]) => void; destroy: () => void };
 ```
 
+Minimal reference implementation — every chart `update`/`destroy` follows this shape (D3 join for `update`, listener/DOM teardown for `destroy`):
+
+```ts
+import { select } from "d3-selection";
+import { scaleBand, scaleLinear } from "d3-scale";
+import { max } from "d3-array";
+
+type Bar = { label: string; value: number };
+
+const createBarChart: ChartFactory<Bar> = (container, data, options) => {
+  const width = options?.width ?? 600;
+  const height = options?.height ?? 300;
+  const svg = select(container)
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("role", "img");
+  const x = scaleBand<string>().range([0, width]).padding(0.1);
+  const y = scaleLinear().range([height, 0]);
+
+  function update(newData: Bar[]) {
+    x.domain(newData.map((d) => d.label));
+    y.domain([0, max(newData, (d) => d.value) ?? 0]);
+    svg
+      .selectAll<SVGRectElement, Bar>("rect")
+      .data(newData, (d) => d.label) // key fn = stable join across updates
+      .join(
+        (enter) => enter.append("rect").attr("class", "bar"),
+        (update) => update,
+        (exit) => exit.remove(),
+      )
+      .attr("x", (d) => x(d.label)!)
+      .attr("y", (d) => y(d.value))
+      .attr("width", x.bandwidth())
+      .attr("height", (d) => height - y(d.value));
+  }
+
+  update(data);
+  return {
+    update,
+    destroy: () => {
+      svg.remove(); // removes the SVG and all bound listeners
+    },
+  };
+};
+```
+
 Tree-shake D3 imports -- import individual modules (`d3-selection`, `d3-scale`, `d3-shape`, etc.) from a centralized `lib/d3.ts` file, not the full `d3` bundle.
 
 For responsive charts, wrap with `ResizeObserver` to re-render on container size changes.
@@ -187,7 +234,7 @@ CSS-native animation is now the **default** for simple reveals and route transit
 | `@starting-style` | Simple element enter/exit (modal, toast) | Need sequenced/staggered enter/exit |
 
 **Browser support (2026-05):**
-- Same-document View Transitions: Baseline (newly available) — Chrome 111+, Safari 18+, Firefox 144+ (Oct 2025). "Newly available," not "widely available," so older in-field versions still lack it.
+- Same-document View Transitions: Baseline (newly available) — Chrome 111+, Safari 18+, Firefox 144+ (Oct 2025; sources vary on the exact Firefox build/flag state — verify against your target before relying on it). "Newly available," not "widely available," so older in-field versions still lack it.
 - **Cross-document View Transitions** (`@view-transition` at-rule for MPAs): Chrome 126+ (June 2024), Safari 18.2+; **Firefox: not yet** (the at-rule is ignored) — falls back to instant nav, no animation
 - Scroll-driven animations: Chrome 115+, **Safari 26+** (unsupported through 18.x); Firefox behind the `layout.css.scroll-driven-animations.enabled` flag, not shipped. **Not Baseline** — always provide a non-scroll-timeline fallback.
 - `@starting-style`: Chrome 117+, Safari 17.5+; Firefox 129+ (Baseline)

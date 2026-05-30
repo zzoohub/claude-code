@@ -97,7 +97,7 @@ export function createFormatters(locale: string) {
       new Intl.ListFormat(locale, { type, style: 'long' }).format(items),
     // Locale-aware sort — never use default Array.sort()/localeCompare() for user-visible lists.
     collator: (opts?: Intl.CollatorOptions) => new Intl.Collator(locale, opts),
-    // DurationFormat types ship only in lib "esnext"; the self-contained unit type + cast work on any lib target.
+    // DurationFormat types ship only in lib "esnext"; the self-contained unit type + cast work on any lib target. Drop the `as any` once `lib: ["esnext"]` is set.
     duration: (parts: Partial<Record<
       'years' | 'months' | 'weeks' | 'days' | 'hours' | 'minutes' | 'seconds'
       | 'milliseconds' | 'microseconds' | 'nanoseconds', number>>) =>
@@ -108,6 +108,7 @@ export function createFormatters(locale: string) {
       if (Math.abs(diffSec) < 60) return rtf.format(-diffSec, 'second');
       if (Math.abs(diffSec) < 3600) return rtf.format(-Math.floor(diffSec / 60), 'minute');
       if (Math.abs(diffSec) < 86400) return rtf.format(-Math.floor(diffSec / 3600), 'hour');
+      // Capped at 'day' for brevity — extend with week/month/year buckets if needed.
       return rtf.format(-Math.floor(diffSec / 86400), 'day');
     },
     // Word/grapheme segmentation for ja/ko/zh/th (which don't space-separate)
@@ -123,14 +124,14 @@ export function createFormatters(locale: string) {
 
 For locales like ar, he, fa, ur:
 
-- Set `<html lang="..." dir="rtl">` (or `auto`) based on the active locale's `Intl.Locale.prototype.getTextInfo().direction` (a method — see note below)
+- Set `<html lang="..." dir="rtl">` based on the active locale's `Intl.Locale.prototype.getTextInfo().direction` (a method — see note below). On the root `<html>` prefer an explicit `rtl`/`ltr` from the resolved locale; reserve `dir="auto"` for user-generated runs of unknown direction (see §10), not the root.
 - Use **CSS logical properties** instead of physical: `margin-inline-start` not `margin-left`, `padding-block-end` not `padding-bottom`, `inset-inline` not `left/right`. Tailwind v4 has `ps-*`/`pe-*`/`ms-*`/`me-*` utilities.
 - Mirror icons that imply direction (arrows, chevrons) — leave content-meaningful icons alone (clock, search)
 - Test with `dir="rtl"` on a few pages even if you don't ship RTL today — catches physical-property bugs early
 - React Native: `I18nManager.forceRTL(true)` + `I18nManager.allowRTL(true)`; requires app restart to apply
 
 ```ts
-// getTextInfo() is a method (the old `textInfo` accessor was removed) and needs lib "esnext".
+// getTextInfo() is a method (the old `textInfo` accessor was removed) and needs lib "esnext" (drop the `as any` once that lib target is set).
 // Firefox doesn't implement it (any version), so fall back to a known-RTL language list.
 const RTL_LANGS = new Set(['ar', 'he', 'fa', 'ur', 'ps', 'sd', 'ckb', 'yi']);
 function isRtl(locale: string): boolean {
@@ -189,7 +190,7 @@ Language (what to translate) is independent from region (currency, date/number c
 
 ## Checklist
 
-- [ ] Keys organized by feature, stored as nested objects (`auth.login.title`)
+- [ ] Keys organized by feature, stored as nested objects (access path `auth.login.title` → `{ auth: { login: { title } } }`, not a literal flat dotted key)
 - [ ] Type-safe keys (next-intl: `AppConfig`, Paraglide: automatic, i18next: `CustomTypeOptions`)
 - [ ] Pluralization uses platform-native syntax AND only the CLDR categories each language has (ja/ko/id: `other` only)
 - [ ] Formatting via `Intl`/library formatters, never hand-formatted in text; currency from region, not language

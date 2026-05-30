@@ -2,6 +2,18 @@
 
 Optimize in-app paywalls, upgrade screens, upsell modals, and feature gates.
 
+## Table of Contents
+
+1. [Core Principles](#core-principles)
+2. [Paywall Trigger Points](#paywall-trigger-points)
+3. [Paywall Screen Components](#paywall-screen-components)
+4. [Specific Paywall Types](#specific-paywall-types)
+5. [Timing and Frequency](#timing-and-frequency)
+6. [Upgrade Flow Optimization](#upgrade-flow-optimization)
+7. [Anti-Patterns to Avoid](#anti-patterns-to-avoid)
+8. [Benchmarks](#benchmarks)
+9. [Key Metrics](#key-metrics)
+
 ---
 
 ## Core Principles
@@ -156,7 +168,7 @@ What you've accomplished:
 | Paywall click-through | 5-15% | 15-25% | 25%+ |
 | Upgrade completion (started → done) | 50-70% | 70-85% | 85%+ |
 
-Products that gate features users have already tried convert 2-3x better than products that gate features users have never seen. Value-before-ask is the single highest-leverage principle for paywall conversion.
+These figures are directional and vary by industry, product, and period — validate against your own data. Products that gate features users have already tried convert 2-3x better than products that gate features users have never seen. Value-before-ask is the single highest-leverage principle for paywall conversion.
 
 ---
 

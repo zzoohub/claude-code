@@ -4,6 +4,18 @@
 
 Shipping an LLM feature is easy. Operating it is the hard part. This covers the layer between "the prompt works" and "it survives real traffic" — the concerns you decide at design time so the feature is operable, not the runtime mechanics of operating it.
 
+## Table of Contents
+
+1. [Latency](#latency)
+2. [Cost](#cost)
+3. [Caching](#caching)
+4. [Reliability](#reliability)
+5. [Observability](#observability)
+6. [Security and privacy](#security-and-privacy)
+7. [Rollout](#rollout)
+8. [Model updates](#model-updates)
+9. [When things go wrong](#when-things-go-wrong)
+
 ## Latency
 
 LLM latency is dominated by two factors: time-to-first-token (TTFT) and time-per-output-token. You trade these against quality.
@@ -45,7 +57,7 @@ Cost = (input tokens × input rate) + (output tokens × output rate). Output is 
 
 Different layers cache different things:
 
-**Prompt caching (provider-level).** Cache stable parts of the prompt (system, few-shot examples, long context documents) so subsequent requests reuse them at a steep discount and lower latency. The exact savings are provider-specific — Anthropic cache reads run ~90% off input (and require an explicit cache breakpoint), OpenAI applies automatic caching at roughly ~50% off, others vary — so check current pricing rather than hard-coding a number. All require the prefix to match exactly: design prompts with a stable prefix and a variable suffix.
+**Prompt caching (provider-level).** Cache stable parts of the prompt (system, few-shot examples, long context documents) so subsequent requests reuse them at a steep discount and lower latency. The exact savings are provider-specific — Anthropic cache reads run ~90% off input (and require an explicit cache breakpoint), OpenAI applies automatic caching at ~50% off or more (newer models discount cached input more steeply), others vary — so check current pricing rather than hard-coding a number. All require the prefix to match exactly: design prompts with a stable prefix and a variable suffix.
 
 **Response caching (your infrastructure).** For deterministic or slow-changing queries, cache the final response by hash of input. Works for tasks like "summarize this URL" but useless for personalized or time-sensitive responses.
 

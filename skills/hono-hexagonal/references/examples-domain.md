@@ -4,6 +4,14 @@ Models, errors, ports, and service implementation.
 
 ---
 
+## Table of Contents
+
+1. [Domain Models](#domain-models)
+2. [Domain Errors](#domain-errors)
+3. [Ports (Interfaces)](#ports-interfaces)
+4. [Service Implementation](#service-implementation)
+
+
 ## Domain Models
 
 ```typescript

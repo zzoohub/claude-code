@@ -4,7 +4,6 @@ description: |
   Build 3D and immersive web experiences with Three.js (WebGPU-first), TSL shaders, Koota ECS, Rapier physics, Rust WASM, and WebXR.
   Use this skill whenever the user works on: 3D scenes, WebGL/WebGPU rendering, Three.js shaders (TSL/node materials), VR/AR/XR/mixed reality, spatial computing, immersive experiences, 3D physics simulation, ECS game architecture, particle systems, procedural geometry, glTF models, spatial audio, hand tracking, controller input, head-mounted displays, or any task involving three/webgpu, three/tsl, koota, @dimforge/rapier3d, or WebXR.
   Also trigger when the user mentions "three.js", "webxr", "webgpu", "TSL", "node material", "shader", "ECS", "rapier", or "wasm" in a 3D/game context.
-  Framework-specific implementations live in `references/<framework>/` — currently only React/R3F is covered. Solid (solid-three) and Svelte (threlte) are out of scope.
   Do NOT use for UX/IA, spatial-interaction comfort, or experience design of XR apps (use ux-design); this skill owns the rendering/engine implementation, not the UX.
 ---
 
@@ -57,7 +56,7 @@ This is a fast-moving domain. The architectural patterns and principles in this 
 
 ## WebGPU-First Setup
 
-Import from `three/webgpu` instead of `three`. This gives WebGPU rendering with automatic WebGL 2 fallback. WebGPU has shipped in every major engine (Chromium, Safari, and — as of early 2026 — Firefox on Windows/macOS), but real-world coverage is still partial: Firefox on Linux/Android and older mobile devices have not caught up. Treat the **WebGL 2 fallback path as the actual guarantee**, not a coverage percentage — design and test for both backends, and feature-detect before assuming WebGPU (see below).
+Import from `three/webgpu` instead of `three`. This gives WebGPU rendering with automatic WebGL 2 fallback. WebGPU has shipped in every major engine (Chromium, Safari, and — as of early 2026 — Firefox on Windows and macOS (Apple Silicon)), but real-world coverage is still partial: Firefox on Linux/Android and older mobile devices have not caught up. Treat the **WebGL 2 fallback path as the actual guarantee**, not a coverage percentage — design and test for both backends, and feature-detect before assuming WebGPU (see below).
 
 ```typescript
 import * as THREE from 'three/webgpu'

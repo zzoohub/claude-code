@@ -2,6 +2,19 @@
 
 > OWASP: A02 (Security Misconfiguration)
 
+## Table of Contents
+
+1. [Default Credentials & Settings](#default-credentials--settings)
+2. [Debug & Development Settings](#debug--development-settings)
+3. [HTTP Security Headers](#http-security-headers)
+4. [CORS Misconfiguration](#cors-misconfiguration)
+5. [Cloud Storage & Service Configuration](#cloud-storage--service-configuration)
+6. [Directory & File Exposure](#directory--file-exposure)
+7. [Infrastructure Misconfiguration](#infrastructure-misconfiguration)
+8. [Subdomain Takeover](#subdomain-takeover)
+9. [Cache Poisoning](#cache-poisoning)
+10. [Environment Separation](#environment-separation)
+
 ---
 
 ## Default Credentials & Settings

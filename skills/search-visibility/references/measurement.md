@@ -4,6 +4,17 @@ How to measure success across traditional search, answer engine features, and AI
 
 ---
 
+## Table of Contents
+
+1. [The Measurement Challenge](#the-measurement-challenge)
+2. [Traditional SEO Metrics](#traditional-seo-metrics)
+3. [AEO Metrics](#aeo-metrics)
+4. [GEO Metrics](#geo-metrics)
+5. [Integrated Measurement Framework](#integrated-measurement-framework)
+6. [Tools Landscape](#tools-landscape)
+7. [Measurement Pitfalls to Avoid](#measurement-pitfalls-to-avoid)
+
+
 ## The Measurement Challenge
 
 Traditional SEO has a clear attribution path: user searches, clicks result, lands on site, converts. Analytics tools (GA4, GSC) track this end to end.
@@ -99,7 +110,7 @@ You need traditional SEO metrics, AEO metrics, and GEO metrics to see the full p
 - **Interpret carefully**: Low CTR on a query where you hold the snippet is normal AEO behavior, not a problem to fix
 
 ### Rich Result Performance
-- **What**: Performance of pages with *currently supported* structured-data rich results (review stars, product, breadcrumbs, video, etc.). Note: FAQ and HowTo rich results are deprecated (HowTo 2023; FAQ removed for all sites May 2026), and their Search Console reports / Rich Results Test support are being retired in 2026 — do not track them as live rich results
+- **What**: Performance of pages with *currently supported* structured-data rich results (review stars, product, breadcrumbs, video, etc.). Note: FAQ and HowTo rich results are deprecated, and their Search Console reports / Rich Results Test support are being retired in 2026 — do not track them as live rich results (timeline in `technical-seo.md` §6)
 - **Tools**: Google Search Console (Enhancements reports), Rich Results Test
 - **Track**: Valid vs. invalid structured data items, CTR comparison for pages with vs. without rich results, rich result types active
 
@@ -156,7 +167,7 @@ You need traditional SEO metrics, AEO metrics, and GEO metrics to see the full p
 **Dashboard 2: Answer Engine Performance (AEO)**
 - Featured snippet ownership and changes
 - People Also Ask presence
-- Rich result performance (currently-supported types — note FAQ/HowTo rich results are deprecated)
+- Rich result performance (currently-supported types — note FAQ/HowTo rich results are deprecated; see `technical-seo.md` §6)
 - Voice search visibility (manual audit results)
 - Zero-click indicators (high impression / low CTR question queries)
 

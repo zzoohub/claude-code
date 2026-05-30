@@ -5,14 +5,13 @@ description: |
   (active → done), block (active → blocked), unblock (blocked → backlog/active),
   abandon (any → backlog with note). Also makes light single-row field edits —
   reprioritize, reassign, move a task to another phase — and removes a row
-  created in error. Edits `tasks/board.md` one row at a time; block/abandon
-  (and phase moves) also touch the feature file.
+  created in error.
   Use when: starting work on a task, marking a task complete, marking a task
   blocked, moving a task back to backlog, changing a single task's priority,
   assignee, or phase, or removing a mistaken row. Trigger phrases: "start
-  T-005", "complete T-005", "block T-005 — waiting on X", "T-005 is done",
-  "reprioritize T-005 to high", "reassign T-005 to Alice", "move T-005 to phase
-  3", "remove T-009 — created by mistake".
+  T-005", "complete T-005", "block T-005 — waiting on X",
+  "reprioritize T-005 to high", "move T-005 to phase 3",
+  "remove T-009 — created by mistake".
   Do NOT use for: creating tasks (use task-add). Do NOT use for: revising a
   task's definition — context, acceptance, touches, deps (use task-add). Do NOT
   use for: rewriting the board (use task-craft for initial creation).
@@ -28,6 +27,9 @@ Brownfield skill for status and light single-field updates. Touches one row of
 
 `tasks/board.md` must already exist with the task.
 
+The single source of truth for the row format and the `status`/`priority` enums
+is `task-craft/references/board-schema.md`.
+
 If your project keeps tasks elsewhere, see `AGENTS.md`.
 
 ## Status Lifecycle
@@ -35,7 +37,7 @@ If your project keeps tasks elsewhere, see `AGENTS.md`.
 ```
 backlog ──start──▶ active ──complete──▶ done
    ▲                 │
-   │                 └──block──▶ blocked ──unblock──▶ active or backlog
+   │                 └──block──▶ blocked ──unblock──▶ backlog (default) or active
    │
    └── abandon ◀── any state (active / blocked / done), → backlog with reason logged to the feature file
 ```
@@ -59,7 +61,7 @@ Same one-row discipline, for single-field corrections:
 | Field | Action | Notes |
 |---|---|---|
 | `priority` | `reprioritize T-NNN --to={high\|medium\|low}` | Lowercase only. |
-| `assignee` | `reassign T-NNN --to={user\|—}` | Doesn't change status. |
+| `assignee` | `reassign T-NNN --assignee={user\|—}` | Doesn't change status. |
 | phase | `move T-NNN --to-phase=N` | Relocate the row to the `## Phase N` section **and** update `phase:` in the feature file so the two stay in sync. Verify the new phase doesn't break dependency ordering or create a same-file conflict. |
 
 ### Removing a task

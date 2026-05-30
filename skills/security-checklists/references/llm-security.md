@@ -2,6 +2,18 @@
 
 > OWASP: Top 10 for LLM Applications 2025 (LLM01-LLM10)
 
+## Table of Contents
+
+1. [Prompt Injection](#prompt-injection)
+2. [MCP Server Security](#mcp-server-security)
+3. [Sensitive Data in LLM Context](#sensitive-data-in-llm-context)
+4. [System Prompt Leakage](#system-prompt-leakage)
+5. [Excessive Agency & Tool Use](#excessive-agency--tool-use)
+6. [LLM Output Handling](#llm-output-handling)
+7. [RAG (Retrieval Augmented Generation) Security](#rag-retrieval-augmented-generation-security)
+8. [Model Configuration & Deployment](#model-configuration--deployment)
+9. [Training Data & Model Security](#training-data--model-security)
+
 ---
 
 ## Prompt Injection

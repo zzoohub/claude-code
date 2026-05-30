@@ -38,7 +38,7 @@ Indexes are only useful when query WHERE/ORDER BY matches index structure exactl
 Consult `references/indexing-pitfalls.md` for common mismatches.
 
 ### 4. Keep Resultsets Reasonable
-Every query should aim for under 10,000 rows returned. Use LIMIT, keyset pagination, or encourage filtering from the application layer. Consult `references/query-patterns.md` for patterns.
+As a rule of thumb, aim for under ~10,000 rows returned (the practical limit depends on row width and the client) — use LIMIT, keyset pagination, or encourage filtering from the application layer. Consult `references/query-patterns.md` for patterns.
 
 ## Workflow: When Writing Queries
 
@@ -80,6 +80,7 @@ Key checks:
 - Connection pooling configured
 - VACUUM/ANALYZE strategy in place
 - Monitoring for slow queries and lock contention
+- For live diagnostics, run `scripts/query_diagnostics.sql` (psql-ready queries for slow queries, locks, bloat, vacuum lag, stale stats)
 
 ## Quick Decision Table
 
@@ -126,7 +127,7 @@ Key checks:
 
 | Version | Released | Notable additions |
 |---|---|---|
-| **PG 18** | 2025-09-25 | Built-in `uuidv7()`; async I/O improvements; explicit `uuidv4()` alias |
+| **PG 18** | 2025-09-25 | Built-in `uuidv7()`; async I/O improvements; explicit `uuidv4()` alias (UUIDv4 already available via `gen_random_uuid()` since PG 13) |
 | **PG 17** | 2024-09 | `MERGE ... RETURNING`; `JSON_TABLE`; incremental sort improvements; faster `vacuum` |
 | **PG 16** | 2023-09 | `pg_stat_io` (per-IO-type stats — complements per-query `BUFFERS`); logical decoding on standby; parallel apply of large transactions |
 | **PG 15** | 2022-10 | `MERGE` statement |
@@ -139,7 +140,7 @@ Practical implications:
 
 ### DDL portability (PG18 vs ≤PG17)
 
-The DDL skeletons in this skill default to PG 18 (`DEFAULT uuidv7()`). For PG 17 and below, generate UUIDs at the application layer or use `gen_random_uuid()` (UUIDv4, built into core since PG 13 — no `pgcrypto` needed):
+When generating UUID-keyed DDL, default to PG 18 (`DEFAULT uuidv7()`). For PG 17 and below, generate UUIDs at the application layer or use `gen_random_uuid()` (UUIDv4, built into core since PG 13 — no `pgcrypto` needed):
 
 ```sql
 -- PG 18+ (preferred)

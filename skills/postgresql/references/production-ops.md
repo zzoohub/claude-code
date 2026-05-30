@@ -4,6 +4,17 @@ Patterns for running PostgreSQL reliably in production.
 
 For runnable diagnostic queries against a live database (slowest queries, lock waits, bloat, vacuum lag, stale planner stats), see `../scripts/query_diagnostics.sql` — psql-ready queries you can execute directly.
 
+## Table of Contents
+
+1. [Zero-Downtime Migrations](#1-zero-downtime-migrations)
+2. [Backfilling Large Tables](#2-backfilling-large-tables)
+3. [VACUUM & ANALYZE Strategy](#3-vacuum--analyze-strategy)
+4. [Connection Pooling](#4-connection-pooling)
+5. [Index Maintenance](#5-index-maintenance)
+6. [PostgreSQL Configuration Tuning](#6-postgresql-configuration-tuning)
+7. [Enabling pg_stat_statements](#7-enabling-pg_stat_statements)
+8. [Monitoring Checklist](#8-monitoring-checklist)
+
 ## 1. Zero-Downtime Migrations
 
 ### Adding NOT NULL Constraint (safe pattern)

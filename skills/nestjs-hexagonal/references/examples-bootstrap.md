@@ -2,6 +2,20 @@
 
 Config, main.ts, module wiring, TypeORM setup, and hex-specific test mocks.
 
+## Table of Contents
+
+1. [Config](#config)
+2. [Bootstrap (main.ts)](#bootstrap-maints)
+3. [Root Module (AppModule)](#root-module-appmodule)
+4. [Feature Module (AuthorsModule)](#feature-module-authorsmodule)
+5. [NoOp Adapters](#noop-adapters)
+6. [TypeORM DataSource + Migrations](#typeorm-datasource--migrations)
+7. [package.json](#packagejson)
+8. [tsconfig.json](#tsconfigjson)
+9. [Vitest config](#vitest-config)
+10. [Testing: Hex-Specific Mocks](#testing-hex-specific-mocks)
+11. [.env.example](#envexample)
+
 ---
 
 ## Config

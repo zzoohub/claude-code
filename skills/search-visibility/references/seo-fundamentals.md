@@ -4,6 +4,15 @@ Detailed reference for traditional SEO practices. This covers keyword research, 
 
 ---
 
+## Table of Contents
+
+1. [1. Keyword Research and Search Intent](#1-keyword-research-and-search-intent)
+2. [2. On-Page Optimization](#2-on-page-optimization)
+3. [3. Content Strategy](#3-content-strategy)
+4. [4. Link Building](#4-link-building)
+5. [5. E-E-A-T (Experience, Expertise, Authoritativeness, Trustworthiness)](#5-e-e-a-t-experience-expertise-authoritativeness-trustworthiness)
+
+
 ## 1. Keyword Research and Search Intent
 
 ### Search Intent Types

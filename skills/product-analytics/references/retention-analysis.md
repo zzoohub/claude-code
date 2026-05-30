@@ -1,5 +1,18 @@
 # Retention & Cohort Analysis
 
+## Table of Contents
+
+1. [Why Retention Is the Only Metric That Matters](#why-retention-is-the-only-metric-that-matters)
+2. [Cohort Types](#cohort-types)
+3. [Retention Intervals](#retention-intervals)
+4. [PMF Assessment via Retention Curves](#pmf-assessment-via-retention-curves)
+5. [Building Cohort Tables](#building-cohort-tables)
+6. [Common Retention Patterns & Diagnoses](#common-retention-patterns--diagnoses)
+7. [Segmented Analysis](#segmented-analysis)
+8. [Implementation in PostHog](#implementation-in-posthog)
+9. [Revenue Retention (GRR/NRR) via HogQL](#revenue-retention-grrnrr-via-hogql)
+10. [LTV Estimation from Cohorts](#ltv-estimation-from-cohorts)
+
 ## Why Retention Is the Only Metric That Matters
 
 Acquisition can be bought. Revenue can be inflated. But retention is the unmanipulable signal of whether your product delivers value. A product with 80% D30 retention and 100 users will outperform a product with 10% D30 retention and 10,000 users — every time.
@@ -94,7 +107,7 @@ Plot cohort retention curves. The shape tells you everything:
 ```
 **Diagnosis**: Strong PMF with network effects or expanding use cases. Rare and very valuable.
 
-### Plateau Height Benchmarks (2025 B2B SaaS)
+### Plateau Height Benchmarks (B2B SaaS, directional — re-verify before citing)
 
 | Plateau Height | Assessment | Action |
 |---------------|------------|--------|
@@ -106,7 +119,7 @@ Plot cohort retention curves. The shape tells you everything:
 
 **Consumer products** typically need higher plateaus (>20%) due to lower monetization per user.
 
-### Revenue Retention Benchmarks (2025)
+### Revenue Retention Benchmarks (directional — re-verify before citing)
 
 | Metric | Median | Top Quartile | Elite |
 |--------|--------|--------------|-------|
@@ -293,15 +306,19 @@ WITH monthly_revenue AS (
   GROUP BY person_id, month
 ),
 nrr AS (
+  -- LEFT JOIN keyed on prev (the base period) so customers who fully churned
+  -- (revenue last month, no events this month) stay in beginning_revenue and
+  -- contribute 0 to ending_revenue via COALESCE. An INNER JOIN would drop them
+  -- from both sides, hiding contraction-to-zero and inflating NRR.
   SELECT
-    curr.month AS month,
+    prev.month + INTERVAL 1 MONTH AS month,
     SUM(prev.revenue) AS beginning_revenue,
-    SUM(curr.revenue) AS ending_revenue
-  FROM monthly_revenue curr
-  JOIN monthly_revenue prev
+    SUM(COALESCE(curr.revenue, 0)) AS ending_revenue
+  FROM monthly_revenue prev
+  LEFT JOIN monthly_revenue curr
     ON curr.person_id = prev.person_id
     AND curr.month = DATE_ADD(prev.month, INTERVAL 1 MONTH)
-  GROUP BY curr.month
+  GROUP BY prev.month
 )
 SELECT
   month,

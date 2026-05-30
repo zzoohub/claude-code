@@ -4,6 +4,18 @@
 
 Compiler-based i18n — translations compile into tree-shakable JS functions. Unused messages are eliminated from the bundle. Full TypeScript type safety is automatic. Framework-agnostic: SvelteKit, TanStack Start, Astro, React Router, or any Vite-based setup.
 
+## Table of Contents
+
+1. [Setup](#setup)
+2. [Message Format](#message-format)
+3. [Usage](#usage)
+4. [SSR Middleware (v2)](#ssr-middleware-v2)
+5. [Strategy Configuration](#strategy-configuration)
+6. [Language Switcher](#language-switcher)
+7. [SEO](#seo)
+8. [Type Safety](#type-safety)
+9. [Common Pitfalls](#common-pitfalls)
+
 ---
 
 ## Setup

@@ -2,6 +2,20 @@
 
 Real-world scenarios where indexes are ignored or used inefficiently, and how to fix them.
 
+## Table of Contents
+
+1. [Pitfall 1: Partial Index Not Used — Query Doesn't Match Exactly](#pitfall-1-partial-index-not-used--query-doesnt-match-exactly)
+2. [Pitfall 2: Composite Index Column Order Mismatch](#pitfall-2-composite-index-column-order-mismatch)
+3. [Pitfall 3: Index Not Selective Enough — Filter Instead of Index Cond](#pitfall-3-index-not-selective-enough--filter-instead-of-index-cond)
+4. [Pitfall 4: LIKE Query Ignored Due to Collation](#pitfall-4-like-query-ignored-due-to-collation)
+5. [Pitfall 5: Mixed-Direction ORDER BY Forces a Sort](#pitfall-5-mixed-direction-order-by-forces-a-sort)
+6. [Pitfall 6: FK DELETE Slow — Missing Index on Referenced Column](#pitfall-6-fk-delete-slow--missing-index-on-referenced-column)
+7. [Pitfall 7: Overindexing Kills HOT Updates](#pitfall-7-overindexing-kills-hot-updates)
+8. [Pitfall 8: Index Ignored After Bulk DELETE — Stale Statistics](#pitfall-8-index-ignored-after-bulk-delete--stale-statistics)
+9. [Pitfall 9: Index-Only Scan Slow — Index Bloat](#pitfall-9-index-only-scan-slow--index-bloat)
+10. [Pitfall 10: Function in WHERE Without Expression Index](#pitfall-10-function-in-where-without-expression-index)
+11. [Index Selection Cheat Sheet](#index-selection-cheat-sheet)
+
 ## Pitfall 1: Partial Index Not Used — Query Doesn't Match Exactly
 
 ```sql

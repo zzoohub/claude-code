@@ -1,24 +1,18 @@
 ---
 name: churn-prevention
 description: |
-  Churn prevention strategies, cancel flow optimization, payment recovery, and customer health scoring.
+  Churn prevention, cancel flows, payment recovery, and customer health scoring.
+  Carve-out: dunning emails ARE owned here, not email-marketing.
   Use when: designing cancel flows, creating save offers, implementing dunning sequences,
-  building health scores, reducing involuntary churn, diagnosing churn patterns,
-  or when user mentions "churn", "cancel", "retention", "dunning", "payment failed",
-  "failed payment", "payment recovery", "save offer", "cancel flow", "downgrade",
-  "customer health", "at-risk customers", "subscription cancellation", "reduce churn rate",
-  "why are users leaving", "customer at risk".
-  Do NOT use for: onboarding optimization (use cro skill); general marketing
-  email sequences including win-back campaigns (use email-marketing skill);
-  pricing/tier design — including what a downgrade tier costs — (use pricing skill;
-  "downgrade" here means offering a lower tier as a save offer to retain a cancelling
-  customer); or deep retention analytics — retention-cohort analysis, retention curves,
-  cohort tables, user segmentation, Carrying Capacity, PMF assessment, or Aha-Moment
-  work (use product-analytics skill; this skill owns operational churn diagnosis tied
-  to intervention: voluntary-vs-involuntary split, cancel-reason themes, at-risk health
-  scoring). Carve-out: dunning emails (payment-failure recovery) ARE owned here in
-  `references/dunning-playbook.md` because they're tightly coupled to retry logic and
-  billing state, not general marketing.
+  building customer health scores, reducing involuntary churn, diagnosing churn patterns,
+  or when user mentions "churn", "retention", "payment failed", "payment recovery",
+  "downgrade", "at-risk customers", "subscription cancellation", "why are users leaving".
+  Do NOT use for: onboarding optimization (use cro); marketing email sequences including
+  win-back (use email-marketing); pricing/tier design, including a downgrade tier's cost
+  (use pricing; "downgrade" here means a save-offer lower tier); or deep retention analytics
+  — cohort analysis, retention curves, segmentation, Carrying Capacity, PMF, Aha-Moment
+  (use product-analytics). This skill owns intervention-tied churn diagnosis:
+  voluntary-vs-involuntary split, cancel-reason themes, at-risk scoring.
 ---
 
 # Churn Prevention
@@ -107,7 +101,7 @@ Payment failures are mechanical problems with mechanical solutions. Fix these fi
 Other states impose analogous requirements. Confirm the current rule and effective date in every state you serve.
 
 ### EU / UK
-- **EU:** The Unfair Commercial Practices Directive (2005/29/EC) and the Consumer Rights Directive (2011/83/EU), as implemented in national law, are the operative rules restricting deceptive cancellation "dark patterns" for ordinary subscription businesses today. The Digital Services Act additionally bans dark patterns but only for designated **online platforms** (Art. 25, which itself defers to the UCPD and GDPR where they already apply); the Digital Markets Act bans dark-pattern circumvention (Arts. 5(2), 13) only for designated **gatekeepers** (a handful of Big Tech firms) — neither reaches a typical SaaS seller. GDPR governs consent-specific dark patterns. A dedicated EU rule on subscription/cancellation dark patterns — the **Digital Fairness Act** — is planned (Commission proposal expected ~Q4 2026) but is NOT yet in force. Separately, Directive (EU) 2023/2673 adds a "withdrawal button" requirement to the Consumer Rights Directive for distance contracts concluded online, applying from 2026-06-19 (this concerns the statutory right of withdrawal, distinct from ongoing subscription cancellation). France's DGCCRF and other consumer-protection authorities (acting under national UCPD law) have stepped up enforcement on subscription-trap patterns since 2024-2025.
+- **EU:** The Unfair Commercial Practices Directive (2005/29/EC) and the Consumer Rights Directive (2011/83/EU), as implemented in national law, are the operative rules restricting deceptive cancellation "dark patterns" for ordinary subscription businesses today. The Digital Services Act additionally bans dark patterns but only for designated **online platforms** (Art. 25, which itself defers to the UCPD and GDPR where they already apply); the Digital Markets Act bans dark-pattern circumvention (Arts. 5(2), 13) only for designated **gatekeepers** (a handful of Big Tech firms) — neither reaches a typical SaaS seller. GDPR governs consent-specific dark patterns. A dedicated EU rule on subscription/cancellation dark patterns — the **Digital Fairness Act** — is planned (Commission proposal expected ~Q4 2026, may slip — confirm) but is NOT yet in force. Separately, Directive (EU) 2023/2673 adds a "withdrawal button" requirement to the Consumer Rights Directive for distance contracts concluded online, applying from 2026-06-19 (this concerns the statutory right of withdrawal, distinct from ongoing subscription cancellation). France's DGCCRF and other consumer-protection authorities (acting under national UCPD law) have stepped up enforcement on subscription-trap patterns since 2024-2025.
 - **UK:** The DSA and DMA do **not** apply in the UK post-Brexit (they reach UK firms only when serving EU users). UK subscription-trap and dark-pattern rules sit under the **Digital Markets, Competition and Consumers Act 2024 (DMCC Act)** — its consumer-protection / unfair-commercial-practices provisions are in force from 2025-04-06 (CMA direct enforcement), and a dedicated subscription-contracts regime (cancel as easily as you signed up, auto-renewal reminders, cooling-off) is expected around spring 2027 (may slip — secondary legislation pending). UK GDPR also applies. Confirm separately.
 
 ### Practical cancel-flow checklist (compliance-safe)
@@ -126,6 +120,8 @@ See `references/cancel-flow-patterns.md` for compliant UI patterns.
 ---
 
 ## Customer Health Score Framework
+
+This section owns the **scoring-model design** (which signals, weights, and thresholds). The instrumented `biz/analytics/health-score.md` artifact and the live data pipeline that computes scores belong to the **product-analytics / data-analyst** side — same methodology-vs-artifact split applied in § Churn Diagnosis.
 
 Track these signals to identify at-risk users before they churn:
 

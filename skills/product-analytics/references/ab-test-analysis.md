@@ -2,6 +2,16 @@
 
 **Layer:** experiment **analysis** (significance testing, segments, novelty, revenue impact, ratio metrics). For experiment **design** (hypothesis, sample size, variant build, ramp), use the **cro** skill.
 
+## Table of Contents
+
+1. [When to Use This Reference](#when-to-use-this-reference)
+2. [Analysis Framework](#analysis-framework)
+3. [Statistical Rigor](#statistical-rigor)
+4. [Common Pitfalls](#common-pitfalls)
+5. [PostHog Experiment Analysis](#posthog-experiment-analysis)
+6. [Experiment Report Template](#experiment-report-template)
+
+
 ## When to Use This Reference
 
 Use when analyzing experiment results from PostHog (or any A/B testing tool). This covers the analysis methodology — experiment design and setup is handled by the **cro** skill.

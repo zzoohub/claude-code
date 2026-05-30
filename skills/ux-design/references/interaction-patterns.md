@@ -2,6 +2,18 @@
 
 How screens respond to user actions. Interaction design is the bridge between static layouts and living interfaces.
 
+## Table of Contents
+
+1. [Core Principle](#core-principle)
+2. [State Machine Design](#state-machine-design)
+3. [System Feedback Patterns](#system-feedback-patterns)
+4. [Gesture Patterns](#gesture-patterns)
+5. [Optimistic UI](#optimistic-ui)
+6. [Loading Patterns](#loading-patterns)
+7. [Undo / Redo Patterns](#undo--redo-patterns)
+8. [Transitions and Navigation Animation](#transitions-and-navigation-animation)
+9. [Micro-Interactions](#micro-interactions)
+
 ---
 
 ## Core Principle

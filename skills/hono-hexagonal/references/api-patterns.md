@@ -4,6 +4,22 @@ HTTP request/response examples for common and advanced patterns.
 
 ---
 
+## Table of Contents
+
+1. [CRUD](#crud)
+2. [Error Responses (RFC 9457)](#error-responses-rfc-9457)
+3. [Pagination](#pagination)
+4. [Conditional Request (ETag)](#conditional-request-etag)
+5. [File Upload](#file-upload)
+6. [State Transitions](#state-transitions)
+7. [Search](#search)
+8. [Relationship Expansion](#relationship-expansion)
+9. [Async Operations](#async-operations)
+10. [Bulk Operations](#bulk-operations)
+11. [Server-Sent Events (SSE)](#server-sent-events-sse)
+12. [Webhooks](#webhooks)
+
+
 ## CRUD
 
 ### Create (POST → 201)

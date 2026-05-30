@@ -4,6 +4,17 @@
 
 ---
 
+## Table of Contents
+
+1. [Error Handling — Client-Facing](#error-handling--client-facing)
+2. [Error Handling — Server-Side](#error-handling--server-side)
+3. [Fail-Closed vs Fail-Open Analysis](#fail-closed-vs-fail-open-analysis)
+4. [Security Event Logging](#security-event-logging)
+5. [Log Integrity & Safety](#log-integrity--safety)
+6. [Alerting & Monitoring](#alerting--monitoring)
+7. [Audit Trail Requirements](#audit-trail-requirements)
+
+
 ## Error Handling — Client-Facing
 
 | Check | Why | CWE |

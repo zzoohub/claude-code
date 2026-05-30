@@ -4,12 +4,12 @@ description: |
   Axum 0.8+ with hexagonal architecture patterns in Rust.
   Use when: building any Rust API — this is the default backend implementation skill.
   Covers: API design (utoipa-axum + OpenApiRouter), domain modeling, ports & adapters, service layer, error handling, testing.
-  Do not use for: database schema design (use database-design skill).
+  Do not use for: database schema design (use database-design skill); non-Rust stacks (use hono/fastapi/nestjs-hexagonal).
 ---
 
 # Axum + Hexagonal Architecture
 
-**For latest Axum/SQLx APIs, use context7.**
+**For latest Axum/SQLx APIs, use a doc-lookup tool (e.g. context7) if one is available.**
 
 > **SQLx version (0.8/0.9):** `sqlx 0.9.0` is now current; this skill's patterns target **0.8/0.9** and work unchanged on both. The `query!`/`query_as!` macros and `&mut **tx` still apply — string-literal queries satisfy 0.9's new `SqlSafeStr` bound automatically. What 0.9 adds: `SqlSafeStr` (dynamic / non-`'static` query strings must now be wrapped in `AssertSqlSafe(...)`), an optional `sqlx.toml` config file, `sqlx::raw_sql()` for running a string directly against an `Executor`, and removal of the `TransactionManager` re-export. The `.sqlx/` offline-prepare workflow is unchanged.
 

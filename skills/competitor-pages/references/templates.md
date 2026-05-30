@@ -2,6 +2,17 @@
 
 Copy structures and section templates for each competitor page format.
 
+## Table of Contents
+
+1. [Format 1: [Competitor] Alternative (Singular)](#format-1-competitor-alternative-singular)
+2. [Format 2: [Competitor] Alternatives / Best [Category] Tools (Roundup)](#format-2-competitor-alternatives--best-category-tools-roundup)
+3. [Format 3: You vs [Competitor]](#format-3-you-vs-competitor)
+4. [Format 4: [A] vs [B] (Third-Party Comparison)](#format-4-a-vs-b-third-party-comparison)
+5. [Format 5: Switching from [Competitor] (Migration Guide)](#format-5-switching-from-competitor-migration-guide)
+6. [Section Copy Patterns](#section-copy-patterns)
+7. [Meta Tags Template](#meta-tags-template)
+8. [Schema Templates](#schema-templates)
+
 > **Placeholders:** Fill every bracketed placeholder before publishing. `[Year]` = the current year (2026) — year-stamped titles only help time-sensitive roundup / "which is better" listicles, and they decay, so re-stamp the year **and** refresh the underlying content each January, or omit the year if you can't commit to refreshing. Mark data you don't have yet with `[TODO: ...]` (see `content-architecture.md` → Handling Incomplete Data).
 
 ---
@@ -88,7 +99,7 @@ Common reasons:
 ### Page Template
 
 ```
-# [N] Best [Competitor] Alternatives in [Year]
+# [N] Best [Competitor] Alternatives in [Year]   <!-- [Year]: re-stamp + refresh content each January, or omit if you can't commit to refreshing -->
 
 ## TL;DR
 [Quick summary of top alternatives with positioning]
@@ -215,7 +226,7 @@ Before evaluating, consider:
 ### Page Template
 
 ```
-# [Competitor A] vs [Competitor B]: Which Is Better in [Year]?
+# [Competitor A] vs [Competitor B]: Which Is Better in [Year]?   <!-- [Year]: re-stamp + refresh content each January, or omit if you can't commit to refreshing -->
 
 ## TL;DR
 [Summary of both + hint at third option]
@@ -344,7 +355,7 @@ Frame weaknesses as scope decisions, not failures:
 <title>[Competitor] Alternative — [Your Product] | [Benefit]</title>
 <meta name="description" content="Looking for a [Competitor] alternative? [Your Product] offers [key benefit]. Compare features, pricing, and see why teams switch.">
 
-<!-- Alternatives page -->
+<!-- Alternatives page ([Year]: re-stamp + refresh each January, or omit if you can't commit to refreshing) -->
 <title>[N] Best [Competitor] Alternatives in [Year]</title>
 <meta name="description" content="Compare the best [Competitor] alternatives including [Alt 1], [Alt 2], and [Your Product]. Features, pricing, and honest recommendations.">
 
@@ -352,7 +363,7 @@ Frame weaknesses as scope decisions, not failures:
 <title>[Your Product] vs [Competitor] — [Key Difference]</title>
 <meta name="description" content="[Your Product] vs [Competitor] compared: features, pricing, and who each is best for. See the detailed breakdown.">
 
-<!-- Third-party comparison -->
+<!-- Third-party comparison ([Year]: re-stamp + refresh each January, or omit if you can't commit to refreshing) -->
 <title>[A] vs [B] — Detailed Comparison [Year]</title>
 <meta name="description" content="[A] vs [B] compared: features, pricing, pros and cons. Plus a third option you might not have considered.">
 ```

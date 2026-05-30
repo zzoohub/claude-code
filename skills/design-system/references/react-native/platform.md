@@ -1,5 +1,15 @@
 # Platform: React Native
 
+## Table of Contents
+
+1. [Token Output — TypeScript](#token-output--typescript)
+2. [Dark Mode](#dark-mode)
+3. [Styled Component Example](#styled-component-example)
+4. [Responsive](#responsive)
+5. [Accessibility](#accessibility)
+6. [Reduced Motion](#reduced-motion)
+7. [Icons](#icons)
+
 ## Token Output — TypeScript
 
 ```typescript
@@ -70,6 +80,8 @@ export const tokens = {
   },
 } as const;
 ```
+
+> **Android shadow caveat:** On the legacy architecture, Android ignores `shadowColor`/`shadowOffset`/`shadowOpacity`/`shadowRadius` and renders only `elevation` (which is why both are defined above). On the New Architecture you can unify both platforms with the `boxShadow` style prop instead.
 
 ## Dark Mode
 

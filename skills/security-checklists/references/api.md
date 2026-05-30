@@ -2,6 +2,24 @@
 
 > OWASP: A01 (Broken Access Control), A05 (Injection)
 
+## Table of Contents
+
+1. [Input Validation](#input-validation)
+2. [Mass Assignment](#mass-assignment)
+3. [Injection Prevention](#injection-prevention)
+4. [Cross-Site Scripting (XSS)](#cross-site-scripting-xss)
+5. [Path Traversal & Arbitrary File Access](#path-traversal--arbitrary-file-access)
+6. [Data Exposure](#data-exposure)
+7. [GraphQL Specific](#graphql-specific)
+8. [File Upload](#file-upload)
+9. [Webhook Security](#webhook-security)
+10. [API Key & Token Management](#api-key--token-management)
+11. [CORS & Security Headers](#cors--security-headers)
+12. [HTTP Request Smuggling](#http-request-smuggling)
+13. [WebSocket Security](#websocket-security)
+14. [Deserialization](#deserialization)
+15. [Rate Limiting & DoS Prevention](#rate-limiting--dos-prevention)
+
 ---
 
 ## Input Validation

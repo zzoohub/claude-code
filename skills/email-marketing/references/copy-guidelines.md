@@ -4,6 +4,21 @@ Writing effective email copy — what makes email different from other copywriti
 
 ---
 
+## Table of Contents
+
+1. [Why Email Copy Is Different](#why-email-copy-is-different)
+2. [The Inbox Trifecta](#the-inbox-trifecta)
+3. [Email Copy Structure](#email-copy-structure)
+4. [Formatting for the Inbox](#formatting-for-the-inbox)
+5. [Accessibility](#accessibility)
+6. [Tone](#tone)
+7. [Length by Type](#length-by-type)
+8. [CTA Guidelines](#cta-guidelines)
+9. [Personalization](#personalization)
+10. [A/B Testing](#ab-testing)
+11. [Common Mistakes](#common-mistakes)
+
+
 ## Why Email Copy Is Different
 
 Email competes in a uniquely hostile environment. Your message sits in an inbox alongside 50+ unread emails, and the reader decides in about 2 seconds whether to open, skip, or delete. Three things are visible before the email is opened — the **from name**, **subject line**, and **preview text**. These three form a trifecta that must work together, because the best body copy in the world is worthless if nobody opens the email.

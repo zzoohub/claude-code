@@ -4,6 +4,18 @@ Observability is the property that lets you ask **new questions** about producti
 
 This file covers the architectural decisions. Vendor / SDK choice is in `tech-stack.md`.
 
+## Table of Contents
+
+1. [The Three Signals](#the-three-signals)
+2. [OpenTelemetry as the Default](#opentelemetry-as-the-default)
+3. [Trace Architecture](#trace-architecture)
+4. [Metrics Architecture](#metrics-architecture)
+5. [Log Architecture](#log-architecture)
+6. [Correlation Across Signals](#correlation-across-signals)
+7. [Health Checks](#health-checks)
+8. [Observability as a Port (Hexagonal)](#observability-as-a-port-hexagonal)
+9. [What to Define in the Architecture Document](#what-to-define-in-the-architecture-document)
+
 ---
 
 ## The Three Signals

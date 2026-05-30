@@ -2,6 +2,13 @@
 
 Config, main.rs, graceful shutdown, CI, and hex-specific test mocks.
 
+## Table of Contents
+
+1. [Config](#config)
+2. [Bootstrap](#bootstrap)
+3. [CI/CD](#cicd)
+4. [Testing: Hex-Specific Mocks](#testing-hex-specific-mocks)
+
 ---
 
 ## Config
@@ -229,7 +236,7 @@ async fn test_app() -> Router {
 }
 ```
 
-Option A keeps handler signatures (`State<AppState>`) unchanged and is the lighter touch for a single binary; Option B is better if you genuinely want one router builder reused across multiple compositions. Either way the canonical `test_app` compiles — the version that passed `Arc<TestAuthorService>` into a `build_router` hardcoded to `Arc<AppAuthorService>` did not.
+Option A keeps handler signatures (`State<AppState>`) unchanged and is the lighter touch for a single binary; Option B is better if you genuinely want one router builder reused across multiple compositions. Either way the canonical `test_app` compiles — note that passing `Arc<TestAuthorService>` into a `build_router` hardcoded to `Arc<AppAuthorService>` does NOT type-check, which is exactly why the test composition must flow through the same alias (Option A) or a generic signature (Option B).
 
 ```rust
 // Pattern 1: oneshot — single request per test

@@ -2,6 +2,16 @@
 
 App orchestrator, main.py, config, pyproject.toml, and hex-specific test mocks.
 
+## Table of Contents
+
+1. [App Orchestrator](#app-orchestrator)
+2. [Bootstrap](#bootstrap)
+3. [Configuration](#configuration)
+4. [pyproject.toml](#pyprojecttoml)
+5. [Testing: Hex-Specific Mocks](#testing-hex-specific-mocks)
+6. [Alembic Migrations](#alembic-migrations)
+7. [Graceful Shutdown](#graceful-shutdown)
+
 ---
 
 ## App Orchestrator
@@ -123,16 +133,18 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class AppConfig(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./db.sqlite"
-    # No default secret in production: the field is required, so the app
-    # refuses to start without SECRET_KEY set (no silent "change-me" signing).
-    secret_key: str = "dev-only-change-me"  # override via env in every non-dev environment
+    # A dev default is provided here, so the app DOES start without SECRET_KEY.
+    # The real safety net is not at the config level: create_access_token refuses
+    # to sign a JWT while this placeholder is in effect (see auth.py guard).
+    # Override via env in every non-dev environment.
+    secret_key: str = "dev-only-change-me"
     port: int = 8080
     # CORS: explicit, non-wildcard defaults. Driven into the middleware from config.
     cors_origins: list[str] = ["http://localhost:3000"]
     cors_allow_methods: list[str] = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"]
     cors_allow_headers: list[str] = ["Authorization", "Content-Type", "X-Request-Id"]
     cors_allow_credentials: bool = True
-    access_token_expire_minutes: int = 30
+    access_token_expire_minutes: int = 15
 
     model_config = SettingsConfigDict(
         env_file=".env",

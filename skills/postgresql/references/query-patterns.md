@@ -2,6 +2,26 @@
 
 Problem-solution patterns for common PostgreSQL query challenges.
 
+## Table of Contents
+
+1. [Keyset Pagination (Cursor Pagination)](#1-keyset-pagination-cursor-pagination)
+2. [Full-Text Search](#2-full-text-search)
+3. [N+1 Query Prevention](#3-n1-query-prevention)
+4. [High-Concurrency Patterns](#4-high-concurrency-patterns)
+5. [Optimistic Locking](#5-optimistic-locking)
+6. [Hierarchical Data (Recursive CTE)](#6-hierarchical-data-recursive-cte)
+7. [JSONB Query Patterns](#7-jsonb-query-patterns)
+8. [Bulk Import](#8-bulk-import)
+9. [Materialized View Caching](#9-materialized-view-caching)
+10. [Row-Level Security (Multi-Tenant)](#10-row-level-security-multi-tenant)
+11. [Time-Series with Partitioning](#11-time-series-with-partitioning)
+12. [UPSERT (INSERT ON CONFLICT)](#12-upsert-insert-on-conflict)
+13. [Window Functions](#13-window-functions)
+14. [DISTINCT ON (PostgreSQL-Specific)](#14-distinct-on-postgresql-specific)
+15. [Conditional Aggregation](#15-conditional-aggregation)
+16. [Date Gap-Filling with generate_series](#16-date-gap-filling-with-generate_series)
+17. [Efficient Filtering Patterns](#17-efficient-filtering-patterns)
+
 ## 1. Keyset Pagination (Cursor Pagination)
 
 **Problem**: OFFSET scans and discards rows — O(n) cost that worsens with page depth.

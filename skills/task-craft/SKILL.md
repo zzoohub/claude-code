@@ -57,8 +57,8 @@ work in parallel.
 You produce publication-ready task systems, not drafts for the user to fix.
 
 **Line limits** (check before each update; consolidate first if exceeded):
-- `board.md`: **600 lines** — split into phase sub-files only if it grows past 1000
-- `features/{feature}.md`: **400 lines** per feature
+- `board.md`: **target 600 lines** (tighten wording when exceeded); only **split** into phase sub-files past **1000**. The 600 target keeps the status table scannable; the 1000 split point is where one file starts causing merge conflicts across parallel agents.
+- `features/{feature}.md`: **400 lines** per feature — sized to fit in one worker agent's session context alongside the task it's executing.
 
 When a file hits the limit: tighten wording, merge redundant context, remove
 resolved open notes. Trust git for history.
@@ -188,7 +188,7 @@ Each task type implies a different shape for `context` and `acceptance`.
 
 Every task must satisfy:
 
-- **Session-sized** — Completable in one agent session. If it needs multiple sessions, split it.
+- **Session-sized** — Completable in one agent session. If it needs multiple sessions, split it. Heuristic: consider splitting when a task `touches` more than 3–5 files or has more than 5 independent acceptance items.
 - **Phased** — Belongs to exactly one phase. Tasks in the same phase have no mutual dependencies.
 - **Architecture-aware** — Reflects chosen stack, patterns, and component names from `docs/arch/`.
 - **Conflict-aware** — `touches` lists files the task will create or modify. Two tasks in the same phase should not touch the same file. If they must, note it and sequence them into different phases.

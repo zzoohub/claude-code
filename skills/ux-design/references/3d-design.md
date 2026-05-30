@@ -4,6 +4,24 @@ UX principles for screen-mediated 3D experiences. The user views and manipulates
 
 Scope: UX decisions for 3D viewports (camera interaction, object interaction, depth hierarchy, discoverability, accessibility). Technical implementation (renderers, frameworks, APIs, performance optimization) is outside this skill's scope.
 
+## Table of Contents
+
+1. [Core Interaction Paradigm](#core-interaction-paradigm)
+2. [Camera Interaction Design](#camera-interaction-design)
+3. [3D Object Interaction](#3d-object-interaction)
+4. [Depth as Visual Hierarchy](#depth-as-visual-hierarchy)
+5. [Discoverability & First-Time Experience](#discoverability--first-time-experience)
+6. [Product Configurator UX](#product-configurator-ux)
+7. [Photorealistic Scene Content (Gaussian Splatting)](#photorealistic-scene-content-gaussian-splatting)
+8. [Scroll-Driven 3D Storytelling](#scroll-driven-3d-storytelling)
+9. [Loading Experience](#loading-experience)
+10. [Mobile UX](#mobile-ux)
+11. [Progressive Experience Levels](#progressive-experience-levels)
+12. [3D Accessibility](#3d-accessibility)
+13. [When NOT to Use 3D](#when-not-to-use-3d)
+14. [Anti-Patterns](#anti-patterns)
+15. [Validation Checklist](#validation-checklist)
+
 ---
 
 ## Core Interaction Paradigm

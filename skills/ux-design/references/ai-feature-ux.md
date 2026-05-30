@@ -2,6 +2,21 @@
 
 UX considerations specific to LLM/AI-powered features. AI output is non-deterministic; classic loaded/error/empty states aren't enough.
 
+## Table of Contents
+
+1. [Streaming output](#streaming-output)
+2. [Citations and provenance](#citations-and-provenance)
+3. [Agent transparency](#agent-transparency)
+4. [Trust calibration](#trust-calibration)
+5. [Error and degraded states](#error-and-degraded-states)
+6. [Editing and regeneration](#editing-and-regeneration)
+7. [Onboarding for AI features](#onboarding-for-ai-features)
+8. [Accessibility for AI UI](#accessibility-for-ai-ui)
+9. [Anti-Patterns](#anti-patterns)
+10. [Validation Checklist](#validation-checklist)
+
+---
+
 ## Streaming output
 
 Token-by-token streaming is the baseline for chat/copilot UI in 2026. Patterns:

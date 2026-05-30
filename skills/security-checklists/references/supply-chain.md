@@ -4,6 +4,18 @@
 
 ---
 
+## Table of Contents
+
+1. [Dependency Management](#dependency-management)
+2. [Dependency Confusion & Typosquatting](#dependency-confusion--typosquatting)
+3. [CI/CD Pipeline Security](#cicd-pipeline-security)
+4. [Container Security](#container-security)
+5. [Infrastructure as Code (IaC) & Kubernetes](#infrastructure-as-code-iac--kubernetes)
+6. [Git Security](#git-security)
+7. [Secrets Management](#secrets-management)
+8. [SBOM & Provenance](#sbom--provenance)
+
+
 ## Dependency Management
 
 | Check | Why | CWE |
@@ -35,6 +47,8 @@ The xz-utils backdoor (March 2024) was inserted by a multi-year social-engineeri
 - **Verify package provenance**: npm provenance attestations are GA (since September 2023; the broader GitHub Artifact Attestations reached GA June 2024) — prefer packages with attested provenance, especially for security-critical deps. Use `npm install --foreground-scripts` to make any executed install script visible.
 - **For container images**: prefer minimal base images (distroless / chainguard); sign artifacts with **Sigstore cosign** and verify on deploy.
 - **Sandbox CI builds**: run dependency install in network-restricted/ephemeral environments where install-time exfiltration has no destination.
+
+> **Last reviewed (package-manager install-script behavior, e.g. pnpm `onlyBuiltDependencies` → `allowBuilds`):** 2026-05. Package-manager major-version defaults change often — re-verify against current docs.
 
 **Recommended scanner stack (2026):** `osv-scanner` (Google), `trivy fs/image/repo` (Aqua), `grype` (Anchore), `socket` for npm pre-install scanning, `dependabot` + `renovate` for automated rollups. `gitleaks` + `trufflehog` for committed secrets.
 
@@ -152,7 +166,7 @@ The xz-utils backdoor (March 2024) was inserted by a multi-year social-engineeri
 **Patterns to catch:**
 - `.env` file committed to repository
 - AWS keys, private keys, or tokens in git history (even if removed in HEAD)
-- A committed secret treated as fixed by scrubbing history alone — it must be rotated/revoked at the source (it may already be cloned, forked, or cached)
+- A committed secret treated as fixed by scrubbing history alone — it must be rotated/revoked at the source (see "Secrets Management" below)
 - `.gitignore` missing entries for common secret files (`.env.local`, `*.pem`, `credentials.json`)
 - No branch protection rules on main branch
 - Direct push to main allowed (no PR required)

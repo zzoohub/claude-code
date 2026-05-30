@@ -3,9 +3,9 @@ name: social-content
 description: |
   Social media content creation, content strategy, and multi-platform publishing.
   Use when: creating social posts, planning content calendars, developing content pillars,
-  writing LinkedIn/Twitter/Instagram/TikTok/YouTube content, repurposing content across platforms,
-  building topic clusters, planning launch campaigns (Product Hunt, Hacker News, Reddit),
-  analyzing viral content, reverse-engineering top creators, building in public,
+  writing LinkedIn/Twitter/Instagram/TikTok/YouTube content, repurposing across platforms,
+  building topic clusters, planning launch campaigns, analyzing viral content,
+  reverse-engineering top creators, building in public,
   or when user mentions "social media", "content strategy", "content calendar", "social post",
   "LinkedIn post", "Twitter thread", "Instagram carousel", "TikTok script", "YouTube script",
   "content pillar", "content repurposing", "topic cluster", "editorial calendar",
@@ -34,7 +34,7 @@ These patterns hold across every platform and every successful practitioner:
 5. **Long-form creates short-form.** Start with one substantial piece, fragment into platform-specific content. This is how Welsh, Hormozi, and every efficient creator operates.
 6. **Consistency is the baseline.** No strategy works without showing up regularly. Algorithms reward predictability.
 7. **Authenticity is non-negotiable.** Personal stories and genuine insights outperform polished corporate messaging on every platform.
-8. **Community > Audience.** 1,000 real fans who interact > 10,000 silent followers. Brands with active communities see materially higher retention -- reported lifts run ~40% (Higher Logic).
+8. **Community > Audience.** 1,000 real fans who interact > 10,000 silent followers. Brands with active communities see materially higher retention -- reported lifts run ~40% (Higher Logic; widely cited ~2021, verify currency before quoting).
 
 ---
 
@@ -170,7 +170,7 @@ Building in public creates authentic content and compounds audience before launc
 Community > broadcast. The shift from audience to community is real.
 
 **Implementation:**
-- **Reply to every comment** thoughtfully (not just "Thanks!"). 73% of consumers will switch to a competitor if a brand doesn't respond on social (Sprout Social).
+- **Reply to every comment** thoughtfully (not just "Thanks!"). 73% of consumers will switch to a competitor if a brand doesn't respond on social (Sprout Social; widely cited ~2021, verify currency before quoting).
 - **Ask follow-up questions** to deepen conversations
 - **Turn great comments** into new post ideas
 - **Create exclusive spaces** (broadcast channels, Discord, groups) for superfans

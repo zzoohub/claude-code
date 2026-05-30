@@ -4,6 +4,18 @@ Word-level clarity, jargon elimination, and conversational tone guidelines.
 
 ---
 
+## Table of Contents
+
+1. [Writing Style Rules](#writing-style-rules)
+2. [Plain English Alternatives](#plain-english-alternatives)
+3. [Words to Cut](#words-to-cut)
+4. [Quick Quality Check](#quick-quality-check)
+5. [Speak Like a Normal Person](#speak-like-a-normal-person)
+6. [The "EveryPerson" Factor](#the-everyperson-factor)
+7. [Show, Don't Just Tell](#show-dont-just-tell)
+8. [Nominalizations to Fix](#nominalizations-to-fix)
+
+
 ## Writing Style Rules
 
 1. **Simple over complex** — "Use" not "utilize," "help" not "facilitate"

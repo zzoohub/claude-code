@@ -2,6 +2,19 @@
 
 Layout guidelines, sizing specifications, platform-specific patterns, and accessibility requirements. Non-negotiable standards for every design.
 
+## Table of Contents
+
+1. [Touch & Click Targets](#touch--click-targets)
+2. [Mobile Ergonomics](#mobile-ergonomics)
+3. [Platform-Specific Patterns](#platform-specific-patterns)
+4. [Responsive Breakpoints](#responsive-breakpoints)
+5. [Response Time](#response-time)
+6. [Visual Spacing](#visual-spacing)
+7. [Typography Scale](#typography-scale)
+8. [Accessibility Requirements](#accessibility-requirements)
+9. [Motion & Animation](#motion--animation)
+10. [Checklist](#checklist)
+
 ---
 
 ## Touch & Click Targets

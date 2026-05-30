@@ -2,6 +2,22 @@
 
 Reduce friction in signup and registration flows, increase completion rates, and set users up for successful activation.
 
+## Table of Contents
+
+1. [Initial Assessment](#initial-assessment)
+2. [Core Principles](#core-principles)
+3. [Field-by-Field Optimization](#field-by-field-optimization)
+4. [Single-Step vs. Multi-Step](#single-step-vs-multi-step)
+5. [Trust and Friction Reduction](#trust-and-friction-reduction)
+6. [Mobile Signup Optimization](#mobile-signup-optimization)
+7. [Post-Submit Experience](#post-submit-experience)
+8. [Measurement](#measurement)
+9. [Output Format](#output-format)
+10. [Benchmarks](#benchmarks)
+11. [Before/After Example: B2B SaaS Signup](#beforeafter-example-b2b-saas-signup)
+12. [Common Signup Flow Patterns](#common-signup-flow-patterns)
+13. [Experiment Ideas](#experiment-ideas)
+
 ## Initial Assessment
 
 Before providing recommendations, understand:
@@ -239,7 +255,7 @@ Organized by:
 | B2B with company fields | 15-30% | 30-45% | 45%+ |
 | Waitlist (email only) | 60-80% | 80-90% | 90%+ |
 
-Adding social auth typically lifts completion by 20-30% relative. Every additional required field drops completion by roughly 5-10%.
+These figures are directional and vary by industry, audience, and period — validate against your own data. Adding social auth typically lifts completion by 20-30% relative. Every additional required field drops completion by roughly 5-10%.
 
 ---
 

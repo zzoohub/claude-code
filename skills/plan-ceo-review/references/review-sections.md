@@ -4,6 +4,19 @@ Loaded by `plan-ceo-review`. Step 0 is run before mode is locked; Sections 1-10 
 
 **After every step and section, apply the section gate defined in `SKILL.md`** (surface the top 5-8 issues, ask via the question protocol, pause for the user, honor the non-interactive fallback). Mode-specific behavior: see `references/mode-reference.md`. Do not paste a STOP block per section — the gate is global.
 
+## Table of Contents
+1. [Step 0: Nuclear Scope Challenge](#step-0-nuclear-scope-challenge)
+2. [Section 1: Architecture Review](#section-1-architecture-review)
+3. [Section 2: Error & Rescue Map](#section-2-error--rescue-map)
+4. [Section 3: Security & Threat Model](#section-3-security--threat-model)
+5. [Section 4: Data Flow & Interaction Edge Cases](#section-4-data-flow--interaction-edge-cases)
+6. [Section 5: Code Quality Review](#section-5-code-quality-review)
+7. [Section 6: Test Review](#section-6-test-review)
+8. [Section 7: Performance Review](#section-7-performance-review)
+9. [Section 8: Observability & Debuggability Review](#section-8-observability--debuggability-review)
+10. [Section 9: Deployment & Rollout Review](#section-9-deployment--rollout-review)
+11. [Section 10: Long-Term Trajectory Review](#section-10-long-term-trajectory-review)
+
 ---
 
 ## Step 0: Nuclear Scope Challenge

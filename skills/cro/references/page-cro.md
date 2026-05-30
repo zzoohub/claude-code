@@ -2,6 +2,16 @@
 
 Analyze marketing pages and provide actionable recommendations to improve conversion rates.
 
+## Table of Contents
+
+1. [Initial Assessment](#initial-assessment)
+2. [CRO Analysis Framework](#cro-analysis-framework)
+3. [Output Format](#output-format)
+4. [Benchmarks](#benchmarks)
+5. [Before/After Example: SaaS Landing Page Hero](#beforeafter-example-saas-landing-page-hero)
+6. [Page-Specific Frameworks](#page-specific-frameworks)
+7. [Experiment Ideas](#experiment-ideas)
+
 ## Initial Assessment
 
 Before providing recommendations, identify:
@@ -131,7 +141,7 @@ For key elements (headlines, CTAs), describe the problem and the angle to pursue
 | Feature page → CTA click | 3-8% | 8-15% | 15%+ |
 | Blog → CTA click | 0.5-2% | 2-5% | 5%+ |
 
-Rates vary by industry, traffic source, and price point. Paid traffic converts higher (intent) but costs more.
+These figures are directional and vary by industry, traffic source, period, and price point — validate against your own data. Paid traffic converts higher (intent) but costs more.
 
 ---
 

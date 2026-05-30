@@ -4,6 +4,16 @@ How to build brand visibility across the platforms AI systems draw from, beyond 
 
 ---
 
+## Table of Contents
+
+1. [Why Multi-Platform Matters for AI Visibility](#why-multi-platform-matters-for-ai-visibility)
+2. [Owned Presence: Platform Strategies](#owned-presence-platform-strategies)
+3. [Earned Mentions: Building Third-Party References](#earned-mentions-building-third-party-references)
+4. [Sentiment Matters](#sentiment-matters)
+5. [Multi-Platform Content Strategy](#multi-platform-content-strategy)
+6. [Multi-Platform Audit Checklist](#multi-platform-audit-checklist)
+
+
 ## Why Multi-Platform Matters for AI Visibility
 
 AI systems assemble answers from multiple sources. When generating a response, they do not only check your website. They pull information from YouTube, Reddit, review sites, LinkedIn, industry publications, news outlets, podcasts (transcripts), and more.

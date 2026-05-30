@@ -1,5 +1,16 @@
 # Platform: Web
 
+## Table of Contents
+
+1. [Token Output — CSS Custom Properties](#token-output--css-custom-properties)
+2. [Dark Mode](#dark-mode)
+3. [Responsive](#responsive)
+4. [Focus States](#focus-states)
+5. [Reduced Motion](#reduced-motion)
+6. [Component Usage Example](#component-usage-example)
+7. [Tailwind CSS Integration](#tailwind-css-integration)
+8. [Units: rem vs px](#units-rem-vs-px)
+
 ## Token Output — CSS Custom Properties
 
 Tokens compile to CSS variables. Components reference variables, never raw values.
@@ -78,6 +89,8 @@ Tokens compile to CSS variables. Components reference variables, never raw value
   --opacity-hover: 0.8;
 }
 ```
+
+> This `:root` block is an excerpt — it omits some semantic tokens (e.g. `text.tertiary`, `border.strong`, `status.warning`/`warning-bg`). For the complete set, generate `:root` from `semantic.tokens.json` (see `references/tokens.md`).
 
 ## Dark Mode
 

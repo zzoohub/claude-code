@@ -4,6 +4,27 @@ UX principles for spatially embodied experiences — AR, VR, and MR. The user is
 
 Scope: spatial UX decisions (comfort zones, interaction models, passthrough MR, content persistence, text input, multi-user, cybersickness, onboarding, privacy). Technical implementation (renderers, APIs, frameworks) is outside this skill's scope.
 
+## Table of Contents
+
+1. [Core Paradigm Shift](#core-paradigm-shift)
+2. [Spatial Comfort Zones](#spatial-comfort-zones)
+3. [Interaction Models](#interaction-models)
+4. [Text Input in XR](#text-input-in-xr)
+5. [Passthrough Mixed Reality Design](#passthrough-mixed-reality-design)
+6. [Content Persistence](#content-persistence)
+7. [Spatial UI Patterns](#spatial-ui-patterns)
+8. [Spatial Feedback](#spatial-feedback)
+9. [XR Onboarding](#xr-onboarding)
+10. [Multi-User / Social XR](#multi-user--social-xr)
+11. [Cybersickness Prevention](#cybersickness-prevention)
+12. [Spatial Information Architecture](#spatial-information-architecture)
+13. [Privacy Considerations](#privacy-considerations)
+14. [Platform Design Languages (2026)](#platform-design-languages-2026)
+15. [Accessibility](#accessibility)
+16. [When NOT to Use XR](#when-not-to-use-xr)
+17. [Anti-Patterns](#anti-patterns)
+18. [Validation Checklist](#validation-checklist)
+
 ---
 
 ## Core Paradigm Shift

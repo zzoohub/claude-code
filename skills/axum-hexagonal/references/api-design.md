@@ -2,6 +2,19 @@
 
 Reference for REST API endpoint design. Consult when defining routes, request/response types, and error handling.
 
+## Table of Contents
+
+1. [Resource Identification](#resource-identification)
+2. [Naming](#naming)
+3. [Response Format](#response-format)
+4. [Pagination](#pagination)
+5. [Filtering, Sorting, Field Selection](#filtering-sorting-field-selection)
+6. [Soft Delete](#soft-delete)
+7. [Security](#security)
+8. [Caching](#caching)
+9. [Versioning](#versioning)
+10. [Checklist](#checklist)
+
 ---
 
 ## Resource Identification

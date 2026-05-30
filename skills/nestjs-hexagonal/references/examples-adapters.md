@@ -2,6 +2,27 @@
 
 Inbound (controller, DTOs, exception filter, auth guard, pipes, healthcheck) and outbound (TypeORM + PostgreSQL repository, mapper).
 
+## Table of Contents
+
+1. [Outbound: TypeORM — Entity](#outbound-typeorm--entity)
+2. [Outbound: TypeORM — Module](#outbound-typeorm--module)
+3. [Outbound: Cursor Helpers (composite + base64)](#outbound-cursor-helpers-composite--base64)
+4. [Outbound: TypeORM — Mapper + Repository](#outbound-typeorm--mapper--repository)
+5. [Outbound: TypeORM — Inline Single-Repo Transaction](#outbound-typeorm--inline-single-repo-transaction)
+6. [Inbound: ZodValidationPipe](#inbound-zodvalidationpipe)
+7. [Inbound: Request DTOs](#inbound-request-dtos)
+8. [Inbound: Response DTOs](#inbound-response-dtos)
+9. [Inbound: Controller](#inbound-controller)
+10. [Inbound: Exception Filter (RFC 9457)](#inbound-exception-filter-rfc-9457)
+11. [Inbound: Auth Guard (JWT with `jose`)](#inbound-auth-guard-jwt-with-jose)
+12. [Inbound: Healthcheck](#inbound-healthcheck)
+13. [Inbound: Job Handler (non-HTTP inbound adapter)](#inbound-job-handler-non-http-inbound-adapter)
+14. [Outbound: UnitOfWork Adapter (TypeORM + nestjs-cls)](#outbound-unitofwork-adapter-typeorm--nestjs-cls)
+15. [Outbound: Outbox via UoW](#outbound-outbox-via-uow)
+16. [Outbound: Idempotency Store](#outbound-idempotency-store)
+17. [Inbound: Rate Limiting (`@nestjs/throttler`)](#inbound-rate-limiting-nestjsthrottler)
+18. [Outbound: Tracer Port (OTel)](#outbound-tracer-port-otel)
+
 ---
 
 ## Outbound: TypeORM — Entity

@@ -1,5 +1,14 @@
 # Aha Moment Discovery
 
+## Table of Contents
+
+1. [Definition](#definition)
+2. [Discovery Process](#discovery-process)
+3. [Common Pitfalls](#common-pitfalls)
+4. [Activation Rate](#activation-rate)
+5. [Implementation in PostHog](#implementation-in-posthog)
+
+
 ## Definition
 
 The Aha Moment is the single action (or set of actions) that predicts long-term retention:

@@ -56,18 +56,18 @@ When something "feels wrong" or needs improvement:
 
 | Problem | Primary Principle | Action | Reference |
 |---------|------------------|--------|-----------|
-| User hesitates | Hick's Law | Reduce choices, progressive disclosure | `cognitive-principles.md` |
-| User misses targets | Fitts's Law | Increase size, reduce distance | `cognitive-principles.md` |
-| User overwhelmed | Cognitive Load | Show only essentials, chunk into steps | `cognitive-principles.md` |
-| User abandons midway | Goal Gradient | Show progress, visible milestones | `cognitive-principles.md` |
-| User remembers negatively | Peak-End Rule | Fix worst moment and final state | `cognitive-principles.md` |
-| User confused by custom UI | Jakob's Law | Use platform-standard patterns | `cognitive-principles.md` |
-| User can't find content | IA failure | Restructure navigation, validate with tree test | `information-architecture.md` |
-| User doesn't know what happened | Feedback gap | Add system feedback (toast, inline, state change) | `interaction-patterns.md` |
-| User doesn't know what to do | Copy failure | Rewrite labels, add guidance, fix empty states | `ux-writing.md` |
-| System feels slow | Doherty Threshold | Optimistic UI, skeleton screens, background processing | `interaction-patterns.md` |
-| 3D/XR issue | See dedicated reference | Load the appropriate reference for diagnosis | `3d-design.md` / `xr-design.md` |
-| AI feature issue | See dedicated reference | Streaming, citations, agent transparency, AI error states | `ai-feature-ux.md` |
+| User hesitates | Hick's Law | Reduce choices, progressive disclosure | `references/cognitive-principles.md` |
+| User misses targets | Fitts's Law | Increase size, reduce distance | `references/cognitive-principles.md` |
+| User overwhelmed | Cognitive Load | Show only essentials, chunk into steps | `references/cognitive-principles.md` |
+| User abandons midway | Goal Gradient | Show progress, visible milestones | `references/cognitive-principles.md` |
+| User remembers negatively | Peak-End Rule | Fix worst moment and final state | `references/cognitive-principles.md` |
+| User confused by custom UI | Jakob's Law | Use platform-standard patterns | `references/cognitive-principles.md` |
+| User can't find content | IA failure | Restructure navigation, validate with tree test | `references/information-architecture.md` |
+| User doesn't know what happened | Feedback gap | Add system feedback (toast, inline, state change) | `references/interaction-patterns.md` |
+| User doesn't know what to do | Copy failure | Rewrite labels, add guidance, fix empty states | `references/ux-writing.md` |
+| System feels slow | Doherty Threshold | Optimistic UI, skeleton screens, background processing | `references/interaction-patterns.md` |
+| 3D/XR issue | See dedicated reference | Load the appropriate reference for diagnosis | `references/3d-design.md` / `references/xr-design.md` |
+| AI feature issue | See dedicated reference | Streaming, citations, agent transparency, AI error states | `references/ai-feature-ux.md` |
 
 ---
 
@@ -87,7 +87,7 @@ These fail the "Does this help the user complete their goal?" test:
 - Custom patterns for standard tasks (violates Jakob's Law)
 - Hover-only interactions on touch devices
 - Org-chart navigation (structure matches company, not user mental model)
-- 3D/XR/AI anti-patterns: see `3d-design.md`, `xr-design.md`, and `ai-feature-ux.md` for domain-specific lists
+- 3D/XR/AI anti-patterns: see `references/3d-design.md`, `references/xr-design.md`, and `references/ai-feature-ux.md` for domain-specific lists
 
 **Rule: If adding something "just in case" — don't. If unsure, mark it for user testing.**
 
@@ -204,7 +204,7 @@ Before finalizing any UX decision:
 - [ ] Cognitive principles cited for key design decisions
 
 ### 3D / XR / AI (if applicable)
-- [ ] Run validation checklist from `3d-design.md`, `xr-design.md`, and/or `ai-feature-ux.md`
+- [ ] Run validation checklist from `references/3d-design.md`, `references/xr-design.md`, and/or `references/ai-feature-ux.md`
 
 ---
 

@@ -2,6 +2,19 @@
 
 Detailed reference for technical SEO covering crawling, indexing, site architecture, Core Web Vitals, rendering, and AI crawler considerations.
 
+## Table of Contents
+
+1. [Crawling and Indexing](#1-crawling-and-indexing)
+2. [Site Architecture](#2-site-architecture)
+3. [Rendering](#3-rendering)
+4. [Core Web Vitals](#4-core-web-vitals)
+5. [HTTPS and Security](#5-https-and-security)
+6. [Structured Data (Schema Markup)](#6-structured-data-schema-markup)
+7. [International SEO (hreflang)](#7-international-seo-hreflang)
+8. [Image and Video SEO](#8-image-and-video-seo)
+9. [Site Migration Checklist](#9-site-migration-checklist)
+10. [Common Technical SEO Issues Checklist](#10-common-technical-seo-issues-checklist)
+
 ---
 
 ## 1. Crawling and Indexing
@@ -242,6 +255,8 @@ Structured data (typically JSON-LD) helps search engines understand the content 
 | Speakable | Voice search priority content | Limited beta: US-English news publishers only, read aloud via Google Assistant |
 
 ### Schema and AEO/GEO Connection
+
+This subsection is the **canonical FAQ/HowTo deprecation timeline for the skill** — other references point here rather than restating dates, so update them in one place.
 
 For AEO purposes, note that FAQPage and HowTo schema **no longer produce Google SERP rich results**. HowTo rich results were removed in 2023; FAQ rich results were restricted to government/health sites in Aug 2023 and fully deprecated for all sites on May 7, 2026 (the FAQ report and Rich Results Test support drop in June 2026, the Search Console API in Aug 2026). The structured Q&A and step markup can still help AI answer engines and LLMs parse, extract, and cite content — so treat it as AEO/GEO *extraction* value, not a Google SERP feature. Speakable schema is a limited beta (US-English news publishers, Google Assistant), not a general voice-search signal.
 

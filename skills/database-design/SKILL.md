@@ -3,13 +3,16 @@ name: database-design
 description: |
   Expert guide for PostgreSQL database design, modeling, and optimization.
   Covers table design, schema modeling, index strategy, normalization/denormalization
-  decisions, ACID transaction design, migration planning, and performance tuning.
+  decisions, ACID transaction design, partitioning, multi-tenancy/RLS, isolation
+  levels, migration planning, and schema-level performance tuning.
   Use when user asks to "design a database", "create tables",
-  "model data", "optimize queries", "add indexes", "normalize",
-  "denormalize", "plan migration", "review schema", "design ERD",
+  "model data", "design queries around schema", "add indexes", "normalize",
+  "denormalize", "partition", "multi-tenant/RLS", "isolation level",
+  "plan migration", "review schema", "design ERD",
   or discusses database architecture, data modeling, or PostgreSQL performance.
   Do NOT use for simple SELECT queries, one-off SQL syntax questions,
-  or non-database application logic.
+  non-database application logic, or writing/EXPLAIN-tuning queries and
+  executing operational migrations (use postgresql skill).
 ---
 
 # PostgreSQL Database Design Skill
@@ -112,6 +115,8 @@ For each, decide:
 ### Step 4: Write DDL
 ```sql
 -- Default skeleton — UUID v7 PK, TIMESTAMPTZ everywhere
+-- New tables only; to add a PK/column to an existing table see references/migration-patterns.md
+--   (a VOLATILE default like uuidv7() on a new NOT NULL column rewrites the whole table).
 CREATE TABLE schema_name.table_name (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),  -- PG18+; ≤17: generate at app layer
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

@@ -4,6 +4,19 @@ B2B cold email writing, personalization, and follow-up sequences.
 
 ---
 
+## Table of Contents
+
+1. [Legal & Compliance First](#legal--compliance-first)
+2. [Writing Principles](#writing-principles)
+3. [Voice & Tone](#voice--tone)
+4. [Structure Frameworks](#structure-frameworks)
+5. [Subject Lines](#subject-lines)
+6. [Follow-Up Sequences](#follow-up-sequences)
+7. [Quality Check](#quality-check)
+8. [What to Avoid](#what-to-avoid)
+9. [Benchmarks](#benchmarks)
+
+
 ## Legal & Compliance First
 
 Cold email is restricted differently in different jurisdictions. **Verify the rules for every region you send into before launching.** Non-compliance risks fines, sender-reputation damage, and platform bans. Below is a 2026 baseline summary — not legal advice.
@@ -76,7 +89,7 @@ Interest-based CTAs ("Worth exploring?") beat meeting requests. One CTA per emai
 
 ## Subject Lines
 
-- 2-4 words, lowercase, no punctuation tricks
+- 2-4 words, lowercase, no punctuation tricks (the general marketing subject-line length in `references/copy-guidelines.md` does not apply to cold)
 - Should look like it came from a colleague ("reply rates," "hiring ops")
 - No product pitches, urgency, emojis, or prospect's first name
 

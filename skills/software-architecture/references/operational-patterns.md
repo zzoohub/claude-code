@@ -2,6 +2,17 @@
 
 Practical architecture patterns that almost every production system needs. Reference this for common implementation decisions that sit between "architecture" and "code."
 
+## Table of Contents
+
+1. [Pagination Strategy](#pagination-strategy)
+2. [Resilience Patterns](#resilience-patterns)
+3. [File Upload Architecture](#file-upload-architecture)
+4. [Background Jobs](#background-jobs)
+5. [Durable Execution](#durable-execution)
+6. [Webhook Reliability](#webhook-reliability)
+7. [Caching Architecture](#caching-architecture)
+8. [Rate Limiting Architecture](#rate-limiting-architecture)
+
 ---
 
 ## Pagination Strategy

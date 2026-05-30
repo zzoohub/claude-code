@@ -2,6 +2,26 @@
 
 Inbound (Shell, handlers, task handlers, webhooks, auth, errors) and outbound (DB, ORM mapper, eager loading).
 
+## Table of Contents
+
+1. [Outbound: ORM Model + Mapper](#outbound-orm-model--mapper)
+2. [Outbound: Postgres Adapter (ORM + mapper)](#outbound-postgres-adapter-orm--mapper)
+3. [Outbound: SQLite Adapter (raw SQL, no ORM)](#outbound-sqlite-adapter-raw-sql-no-orm)
+4. [Outbound: Eager Loading (N+1 Prevention)](#outbound-eager-loading-n1-prevention)
+5. [Inbound: Task Handler (non-HTTP inbound adapter)](#inbound-task-handler-non-http-inbound-adapter)
+6. [Inbound: Shell (wraps FastAPI + uvicorn)](#inbound-shell-wraps-fastapi--uvicorn)
+7. [Inbound: Dependency Injection](#inbound-dependency-injection)
+8. [Inbound: Auth Dependency](#inbound-auth-dependency)
+9. [Inbound: Request / Response Schemas](#inbound-request--response-schemas)
+10. [Inbound: Handler (Router)](#inbound-handler-router)
+11. [Inbound: API Error (RFC 9457)](#inbound-api-error-rfc-9457)
+12. [Inbound: Response Wrappers](#inbound-response-wrappers)
+13. [Inbound: Pagination (cursor-based)](#inbound-pagination-cursor-based)
+14. [Inbound: Healthcheck](#inbound-healthcheck)
+15. [Outbound: UnitOfWork + Outbox Adapter (transactional, SQLAlchemy)](#outbound-unitofwork--outbox-adapter-transactional-sqlalchemy)
+16. [Outbound: Idempotency Store](#outbound-idempotency-store)
+17. [Outbound: Tracer Port (OTel)](#outbound-tracer-port-otel)
+
 ---
 
 ## Outbound: ORM Model + Mapper
@@ -206,6 +226,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 # Additional method on PostgresAuthorRepository (session-based).
+# Indent this `async def` into the class body shown above — it is a method of
+# PostgresAuthorRepository, not a module-level function.
 async def find_author_with_posts(self, author_id: uuid.UUID) -> Author | None:
     result = await self._session.execute(
         select(AuthorModel)
@@ -426,7 +448,7 @@ def hash_password(password: str) -> str:
 def verify_password(plain: str, hashed: str) -> bool:
     return _hasher.verify(password=plain, hash=hashed)
 
-def create_access_token(user_id: int, secret_key: str, expires_minutes: int = 30) -> str:
+def create_access_token(user_id: int, secret_key: str, expires_minutes: int = 15) -> str:
     if not secret_key or secret_key == "dev-only-change-me":
         # Never sign real tokens with the placeholder secret.
         raise RuntimeError("SECRET_KEY is unset/placeholder; refusing to sign a JWT")
@@ -672,6 +694,8 @@ def decode_cursor(raw: str) -> tuple[datetime, uuid.UUID]:
 
 # src/outbound/postgres/repository.py — cursor pagination (method on the
 # session-based PostgresAuthorRepository; runs against self._session).
+# Indent this `async def` into the PostgresAuthorRepository class body — it is a
+# method, not a module-level function.
 from sqlalchemy import select, tuple_
 
 async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]:

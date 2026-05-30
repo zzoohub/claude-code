@@ -2,26 +2,22 @@
 name: marketing-psychology
 description: |
   70 mental models and psychological principles for marketing, pricing, and growth decisions.
-  Use when: applying persuasion principles, understanding buyer psychology, choosing pricing tactics,
-  designing nudges, checking whether a tactic is ethical persuasion vs a dark pattern, optimizing
-  conversion with psychology, or when user mentions "psychology", "mental model", "persuasion",
+  Use when: applying persuasion principles, choosing pricing tactics, judging ethical persuasion
+  vs a dark pattern, or when user mentions "psychology", "mental model", "persuasion",
   "cognitive bias", "behavioral economics", "nudge", "anchoring", "scarcity", "urgency", "FOMO",
   "social proof", "loss aversion", "framing effect", "decoy effect", "reciprocity",
   "endowment effect", "default effect", "IKEA effect", "choice architecture", "dark pattern",
   "manipulation", "ethical persuasion".
-  Do NOT use for: writing copy (use copywriting — this skill picks which principle to apply,
-  copywriting produces the words); page-level CRO (use cro — this skill explains the principle,
-  cro designs and tests the flow change); pricing tier design and strategy (use pricing — this
-  skill covers the psychology behind why pricing works; pricing covers what to charge and how to
-  structure tiers); loop/referral mechanics and K-factor modeling (use growth-loops — this skill
-  only explains the psychology behind why loops and switching costs work); or churn intervention
-  and retention analytics (use churn-prevention for cancel flows/save offers/health scoring,
-  product-analytics for retention cohorts — this skill explains only the behavioral "why").
+  Do NOT use for: writing copy (-> copywriting); page-level CRO, flow design/testing (-> cro);
+  pricing tier design, what to charge (-> pricing); loop/referral mechanics, K-factor modeling
+  (-> growth-loops); churn intervention, cancel flows, save offers, health scoring
+  (-> churn-prevention); retention cohorts and analytics (-> product-analytics).
+  This skill only picks which principle to apply and explains the behavioral why.
 ---
 
 # Marketing Psychology & Mental Models
 
-70 mental models organized for marketing application. Use these to understand why people buy, influence behavior ethically, and make better marketing decisions.
+~70 mental models organized for marketing application (the reference's `###` headers count slightly higher because Social Proof and Mental Accounting (Pricing) are explicit aliases and the AIDA/PAS/BAB/4Ps/SSS group are copywriting frameworks, not standalone models). Use these to understand why people buy, influence behavior ethically, and make better marketing decisions.
 
 **Product context**: If `.claude/product-marketing-context.md` exists, read it first to tailor recommendations to the specific product and audience.
 
@@ -34,7 +30,7 @@ description: |
 3. **Select 2-3 models** — Don't overload; pick the most applicable.
 4. **Design within guardrails** — Apply the models within the Ethical Guardrails below.
 5. **Implement** — Use copywriting for messaging, cro for flow changes.
-6. **Measure** — Validate with cro experiments; track impact with data-analyst.
+6. **Measure** — Validate with cro experiments; track impact via the data-analyst agent.
 
 ---
 

@@ -4,6 +4,18 @@
 
 next-intl v4 is ESM-only, requires React 17+ and TypeScript 5+. Uses ICU MessageFormat with first-class Server Component support and built-in type safety via `AppConfig`.
 
+## Table of Contents
+
+1. [Setup](#setup)
+2. [Usage Patterns](#usage-patterns)
+3. [Type Safety](#type-safety)
+4. [ICU Message Syntax](#icu-message-syntax)
+5. [Formatting](#formatting)
+6. [Static Rendering](#static-rendering)
+7. [SEO](#seo)
+8. [Language Switcher](#language-switcher)
+9. [Common Pitfalls](#common-pitfalls)
+
 ---
 
 ## Setup

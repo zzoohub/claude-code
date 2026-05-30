@@ -48,7 +48,7 @@ Hormozi's three-part formula optimized for social media content consumption:
 
 ### PAS / AIDA / BAB / 4Ps / SSS
 
-Canonical definitions: `copywriting/references/persuasion-frameworks.md`.
+Canonical definitions: the copywriting skill's persuasion-frameworks reference.
 
 **Social application notes:**
 - **PAS** — sales/product posts; works for short copy (1 paragraph)

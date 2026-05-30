@@ -12,8 +12,9 @@ description: |
   "make an architecture decision about X", "let's switch from X to Y".
   Do NOT use for: a new system from scratch (use software-architecture — it
   produces the full design doc plus initial ADRs). Do NOT use for: schema
-  decisions (use database-design). Do NOT use for: pure code refactors that
-  don't shift architecture (just open a task).
+  decisions (use database-design). Do NOT use for: writing feature requirements
+  (use feature-spec). Do NOT use for: pure code refactors that don't shift
+  architecture (just open a task).
 ---
 
 # Arch Decision — Single ADR
@@ -32,8 +33,8 @@ If your project keeps architecture docs elsewhere, see `AGENTS.md`.
 
 1. Reads existing `docs/arch/context.md` (problem, ASRs, domain) and
    `docs/arch/system.md` (current patterns, components) for context.
-2. Frames the decision — one decision per ADR. If 3+ unrelated decisions
-   surface, split into 3 ADRs.
+2. Frames the decision — one decision per ADR. If multiple unrelated decisions
+   surface, split into separate ADRs (one per decision).
 3. Captures 2-4 realistic options including "do nothing / keep current."
 4. States the choice with reasoning tied to an ASR or constraint from
    `context.md` §3.
@@ -83,9 +84,10 @@ not a restatement of its cons. Appended ADRs may sit alongside ones authored by
 ## Workflow
 
 1. **Read context** — `docs/arch/context.md` and `docs/arch/system.md`. If
-   either is missing, flag it to the user before proceeding.
-2. **Get the next ADR number** — Find the highest existing ADR-NNN in
-   `decisions.md` or under `decisions/` and add 1.
+   either is missing, flag the gap to the user; you can still proceed.
+2. **Get the next ADR number** — Find the highest existing ADR-NNN and add 1.
+   NNN is zero-padded to 3 digits (`ADR-001`). Scan only the layout the project
+   actually uses (`decisions.md` or `decisions/`), not both.
 3. **Frame one decision** — If multiple decisions surface, ask the user which
    to record first; defer the others to follow-up ADRs.
 4. **Draft 2-4 options** — Include "keep current" as one option.
@@ -105,7 +107,8 @@ not a restatement of its cons. Appended ADRs may sit alongside ones authored by
 - [ ] ADR number is unique and monotonically increasing
 - [ ] If the decision changes architecture surface, `system.md` is patched in
       the affected section
-- [ ] Status is `Accepted` (or `Proposed` if pending review)
+- [ ] Status is valid (`Accepted`, or `Proposed` if pending review; if this ADR
+      replaces an existing one, mark that older ADR `Superseded by ADR-{NNN}`)
 
 ## Output
 

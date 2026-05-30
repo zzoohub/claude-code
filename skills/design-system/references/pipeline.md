@@ -2,6 +2,16 @@
 
 Single source of truth → platform-specific outputs. Define once, transform per platform.
 
+## Table of Contents
+
+1. [Architecture](#architecture)
+2. [Style Dictionary Setup](#style-dictionary-setup)
+3. [Workflow](#workflow)
+4. [Dark Theme Pipeline](#dark-theme-pipeline)
+5. [Figma Sync (Optional)](#figma-sync-optional)
+6. [Tailwind Config Generation](#tailwind-config-generation)
+7. [When to Set This Up](#when-to-set-this-up)
+
 ## Architecture
 
 ```

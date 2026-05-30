@@ -2,6 +2,11 @@
 
 > Examples use the skill's PK default `UUID DEFAULT uuidv7()` (PG18+); on PG ≤17 generate v7 at the application layer — see SKILL.md.
 
+## Table of Contents
+
+1. [Normalization Levels](#normalization-levels)
+2. [Denormalization: When and How](#denormalization-when-and-how)
+
 ## Normalization Levels
 
 ### 1NF (First Normal Form)

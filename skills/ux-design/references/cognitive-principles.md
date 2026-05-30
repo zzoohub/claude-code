@@ -2,6 +2,22 @@
 
 Behavioral science applied to interface design. Use this reference when diagnosing why an interface feels wrong or when users struggle.
 
+## Table of Contents
+
+1. [Hick's Law](#hicks-law)
+2. [Fitts's Law](#fittss-law)
+3. [Cognitive Load Theory](#cognitive-load-theory)
+4. [Goal Gradient Effect](#goal-gradient-effect)
+5. [Peak-End Rule](#peak-end-rule)
+6. [Miller's Law](#millers-law)
+7. [Von Restorff Effect (Isolation Effect)](#von-restorff-effect-isolation-effect)
+8. [Jakob's Law](#jakobs-law)
+9. [Doherty Threshold](#doherty-threshold)
+10. [Aesthetic-Usability Effect](#aesthetic-usability-effect)
+11. [Serial Position Effect](#serial-position-effect)
+12. [Zeigarnik Effect](#zeigarnik-effect)
+13. [Principle Selection Guide](#principle-selection-guide)
+
 ---
 
 ## Hick's Law

@@ -1,5 +1,18 @@
 # PostgreSQL Data Types Guide
 
+## Table of Contents
+
+1. [Type Selection Principles](#type-selection-principles)
+2. [Numeric Types](#numeric-types)
+3. [String Types](#string-types)
+4. [Date/Time Types](#datetime-types)
+5. [ENUM Type](#enum-type)
+6. [JSONB Hybrid (relational + flexible)](#jsonb-hybrid-relational--flexible)
+7. [Boolean](#boolean)
+8. [Arrays](#arrays)
+9. [Domain Types](#domain-types)
+10. [Generated Columns (PostgreSQL 12+; VIRTUAL added in 18)](#generated-columns-postgresql-12-virtual-added-in-18)
+
 ## Type Selection Principles
 
 The right data type affects storage, performance, and data integrity.

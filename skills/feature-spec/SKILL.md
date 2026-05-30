@@ -75,7 +75,7 @@ problem statement).
 
 ## Requirements
 Testable, specific. Give each a stable ID (`REQ-001`, `REQ-002`, ...) so tasks
-and tests can reference it. (Canonical format — see `conventions/README.md`.)
+and tests can reference it. Format: `REQ-` plus a zero-padded 3-digit sequence.
 
 ## User Journeys
 Step-by-step flows for each user type.
@@ -99,11 +99,11 @@ Unknowns still being resolved. Flag them — don't invent answers. Remove as the
 ## Workflow
 
 1. **Read context** — `docs/prd/prd.md` + relevant existing `docs/prd/features/*.md`
-2. **Discover the feature** — ~3 questions for a typical feature (more only if complex):
+2. **Discover the feature** — ask the questions from "What This Skill Does" step 3:
    - What user problem does this solve? (must tie back to prd.md problem)
    - What's the core user journey, end-to-end?
    - What does "done" look like — what acceptance defines success?
-3. **Draft the spec** — Use the feature-spec template
+3. **Draft the spec** — Use the feature-spec template; keep it within the 200-line limit
 4. **Patch prd.md** — Add (or update, if already present) the feature's Feature
    Overview row and Dev Order entry, locating those sections by role. Check
    prd.md against its 400-line limit first; consolidate if it would exceed.
@@ -116,7 +116,7 @@ Unknowns still being resolved. Flag them — don't invent answers. Remove as the
 - [ ] At least one full user journey is mapped
 - [ ] Edge cases cover the failure modes relevant to this feature (invalid/empty input, unauthorized, concurrent/duplicate, limit exceeded, upstream failure, partial success)
 - [ ] Open questions are flagged — no invented answers
-- [ ] Passes the critical PRD anti-patterns: no solution-as-problem Overview, no library/framework names in Requirements, every requirement has evidence (see the prd-craft anti-patterns reference)
+- [ ] Passes the critical PRD anti-patterns: no solution-as-problem Overview, no library/framework names in Requirements, every requirement has evidence (see `prd-craft/references/anti-patterns.md`)
 - [ ] Feature appears exactly once in `prd.md` Feature Overview and once in Dev Order (update in place on re-run, don't duplicate)
 - [ ] Filename matches the kebab-case feature name from prd.md
 

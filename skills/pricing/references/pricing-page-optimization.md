@@ -268,7 +268,7 @@ Key frameworks from pricing experts, condensed for reference.
 
 ### Patrick Campbell (ProfitWell / Paddle)
 
-1. Pricing has **7.5x more impact** on revenue than acquisition
+1. Pricing has **~7.5x more impact** on revenue than acquisition (the canonical figure cited in `SKILL.md`)
 2. Quantify willingness to pay early and often — don't guess
 3. Freemium is an **acquisition model**, not a revenue model
 4. 8/10 companies using per-user pricing should use a different metric

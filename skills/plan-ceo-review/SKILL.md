@@ -3,9 +3,8 @@ name: plan-ceo-review
 description: |
   CEO/founder-mode plan review for re-examining the problem at the scope/vision
   level. Rethink the problem, find the 10-star product, challenge premises,
-  expand scope when it creates a better product. Three modes:
-  SCOPE EXPANSION (dream big), HOLD SCOPE (maximum rigor), SCOPE REDUCTION
-  (strip to essentials).
+  expand scope when it creates a better product. Three modes: SCOPE EXPANSION
+  (dream big), HOLD SCOPE (maximum rigor), SCOPE REDUCTION (strip to essentials).
   Use when: scope is still negotiable — typically after a PRD exists but before
   a design/architecture doc is locked — and the user says "review my plan",
   "is this the right approach", "are we building the right thing", "should we
@@ -13,11 +12,10 @@ description: |
   commit".
   Routing: if the user wants to change WHAT gets built, use this; if scope is
   already locked and they only want execution rigor on a fixed design doc, use
-  plan-eng-review (lighter). Choose HOLD SCOPE here only when you also want a
-  premise/dream-state challenge alongside the rigor pass.
-  Do NOT use for: locked-scope execution-rigor reviews on a fixed plan
-  (use plan-eng-review). Do NOT use for: code review of written code
-  (use the reviewer agent or /code-review — those run AFTER code exists).
+  plan-eng-review (scope fixed — execution rigor only).
+  Do NOT use for: locked-scope execution-rigor reviews (use plan-eng-review);
+  code review of written code (use the reviewer agent or /code-review — those
+  run AFTER code exists).
 allowed-tools:
   - Read
   - Grep

@@ -2,6 +2,16 @@
 
 Structural design of information spaces. IA determines how users find, understand, and move through content.
 
+## Table of Contents
+
+1. [Core Principle](#core-principle)
+2. [Dan Brown's 8 Principles of IA](#dan-browns-8-principles-of-ia)
+3. [Navigation Patterns](#navigation-patterns)
+4. [IA Design Process](#ia-design-process)
+5. [Search vs. Browse](#search-vs-browse)
+6. [Cross-Linking Strategy](#cross-linking-strategy)
+7. [Common IA Anti-Patterns](#common-ia-anti-patterns)
+
 ---
 
 ## Core Principle

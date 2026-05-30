@@ -4,6 +4,20 @@ Detailed character limits, image dimensions, and format variations for each ad p
 
 ---
 
+## Table of Contents
+
+1. [Google Ads](#google-ads)
+2. [Meta Ads (Facebook/Instagram)](#meta-ads-facebookinstagram)
+3. [LinkedIn Ads](#linkedin-ads)
+4. [TikTok Ads](#tiktok-ads)
+5. [X (formerly Twitter) Ads](#x-formerly-twitter-ads)
+6. [Character Count Best Practices](#character-count-best-practices)
+7. [Quick Reference Card](#quick-reference-card)
+8. [Performance Benchmarks (2025-2026)](#performance-benchmarks-2025-2026)
+9. [Platform Creative Philosophy (2025-2026)](#platform-creative-philosophy-2025-2026)
+
+---
+
 ## Google Ads
 
 ### Responsive Search Ads (RSAs)
@@ -242,6 +256,10 @@ Same specs as Feed, but test separately — performance varies significantly.
 ---
 
 ## Performance Benchmarks (2025-2026)
+
+> Time-sensitive figures: every benchmark, CPC/CPL/CTR range, and vendor ROI lift in this
+> section is a 2025-2026 snapshot that shifts quarterly. Re-verify against current platform
+> or vendor data before quoting to a client.
 
 ### Meta (Facebook/Instagram)
 

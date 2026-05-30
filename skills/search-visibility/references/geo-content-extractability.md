@@ -4,6 +4,14 @@ How AI systems retrieve content and how to optimize your content for extraction 
 
 ---
 
+## Table of Contents
+
+1. [How AI Content Retrieval Works](#how-ai-content-retrieval-works)
+2. [Core Extractability Principles](#core-extractability-principles)
+3. [High-Value Extractable Content Patterns](#high-value-extractable-content-patterns)
+4. [Content Audit Checklist for Extractability](#content-audit-checklist-for-extractability)
+
+
 ## How AI Content Retrieval Works
 
 AI systems generating answers (Google AI Overviews, ChatGPT with browsing, Perplexity) use Retrieval-Augmented Generation (RAG):

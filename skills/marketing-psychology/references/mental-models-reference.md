@@ -2,6 +2,16 @@
 
 Detailed descriptions of 70 mental models for marketing application. Each model includes the core principle and a specific marketing application.
 
+## Table of Contents
+
+1. [Foundational Thinking Models](#foundational-thinking-models)
+2. [Understanding Buyers & Human Psychology](#understanding-buyers--human-psychology)
+3. [Influencing Behavior & Persuasion](#influencing-behavior--persuasion)
+4. [Pricing Psychology](#pricing-psychology)
+5. [Design & Delivery Models](#design--delivery-models)
+6. [Growth & Scaling Models](#growth--scaling-models)
+7. [Dark Pattern Anti-Catalog](#dark-pattern-anti-catalog)
+
 ---
 
 ## Foundational Thinking Models

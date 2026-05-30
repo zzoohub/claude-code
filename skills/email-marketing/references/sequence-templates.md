@@ -4,6 +4,17 @@ Detailed templates for common email sequence types, including behavioral branchi
 
 ---
 
+## Table of Contents
+
+1. [Behavioral Branching](#behavioral-branching)
+2. [Welcome Sequence (Post-Signup)](#welcome-sequence-post-signup)
+3. [Lead Nurture Sequence (Pre-Sale)](#lead-nurture-sequence-pre-sale)
+4. [Onboarding Sequence (Product Users)](#onboarding-sequence-product-users)
+5. [Re-Engagement Sequence](#re-engagement-sequence)
+6. [Win-Back Sequence (Post-Cancel)](#win-back-sequence-post-cancel)
+7. [Output Format](#output-format)
+
+
 ## Behavioral Branching
 
 Linear sequences treat every subscriber the same. Real sequences branch based on what users do (or don't do). This matters because a user who activated on day 1 doesn't need the same email as someone who hasn't logged in.

@@ -4,6 +4,21 @@ W3C Candidate Recommendation. The core API is stable; modules (hit test, hand in
 
 > For React bindings (`@react-three/xr v6`): `react/web-xr.md`
 
+## Table of Contents
+
+1. [Session Types](#session-types)
+2. [Reference Spaces](#reference-spaces)
+3. [Input Sources](#input-sources)
+4. [Browser Support (early 2026)](#browser-support-early-2026)
+5. [Raw WebXR Session Setup](#raw-webxr-session-setup)
+6. [Input Handling](#input-handling)
+7. [Hand Tracking](#hand-tracking)
+8. [Hit Testing (AR)](#hit-testing-ar)
+9. [Anchors](#anchors)
+10. [Plane Detection](#plane-detection)
+11. [Haptic Feedback](#haptic-feedback)
+
+
 ## Session Types
 
 | Mode | Description |

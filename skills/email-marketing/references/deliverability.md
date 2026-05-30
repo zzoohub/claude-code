@@ -6,6 +6,19 @@ Getting emails into the inbox instead of spam. None of the copy or strategy guid
 
 ---
 
+## Table of Contents
+
+1. [Why Deliverability Matters](#why-deliverability-matters)
+2. [Gmail / Yahoo / Microsoft Sender Requirements (mandatory for bulk senders)](#gmail--yahoo--microsoft-sender-requirements-mandatory-for-bulk-senders)
+3. [DNS Authentication](#dns-authentication)
+4. [Domain & IP Warm-Up](#domain--ip-warm-up)
+5. [Consent Capture](#consent-capture)
+6. [List Hygiene](#list-hygiene)
+7. [Spam Trigger Avoidance](#spam-trigger-avoidance)
+8. [Monitoring](#monitoring)
+9. [Cold Email Deliverability](#cold-email-deliverability)
+
+
 ## Why Deliverability Matters
 
 Email providers (Gmail, Outlook, etc.) use sender reputation, authentication, and engagement signals to decide whether your email reaches the inbox, lands in the promotions tab, or goes straight to spam. A sender with bad reputation can have 30-50% of emails silently dropped. Most senders don't realize this is happening because bounce rates only measure hard bounces, not spam filtering.
@@ -90,7 +103,7 @@ Most email providers (Customer.io, Resend, SendGrid, etc.) walk you through this
 New sending domains and IPs have no reputation. Email providers are suspicious of senders they haven't seen before. Sending a large volume from a cold domain triggers spam filters.
 
 ### Warm-Up Process
-1. **Week 1**: Send 50-100 emails/day to your most engaged contacts (people who opened recently)
+1. **Week 1**: Send 50-100 emails/day to your most engaged contacts (people who opened recently) — cold outreach starts lower (30-50/day per mailbox; see Cold Email Deliverability below)
 2. **Week 2**: Double volume, still targeting engaged contacts
 3. **Week 3-4**: Gradually increase volume and broaden audience
 4. **Week 5+**: Full volume if engagement metrics look healthy
@@ -133,6 +146,8 @@ A dirty list tanks deliverability because bounces and spam complaints are the st
 | Spam complaint rate | < 0.05% | > 0.1% |
 | Unsubscribe rate | < 0.3% | > 0.5% |
 | List growth rate | Positive | Shrinking |
+
+The spam complaint rate above is an **internal hygiene target**; the **Gmail enforcement limit** is a different scale (< 0.1% target / 0.3% cliff — see the Gmail / Yahoo / Microsoft Sender Requirements section above).
 
 ### Suppression-List Management
 - Maintain a **single global suppression list** as the source of truth, synced across every ESP and your product DB.
@@ -191,6 +206,6 @@ Cold outreach has stricter deliverability challenges because recipients didn't o
 - **Use a separate domain** — never send cold email from your main product domain
 - **Warm the domain** for 2-3 weeks before any outreach
 - **Keep volume low** — 30-50 emails/day per mailbox to start
-- **Rotate sending accounts** — spread volume across multiple mailboxes
+- **Rotate sending accounts** — spread modest volume across multiple mailboxes, not fresh-mailbox rotation at scale (see the mailbox-rotation warning in `references/cold-outreach.md`)
 - **Personalize meaningfully** — identical emails sent to many recipients look like spam to filters
 - **Monitor replies and bounces daily** — fast feedback loops prevent domain damage

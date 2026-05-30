@@ -2,6 +2,20 @@
 
 Optimize checkout flows, cart experiences, and purchase completion for e-commerce and SaaS.
 
+## Table of Contents
+
+1. [Core Principles](#core-principles)
+2. [Checkout Flow Types](#checkout-flow-types)
+3. [Cart Page Optimization](#cart-page-optimization)
+4. [Checkout Form Optimization](#checkout-form-optimization)
+5. [Payment Optimization](#payment-optimization)
+6. [Before/After Example: E-commerce Checkout](#beforeafter-example-e-commerce-checkout)
+7. [Mobile Checkout](#mobile-checkout)
+8. [Abandonment Recovery](#abandonment-recovery)
+9. [Benchmarks](#benchmarks)
+10. [Key Metrics](#key-metrics)
+11. [Experiment Ideas](#experiment-ideas)
+
 ---
 
 ## Core Principles
@@ -78,8 +92,8 @@ Deferrable: Account creation, Marketing opt-in, Survey questions
 
 ### Payment Methods
 - Credit/debit card (baseline)
-- Digital wallets: Apple Pay, Google Pay, Shop Pay (30-50% faster completion)
-- Buy Now Pay Later: Klarna, Affirm, Afterpay (lifts AOV 20-30% for $50+ purchases)
+- Digital wallets: Apple Pay, Google Pay, Shop Pay (directionally ~30-50% faster completion — validate against your own data)
+- Buy Now Pay Later: Klarna, Affirm, Afterpay (directionally lifts AOV ~20-30% for $50+ purchases — validate against your own data)
 - PayPal (preferred in some markets)
 
 ### Express Checkout
@@ -194,7 +208,7 @@ Mobile has 2-3x higher abandonment than desktop. Optimize aggressively:
 | Mobile checkout completion | 20-35% | 35-50% | 50%+ |
 | Cart abandonment recovery (email) | 5-10% | 10-15% | 15%+ |
 
-Adding express payment (Apple Pay/Google Pay) typically lifts mobile checkout completion by 15-25% relative.
+These figures are directional and vary by industry, market, and period — validate against your own data. Adding express payment (Apple Pay/Google Pay) typically lifts mobile checkout completion by 15-25% relative.
 
 ---
 

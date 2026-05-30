@@ -2,6 +2,23 @@
 
 Optimize any form that is NOT signup/registration — lead capture, contact, demo request, application, survey. (Checkout/payment forms are covered in checkout-cro.md.)
 
+## Table of Contents
+
+1. [Core Principles](#core-principles)
+2. [Field-by-Field Optimization](#field-by-field-optimization)
+3. [Form Layout](#form-layout)
+4. [Multi-Step Forms](#multi-step-forms)
+5. [Error Handling](#error-handling)
+6. [Submit Button Optimization](#submit-button-optimization)
+7. [Trust and Friction Reduction](#trust-and-friction-reduction)
+8. [Form Types: Specific Guidance](#form-types-specific-guidance)
+9. [Benchmarks](#benchmarks)
+10. [Before/After Example: Demo Request Form](#beforeafter-example-demo-request-form)
+11. [Mobile Optimization](#mobile-optimization)
+12. [Key Metrics](#key-metrics)
+13. [Output Format](#output-format)
+14. [Experiment Ideas](#experiment-ideas)
+
 ---
 
 ## Core Principles
@@ -150,7 +167,7 @@ Strong: "[Action] + [What they get]"
 | Quote/application (7+ fields) | 5-15% | 15-25% | 25%+ |
 | Survey (10+ questions) | 10-25% | 25-40% | 40%+ |
 
-Each additional field beyond 3 typically reduces completion by 5-10%. Multi-step forms with progress bars can recover 10-20% of that loss.
+These figures are directional and vary by industry, audience, and period — validate against your own data. Each additional field beyond 3 typically reduces completion by 5-10%. Multi-step forms with progress bars can recover 10-20% of that loss.
 
 ---
 
@@ -208,6 +225,28 @@ Why it works: 3 fields (email + company is enough to enrich name, title, size vi
 | Field drop-off | Which fields lose people |
 | Error rate | By field |
 | Time to complete | Total and by field |
+
+---
+
+## Output Format
+
+### Audit Findings
+For each issue found:
+- **Issue**: What's wrong
+- **Impact**: Why it matters (with estimated impact if possible)
+- **Fix**: Specific recommendation
+- **Priority**: High/Medium/Low
+
+### Recommended Changes
+Organized by:
+1. Quick wins (same-day fixes)
+2. High-impact changes (week-level effort)
+3. Test hypotheses (things to A/B test)
+
+### Form Redesign (if requested)
+- Recommended field set with rationale
+- Field order
+- Copy direction for labels, placeholders, buttons, errors (hand to the copywriting skill for final variants)
 
 ---
 

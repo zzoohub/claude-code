@@ -10,7 +10,8 @@ description: |
   "ad angles", "creative testing", "ad fatigue", "creative refresh".
   Do NOT use for: organic social content (use social-content skill), landing page copy
   (use copywriting skill), ad targeting/budget strategy (use marketer agent),
-  or ad performance analysis (use product-analytics skill).
+  ad performance analysis (use product-analytics skill), or selecting/ethics-judging
+  psychological principles themselves (use marketing-psychology skill).
 ---
 
 # Ad Creative
@@ -229,8 +230,8 @@ those that don't — often dramatically. **Creative is the dominant lever in pai
 
 ### TikTok
 - **Native-first**: Ads must feel like organic FYP content, not commercials
-- **UGC ROI**: +55% ROI over non-UGC; unbranded UGC +19% better than branded
-- **Lo-fi wins**: +81% ROI for content without logos or heavy overlays
+- **UGC ROI**: +55% ROI over non-UGC; unbranded UGC +19% better than branded (vendor figures, 2025-2026 — re-verify quarterly)
+- **Lo-fi wins**: +81% ROI for content without logos or heavy overlays (vendor figures, 2025-2026 — re-verify quarterly)
 - **Speed**: 90% of ad recall happens in first 6 seconds; refresh every 7 days
 - **Production**: Smartphone-shot, quick cuts every 2-3 seconds, TikTok-native editing (captions, green screen)
 
@@ -255,7 +256,7 @@ those that don't — often dramatically. **Creative is the dominant lever in pai
 - **Reddit**: Native subreddit-style copy; AMA-format works; avoid corporate tone. Conversion ads work for B2B.
 - **Pinterest**: Lifestyle / aspirational visuals; 2:3 vertical pins; women + commerce-heavy audience. Idea Pins for organic-ad hybrid.
 - **Snap**: Vertical full-screen video; first 2s is everything; AR Lens / Sponsored Filters for brand lift.
-- **X (Twitter)**: Hot-take copy + image / short video; engagement signals matter for placement. Currently underpriced for B2B reach.
+- **X (Twitter)**: Hot-take copy + image / short video; engagement signals matter for placement. As of 2026, some advertisers observe it is underpriced for B2B reach — verify current pricing/reach before relying on this.
 - **YouTube Shorts**: Vertical, hook in 1s, captions on. Skippable vs unskippable affects message length.
 - **CTV (Netflix Ads, Disney+, Roku, Hulu, FAST channels)**: 15-30s spots; pair with frequency caps; pixel-based attribution is weak — use lift studies.
 
@@ -290,7 +291,7 @@ and modern performance data all converge on the same truths:
 3. **One message per ad** — Trying to say two things means saying nothing
 4. **Message match is mandatory** — Ad headline must match landing page headline
 5. **Test, don't guess** — Write 15-25+ headlines before picking (a direct-response discipline; Ogilvy's point was to *test* them, not a fixed count)
-6. **Emotion drives action** — Loss aversion is 2x stronger than gain; use it
+6. **Emotion drives action** — Loss aversion is 2x stronger than gain; use it (for selecting which psychological principle to apply, see the marketing-psychology skill)
 7. **Hook earns attention, body earns the click** — Without the hook, nothing else matters
 8. **Platform-native beats platform-agnostic** — Reformat for each platform, don't just resize
 9. **Creative quality > budget or targeting** — ~47% of CPG sales lift (Nielsen Catalina, 2017); ~70% of campaign performance (Google). Invest in creative first.

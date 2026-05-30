@@ -4,6 +4,19 @@
 
 ---
 
+## Table of Contents
+
+1. [Race Conditions](#race-conditions)
+2. [Numeric Manipulation](#numeric-manipulation)
+3. [State Machine Violations](#state-machine-violations)
+4. [Discount & Coupon Abuse](#discount--coupon-abuse)
+5. [Time-Based Attacks](#time-based-attacks)
+6. [Account & Limit Abuse](#account--limit-abuse)
+7. [Privilege Boundaries](#privilege-boundaries)
+8. [Refund & Chargeback Abuse](#refund--chargeback-abuse)
+9. [Export & Data Access Abuse](#export--data-access-abuse)
+
+
 ## Race Conditions
 
 | Check | Why | CWE |

@@ -2,6 +2,17 @@
 
 Complete payment recovery strategy for involuntary churn prevention.
 
+## Table of Contents
+
+1. [The Dunning Stack](#the-dunning-stack)
+2. [Pre-Dunning (Prevent Failures)](#pre-dunning-prevent-failures)
+3. [Smart Retry Logic](#smart-retry-logic)
+4. [Dunning Email Sequence](#dunning-email-sequence)
+5. [Recovery Benchmarks](#recovery-benchmarks)
+6. [Chargeback / Dispute Risk](#chargeback--dispute-risk)
+7. [Billing Provider Capabilities](#billing-provider-capabilities)
+8. [Tool Integrations](#tool-integrations)
+
 ---
 
 ## The Dunning Stack
@@ -57,6 +68,8 @@ The terminal hard-cancel (day 10) lands **after** the final dunning email (day 1
 ---
 
 ## Dunning Email Sequence
+
+This email track shares the same day-0 to day-10 clock as the retry/grace schedule in § Smart Retry Logic above — both are triggered off billing-state events (not the calendar), so the two tracks never drift.
 
 | Email | Timing | Tone | Content |
 |-------|--------|------|---------|

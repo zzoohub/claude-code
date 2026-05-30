@@ -4,8 +4,7 @@ System architecture defines **what components exist and how they connect** — s
 
 For internal service structure (layers, domain isolation, code organization), see `service-architecture.md`.
 
-## Contents
-
+## Table of Contents
 - **Communication Patterns** — Request-Response, EDA, CQRS, Event Sourcing, Saga, Modular Monolith
 - **Composition Decision Flowchart** + Real-World Architecture Compositions
 - **Additional Patterns** — Strangler Fig, BFF, Cell-based, Event Lakehouse

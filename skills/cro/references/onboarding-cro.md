@@ -2,6 +2,20 @@
 
 Reduce time-to-value and drive new users to their Aha Moment as quickly as possible, then build habits that lead to long-term retention.
 
+## Table of Contents
+
+1. [Initial Assessment](#initial-assessment)
+2. [Core Principles](#core-principles)
+3. [Defining Activation](#defining-activation)
+4. [Onboarding Flow Design](#onboarding-flow-design)
+5. [Multi-Channel Onboarding](#multi-channel-onboarding)
+6. [Handling Stalled Users](#handling-stalled-users)
+7. [Measurement](#measurement)
+8. [Benchmarks](#benchmarks)
+9. [Output Format](#output-format)
+10. [Common Patterns by Product Type](#common-patterns-by-product-type)
+11. [Experiment Ideas](#experiment-ideas)
+
 ## Initial Assessment
 
 Before providing recommendations, understand:
@@ -164,7 +178,7 @@ Identify biggest drops and focus there.
 | Day 7 retention | 10-20% | 20-35% | 35%+ |
 | Time to first value | Minutes to days | < 5 min | < 1 min |
 
-B2B products tend toward lower activation rates but higher retention once activated. Products with strong empty-state design consistently outperform those with blank-slate experiences.
+These figures are directional and vary by industry, product, and period — validate against your own data. B2B products tend toward lower activation rates but higher retention once activated. Products with strong empty-state design consistently outperform those with blank-slate experiences.
 
 ---
 

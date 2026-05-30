@@ -1,5 +1,16 @@
 # Event Tracking Design
 
+## Table of Contents
+
+1. [When to Use This Reference](#when-to-use-this-reference)
+2. [Event Naming Convention](#event-naming-convention)
+3. [Essential Events by Context](#essential-events-by-context)
+4. [Standard Properties](#standard-properties)
+5. [Tracking Plan Template](#tracking-plan-template)
+6. [Validation Checklist](#validation-checklist)
+7. [Server-Side vs Client-Side Events](#server-side-vs-client-side-events)
+8. [Common Mistakes](#common-mistakes)
+
 ## When to Use This Reference
 
 Use when designing a new tracking plan, adding events for a new feature, auditing existing tracking, or setting up analytics for a new product. This reference covers the naming, structure, and validation of analytics events — not the implementation code (that's a developer task).

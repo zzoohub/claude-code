@@ -1,26 +1,20 @@
 ---
 name: search-visibility
 description: |
-  Comprehensive search visibility strategy covering SEO (Search Engine
-  Optimization), AEO (Answer Engine Optimization), and GEO (Generative Engine
-  Optimization). Includes keyword research, on-page/technical SEO, link building,
-  content strategy, featured snippets, voice search, People Also Ask, zero-click
-  optimization, FAQ schema, direct answer formatting, AI search visibility,
-  content extractability, entity clarity, and multi-platform presence.
-  Use when: user asks about SEO, AEO, GEO, search optimization, AI visibility,
-  keyword research, on-page SEO, technical SEO, backlinks, content strategy,
-  AI citations, content extractability, featured snippets, voice search, answer
-  engine, zero-click search, People Also Ask, FAQ optimization, direct answers,
-  or mentions "SEO", "AEO", "GEO", "AI search", "search optimization", "ranking",
-  "organic traffic", "AI visibility", "generative engine", "answer engine",
-  "featured snippet", "voice search", "schema markup", "structured data",
-  "llms.txt", "AI Overviews", "AI Mode", "ChatGPT citations", "Perplexity",
-  "Core Web Vitals", "hreflang".
-  Do NOT use for: social media content strategy (use social-content), email
-  content (use email-marketing), ad copy (use ad-creative), UX copy or microcopy
-  (use copywriting for voice and structure — this skill only supplies the
-  SEO/AEO/GEO optimization layer on top), or competitor comparison page formats
-  (use competitor-pages; this skill provides the SEO layer for those pages).
+  Search visibility strategy unifying SEO (Search Engine Optimization), AEO
+  (Answer Engine Optimization), and GEO (Generative Engine Optimization).
+  Use when: SEO/AEO/GEO work, search or AI visibility, keyword research,
+  on-page/technical SEO, backlinks, content strategy, AI citations, content
+  extractability, entity clarity, multi-platform presence, or mentions "SEO",
+  "AEO", "GEO", "AI search", "search optimization", "ranking", "organic traffic",
+  "generative engine", "answer engine", "featured snippet", "voice search",
+  "People Also Ask", "zero-click", "FAQ schema", "direct answers", "schema
+  markup", "structured data", "llms.txt", "AI Overviews", "AI Mode", "ChatGPT
+  citations", "Perplexity", "Core Web Vitals", "hreflang".
+  Do NOT use for: social media content (use social-content), email content (use
+  email-marketing), ad copy (use ad-creative), UX copy or microcopy (use
+  copywriting), or competitor comparison page formats (use competitor-pages).
+  This skill only adds the SEO/AEO/GEO layer on top of those.
 ---
 
 # Search Visibility Skill
@@ -70,7 +64,7 @@ These are not separate disciplines. They form a continuum: SEO builds the founda
 2. **Featured Snippet Optimization**: Target paragraph, list, table, and video snippet formats with content structured to match each type.
 3. **Voice Search Readiness**: Optimize for conversational, question-based queries that voice assistants pull from. Content must be speakable and natural.
 4. **Zero-Click Strategy**: Build brand visibility even when users never click through, by owning answer positions in SERPs.
-5. **FAQ and Structured Answer Content**: Use question-based headings and concise answers (40-60 words) to capture People Also Ask and feed AI answer extraction. Note FAQ/HowTo schema no longer produces SERP rich results (deprecated 2023/2026) — keep such markup for AI/LLM extraction, not rich results.
+5. **FAQ and Structured Answer Content**: Use question-based headings and concise answers (40-60 words) to capture People Also Ask and feed AI answer extraction. Note FAQ/HowTo schema no longer produces SERP rich results — keep such markup for AI/LLM extraction, not rich results (canonical deprecation timeline: `references/technical-seo.md` §6 — FAQ removed for all sites May 7 2026; HowTo 2023).
 
 ### GEO Principles (Detail: `references/geo-content-extractability.md`, `references/geo-entity-clarity.md`, `references/geo-multi-platform.md`)
 
@@ -190,7 +184,7 @@ Traditional SEO metrics (rankings, clicks, traffic) + AEO metrics (featured snip
 
 5. **Structured Data**
    - Organization/Product/Article schema for entity and content-type signals (still supported rich results)
-   - FAQPage / HowTo markup only as AI/LLM extraction aids — their Google SERP rich results are deprecated (HowTo 2023; FAQ removed for all sites May 2026)
+   - FAQPage / HowTo markup only as AI/LLM extraction aids — their Google SERP rich results are deprecated (canonical timeline in `references/technical-seo.md` §6)
    - Speakable schema only for qualifying news publishers (limited Google beta)
 
 6. **Distribution Plan**

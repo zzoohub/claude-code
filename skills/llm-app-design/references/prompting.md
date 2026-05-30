@@ -2,6 +2,18 @@
 
 Prompts are programs written in natural language. Like code, they have structure, reusable patterns, and failure modes. Treat them that way.
 
+## Table of Contents
+
+1. [Structure over volume](#structure-over-volume)
+2. [Role priming](#role-priming)
+3. [Specifying output](#specifying-output)
+4. [Few-shot examples](#few-shot-examples)
+5. [Chain-of-thought (CoT)](#chain-of-thought-cot)
+6. [System prompt vs user prompt](#system-prompt-vs-user-prompt)
+7. [Extended / "thinking" modes](#extended--thinking-modes)
+8. [Anti-patterns](#anti-patterns)
+9. [Iteration loop](#iteration-loop)
+
 ## Structure over volume
 
 A 100-line unstructured prompt performs worse than a 40-line structured one. The model's attention is a finite resource — waste it on filler and the important parts get ignored.

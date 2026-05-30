@@ -2,6 +2,17 @@
 
 How to optimize content for featured snippets, voice search, People Also Ask, and zero-click search experiences.
 
+## Table of Contents
+
+1. [What AEO Is](#what-aeo-is)
+2. [Featured Snippet Optimization](#featured-snippet-optimization)
+3. [Voice Search Optimization](#voice-search-optimization)
+4. [People Also Ask (PAA) Optimization](#people-also-ask-paa-optimization)
+5. [Zero-Click Search Strategy](#zero-click-search-strategy)
+6. [FAQ Content and Schema Strategy](#faq-content-and-schema-strategy)
+7. [Content Formatting for AEO](#content-formatting-for-aeo)
+8. [AEO Audit Checklist](#aeo-audit-checklist)
+
 ---
 
 ## What AEO Is
@@ -236,7 +247,7 @@ This is not necessarily bad for your brand. Zero-click visibility still builds b
 
 ### FAQ Schema Markup
 
-⚠️ **FAQPage schema no longer produces FAQ rich results in Google Search.** Google restricted FAQ rich results to authoritative government/health sites in Aug 2023, then removed them entirely for all sites on May 7, 2026 (the FAQ report and Rich Results Test support drop June 2026; Search Console API support is removed Aug 2026). Do **not** add FAQPage schema expecting a SERP rich result. Its remaining value is helping search engines and AI/LLM answer engines parse and extract your Q&A content. If you keep it, follow these implementation rules so the markup stays clean for machine extraction:
+⚠️ **FAQPage schema no longer produces FAQ rich results in Google Search.** (Canonical deprecation timeline: `technical-seo.md` §6 — restricted to gov/health Aug 2023, removed for all sites May 7 2026.) Do **not** add FAQPage schema expecting a SERP rich result. Its remaining value is helping search engines and AI/LLM answer engines parse and extract your Q&A content. If you keep it, follow these implementation rules so the markup stays clean for machine extraction:
 - Each question-answer pair must be visible on the page (not hidden behind tabs or accordions for initial load)
 - The schema content must exactly match the visible page content
 - Do not include promotional content in FAQ schema answers
@@ -244,7 +255,7 @@ This is not necessarily bad for your brand. Zero-click visibility still builds b
 
 ### HowTo Schema Markup
 
-⚠️ **HowTo rich results were removed by Google in 2023** (mobile Aug 2023, desktop by Sept 13 2023) and no longer appear in Search; HowTo is no longer a supported rich-result type. Structured step markup (HowTo, or plain semantic ordered steps with names, descriptions, time, and tools) can still aid AI/LLM and assistant extraction of procedural content and is fine to keep — but do **not** implement it expecting a SERP rich result. If you keep it:
+⚠️ **HowTo rich results were removed by Google in 2023** and no longer appear in Search; HowTo is no longer a supported rich-result type. (Canonical timeline: `technical-seo.md` §6.) Structured step markup (HowTo, or plain semantic ordered steps with names, descriptions, time, and tools) can still aid AI/LLM and assistant extraction of procedural content and is fine to keep — but do **not** implement it expecting a SERP rich result. If you keep it:
 - Each step must be clearly defined with a name and description
 - Steps must be in the correct sequential order
 - Include estimated time and materials/tools where applicable
@@ -320,7 +331,7 @@ Use headings that mirror how users actually search:
 - [ ] Each PAA-targeted answer is concise (2-4 sentences) and self-contained
 
 ### Schema Markup
-- [ ] FAQPage / HowTo markup, if used, is treated as AI/LLM extraction aid only — NOT for SERP rich results (both rich-result types deprecated: FAQ removed May 2026, HowTo removed 2023)
+- [ ] FAQPage / HowTo markup, if used, is treated as AI/LLM extraction aid only — NOT for SERP rich results (both rich-result types deprecated; dates in `technical-seo.md` §6)
 - [ ] Speakable schema only on qualifying news-publisher content (not a general tactic)
 - [ ] Article / Product / Organization schema present where applicable (still supported)
 - [ ] All schema content matches visible page content exactly

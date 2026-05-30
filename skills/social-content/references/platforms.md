@@ -52,7 +52,7 @@ LinkedIn is fundamentally different from other platforms -- it's designed to **p
 ### Posting Strategy
 - **Frequency**: 1x/day (Justin Welsh posts daily, early morning East Coast)
 - **Best times**: Tue-Thu, 8-10am local time
-- **Post length**: 1,200-1,500 characters sweet spot. Longer posts trigger "see more" which counts as engagement.
+- **Post length**: 1,200-1,500 characters sweet spot. Longer posts trigger "see more"; the click is widely believed (industry consensus, not LinkedIn-documented) to function as a dwell/engagement signal.
 - **Hashtags**: 3-5 relevant via Creator Mode
 
 ### Tactical Playbook
@@ -150,7 +150,7 @@ Tweet N+2: [CTA: "If this was helpful, RT the first tweet so others see it too."
 ## Instagram
 
 ### Algorithm Mechanics
-Instagram runs **separate algorithms** for Feed, Stories, Reels, and Explore. The unified metric across all formats is now "Views."
+Instagram runs **separate algorithms** for Feed, Stories, Reels, and Explore. As of the 2024-2025 rollout, "Views" became the headline metric across most formats (verify per-format/region, as rollout varied).
 
 **Key signals (2025-2026):**
 - **DM shares are the strongest signal.** If users send your content to friends, the algorithm treats it as highly distributable. Design content that passes "the DM test" -- would someone send this to a specific friend?

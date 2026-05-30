@@ -117,7 +117,7 @@ Evaluate:
 **STOP — apply the section gate.**
 
 ## How to ask questions
-These skills drive AskUserQuestion. Map your output onto the tool's actual shape: a `question` body plus a list of `options`, where each option is a card with a short `label` and a `description`. The tool renders the option cards and auto-appends an "Other" choice — you do NOT hand-write "A) B) C)" and the tool does not letter them for you.
+This skill drives AskUserQuestion. Map your output onto the tool's actual shape: a `question` body plus a list of `options`, where each option is a card with a short `label` and a `description`. The tool renders the option cards and auto-appends an "Other" choice — you do NOT hand-write "A) B) C)" and the tool does not letter them for you.
 
 For every issue:
 * **One issue = one AskUserQuestion call.** Never combine multiple issues into one question. (In SMALL CHANGE mode this means a short sequence of calls at the end — one per section's top issue — not a single fused mega-question.)

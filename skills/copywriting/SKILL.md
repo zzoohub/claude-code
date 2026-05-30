@@ -104,7 +104,7 @@ Why: The human brain processes one concept at a time. If the reader has to parse
 
 ### Principle 7: Write for the Skimmer (Eyeball Monkey Bars)
 
-Most internet readers scan rather than read top-to-bottom (Nielsen Norman Group, *How Users Read on the Web*, 1997). Make copy effortless to navigate — like swinging from one monkey bar to the next: short paragraphs, bullet brigades, snappy sentences, and disproportionate time spent on the hook. See `references/transitions.md` → Scannable Flow for the full guidance and rules of thumb.
+Most internet readers scan rather than read top-to-bottom. Make copy effortless to navigate — short paragraphs, bullet brigades, snappy sentences, and disproportionate time spent on the hook. See `references/transitions.md` → Scannable Flow for the full guidance, the NN/g source, and rules of thumb.
 
 Why: Long copy still works — but only when every paragraph earns its place. People visit your site to find info, not to read prose. Make the finding effortless.
 
@@ -185,7 +185,7 @@ For page-level copy, follow the section structure in `references/copy-frameworks
 ### 6. Quality Checklist
 
 Before delivering any copy, verify:
-- [ ] Does it pass all 8 Principles?
+- [ ] Does it pass all 8 Principles? (for conversion/promotional copy — skip for neutral UX microcopy like errors and tooltips)
 - [ ] Is there exactly one clear message?
 - [ ] Is the desired action obvious?
 - [ ] Does it align with brand voice?

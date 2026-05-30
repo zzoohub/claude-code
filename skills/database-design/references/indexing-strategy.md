@@ -1,5 +1,14 @@
 # PostgreSQL Indexing Strategy Guide
 
+## Table of Contents
+
+1. [Core Principle](#core-principle)
+2. [Index Types](#index-types)
+3. [Advanced Index Patterns](#advanced-index-patterns)
+4. [Index Maintenance](#index-maintenance)
+5. [Index Anti-Patterns](#index-anti-patterns)
+6. [Reading EXPLAIN ANALYZE](#reading-explain-analyze)
+
 ## Core Principle
 
 The goal of indexing: **minimize disk I/O**. An index is metadata pointing to where specific values are stored.

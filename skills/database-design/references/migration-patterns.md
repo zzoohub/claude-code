@@ -2,6 +2,15 @@
 
 > Examples use the skill's PK default `UUID DEFAULT uuidv7()` (PG18+); on PG ≤17 generate v7 at the application layer — see SKILL.md → 'Primary Key Type Decision'.
 
+## Table of Contents
+
+1. [Core Principles](#core-principles)
+2. [Migration File Convention](#migration-file-convention)
+3. [Zero-Downtime Migration Patterns](#zero-downtime-migration-patterns)
+4. [Strangler Fig Pattern (Table Migration)](#strangler-fig-pattern-table-migration)
+5. [Large Table Migrations](#large-table-migrations)
+6. [Post-Migration Checklist](#post-migration-checklist)
+
 ## Core Principles
 
 1. **Every migration has a rollback** — no exceptions

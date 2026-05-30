@@ -2,13 +2,10 @@
 name: task-add
 description: |
   Add tasks to an existing task board, or revise an existing task whose
-  definition changed. Reads the current `tasks/board.md` and feature files to
-  learn the project's grouping (phases or iterations) and the next available ID,
-  then appends new tasks. Creates or updates a single
-  `tasks/features/{feature}.md` with details. Works for feature work, bugfixes,
-  hotfixes, refactors, spikes, and chores. Revising edits a task's definition
-  (context, acceptance, touches, depends_on, type) and logs it to the feature
-  file's `Changes` section.
+  definition changed. Appends new tasks to `tasks/board.md` and details to
+  `tasks/features/{feature}.md`. Works for feature work, bugfixes, hotfixes,
+  refactors, spikes, and chores. Revising edits a task's definition (context,
+  acceptance, touches, depends_on, type) and logs it.
   Use when: the task board already exists and you need to add work — a new
   feature, a bug, a one-off fix, a refactor, a chore — or revise a task whose
   plan changed. Trigger phrases: "add a task for X", "log a bug for X", "create
@@ -44,11 +41,14 @@ see `AGENTS.md` at the repo root.
    - **Phases board** — earliest phase that respects dependencies. If all
      phases are done, append `Phase N+1 — {feature}`.
    - **Iterations board** — add to the current open iteration, or the next
-     one if the current is closed. Never create a `Phase N` heading on an
-     iterations board.
+     one if the current is closed. An iteration is closed once its time-box
+     has elapsed (its ISO week is in the past) or its heading is tagged
+     `(closed)`; otherwise treat it as open. Never create a `Phase N` heading
+     on an iterations board.
 6. Updates or creates `tasks/features/{feature}.md` with task details. For
-   one-off bugfixes / chores, skip the feature file unless the user asks for
-   `--with-spec` or the change is non-trivial. When you skip it, keep the
+   one-off bugfixes / chores, skip the feature file unless the user explicitly
+   asks for a spec (`--with-spec` forces a feature file to be created) or the
+   change is non-trivial. When you skip it, keep the
    board row self-contained (clear `task` + `touches`) and use a stable
    `feature` bucket (`infra` / `chore` / `bugfix-{slug}`); any later
    block/abandon note for such a task goes to `tasks/features/_misc.md`.
@@ -73,10 +73,10 @@ Type Guide** in `task-craft`.
 |---|---|
 | `feature` | New behavior tied to a feature spec |
 | `bugfix` | Defect with a repro |
-| `hotfix` | Production incident; deploy fast |
 | `refactor` | Code restructure with no behavior change |
-| `spike` | Time-boxed investigation |
 | `chore` | Infra / tooling / docs |
+| `spike` | Time-boxed investigation |
+| `hotfix` | Production incident; deploy fast |
 
 ## Workflow
 
@@ -153,7 +153,7 @@ Keep upgrades minimal; don't reformat unrelated rows.
 ### T-NNN: {Title}
 - **type:** {feature | bugfix | hotfix | refactor | spike | chore}
 - **phase:** N            <!-- omit when grouping is iterations -->
-- **iteration:** YYYY-Wnn <!-- omit when grouping is phases -->
+- **iteration:** YYYY-Wnn <!-- omit when grouping is phases; the `## Iteration …` heading is authoritative, this field mirrors its ISO week -->
 - **priority:** {low | medium | high}
 - **depends_on:** {task IDs or —}
 - **touches:** {files to create/modify}

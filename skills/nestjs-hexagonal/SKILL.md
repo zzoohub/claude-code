@@ -20,7 +20,7 @@ Separate **business domain** from **infrastructure**. Domain defines *what*; ada
     -> [Port: Repository abstract class] -> [Outbound Adapter: TypeORM/etc.]
 ```
 
-**Dependencies always point inward.** Domain code never imports NestJS, TypeORM, or any infrastructure package.
+**Dependencies always point inward.** Domain code never imports NestJS, TypeORM, or any infrastructure package (single `@Injectable()` concession aside — see § Service).
 
 ---
 
@@ -65,7 +65,7 @@ tests/
 └── mocks.ts                    # Stub, Saboteur, Spy, NoOp
 ```
 
-**Rule:** `domain/` never imports from `inbound/` or `outbound/`. Domain may import a **single** `@nestjs/common` symbol — `@Injectable()` — on the service implementation only, as a DI-metadata concession (see § Service below). Everything else (`HttpException`, decorators, modules) stays out of `domain/`. If you want a zero-`@nestjs/*`-in-domain stance, drop `@Injectable()` and use `useFactory` wiring — both patterns are supported.
+**Rule:** `domain/` never imports from `inbound/` or `outbound/`. Domain may import a **single** `@nestjs/common` symbol — `@Injectable()` — on the service implementation only, as a DI-metadata concession (see § Service below). Everything else (`HttpException`, decorators, modules) stays out of `domain/`.
 
 ---
 
@@ -339,7 +339,7 @@ The persistence module provides `AuthorRepository` — the feature module and co
 
 ### Feature Module Pattern
 
-Each domain gets a **feature module** that wires its controller, service, and repository. Default wiring: `{ provide: AuthorService, useClass: AuthorServiceImpl }` with `@Injectable()` on the impl. Switch to `useFactory` only if you want zero NestJS imports inside `domain/`.
+Each domain gets a **feature module** that wires its controller, service, and repository. Default wiring: `{ provide: AuthorService, useClass: AuthorServiceImpl }` with `@Injectable()` on the impl; `useFactory` for a NestJS-import-free `domain/` (see § Service).
 
 ### Scaling
 
@@ -442,7 +442,7 @@ For **single-repo transactions** (no cross-repo orchestration), inline `repo.man
 
 ### Framework
 - [ ] Controllers in inbound/ with `@Controller()` decorators
-- [ ] Services wired via `useClass` with `@Injectable()` on the impl (or `useFactory` for stricter framework-free domain)
+- [ ] Services wired via `useClass` with `@Injectable()` on the impl (or `useFactory`, see § Service)
 - [ ] Validation via `createZodDto` classes + `ZodValidationPipe` registered through `APP_PIPE` (returns **422** on failure, matching api-design.md); Swagger doc wrapped with `cleanupOpenApiDoc()`
 - [ ] Global `DomainExceptionFilter` registered via `APP_FILTER` in AppModule (DI-resolved — it injects `ClsService` for the `X-Request-Id` header); filter matches on `instanceof DomainError` (base class), not on a loose `"tag" in error` check; re-maps `ThrottlerException` 429 to `application/problem+json`
 - [ ] `enableShutdownHooks()` called in main.ts

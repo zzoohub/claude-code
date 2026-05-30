@@ -6,6 +6,18 @@ RAG grounds a language model in your data. Done well, it's the difference betwee
 
 The retrieval half of this pipeline (embeddings, hybrid search, metadata filters, re-ranking) is also a standalone primitive: semantic search, clustering, dedup, and embedding-based classification use the same machinery *without* a generation step. When you don't need synthesized language out, stop at retrieval — it's cheaper and more reliable than an LLM call. The sections below cover retrieval as the front half of RAG, but they transfer directly to those non-generative shapes.
 
+## Table of Contents
+
+1. [When RAG is right](#when-rag-is-right)
+2. [The pipeline](#the-pipeline)
+3. [Indexing: chunking](#indexing-chunking)
+4. [Retrieval: more than vector search](#retrieval-more-than-vector-search)
+5. [Ranking: the second-stage filter](#ranking-the-second-stage-filter)
+6. [Augmentation: how to inject context](#augmentation-how-to-inject-context)
+7. [Evaluation](#evaluation)
+8. [Agentic retrieval](#agentic-retrieval)
+9. [Common anti-patterns](#common-anti-patterns)
+
 ## When RAG is right
 
 Use RAG when:

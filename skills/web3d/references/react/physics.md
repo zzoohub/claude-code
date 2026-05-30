@@ -4,6 +4,18 @@ Declarative R3F bindings for Rapier physics. v2 supports R3F v9 + React 19.
 
 > For raw Rapier API and Worker pattern: `../physics.md`
 
+## Table of Contents
+
+1. [Setup](#setup)
+2. [RigidBody](#rigidbody)
+3. [Colliders](#colliders)
+4. [Collision Groups](#collision-groups)
+5. [Joints](#joints)
+6. [Hooks](#hooks)
+7. [InstancedRigidBodies](#instancedrigidbodies)
+8. [Character Controller Pattern](#character-controller-pattern)
+
+
 ## Setup
 
 ```bash
@@ -69,7 +81,7 @@ import { RigidBody } from '@react-three/rapier'
 >
   <mesh>
     <boxGeometry args={[1, 1, 1]} />
-    <meshStandardMaterial color="red" />
+    <meshStandardNodeMaterial color="red" />
   </mesh>
 </RigidBody>
 ```
@@ -190,7 +202,7 @@ const instances = useMemo<InstancedRigidBodyProps[]>(() =>
 <InstancedRigidBodies ref={rigidBodies} instances={instances} colliders="cuboid">
   <instancedMesh args={[undefined, undefined, 500]} count={500}>
     <boxGeometry args={[0.5, 0.5, 0.5]} />
-    <meshStandardMaterial color="orange" />
+    <meshStandardNodeMaterial color="orange" />
   </instancedMesh>
 </InstancedRigidBodies>
 ```
@@ -225,7 +237,7 @@ function Character() {
       }}
     >
       <CapsuleCollider args={[0.5, 0.25]} />
-      <mesh><capsuleGeometry args={[0.25, 1]} /><meshStandardMaterial /></mesh>
+      <mesh><capsuleGeometry args={[0.25, 1]} /><meshStandardNodeMaterial /></mesh>
     </RigidBody>
   )
 }

@@ -11,6 +11,17 @@ This is not a neutral catalog of technology options — it is a **curated house 
 
 Deviation is fine when justified. Unjustified deviation is tech debt.
 
+## Table of Contents
+
+1. [Language](#language)
+2. [Framework](#framework)
+3. [Infrastructure](#infrastructure)
+4. [Data](#data)
+5. [AI](#ai)
+6. [External Services](#external-services)
+
+---
+
 ## Language
 
 | Role | Options |

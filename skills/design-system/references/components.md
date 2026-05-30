@@ -1,5 +1,14 @@
 # Component Patterns
 
+## Table of Contents
+
+1. [Pattern 1: Flat API (Simple Components)](#pattern-1-flat-api-simple-components)
+2. [Pattern 2: Explicit Variant Components](#pattern-2-explicit-variant-components)
+3. [Pattern 3: Compound API (Flexible Layout)](#pattern-3-compound-api-flexible-layout)
+4. [Pattern 4: Headless (Reusable Behavior)](#pattern-4-headless-reusable-behavior)
+5. [When to Upgrade](#when-to-upgrade)
+6. [States Checklist](#states-checklist)
+
 ## Pattern 1: Flat API (Simple Components)
 
 Best for components with few visual variations and no behavioral differences between variants. Use constrained props for appearance (size, colorScheme), but never boolean props for modes.
@@ -120,7 +129,7 @@ Every headless module must support:
 
 Good candidates for headless: Toggle, Dialog, Dropdown, Accordion, Tooltip, Combobox — anything with complex keyboard/focus patterns.
 
-> For React-specific implementations (JSX, hooks, Context API): `references/react/components.md`
+> For React-specific implementations (JSX, hooks, Context API): `references/react/components.md` (also linked directly from SKILL.md)
 
 ## When to Upgrade
 

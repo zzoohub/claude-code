@@ -2,7 +2,7 @@
 name: motion
 description: |
   Motion design for web and React Native — animation, scroll effects, gestures, page transitions, visual atmosphere, and interactive charts.
-  Use when: adding animation or motion polish (scroll reveals, parallax, stagger, page transitions, cursor effects, kinetic typography, marquee/ticker), gesture interactions (swipe, drag, pinch, shared element transitions, spring animations), interactive data visualization (animated charts, D3, bar/line/area/donut charts), or making a UI feel more alive/cinematic/immersive. Trigger on phrases like "add animations", "more dynamic", "add wow factor", "make it interactive", "micro-interactions", "loading animation", "splash screen", or any request to add motion to an existing UI on either web or mobile.
+  Use when: adding animation or motion polish (scroll reveals, parallax, stagger, page transitions, cursor effects, kinetic typography, marquee/ticker), gesture interactions (swipe, drag, pinch, shared element transitions, spring animations), interactive data visualization (animated D3 bar/line/area/donut charts), or making a UI feel more alive/cinematic/immersive. Trigger on phrases like "add animations", "more dynamic", "add wow factor", "make it interactive", "micro-interactions", "loading animation", "splash screen", or adding motion to an existing UI on web or mobile.
   Do NOT use for: basic CSS hover states (use design-system motion tokens), building components from scratch, UX flow decisions (use ux-design), data/API work, or 3D/WebGL/WebGPU scenes (consider web3d).
 ---
 
@@ -103,7 +103,7 @@ Need animation?
 |   +-- Everything else (stagger, pin, scrub, snap) --> GSAP ScrollTrigger
 |
 +-- Timeline sequence (A->B->C)? --> GSAP timeline
-+-- Text character/word animation? --> GSAP + custom splitter
++-- Text character/word animation? --> GSAP SplitText (free since 2025)
 |
 +-- Route/page transition?
 |   +-- Cross-fade, shared element --> View Transitions API
@@ -170,11 +170,11 @@ Need animation?
 | Anti-Pattern | Why It's Bad | Fix |
 |-------------|-------------|-----|
 | **Animate everything** | No hierarchy = no attention guidance | Pick 1-2 hero moments per viewport. Stillness is a design choice. |
-| **3+ second loading animation** | Long load animations drive abandonment (~53% of mobile users abandon a site that takes >3s — Think with Google) | Progressive reveal. Skeleton loaders for structure. |
+| **3+ second loading animation** | Long load animations drive abandonment (~53% of mobile users abandon a site that takes >3s — Think with Google, 2017; dated stat, trend still holds — re-verify before citing) | Progressive reveal. Skeleton loaders for structure. |
 | **Parallax on text** | Brain can't read and track motion simultaneously | Parallax on images/backgrounds only. |
 | **Mixed emotional registers** | Bouncy elastic on a luxury brand = cognitive dissonance | Commit to one register. |
 | **Scroll hijacking on content** | Users prefer control | Reserve for immersive storytelling only. Never on blogs, docs, dashboards. |
-| **Hover-only discovery** | ~60% of web traffic is touch (no hover) | All info visible by default. Hover enhances, never reveals. |
+| **Hover-only discovery** | ~60% of web traffic is touch (no hover) — dated figure, trend still holds; re-verify before citing | All info visible by default. Hover enhances, never reveals. |
 | **Stagger > 10 items** | Beyond ~6, the effect adds perceived load and total duration without adding clarity | Stagger first 4-6, batch-reveal the rest. |
 | **Porting web hover to mobile** | Mobile has no hover | Rethink: magnetic hover -> spring tap, hover reveal -> always visible. |
 | **Timing-based everything (RN)** | `withTiming` can't be interrupted mid-flight | Default to `withSpring` for touch-related animations. |

@@ -4,6 +4,17 @@ Concrete good/bad examples for the PRD sections where calibration matters most.
 Reference this when writing a PRD to calibrate quality and depth. (The Appendix
 is mechanical and has no example.)
 
+## Table of Contents
+
+1. [Section 1: Problem / Opportunity](#section-1-problem--opportunity)
+2. [Section 2: Target Users](#section-2-target-users)
+3. [Section 3: Proposed Solution](#section-3-proposed-solution)
+4. [Section 4: Success Metrics](#section-4-success-metrics)
+5. [Section 5: Feature Overview](#section-5-feature-overview)
+6. [Section 6: Dev Order](#section-6-dev-order)
+7. [Section 7: Scope & Non-Goals](#section-7-scope--non-goals)
+8. [Section 8: Assumptions, Constraints & Risks](#section-8-assumptions-constraints--risks)
+
 ---
 
 ## Section 1: Problem / Opportunity

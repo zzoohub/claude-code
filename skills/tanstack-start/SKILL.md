@@ -5,8 +5,8 @@ description: |
   Use when: building full-stack apps with TanStack Start, using TanStack Router file-based routing,
   writing createServerFn or createMiddleware, deploying TanStack Start apps.
   Also use when user mentions TanStack Start or TanStack Router.
-  Do not use for: Next.js (use nextjs skill). For SolidJS apps, prefer SolidStart (the Solid team's
-  own framework) — the TanStack Solid adapter is experimental and not covered here.
+  Do not use for: Next.js (use vercel-composition-patterns / vercel:nextjs). For SolidJS apps,
+  prefer SolidStart or TanStack Start's Solid adapter — this skill covers React patterns only.
   For React-specific patterns, also read `references/react.md`.
 ---
 
@@ -326,7 +326,7 @@ export default defineConfig({
 | Platform | Configuration |
 |----------|---------------|
 | Node.js | Add the `nitro()` plugin, then `vite build` → `node .output/server/index.mjs` |
-| Bun | `nitro({ preset: 'bun' })`; optional Bun-native server (`bun run server.ts`, React 19 only) |
+| Bun | `nitro({ preset: 'bun' })`; optional Bun-native server (`bun run server.ts`) |
 | Vercel | Nitro plugin (auto-detected preset) + one-click deploy. Optionally pin `nitro({ preset: 'vercel' })` |
 | Railway / others | Follow the Nitro instructions |
 | Cloudflare | `cloudflare({ viteEnvironment: { name: 'ssr' } })` as the **first** plugin + `wrangler.jsonc` (`"main": "@tanstack/react-start/server-entry"`, `"compatibility_flags": ["nodejs_compat"]`). Not Nitro |

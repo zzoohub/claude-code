@@ -2,6 +2,13 @@
 
 > For core Rust WASM setup and API: `../wasm.md`
 
+## Table of Contents
+
+1. [Terrain Generator Component](#terrain-generator-component)
+2. [Particle System (Zero-Copy)](#particle-system-zero-copy)
+3. [SharedArrayBuffer Physics Sync](#sharedarraybuffer-physics-sync)
+
+
 ## Terrain Generator Component
 
 ```tsx
@@ -25,7 +32,7 @@ function WasmTerrain({ width = 128, depth = 128 }) {
 
   return (
     <mesh geometry={geometry}>
-      <meshStandardMaterial color="#3a7d44" />
+      <meshStandardNodeMaterial color="#3a7d44" />
     </mesh>
   )
 }
@@ -76,7 +83,7 @@ function WasmParticles() {
 
   return (
     <points geometry={geometry}>
-      <pointsMaterial size={0.02} color="#88ccff" />
+      <pointsNodeMaterial size={0.02} color="#88ccff" />
     </points>
   )
 }

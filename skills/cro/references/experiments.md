@@ -4,6 +4,20 @@
 
 Plan, design, and implement A/B tests with statistical rigor.
 
+## Table of Contents
+
+1. [Core Principles](#core-principles)
+2. [Hypothesis Framework](#hypothesis-framework)
+3. [Test Types](#test-types)
+4. [Sample Size Quick Reference](#sample-size-quick-reference)
+5. [Metrics Selection](#metrics-selection)
+6. [Designing Variants](#designing-variants)
+7. [Traffic Allocation](#traffic-allocation)
+8. [Implementation](#implementation)
+9. [Running the Test](#running-the-test)
+10. [Analyzing Results](#analyzing-results)
+11. [Common Mistakes](#common-mistakes)
+
 ---
 
 ## Core Principles

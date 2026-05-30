@@ -2,6 +2,12 @@
 
 Rapier is a Rust-based physics engine compiled to WASM. This reference covers the raw Rapier API and Worker-based architecture. For declarative React bindings (`@react-three/rapier`), see `react/physics.md`.
 
+## Table of Contents
+
+1. [Setup (Raw Rapier)](#setup-raw-rapier)
+2. [Core Concepts](#core-concepts)
+3. [Worker Pattern](#worker-pattern)
+
 ## Setup (Raw Rapier)
 
 ```bash
@@ -122,6 +128,9 @@ eventQueue.drainContactForceEvents((event) => {
 const GROUP_PLAYER = 0x00010001
 const GROUP_ENEMY = 0x00020002
 const GROUP_SENSOR = 0x00040001  // sensor in group 2, interacts with group 0
+// Each value above only filters its OWN group, so player and enemy won't collide with
+// each other. For player-enemy collisions, widen the filter mask to include the other
+// group, e.g. GROUP_PLAYER = 0x00010003 (member group 0, filter groups 0 and 1).
 
 colliderDesc.setCollisionGroups(GROUP_PLAYER)
 ```

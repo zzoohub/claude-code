@@ -4,6 +4,16 @@ Techniques for smooth transitions between copy sections, maintaining narrative c
 
 ---
 
+## Table of Contents
+
+1. [Core Principle: One Cohesive Thought](#core-principle-one-cohesive-thought)
+2. [Section-to-Section Transitions](#section-to-section-transitions)
+3. [Paragraph Linking Techniques](#paragraph-linking-techniques)
+4. [Long-Form Content Flow](#long-form-content-flow)
+5. [Scannable Flow (Eyeball Monkey Bars)](#scannable-flow-eyeball-monkey-bars)
+6. [Anti-Patterns](#anti-patterns)
+
+
 ## Core Principle: One Cohesive Thought
 
 Even with multiple elements, copy must read as a single cohesive thought — not fragmented ideas crammed together. See SKILL.md → Principle 6 for the full rule and example. Everything below serves this principle: each transition should carry the reader forward as one continuous line of thinking.

@@ -4,6 +4,18 @@
 
 ---
 
+## Table of Contents
+
+1. [Password & Credential Hashing](#password--credential-hashing)
+2. [Encryption (At Rest)](#encryption-at-rest)
+3. [Encryption (In Transit)](#encryption-in-transit)
+4. [Key Derivation](#key-derivation)
+5. [Random Number Generation](#random-number-generation)
+6. [Digital Signatures & Verification](#digital-signatures--verification)
+7. [Certificate Management](#certificate-management)
+8. [Homegrown Crypto Detection](#homegrown-crypto-detection)
+
+
 ## Password & Credential Hashing
 
 | Check | Why | CWE |

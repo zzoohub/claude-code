@@ -2,9 +2,21 @@
 
 Specific tactics for maximizing visibility in AI-powered search and answer platforms. Extends the GEO principles in the main skill with platform-specific and monitoring strategies.
 
-For foundational GEO concepts, see: `geo-content-extractability.md`, `geo-entity-clarity.md`, `geo-multi-platform.md`
+See also (not prerequisites; each is linked directly from SKILL.md): `geo-content-extractability.md`, `geo-entity-clarity.md`, `geo-multi-platform.md` for the foundational GEO concepts.
 
 ---
+
+## Table of Contents
+
+1. [How AI Search Platforms Select Sources](#how-ai-search-platforms-select-sources)
+2. [The Three Pillars of AI Optimization](#the-three-pillars-of-ai-optimization)
+3. [AI Visibility Audit](#ai-visibility-audit)
+4. [Content Types That Get Cited Most](#content-types-that-get-cited-most)
+5. [Schema Markup for AI](#schema-markup-for-ai)
+6. [Monitoring AI Visibility](#monitoring-ai-visibility)
+7. [Common Mistakes](#common-mistakes)
+8. [2025-2026 AI Search Landscape Updates](#2025-2026-ai-search-landscape-updates)
+
 
 ## How AI Search Platforms Select Sources
 
@@ -19,12 +31,12 @@ For foundational GEO concepts, see: `geo-content-extractability.md`, `geo-entity
 
 **Key difference from traditional SEO:** Traditional SEO gets you ranked. AI SEO gets you **cited**. A well-structured page can get cited even if it ranks on page 2 or 3.
 
-**Critical stats** (as of early 2026 — these move fast; keep the date and re-verify):
-- AI Overviews appear in roughly **15-25% of Google queries in broad global keyword studies** (Semrush: peaked ~25% mid-2025, ~16% by Nov 2025), but **45-60% in US-focused / curated-keyword trackers** and per Google's own framing (Advanced Web Ranking ~60% of US queries; BrightEdge/Google ~50%). Varies widely by country, intent, device, and measurement method — treat as directional, not a single fact
-- AI Overviews can cut click-through to the **top organic result by up to ~58%** when present (Ahrefs, Dec 2025)
-- Brands are reportedly cited via third-party sources (Reddit, Wikipedia, review sites) far more than via their own domains
-- Well-structured, sourced content is cited materially more often than thin/undated content
-- Adding statistics and citing sources are among the highest-leverage on-page tactics (see the GEO study below)
+**Critical stats** (as of early 2026 — these move fast; keep the date and re-verify). Each stat is followed by the decision it should drive:
+- AI Overviews appear in roughly **15-25% of Google queries in broad global keyword studies** (Semrush: peaked ~25% mid-2025, ~16% by Nov 2025), but **45-60% in US-focused / curated-keyword trackers** and per Google's own framing (Advanced Web Ranking ~60% of US queries; BrightEdge/Google ~50%). Varies widely by country, intent, device, and measurement method — treat as directional, not a single fact. **Decision:** measure AIO presence on *your own* tracked query set rather than picking a headline number; size the GEO investment to how many of your queries actually trigger an AIO
+- AI Overviews can cut click-through to the **top organic result by up to ~58%** when present (Ahrefs, Dec 2025). **Decision:** for AIO-present queries, target citation *inside* the AIO, not rank-1 CTR — track mentions, not just clicks
+- Brands are reportedly cited via third-party sources (Reddit, Wikipedia, review sites) far more than via their own domains. **Decision:** fund third-party presence (Reddit, Wikipedia, review sites) alongside on-site content, not after it
+- Well-structured, sourced content is cited materially more often than thin/undated content. **Decision:** add visible dates, authors, and sources to priority pages before chasing new content
+- Adding statistics and citing sources are among the highest-leverage on-page tactics (see the GEO study below). **Decision:** prioritize adding cited statistics and quotations to existing pages as the first GEO action
 
 ---
 

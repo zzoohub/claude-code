@@ -3,6 +3,22 @@
 Check every PRD against these failure modes before finalizing. Each anti-pattern
 includes what it looks like, why it's dangerous, and how to fix it.
 
+## Table of Contents
+
+1. [The Solution Masquerading as a Problem](#1-the-solution-masquerading-as-a-problem)
+2. [The Vacuous PRD](#2-the-vacuous-prd)
+3. [The Novel](#3-the-novel)
+4. [The Design Document in Disguise](#4-the-design-document-in-disguise)
+5. [The Technical Spec in Disguise](#5-the-technical-spec-in-disguise)
+6. [The Metrics-Free Zone](#6-the-metrics-free-zone)
+7. [The Everything Bagel](#7-the-everything-bagel)
+8. [The One-Sided Coin](#8-the-one-sided-coin)
+9. [The Outdated Artifact](#9-the-outdated-artifact)
+10. [Missing Alternatives](#10-missing-alternatives)
+11. [Requirement Without Evidence](#11-requirement-without-evidence)
+12. [The Copy-Paste PRD](#12-the-copy-paste-prd)
+13. [The Output-Metric Trap](#13-the-output-metric-trap)
+
 ---
 
 ## 1. The Solution Masquerading as a Problem

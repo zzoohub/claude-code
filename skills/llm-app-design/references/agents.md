@@ -4,6 +4,20 @@
 
 An "agent" is an LLM that runs in a loop, calling tools and deciding its next action until a goal is reached. Agents are powerful and expensive. Most LLM apps don't need one.
 
+## Table of Contents
+
+1. [What makes something an agent](#what-makes-something-an-agent)
+2. [When agents are right](#when-agents-are-right)
+3. [Workflows: the shapes before you reach for an agent](#workflows-the-shapes-before-you-reach-for-an-agent)
+4. [The basic agent loop](#the-basic-agent-loop)
+5. [Context management](#context-management)
+6. [Memory across sessions](#memory-across-sessions)
+7. [Planning vs reactive](#planning-vs-reactive)
+8. [Multi-agent architectures](#multi-agent-architectures)
+9. [Safety rails](#safety-rails)
+10. [Common failure modes](#common-failure-modes)
+11. [Evaluating agents](#evaluating-agents)
+
 ## What makes something an agent
 
 The defining property: the model chooses what to do next at runtime. Not the code, not the developer, not a predefined workflow — the model decides each step based on what it has seen so far.

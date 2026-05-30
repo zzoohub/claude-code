@@ -2,6 +2,14 @@
 
 DTCG-inspired format. Single source of truth for all platforms.
 
+## Table of Contents
+
+1. [File Structure](#file-structure)
+2. [Primitive Tokens](#primitive-tokens)
+3. [Semantic Tokens](#semantic-tokens)
+4. [Dark Theme](#dark-theme)
+5. [Component Tokens (Tier 3 — Use Sparingly)](#component-tokens-tier-3--use-sparingly)
+
 > **Note on DTCG conformance:** This file uses CSS-string shorthands for some `$value`s rather than the strict DTCG object forms. The `shadow` tokens use a raw CSS string (not the object form `{color, offsetX, offsetY, blur, spread}`), and `dimension` tokens (spacing, radius) use strings like `"4px"` rather than the DTCG object `{ "value": 4, "unit": "px" }`. If you need strict DTCG conformance for Style Dictionary v4 / Terrazzo / Tokens Studio, expand both the shadow and dimension tokens to the structured object format per the DTCG 2025.10 spec. Otherwise, these CSS-string variants ship fine through custom Style Dictionary transforms.
 
 ## File Structure

@@ -4,6 +4,19 @@ General performance principles for Three.js / WebGPU applications. Framework-agn
 
 > For React-specific performance (R3F patterns, Drei helpers): `react/performance.md`
 
+## Table of Contents
+
+1. [Key Rules](#key-rules)
+2. [Draw Call Budget](#draw-call-budget)
+3. [Instancing](#instancing)
+4. [Level of Detail (LOD)](#level-of-detail-lod)
+5. [Geometry Merging](#geometry-merging)
+6. [Adaptive Resolution](#adaptive-resolution)
+7. [Render on Demand](#render-on-demand)
+8. [Profiling](#profiling)
+9. [Common Bottlenecks](#common-bottlenecks)
+
+
 ## Key Rules
 
 1. **Never trigger UI re-renders in the render loop** -- mutate Three.js objects directly

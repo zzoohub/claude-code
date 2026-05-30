@@ -8,17 +8,16 @@ marketing data.
 
 ## Table of Contents
 
-1. [Testing Philosophy](#philosophy)
-2. [Testing Methodologies](#methodologies)
-3. [Statistical Requirements](#statistics)
-4. [The 4-Step Testing Loop](#testing-loop)
-5. [Creative Fatigue Management](#fatigue)
-6. [Scaling Winners](#scaling)
-7. [Creative Lifecycle Calendar](#lifecycle)
+1. [Testing Philosophy](#testing-philosophy)
+2. [Testing Methodologies](#testing-methodologies)
+3. [Statistical Requirements](#statistical-requirements)
+4. [The 4-Step Testing Loop](#the-4-step-testing-loop)
+5. [Creative Fatigue Management](#creative-fatigue-management)
+6. [Scaling Winners](#scaling-winners)
+7. [Creative Lifecycle Calendar](#creative-lifecycle-calendar)
 
----
 
-## Testing Philosophy {#philosophy}
+## Testing Philosophy
 
 Ad creative testing is not A/B testing a button color — it's a scientific process
 for discovering what resonates with humans at scale.
@@ -46,7 +45,7 @@ Test in this order. Each level has more impact than the next:
 
 ---
 
-## Testing Methodologies {#methodologies}
+## Testing Methodologies
 
 ### A/B Testing (Isolation Testing)
 Compare two ad variants that differ by ONE element only.
@@ -78,7 +77,7 @@ Upload many creative variants and let the algorithm find winners.
 
 ---
 
-## Statistical Requirements {#statistics}
+## Statistical Requirements
 
 ### Confidence Thresholds
 
@@ -107,6 +106,8 @@ For click-based decisions (CTR):
 - Need 1,000+ impressions per variant
 - 100+ clicks per variant for reliable CTR comparison
 
+These are rules of thumb — a real significance calculator requires your baseline rate and the minimum detectable effect (and target power) to size the test properly.
+
 ### Common Statistical Mistakes
 
 1. **Calling winners too early** — 24 hours is almost never enough
@@ -117,7 +118,7 @@ For click-based decisions (CTR):
 
 ---
 
-## The 4-Step Testing Loop {#testing-loop}
+## The 4-Step Testing Loop
 
 ### Step 1: Hypothesis Formation
 
@@ -184,7 +185,7 @@ Once you find the winning hook, test bodies with the winning hook:
 
 ---
 
-## Creative Fatigue Management {#fatigue}
+## Creative Fatigue Management
 
 ### What is Creative Fatigue?
 
@@ -223,7 +224,7 @@ costs rise. The hook fatigues first because it gets the most exposure.
 
 ---
 
-## Scaling Winners {#scaling}
+## Scaling Winners
 
 ### Scaling Rules
 
@@ -250,7 +251,7 @@ Variation 5: Same concept, platform-native adaptation (TikTok cut)
 
 ---
 
-## Creative Lifecycle Calendar {#lifecycle}
+## Creative Lifecycle Calendar
 
 ### Weekly Cadence (High-Spend Accounts)
 

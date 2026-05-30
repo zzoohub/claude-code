@@ -2,14 +2,11 @@
 name: cro
 description: |
   Conversion Rate Optimization for pages, forms, signup flows, onboarding, popups, paywalls, and checkout.
-  Use when: analyzing page conversion, optimizing signup flows, improving onboarding activation,
-  reducing form abandonment, creating/optimizing popups, improving paywall conversion,
-  designing A/B tests, optimizing checkout flows, or when user mentions "conversion", "CRO",
-  "optimize", "drop-off", "abandon", "friction", "paywall", "upgrade flow", "popup", "modal",
-  "signup optimization", "landing page optimization", "why aren't people signing up",
-  "improve my pricing page", "reduce bounce rate", "increase sign-ups", "cart abandonment",
-  "checkout optimization", "not converting", "low conversion", "funnel optimization".
-  Do NOT use for: writing final copy (use copywriting skill — cro identifies copy problems and directions, copywriting produces variants),
+  Use when: analyzing page conversion, optimizing signup/checkout flows, improving onboarding activation,
+  reducing form abandonment, creating/optimizing popups/modals, optimizing paywall/upgrade flows,
+  designing A/B tests, or when user mentions "conversion", "CRO", "drop-off", "friction", "paywall",
+  "popup", "improve my pricing page", "bounce rate", "cart abandonment", "funnel optimization".
+  Do NOT use for: writing final copy (use copywriting skill — cro identifies copy problems/directions, copywriting produces variants),
   psychological principles (use marketing-psychology skill), email optimization (use email-marketing skill),
   pricing strategy/tier design (use pricing skill — cro covers only paywall/pricing-page UI),
   referral/viral-loop design (use growth-loops skill), or A/B test analysis and Aha-Moment/retention analytics
@@ -110,7 +107,7 @@ Every hypothesis needs validation. What works on one site may fail on another. S
 
 ## CRO Analysis Output Template
 
-This is the default shape. When a reference defines its own Output Format (e.g. `signup-flow-cro.md`, `onboarding-cro.md`), follow the reference's format and treat this template as the fallback.
+This is the default shape. When a reference defines its own Output Format (e.g. `page-cro.md`, `signup-flow-cro.md`, `onboarding-cro.md`, `form-cro.md`), follow the reference's format and treat this template as the fallback.
 
 **Output:** When asked to save a written CRO analysis, write it to `biz/growth/cro/{page-or-flow}-analysis.md` (default) or the path defined in `AGENTS.md`.
 

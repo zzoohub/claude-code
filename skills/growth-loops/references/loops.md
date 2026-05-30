@@ -2,6 +2,20 @@
 
 Frameworks for designing compounding user-acquisition loops: viral, content, paid, and integration loops. This file is the canonical reference for the growth-optimizer agent's referral/viral work.
 
+## Table of Contents
+
+1. [The Loop Mental Model](#the-loop-mental-model)
+2. [Loop Types](#loop-types)
+3. [Referral / Viral Loop Design (5 Stages)](#referral--viral-loop-design-5-stages)
+4. [Abuse Guardrails](#abuse-guardrails)
+5. [Viral Metrics](#viral-metrics) — includes K Factor (Viral Coefficient), Amplification Factor, Loop Cycle Time
+6. [Paid Loop Economics](#paid-loop-economics)
+7. [Two Anti-Patterns](#two-anti-patterns)
+8. [When NOT to Build a Loop](#when-not-to-build-a-loop)
+9. [Common Loop Patterns (Reference)](#common-loop-patterns-reference)
+10. [Marketplace Cold-Start](#marketplace-cold-start)
+11. [Output Format (for growth-optimizer agent)](#output-format-for-growth-optimizer-agent)
+
 ---
 
 ## The Loop Mental Model
@@ -139,7 +153,7 @@ This decay is *why* sustained K > 1 is so rare, and why amplification is an idea
 
 Days from a user signing up to their invitees signing up. Shorter cycles compound faster — they decide how quickly you approach the amplification ceiling.
 - Rough targets: consumer loops should turn over in days; B2B in weeks rather than months. Exact thresholds vary by product — the lever that matters is making each cycle faster.
-- Optimize: shorten time-to-Aha-Moment, surface invite UI sooner after Aha
+- Optimize: shorten time-to-Aha Moment, surface invite UI sooner after Aha
 
 ### Referral Conversion Rate
 

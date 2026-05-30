@@ -1,5 +1,18 @@
 # PostgreSQL Performance Patterns
 
+## Table of Contents
+
+1. [Column Ordering for Storage Optimization](#1-column-ordering-for-storage-optimization)
+2. [postgresql.conf Tuning](#2-postgresqlconf-tuning)
+3. [Connection Pooling](#3-connection-pooling)
+4. [Partitioning](#4-partitioning)
+5. [Query Performance Patterns](#5-query-performance-patterns)
+6. [Materialized Views](#6-materialized-views)
+7. [VACUUM Monitoring](#7-vacuum-monitoring)
+8. [Backfill / Bulk Load Optimization](#8-backfill--bulk-load-optimization)
+9. [Ingestion Patterns](#9-ingestion-patterns)
+10. [Read Replicas (read scaling)](#10-read-replicas-read-scaling)
+
 ## 1. Column Ordering for Storage Optimization
 
 PostgreSQL enforces alignment padding based on data type size. An 8-byte BIGINT must start

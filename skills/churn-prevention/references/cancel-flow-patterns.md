@@ -2,6 +2,18 @@
 
 Detailed cancel flow design patterns, exit survey strategies, and save offer frameworks.
 
+## Table of Contents
+
+1. [Cancel Flow Structure](#cancel-flow-structure)
+2. [Exit Survey Design](#exit-survey-design)
+3. [Dynamic Save Offers](#dynamic-save-offers)
+4. [Save Offer Types](#save-offer-types)
+5. [Refunds, Proration & Credits](#refunds-proration--credits)
+6. [Cancel Flow UI Pattern (compliance-safe)](#cancel-flow-ui-pattern-compliance-safe)
+7. [Churn Prediction & Proactive Retention](#churn-prediction--proactive-retention)
+8. [Common Mistakes](#common-mistakes)
+9. [Metrics](#metrics)
+
 ---
 
 ## Cancel Flow Structure

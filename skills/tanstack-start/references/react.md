@@ -1,5 +1,12 @@
 # TanStack Start with React
 
+## Table of Contents
+
+1. [Setup](#setup)
+2. [TanStack Query Integration](#tanstack-query-integration)
+3. [Headless Pattern](#headless-pattern)
+4. [Streaming](#streaming)
+
 ## Setup
 
 ```bash
@@ -9,7 +16,8 @@ bun add -d vite @vitejs/plugin-react typescript @types/react @types/react-dom @t
 bun add @tanstack/zod-adapter zod
 ```
 
-**`vite.config.ts`** — the React plugin must come *after* `tanstackStart()`:
+**`vite.config.ts`** — the React plugin must come *after* `tanstackStart()`. This is the minimal
+framework setup; for production deployment add the `nitro()` plugin (see Deployment in SKILL.md):
 
 ```ts
 import { defineConfig } from 'vite'

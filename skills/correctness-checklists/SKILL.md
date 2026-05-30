@@ -3,10 +3,8 @@ name: correctness-checklists
 description: |
   Correctness checklists for the bugs that survive green CI — defects that pass
   tests, lint, and type-checks but corrupt data, double-charge, lose writes, or
-  page you at 3am. Tests run single-threaded on happy paths, so they miss
-  concurrency, retry, partial-failure, caching, and boundary defects. This is
-  the Pass 1 (blocking) review layer for runtime correctness, alongside
-  security-checklists.
+  page you at 3am. This is the Pass 1 (blocking) review layer for runtime
+  correctness, alongside security-checklists.
   Use when: reviewing a diff that touches concurrency, locks, transactions,
   retries, webhooks, event/queue handlers, caching, background jobs,
   money/inventory state machines, or data crossing serialization/network/DB
@@ -35,6 +33,7 @@ Flag these when the diff touches the trigger areas. Pick sections by what change
 - **Upsert relying on an app-level existence check** — `findOrCreate` / `upsert` without a unique index creates duplicates under load.
 - **TOCTOU** — any check-then-act that must be atomic (balance ≥ amount → debit; slot free → reserve; quota left → consume).
 - **Non-atomic counter / aggregate** — read-modify-write of a count/total instead of an atomic increment or a DB-side aggregate.
+- **Inconsistent lock ordering** — two transactions lock the same resources in different orders and deadlock. Fix: acquire locks in a consistent, well-defined order everywhere.
 
 ## Idempotency & Retries
 

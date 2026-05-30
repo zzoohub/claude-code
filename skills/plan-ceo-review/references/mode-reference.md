@@ -16,6 +16,8 @@ Loaded by `plan-ceo-review`. Behavior matrix for the three modes. The per-sectio
 | Error map | Full + chaos scenarios | Full | Critical paths only |
 | Phase 2/3 planning | Map it | Note it | Skip |
 
+HOLD-SCOPE note: choose HOLD SCOPE when you want maximum execution rigor on the accepted scope AND a premise/dream-state challenge alongside the rigor pass. If scope is fully locked and you only want execution rigor (no premise challenge), route to `plan-eng-review` instead.
+
 Minimal-diff note: in EXPANSION, "minimal diff" constrains HOW each chosen capability is built, not WHETHER to add scope. In HOLD/REDUCTION it constrains both.
 
 Error-map note: REDUCTION maps only critical paths, but the deterministic `RESCUED=N AND TEST=N AND Silent → CRITICAL GAP` gate still applies to whatever IS mapped — never soften it (see `references/required-outputs.md`).

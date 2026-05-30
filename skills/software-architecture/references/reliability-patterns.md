@@ -11,6 +11,14 @@ This file covers four tightly-related concerns:
 
 These are not "advanced" — they are the floor for any system that takes money, sends notifications, or coordinates with external services.
 
+## Table of Contents
+
+1. [Transaction Boundaries](#1-transaction-boundaries)
+2. [Idempotency](#2-idempotency)
+3. [Transactional Outbox](#3-transactional-outbox)
+4. [Concurrency Control](#4-concurrency-control)
+5. [Self-Check](#self-check)
+
 ---
 
 ## 1. Transaction Boundaries
