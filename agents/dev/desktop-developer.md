@@ -26,7 +26,7 @@ Before writing any code, execute these steps in order:
 
 1. **Read project conventions** — `CLAUDE.md` / `AGENTS.md` at the repo root first. `AGENTS.md` may override the default paths used in the steps below; resolve all later paths against it before reading them.
 2. **Read architecture** — `docs/arch/system.md` to identify the web framework for Tauri's UI layer. If missing, infer from `apps/desktop/package.json` (web deps) and `apps/desktop/src-tauri/Cargo.toml` (Tauri version). If the framework still can't be determined, surface a clarifying question in your Notes (you cannot prompt the user interactively).
-3. **Load skills** — `frontend-design` is preloaded at startup. Load the remaining UI-layer skills at runtime via the `Skill` tool based on the detected UI stack. Rows are **not** mutually exclusive — load every row that applies (e.g. a React TanStack Start app matches both `tanstack-start` and `vercel-composition-patterns`; load both, they are complementary):
+3. **Load skills** — `frontend-design:frontend-design` (frontmatter) is preloaded at startup — it's an external plugin; if absent, fall back to `design-system` + general best practice and note it briefly. Load the remaining UI-layer skills at runtime via the `Skill` tool based on the detected UI stack. Rows are **not** mutually exclusive — load every row that applies (e.g. a React TanStack Start app matches both `tanstack-start` and `vercel-composition-patterns`; load both, they are complementary):
    | Skill | Condition |
    |-------|-----------|
    | `tanstack-start` | TanStack Start UI layer (React or Solid) |

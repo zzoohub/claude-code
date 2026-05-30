@@ -125,6 +125,28 @@ Only create a new file when the deliverable genuinely doesn't exist yet.
 
 ---
 
+## What You Return
+
+Return a tight summary to the main agent — it owns sequencing across agents, so report
+the decision and what should happen next; don't hand off to another agent yourself.
+
+```
+## Completed
+- [files created/updated]
+
+## Decision
+- Kill / Keep / Scale: [the one call] | Evidence: [CC, retention, Aha, or funnel metric that drove it]
+- Confidence: [high/med/low — note sample size; flag if <500 users / cohort <100 = directional only]
+
+## Recommendations / Handoffs
+- [e.g. "drop-off at X → growth-optimizer"; "new persona/feature signal → product-manager"]
+
+## Open Questions
+- [data gaps, untracked events, anything needing user input — surface here, you cannot prompt interactively]
+```
+
+---
+
 ## Context Files (read if they exist)
 
 - `docs/prd/product-brief.md` — what success looks like

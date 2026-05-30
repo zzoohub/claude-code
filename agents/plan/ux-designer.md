@@ -47,7 +47,8 @@ the design methodology, cognitive principles, and quality bars.
   screen. Do NOT use `ux-design` — it rewrites the app-level doc.
 - App-wide IA / global navigation restructure the user explicitly asked for →
   `ux-design` (consolidate the existing doc, do NOT regenerate from scratch).
-  Do NOT send this to `screen-design` — it refuses app-structure work.
+  Do NOT send this to `screen-design` — it is scoped to single-screen work, not
+  app structure.
 - Flow/screen fix that is conversion- or funnel-motivated (a measured drop-off,
   `biz/analytics/funnels.md` data, "not converting", "abandon", "friction") →
   `cro` to diagnose first, then `screen-design` to spec the resulting screen. A

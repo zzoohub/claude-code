@@ -65,15 +65,15 @@ not owned by an agent.
 
 **Dev layer (doers):**
 - `backend-developer` → postgresql + one of axum / fastapi / hono / nestjs-hexagonal (by stack) · database-design · correctness-checklists
-- `frontend-developer` → frontend-design + tanstack-start / vercel-* (by stack) · design-system · motion · i18n · web3d
-- `mobile-developer` → design-system · motion · i18n (+ React Native skills)
+- `frontend-developer` → frontend-design + tanstack-start / vercel-composition-patterns / vercel-react-best-practices (by stack) · design-system · motion · i18n · web3d
+- `mobile-developer` → vercel-react-native-skills · expo-app-design (Expo/Vercel-managed) · design-system · motion · i18n
 - `desktop-developer` → same web UI skill as frontend + Tauri-specific work
 - `reviewer` → security-checklists · correctness-checklists · maintainability-checklists
-- `verifier` → qa (browse) + claude-in-chrome / playwright fallbacks
-- `release-engineer` → vercel:deploy/env/cicd · cloudflare:wrangler · Supabase MCP (by target)
+- `verifier` → qa (browse) + playwright (preferred) / claude-in-chrome fallbacks
+- `release-engineer` → vercel:deploy · vercel:env · vercel:deployments-cicd · vercel:status · cloudflare:wrangler · cloudflare:workers-best-practices · Supabase MCP (by target)
 
 **Biz layer (doers):**
-- `marketer` → copywriting · competitor-pages · pricing · ad-creative
+- `marketer` → copywriting · competitor-pages · pricing · ad-creative · marketing-psychology
 - `content-marketer` → copywriting · social-content · email-marketing · search-visibility
 - `growth-optimizer` → cro · growth-loops · churn-prevention · pricing · marketing-psychology · copywriting
 - `data-analyst` → product-analytics + PostHog MCP
@@ -141,20 +141,43 @@ marketing around a product gap.
 
 Default file locations. Override here to change them for this repo — agents read this section.
 
+This is the single override point for paths — every file an agent reads or writes
+has a row here. A trailing `/` denotes a directory family authored by one agent.
+
 | Artifact | Path | Written by | Read by |
 |---|---|---|---|
-| Product brief | `docs/prd/product-brief.md` | product-manager | architect, ux-designer, marketer |
+| Product brief | `docs/prd/product-brief.md` | product-manager | architect, ux-designer, biz agents |
 | PRD | `docs/prd/prd.md` | product-manager | architect, ux-designer, task-manager, biz agents |
 | Feature spec | `docs/prd/features/{feature}.md` | product-manager | architect, task-manager, developers |
-| Architecture | `docs/arch/system.md` | architect | developers, release-engineer, reviewer |
-| Architecture decisions | `docs/arch/decisions.md` (or `docs/arch/decisions/ADR-NNN-*.md`) | architect | developers |
+| Arch context (greenfield sentinel) | `docs/arch/context.md` | architect (software-architecture) | architect (brownfield detection), developers |
+| Architecture | `docs/arch/system.md` | architect (software-architecture) | developers, release-engineer, reviewer |
+| Architecture decisions | `docs/arch/decisions.md` (or `docs/arch/decisions/ADR-NNN-*.md`) | architect (arch-decision) | developers |
+| Database design | `docs/arch/database.md` | architect (database-design) | backend-developer, reviewer, task-manager |
 | App UX | `docs/ux/ux-design.md` | ux-designer | frontend/mobile/desktop developers |
 | Screen specs | `docs/ux/screens/{screen}.md` | ux-designer | frontend/mobile/desktop developers |
 | Task board | `tasks/board.md` | task-manager | developers, release-engineer |
 | Task details | `tasks/features/{feature}.md` | task-manager | developers |
+| Project checklist (optional) | `checklist.md` (repo root or `docs/`) | *(project-defined)* | reviewer |
 | Deploy runbook | `docs/ops/runbook.md` | release-engineer | release-engineer (next release) |
 | Marketing strategy | `biz/marketing/strategy.md` | marketer | content-marketer, growth-optimizer, data-analyst |
-| Analytics (dashboards, reports, health score) | `biz/analytics/` | data-analyst | all biz agents |
+| Launch materials | `biz/marketing/launch/` | marketer | content-marketer |
+| Pricing (public tiers) | `biz/marketing/pricing.md` | marketer | growth-optimizer |
+| Competitor analysis | `biz/marketing/competitors.md` | marketer | content-marketer |
+| Marketing assets | `biz/marketing/assets/` | marketer, content-marketer | — |
+| Content strategy | `biz/marketing/content/strategy.md` | content-marketer | — |
+| Content (social/email/blog/changelog) | `biz/marketing/content/{social,email,blog,changelog}/` | content-marketer | — |
+| Tracking plan + Aha moment | `biz/analytics/tracking-plan.md` | data-analyst | marketer, content-marketer, growth-optimizer |
+| Funnels + retention | `biz/analytics/funnels.md` | data-analyst | ux-designer, growth-optimizer |
+| Dashboards | `biz/analytics/dashboards.md` | data-analyst | — |
+| Kill/Keep/Scale + CC | `biz/analytics/kill-criteria.md` | data-analyst | marketer |
+| Customer health score | `biz/analytics/health-score.md` | data-analyst | growth-optimizer |
+| Analytics reports | `biz/analytics/reports/` | data-analyst | all biz agents |
+| Growth experiments log | `biz/growth/experiments.md` | growth-optimizer | data-analyst, content-marketer |
+| Referral / viral loop | `biz/growth/referral-program.md` | growth-optimizer | — |
+| Churn prevention strategy | `biz/growth/churn-prevention.md` | growth-optimizer | — |
+| Dunning / payment recovery | `biz/growth/dunning.md` | growth-optimizer | — |
+| Paywall / upgrade pricing | `biz/growth/paywall-pricing.md` | growth-optimizer | — |
+| CRO analyses | `biz/growth/cro/{page-or-flow}-analysis.md` | growth-optimizer | — |
 | Customer feedback log | `biz/ops/feedback-log.md` | *(currently unowned — see Known gaps)* | all biz agents |
 
 **Source layout (monorepo convention):** `apps/web` · `apps/api` · `apps/worker` ·
@@ -169,7 +192,8 @@ These power specific agents. If one is unavailable, the agent falls back as note
 | Dependency | Used by | Purpose | Fallback if missing |
 |---|---|---|---|
 | `frontend-design` plugin | frontend-developer, desktop-developer | Production-grade UI design | `design-system` + general best practice |
-| `vercel-*` plugin skills | frontend/mobile/desktop developers | React / Next / TanStack / RN patterns | repo conventions + closest general skill |
+| `vercel-*` skills (Vercel-managed) | frontend/mobile/desktop developers | React / Next / TanStack / RN patterns. Vercel-managed upstream, always installed — fall back briefly only if absent | `design-system` + general best practice |
+| `expo-app-design` plugin (Expo-managed) | mobile-developer | Native Expo/RN UI patterns. Expo-managed upstream, always installed — fall back briefly only if absent | `vercel-react-native-skills` + `design-system` |
 | Vercel MCP | release-engineer | Auth session for `vercel:*` skills + CLI (MCP exposes auth only; deploy/env/state run through the skills) | `vercel` CLI via Bash |
 | Cloudflare MCPs (bindings/builds/observability) | release-engineer | Workers/Pages deploy, build logs, runtime logs | `wrangler` CLI via Bash |
 | Supabase MCP | release-engineer | Migrations, edge functions, advisors, logs | `supabase` CLI via Bash |
@@ -214,5 +238,6 @@ Be honest about what this library does **not** do yet, so you don't assume an ow
   but SOC2/ISO, secrets-rotation policy, and vendor risk are not.
 - **Validation/PMF method** — `product-brief` captures the problem; it does not prescribe how to
   validate it (interviews, landing-page smoke tests, Sean Ellis survey).
-- **Orphan reference** — `skills/web-design-guidelines` is routed by no agent. Treat
-  `design-system` as primary; deprecate or document this if you keep it.
+- **Orphan reference** — `skills/web-design-guidelines` is not routed by any agent;
+  `design-system` is the primary UI guidance for frontend/desktop developers. Either
+  deprecate `web-design-guidelines` or give it an explicit role if you keep it.

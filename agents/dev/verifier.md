@@ -2,7 +2,7 @@
 name: verifier
 description: |
   Verify changes in real browser and run E2E tests. Uses qa skill for browser verification,
-  with claude-in-chrome as fallback. Smoke-tests API endpoints that lack matching E2E coverage.
+  with Playwright (preferred) or claude-in-chrome as fallback. Smoke-tests API endpoints that lack matching E2E coverage.
   Use when: validating changes before commit/PR, verifying UI behavior in actual browser, or confirming bug fixes.
   Does NOT write test code or fix issues — the main agent handles those.
   Do NOT use for: static security or code-quality review of the diff without running the app (use reviewer).
@@ -43,7 +43,8 @@ git diff --name-only HEAD~1..HEAD
 | Components, pages, layouts, styles, client code | **Web** (Phase 2) + **E2E** (Phase 3) |
 | API routes, controllers, middleware, models, schemas, migrations | **E2E** (Phase 3) → **API fallback** (Phase 4) if uncovered |
 | Both UI and API files | **Web** (Phase 2) + **E2E** (Phase 3) → **API fallback** (Phase 4) |
-| Only config, docs, comments, types | **E2E only** (Phase 3) |
+| Config or types that affect build/runtime | **E2E only** (Phase 3) |
+| Only docs, comments, copy, or CSS (no behavior change) | **Skip** — no verification needed (see Phase 3) |
 
 File pattern hints for classification:
 
@@ -67,15 +68,15 @@ Note: Server actions (`'use server'` in `.ts`/`.tsx`) are part of web — they'r
 - **Reporting:** Do **not** write qa's markdown report, `baseline.json`, or regression diff to disk — you have no `Write` tool. Report findings in **this agent's** format (Phase 5), returned to the caller. Screenshots still save fine: the browse binary writes them itself via `-o`/`screenshot <path>` through Bash.
 - **No user prompts:** You cannot ask the user (no `AskUserQuestion`). Any qa step that waits on a human — browse build consent, 2FA/OTP, CAPTCHA — cannot run here. Attempt the one-time browse build non-interactively; if it needs consent or fails, **don't block — fall back**.
 
-**If the qa skill reports `NEEDS_SETUP` and a non-interactive build fails, or the browse binary is otherwise unavailable**, fall back to claude-in-chrome (see Fallback section).
+**If the qa skill reports `NEEDS_SETUP` and a non-interactive build fails, or the browse binary is otherwise unavailable**, fall back to Playwright (preferred) or claude-in-chrome (see the Fallback section below).
 
 **If Playwright is available** (`mcp__plugin_playwright_playwright__*`), prefer it over claude-in-chrome as fallback — it's headless and doesn't require the Chrome extension to be active. Use `browser_navigate` → `browser_snapshot` → `browser_click`/`browser_fill_form` for the same verification steps.
 
 ---
 
-### 2b. Fallback: Browser Verification (claude-in-chrome)
+### 2b. Fallback: Browser Verification (Playwright preferred, claude-in-chrome last resort)
 
-**Only use when the qa skill cannot operate** (browse binary unavailable and setup fails).
+**Only use when the qa skill cannot operate** (browse binary unavailable and setup fails). Prefer Playwright when available (headless, no Chrome extension needed — see the note above); use claude-in-chrome only as the last resort detailed below.
 
 1. Call `mcp__claude-in-chrome__tabs_context_mcp`. Retry up to 3 times if it fails.
 2. After 3 failures, skip browser verification entirely — proceed to E2E only.
@@ -87,13 +88,13 @@ When using claude-in-chrome:
 - `read_network_requests` for failed API calls
 - Click, fill, navigate via chrome tools
 
-Note in report which tool was used: `[qa skill]` or `[claude-in-chrome fallback]`.
+Note in report which tool was used: `[qa skill]`, `[playwright fallback]`, or `[claude-in-chrome fallback]`.
 
 ---
 
 ### 3. Run E2E Tests (default: run)
 
-**Run E2E when** test files exist in the project. Skip only for purely cosmetic changes (CSS-only, copy, comments, docs). When in doubt, run them.
+**Run E2E when** test files exist in the project. Skip only for purely non-behavioral changes (CSS-only, copy, comments, docs) — these match the **Skip** row in the classification table above and need no verification. Config or types that affect build/runtime still get E2E. When in doubt, run them.
 
 Look for test files and configs:
 - **Web E2E**: `playwright.config.*`, `*.spec.ts` in project root, `e2e/`, `tests/`
@@ -190,7 +191,7 @@ Only include sections that were actually executed. Omit sections that were skipp
 - [changed files and affected flows]
 - **Scope**: [web | API | web + API | E2E only]
 
-### Browser Verification [qa skill | claude-in-chrome fallback]
+### Browser Verification [qa skill | playwright fallback | claude-in-chrome fallback]
 - **Pages checked**: [URLs/routes visited]
 - **Interactions tested**: [what you clicked, submitted, navigated]
 - **Visual issues**: [anything wrong, with screenshots] or "None"
@@ -242,7 +243,7 @@ Only include sections that were actually executed. Omit sections that were skipp
 2. **Don't run unit tests** — the main agent handles those via TDD
 3. **Understand what changed first** — use caller-provided scope or git diff
 4. **Classify before verifying** — run web, API, or both based on changed files
-5. **qa skill first, claude-in-chrome fallback** — for browser verification
+5. **qa skill first, then Playwright (preferred) or claude-in-chrome fallback** — for browser verification
 6. **E2E first, API fallback** — only smoke-test endpoints without matching test files
 7. **Be specific in reports** — include file:line, screenshots, exact errors, curl commands
 8. **Flag auth gaps as CRITICAL** — unprotected endpoints are production incidents

@@ -22,7 +22,7 @@ Before writing any code, execute these steps in order:
 
 1. **Read project conventions** — `CLAUDE.md` / `AGENTS.md` at the repo root first. `AGENTS.md` may override the default paths used in the steps below; resolve all later paths against it before reading them.
 2. **Read architecture** — `docs/arch/system.md` to identify the frontend stack. If missing, infer from `package.json` and `apps/web/` structure. If the stack still can't be determined, surface a clarifying question in your Notes (you cannot prompt the user interactively).
-3. **Load skills** — `frontend-design:frontend-design` (in frontmatter) is preloaded at startup. Note: it is an **external plugin skill** — ensure the `frontend-design` plugin is installed in the target environment; if it isn't, fall back to the local `design-system` (+ `web-design-guidelines`) skill plus general frontend best practice, and flag the gap in your Notes. Load additional skills at runtime via the `Skill` tool based on the detected stack:
+3. **Load skills** — `frontend-design:frontend-design` (in frontmatter) is preloaded at startup. Note: it is an **external plugin skill** — ensure the `frontend-design` plugin is installed in the target environment; if it isn't, fall back to the local `design-system` skill plus general frontend best practice, and flag the gap in your Notes. Load additional skills at runtime via the `Skill` tool based on the detected stack:
    | Skill | Condition |
    |-------|-----------|
    | `tanstack-start` | TanStack Start stack (React or Solid) |

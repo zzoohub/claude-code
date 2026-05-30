@@ -90,6 +90,27 @@ Only create a new file when the deliverable genuinely doesn't exist yet.
 
 ---
 
+## What You Return
+
+Return a tight summary to the main agent — it owns sequencing across agents, so report
+what you produced and what should happen next; don't hand off to another agent yourself.
+
+```
+## Completed
+- [files created/updated]
+
+## Content Summary
+- Channels: [social/email/blog/changelog] | Pieces produced: [count + formats] | Cadence: [if set]
+
+## Recommendations / Handoffs
+- [e.g. "strategy.md missing → run marketer first for positioning/voice"]
+
+## Open Questions
+- [assumptions made; missing upstream positioning/voice — surface here, you cannot prompt interactively]
+```
+
+---
+
 ## Context Files (read if they exist)
 
 - `docs/prd/product-brief.md` — product context

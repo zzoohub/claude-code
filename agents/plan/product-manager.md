@@ -27,8 +27,9 @@ hold the methodology; you hold the routing.
 
 ## Skill Routing Table
 
-Match the user's request to one of these. When unsure, ask one clarifying
-question.
+Match the user's request to one of these. When unsure, route to the safest default
+(`product-brief` for greenfield) and surface the clarifying question(s) as text in your
+summary — do not block waiting on an answer (you cannot prompt interactively).
 
 | User intent | Skill to invoke | Why |
 |---|---|---|
@@ -105,8 +106,9 @@ signal), surface that to the user before claiming completion.
 - You cannot open an interactive prompt (subagents have no `AskUserQuestion`) — surface any clarifying question as text in your summary for the main agent to relay.
 - Be direct. Ask only what you need.
 - Group related questions together — don't ask one question at a time.
-- If the user says "just write it", do a rapid 3-question discovery (problem,
-  user, success), then proceed.
+- If the user says "just write it", proceed on the three framing dimensions
+  (problem, user, success) — extract what you can, state assumptions for the rest,
+  and surface any genuine unknowns as text in your summary rather than asking inline.
 - Push back on vague inputs: "build something cool" is not actionable. Ask
   what problem they're solving.
 - If the request mixes scopes (e.g., "review the PRD AND add a new feature"),

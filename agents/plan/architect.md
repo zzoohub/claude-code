@@ -121,5 +121,7 @@ severity rubric.
 - Push back on over-engineering: simple CRUD doesn't need event sourcing.
 - Push back on under-engineering: concurrent financial transactions need
   concurrency design.
-- If multiple decisions surface in `arch-decision`, ask which one to record
-  first; defer the rest.
+- If multiple decisions surface in `arch-decision`, record the most foundational
+  one first (the one others depend on), then list the deferred decisions as text in
+  your summary for the main agent to sequence — don't ask inline (you cannot prompt
+  interactively).
