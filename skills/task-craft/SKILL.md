@@ -7,6 +7,8 @@ description: |
   Use when: a new project's design docs are ready and you need the initial task
   breakdown. Owns the task generation process and the task quality bar; the
   canonical row format lives in `references/board-schema.md`.
+  Also use to review / audit an existing task board (read-only — produces a
+  prioritized findings list, does not overwrite the board).
   Do NOT use for: adding a task to an existing board (use task-add instead). Do
   NOT use for: moving task status (use task-status). Do NOT use for: product
   planning (use prd-craft), architecture (use software-architecture), UX design
@@ -209,5 +211,26 @@ Every task must satisfy:
 - [ ] Task descriptions are specific enough that a worker agent can start without reading the PRD
 
 Fail a gate → revise before saving.
+
+---
+
+## Review / Audit Mode
+
+When the user asks to **review / audit** an existing task board (not generate a
+new one), do **not** run the generation workflow and do **not** overwrite
+`tasks/board.md`. This mode is read-only.
+
+1. Read `tasks/board.md` and `tasks/features/*.md`.
+2. Audit against the **Task Quality Bar** and **Quality Gates** above, plus:
+   - **Phase integrity** — no same-phase file conflicts; every `depends_on`
+     item sits in an earlier phase.
+   - **Coverage** — every feature in `docs/prd/features/` has tasks; no orphan
+     tasks pointing at non-existent features.
+   - **Acceptance quality** — each task is specific, session-sized, and
+     type-appropriate.
+3. Output a prioritized findings list (🔴 blocker / 🟠 should-fix / 🟡 nit),
+   each citing the offending `T-NNN` and a concrete fix. Do **not** rewrite the
+   board — propose changes and let the user apply them via `task-add` /
+   `task-status`.
 
 ---

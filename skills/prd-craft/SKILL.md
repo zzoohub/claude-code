@@ -79,6 +79,10 @@ blindly — branch:
 
 - The user asked to **review / audit / improve** the PRD → go to **Review /
   Audit Mode** (below). Do not run the creation flow.
+- The product has **genuinely pivoted** — the problem, target users, or success
+  metric have changed, not just the feature set → run the creation flow to
+  rewrite the vision in place. Confirm the pivot scope with the user first so
+  you don't discard a still-valid vision.
 - Otherwise it's probably a **single-feature add** → return to the user and
   suggest the `feature-spec` skill, which patches the PRD in place without
   rewriting the vision.

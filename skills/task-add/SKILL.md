@@ -1,24 +1,29 @@
 ---
 name: task-add
 description: |
-  Add tasks to an existing task board. Reads the current `tasks/board.md` and
-  feature files to learn the project's grouping (phases or iterations) and the
-  next available ID, then appends new tasks. Creates or updates a single
+  Add tasks to an existing task board, or revise an existing task whose
+  definition changed. Reads the current `tasks/board.md` and feature files to
+  learn the project's grouping (phases or iterations) and the next available ID,
+  then appends new tasks. Creates or updates a single
   `tasks/features/{feature}.md` with details. Works for feature work, bugfixes,
-  hotfixes, refactors, spikes, and chores.
+  hotfixes, refactors, spikes, and chores. Revising edits a task's definition
+  (context, acceptance, touches, depends_on, type) and logs it to the feature
+  file's `Changes` section.
   Use when: the task board already exists and you need to add work — a new
-  feature, a bug, a one-off fix, a refactor, a chore. Trigger phrases: "add a
-  task for X", "log a bug for X", "create a task to refactor Y", "add this to
-  the board".
+  feature, a bug, a one-off fix, a refactor, a chore — or revise a task whose
+  plan changed. Trigger phrases: "add a task for X", "log a bug for X", "create
+  a task to refactor Y", "add this to the board", "revise T-007", "update
+  T-012's acceptance", "the plan changed for T-009".
   Do NOT use for: creating the initial board (use task-craft). Do NOT use for:
-  moving task status (use task-status). Do NOT use for: writing the feature
-  spec itself (use feature-spec).
+  moving status or editing board state fields — status, priority, assignee,
+  phase — (use task-status). Do NOT use for: writing the feature spec itself
+  (use feature-spec).
 ---
 
-# Task Add — Append to Existing Board
+# Task Add — Append or Revise on an Existing Board
 
-Adds tasks to a board that already exists, picking the right group and the
-next available ID.
+Adds new tasks to a board that already exists — or revises an existing task's
+definition — picking the right group and the next available ID.
 
 ## Prerequisites
 
@@ -97,6 +102,31 @@ Type Guide** in `task-craft`.
    section (skip if no feature file was created).
 8. **Bump the header** — set `> Last updated:` to today's date.
 
+## Revising an Existing Task
+
+When a task already on the board needs its **definition** changed because the
+plan moved — new acceptance, corrected `context`, different `touches`, an
+added/removed dependency, or a changed `type` — revise it in place. This edits
+what the task *is*, not where it sits or how urgent it is.
+
+1. **Find it** — Grep the board row by its leading `| T-NNN |` cell, then locate
+   `### T-NNN:` in `tasks/features/{feature}.md`.
+2. **Edit the detail block** — change only the fields that moved (`context`,
+   `acceptance`, `touches`, `depends_on`, `type`). Keep acceptance verifiable
+   and `touches` specific; re-cite the `REQ-NNN` the task satisfies if scope
+   shifted.
+3. **Sync the board row** — if the one-line `task` description, `type`, or
+   `touches` changed, update those cells in `tasks/board.md`. After a `touches`
+   change, re-check the same-group (phase/iteration) file-conflict rule.
+4. **Log it** — append a dated entry to the feature file's `Changes` section
+   (the append-only log exists to capture exactly this):
+   `- <today, YYYY-MM-DD>: T-NNN revised — {what changed and why}`. If the task
+   has no feature file, log to `tasks/features/_misc.md`.
+5. **Bump** `> Last updated:` to today.
+
+Board **state** — `status`, `priority`, `assignee`, `phase` — is not revised
+here; those are one-row moves owned by `task-status`.
+
 ## board.md row format
 
 Canonical column set and field semantics: `task-craft/references/board-schema.md`.
@@ -144,6 +174,8 @@ Keep upgrades minimal; don't reformat unrelated rows.
 - [ ] For bugfixes: includes a repro test that fails before and passes after
 - [ ] For refactors: confirms no behavior change (existing tests still pass)
 - [ ] For spikes: time-boxed with a deliverable (decision recorded somewhere)
+- [ ] For a revise: only definition fields changed (state fields left to
+      `task-status`); the `Changes` log says what moved and why
 - [ ] Feature file `Changes` section has a dated entry
 
 ## Output
@@ -151,3 +183,5 @@ Keep upgrades minimal; don't reformat unrelated rows.
 - `tasks/board.md` — patched (rows added in correct group, `> Last updated:` bumped)
 - `tasks/features/{feature}.md` — updated (or created if absent and the task
   warrants context)
+- On a revise: the task's detail block edited, `Changes` appended, and any
+  changed `task` / `type` / `touches` board cells patched

@@ -3,16 +3,19 @@ name: task-status
 description: |
   Move a task's status on the board: start (backlog → active), complete
   (active → done), block (active → blocked), unblock (blocked → backlog/active),
-  abandon (any → backlog with note). Also makes light single-row field edits:
-  reprioritize, reassign, and move a task to another phase. Edits `tasks/board.md`
-  one row at a time; block/abandon (and phase moves) also touch the feature file.
+  abandon (any → backlog with note). Also makes light single-row field edits —
+  reprioritize, reassign, move a task to another phase — and removes a row
+  created in error. Edits `tasks/board.md` one row at a time; block/abandon
+  (and phase moves) also touch the feature file.
   Use when: starting work on a task, marking a task complete, marking a task
-  blocked, moving a task back to backlog, or changing a single task's priority,
-  assignee, or phase. Trigger phrases: "start T-005", "complete T-005",
-  "block T-005 — waiting on X", "T-005 is done", "reprioritize T-005 to high",
-  "reassign T-005 to Alice", "move T-005 to phase 3".
-  Do NOT use for: creating tasks (use task-add). Do NOT use for: rewriting the
-  board (use task-craft for initial creation).
+  blocked, moving a task back to backlog, changing a single task's priority,
+  assignee, or phase, or removing a mistaken row. Trigger phrases: "start
+  T-005", "complete T-005", "block T-005 — waiting on X", "T-005 is done",
+  "reprioritize T-005 to high", "reassign T-005 to Alice", "move T-005 to phase
+  3", "remove T-009 — created by mistake".
+  Do NOT use for: creating tasks (use task-add). Do NOT use for: revising a
+  task's definition — context, acceptance, touches, deps (use task-add). Do NOT
+  use for: rewriting the board (use task-craft for initial creation).
 ---
 
 # Task Status — Move One Task
@@ -59,6 +62,15 @@ Same one-row discipline, for single-field corrections:
 | `assignee` | `reassign T-NNN --to={user\|—}` | Doesn't change status. |
 | phase | `move T-NNN --to-phase=N` | Relocate the row to the `## Phase N` section **and** update `phase:` in the feature file so the two stay in sync. Verify the new phase doesn't break dependency ordering or create a same-file conflict. |
 
+### Removing a task
+
+Prefer **abandon** (status → backlog with a logged reason) for any task that was
+ever real — it keeps the audit trail. **Hard-remove** — delete the board row and
+its `### T-NNN` detail block — only for a row created in error (a duplicate or a
+typo-task). On hard-remove, append a dated `Changes` note recording the deletion
+and why (to `tasks/features/_misc.md` if the task had no feature file). IDs are
+never reused, even after a hard-remove.
+
 ## What This Skill Does
 
 1. Reads `tasks/board.md`, finds the task row by its leading `| T-NNN |` cell.
@@ -73,8 +85,9 @@ Same one-row discipline, for single-field corrections:
 ## What This Skill Does NOT Do
 
 - Does not rewrite the board or re-order unrelated rows
-- Does not edit task context/acceptance in the feature file (only board fields,
-  the `phase:` mirror, and `Changes` notes)
+- Does not edit a task's definition in the feature file — only board fields, the
+  `phase:` mirror, `Changes` notes, and (on hard-remove) deletion of the row's
+  detail block. To change context/acceptance/touches, use `task-add` (revise).
 - Does not create tasks
 - Does not validate completion
 
@@ -115,6 +128,8 @@ Same one-row discipline, for single-field corrections:
 - [ ] On a phase move: board section and feature-file `phase:` both updated
 - [ ] For block/abandon: feature file (or `_misc.md`) `Changes` has a dated
       entry with reason
+- [ ] For hard-remove: row and `### T-NNN` detail block both deleted, deletion
+      logged to `Changes`, and the ID is never reused
 - [ ] `> Last updated:` header bumped
 - [ ] For complete: the work is actually verified (caller's responsibility —
       this skill trusts the caller)
