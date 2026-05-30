@@ -96,7 +96,10 @@ Three complementary protocols are converging as the standard stack for agent sys
 (Agent <-> Agent)  (Agent <-> User)
 ```
 
-All three are governed under the **Agentic AI Foundation (AAIF)** at the Linux Foundation.
+These three protocols have **different governance** (a common misconception is that one body owns all three):
+- **MCP** was donated by Anthropic to the **Agentic AI Foundation (AAIF)**, a Linux Foundation directed fund formed Dec 2025 (alongside `goose` and `AGENTS.md`).
+- **A2A** is a *separate, standalone* Linux Foundation project (the Agent2Agent Protocol Project, donated by Google in June 2025) — not part of AAIF.
+- **AG-UI** is an open protocol created and maintained by **CopilotKit**, not under any foundation.
 
 ### MCP (Model Context Protocol)
 
@@ -108,6 +111,7 @@ All three are governed under the **Agentic AI Foundation (AAIF)** at the Linux F
 - **Prompts** — Reusable prompt templates exposed by the server
 - **Sampling** — Server can request the client's LLM to generate completions
 - **Elicitation** — Server can request information from the user
+- **Roots** — Client exposes the filesystem/URI boundaries the server may operate within
 
 **Transport**:
 - **stdio** — Local transport via JSON-RPC over stdin/stdout. For local tools.
@@ -139,7 +143,7 @@ MCP is becoming a **product distribution channel**. By exposing your product's c
 **Scope**: Agent <-> User. Defines how agents communicate with humans in real time.
 
 **Key concepts**:
-- Streams JSON events over standard HTTP
+- Streams JSON events over a standard HTTP transport (SSE, or other streaming transports)
 - Event types: text messages, tool calls, state snapshots/deltas, lifecycle signals
 
 ### How They Relate
@@ -147,7 +151,7 @@ MCP is becoming a **product distribution channel**. By exposing your product's c
 | Protocol | Direction | Creator | Status |
 |---|---|---|---|
 | **MCP** | Agent <-> Tools (vertical) | Anthropic -> AAIF | Production |
-| **A2A** | Agent <-> Agent (horizontal) | Google -> AAIF | Maturing |
+| **A2A** | Agent <-> Agent (horizontal) | Google -> Linux Foundation (Agent2Agent Project) | Maturing |
 | **AG-UI** | Agent <-> User (presentation) | CopilotKit | Emerging |
 
 An agent uses MCP to access its tools, A2A to collaborate with peer agents, and AG-UI to communicate with users.
@@ -270,7 +274,9 @@ For agents that run long enough to need crash recovery, search for current platf
 
 ### The 17x Error Trap
 
-Naive multi-agent systems amplify errors. An agent with 90% accuracy across 17 serial steps yields ~17% overall accuracy (0.9^17). Mitigation:
+Naive ("bag of agents") multi-agent systems amplify errors. Google DeepMind & MIT (Kim et al., "Towards a Science of Scaling Agent Systems," 2025) found unstructured/decentralized agent networks amplify a single agent's error by up to ~17.2x relative to a single-agent baseline, while centralized orchestration contains it to ~4.4x by acting as a circuit breaker.
+
+Separately, serial chains compound failure multiplicatively (90%-reliable steps: 5 ≈ 59%, 10 ≈ 35%, 17 ≈ 17%, per 0.9^n — the ~17% here is a coincidence, unrelated to the 17.2x amplification figure). Mitigation:
 - Structured orchestration over loose coupling
 - Verification steps after critical actions
 - Feedback loops for self-correction

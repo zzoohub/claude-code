@@ -23,10 +23,12 @@ This file covers the architectural decisions. Vendor / SDK choice is in `tech-st
 OpenTelemetry (OTel) is the vendor-neutral standard for emitting traces, metrics, and (increasingly) logs. Instrument once with the OTel SDK; route to any backend via the **OTel Collector**.
 
 ```
-Application -> OTel SDK -> OTLP -> OTel Collector -> [ Tempo | Jaeger | Datadog | Honeycomb | ... ]
-                                                  -> [ Prometheus | Mimir | Datadog | ...        ]
-                                                  -> [ Loki | Elastic | Datadog | ...           ]
+Application -> OTel SDK -> OTLP -> OTel Collector -> [ Tempo | Jaeger | Axiom | Datadog | Honeycomb | ... ]
+                                                  -> [ Prometheus | Mimir | Datadog | ...                ]
+                                                  -> [ Loki | Elastic | Axiom | Datadog | ...            ]
 ```
+
+The backend names above illustrate the vendor-neutral fan-out; the house pick is Axiom (+ CF Workers Logpush) per `tech-stack.md`.
 
 **Why this matters architecturally**:
 
@@ -47,7 +49,7 @@ Every inbound request opens a root span; every outbound dependency opens a child
 | Layer | Span Behavior |
 |---|---|
 | **HTTP server** | Auto-instrumented. Span per request, with `http.method`, `http.route`, `http.status_code` |
-| **DB client** | Auto-instrumented. Span per query, with `db.system`, `db.statement` (parameterized), `db.operation` |
+| **DB client** | Auto-instrumented. Span per query, with `db.system.name`, `db.query.text` (parameterized), `db.operation.name` (older `db.system`/`db.statement`/`db.operation` are deprecated aliases) |
 | **Outbound HTTP / gRPC** | Auto-instrumented. Inject `traceparent` header automatically |
 | **Message broker** | Inject `traceparent` into headers; consumer extracts and **links** (not parents) the consume span |
 | **Application logic** | Manual spans only at meaningful boundaries (use case, sub-operation), not every function |
@@ -127,7 +129,7 @@ Logs are JSON, not strings. Every log line carries:
 - `timestamp` (RFC3339, UTC)
 - `level` (`debug`/`info`/`warn`/`error`)
 - `message` (the human-readable headline; everything else in fields)
-- `service.name`, `service.version`, `deployment.environment`
+- `service.name`, `service.version`, `deployment.environment.name`
 - `trace_id`, `span_id` (for correlation)
 - Context fields (`tenant_id`, `user_id`, etc.)
 

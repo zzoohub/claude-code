@@ -21,7 +21,7 @@ Treat content as a living, breathing thing with lifecycles, behaviors, and attri
 
 ### 2. Principle of Choices
 Present meaningful choices. More isn't better — relevant is better.
-- Each navigation level: 5-9 options maximum (Miller's Law)
+- Each navigation level: up to ~5-9 options (Miller's Law, general ceiling). Top-level nav is tighter — see `cognitive-principles.md` (Miller's Law): 5 max on mobile, 7 on desktop, and a hard 5 for a mobile tab bar.
 - Every option must be clearly distinct from its siblings
 - If users can't predict what's behind a label, the label fails
 
@@ -34,7 +34,7 @@ Show only enough information to help users understand what they'll find if they 
 ### 4. Principle of Exemplars
 Show examples of content when describing categories.
 - "Electronics" with a thumbnail of a laptop is clearer than "Electronics" alone
-- Previews, thumbnets, and excerpts reduce navigation uncertainty
+- Previews, thumbnails, and excerpts reduce navigation uncertainty
 
 ### 5. Principle of Front Doors
 Assume users arrive at any page, not just the homepage.
@@ -167,7 +167,7 @@ Closed Sort: Users sort cards into predefined categories
 Hybrid Sort: Predefined categories + option to create new ones
 ```
 - Minimum 15 participants for reliable patterns
-- Look for: agreement (>60% same grouping) and disagreement (signals ambiguity)
+- Look for: agreement (~60%+ same grouping is a useful rule of thumb, not a hard gate) and disagreement (signals ambiguity)
 - Use disagreements to identify content that needs multiple access paths
 
 ### Step 3: Define Hierarchy
@@ -185,8 +185,8 @@ Rule: If a user needs >3 taps/clicks to reach core content, the IA is too deep.
 ### Step 4: Tree Test (Validate)
 - Give users tasks: "Find where you'd change your notification settings"
 - Measure: success rate, directness (first click correct?), time
-- Pass threshold: >80% success rate, >60% directness
-- Fail: restructure and retest
+- Pass threshold (directional rules of thumb, not absolute — hard tasks legitimately score lower): aim for >80% success and >60% directness on primary tasks
+- Below that: restructure and retest
 
 ### Step 5: Create Sitemap
 

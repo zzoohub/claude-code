@@ -4,17 +4,19 @@
 
 RAG grounds a language model in your data. Done well, it's the difference between a model that hallucinates confidently and one that cites sources. Done poorly, it's an expensive way to serve irrelevant context.
 
+The retrieval half of this pipeline (embeddings, hybrid search, metadata filters, re-ranking) is also a standalone primitive: semantic search, clustering, dedup, and embedding-based classification use the same machinery *without* a generation step. When you don't need synthesized language out, stop at retrieval — it's cheaper and more reliable than an LLM call. The sections below cover retrieval as the front half of RAG, but they transfer directly to those non-generative shapes.
+
 ## When RAG is right
 
 Use RAG when:
 
 - The answer requires knowledge the model doesn't have (private docs, recent data, user-specific content).
-- The knowledge base is too large to fit in context (anything > ~50k tokens at query time).
+- The knowledge base is too large to fit comfortably in context at query time (see the stuffing threshold under "Don't use RAG" below).
 - Answers need to cite sources or be auditable.
 
 Don't use RAG when:
 
-- The full knowledge base fits in context (< 100k tokens, rarely changing) — just include it. Prompt caching makes this cheaper than retrieval infrastructure.
+- The full knowledge base fits comfortably in context — as a rule of thumb under ~100k tokens, and rarely changing — just include it. With ever-larger context windows this ceiling keeps rising, and prompt caching makes stuffing cheaper than standing up retrieval infrastructure. (Attention quality and per-call cost still favor retrieval as the corpus grows — don't stuff just because you technically can.)
 - The task is generative, not factual (creative writing, brainstorming).
 - A direct database query would work (structured data, exact lookups).
 
@@ -88,7 +90,7 @@ Initial retrieval returns the top-K chunks. Rarely are the top 3 of those the ac
 
 Naive: concatenate retrieved chunks into the prompt. This works but has failure modes:
 
-- **Order matters.** Models weight the start and end of long contexts more than the middle ("lost in the middle" problem). Put the most relevant chunk first or last.
+- **Order matters.** Positional bias toward the start and end of long contexts ("lost in the middle") persists but is weaker in current long-context models. It's still safest to place the most relevant chunk first or last rather than bury it mid-context.
 - **Cite explicitly.** Label each chunk with an id and instruct the model to cite it in the answer. This enables source attribution and hallucination detection.
 - **Handle "no match" gracefully.** If retrieval returns nothing relevant, tell the model. Otherwise it'll confabulate from its training data.
 
@@ -131,7 +133,7 @@ Simple RAG retrieves once per query. Complex questions ("compare our refund poli
 - **Iterative retrieval.** LLM retrieves, reads, decides if it has enough, retrieves more if not.
 - **Self-querying.** LLM writes structured queries (with metadata filters) from the natural-language question.
 
-These are more expensive and harder to debug than one-shot RAG. Upgrade only when eval shows one-shot failing, and see `references/agents.md` for the agent loop patterns.
+These are more expensive and harder to debug than one-shot RAG. Upgrade only when eval shows one-shot failing. See `references/agents.md` for the agent loop and workflow patterns, and `software-architecture/references/ai-architecture.md` §3 / `ai-agents.md` for the system-level agentic-retrieval architecture (multi-step orchestration, latency budgets).
 
 ## Common anti-patterns
 

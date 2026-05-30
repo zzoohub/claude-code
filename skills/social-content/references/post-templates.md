@@ -74,7 +74,7 @@ Aim for 2-3 of these elements when creating a post: **Social Currency, Triggers,
 6. **FOMO**: Highlight what readers might miss
    - "The career mistake 90% of professionals make..."
 
-**Key stat**: Posts with 80-100 characters in the hook receive 66% higher engagement. You have ~3 seconds to hook on social (vs 8 seconds on a website).
+**Rule of thumb**: Short, punchy hooks win -- Sprout Social found 40-80-character Facebook posts earn the highest engagement. You have only a few seconds before someone scrolls past, so front-load the hook.
 
 ---
 

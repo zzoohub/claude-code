@@ -17,6 +17,12 @@ const configSchema = z.object({
   DATABASE_URL: z.string().min(1),
   PORT: z.coerce.number().default(3000),
   CORS_ORIGIN: z.string().default("http://localhost:3000"),
+  // Asymmetric JWT (canonical) — verifiers fetch public keys from the issuer's
+  // JWKS endpoint and pin audience/issuer. See guards/jwt-auth.guard.ts.
+  JWT_JWKS_URL: z.string().url(),
+  JWT_AUDIENCE: z.string().min(1),
+  JWT_ISSUER: z.string().min(1),
+  // Symmetric secret — only for the single-service / dev HS256 fallback.
   JWT_SECRET: z.string().min(16),
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 });
@@ -40,7 +46,6 @@ import { cleanupOpenApiDoc } from "nestjs-zod";
 import { Logger } from "nestjs-pino";
 import helmet from "helmet";
 import { AppModule } from "./app.module";
-import { DomainExceptionFilter } from "./inbound/http/filters/domain-exception.filter";
 
 async function bootstrap() {
   // `bufferLogs: true` queues startup logs until nestjs-pino is wired,
@@ -55,11 +60,14 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
   app.enableCors({ origin: [configService.get("CORS_ORIGIN")] });
 
-  // Global exception filter — maps domain errors to RFC 9457.
+  // NOTE: the global exception filter (DomainExceptionFilter) is registered via
+  // APP_FILTER in AppModule, NOT `new DomainExceptionFilter()` here — it injects
+  // ClsService (for the X-Request-Id correlation id) and so must be DI-resolved.
   // Request validation runs through the global ZodValidationPipe (APP_PIPE in AppModule).
-  app.useGlobalFilters(new DomainExceptionFilter());
 
   // Swagger — cleanupOpenApiDoc post-processes createZodDto schemas into valid OpenAPI.
+  // addBearerAuth() registers the scheme; apply it per-operation with
+  // @ApiBearerAuth() + @UseGuards(JwtAuthGuard) on protected routes (see below).
   const config = new DocumentBuilder()
     .setTitle("Author API")
     .setVersion("1")
@@ -82,7 +90,7 @@ bootstrap();
 ```typescript
 // src/app.module.ts
 import { Module } from "@nestjs/common";
-import { APP_GUARD, APP_PIPE } from "@nestjs/core";
+import { APP_FILTER, APP_GUARD, APP_PIPE } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { TerminusModule } from "@nestjs/terminus";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
@@ -96,6 +104,7 @@ import { TypeOrmPersistenceModule } from "./outbound/typeorm/typeorm.module";
 import { AuthorsModule } from "./authors.module";
 import { HealthController } from "./inbound/http/health/health.controller";
 import { ZodValidationPipe } from "./inbound/http/pipes/zod-validation.pipe";
+import { DomainExceptionFilter } from "./inbound/http/filters/domain-exception.filter";
 
 @Module({
   imports: [
@@ -140,6 +149,10 @@ import { ZodValidationPipe } from "./inbound/http/pipes/zod-validation.pipe";
     { provide: APP_PIPE, useClass: ZodValidationPipe },
     // Global rate-limit guard (ThrottlerGuard reads ThrottlerModule's config).
     { provide: APP_GUARD, useClass: ThrottlerGuard },
+    // Global exception filter — DI-resolved so it can inject ClsService for the
+    // X-Request-Id correlation header. Catches everything (incl. ThrottlerException
+    // 429s) and emits RFC 9457 application/problem+json.
+    { provide: APP_FILTER, useClass: DomainExceptionFilter },
   ],
 })
 export class AppModule {}
@@ -177,6 +190,10 @@ import { NoOpMetrics, NoOpNotifier } from "./outbound/noop";
 @Module({
   controllers: [AuthorsController],
   providers: [
+    // ⚠️ NoOp metrics/notifier are DEV/TEST DEFAULTS — they drop every signal
+    // on the floor. Override per-environment with real adapters (e.g. an OTel
+    // meter, a queue-backed notifier) in production wiring, or move this NoOp
+    // binding into a dedicated dev module so prod can't accidentally ship it.
     { provide: AuthorMetrics, useClass: NoOpMetrics },
     { provide: AuthorNotifier, useClass: NoOpNotifier },
     { provide: AuthorService, useClass: AuthorServiceImpl },
@@ -292,7 +309,7 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
     "unplugin-swc": "^1.5",
     "supertest": "^7.0",
     "ts-node": "^10.9",
-    "@types/express": "^4.0",
+    "@types/express": "^5",
     "@types/pg": "^8.0",
     "@types/supertest": "^6.0"
   }
@@ -465,36 +482,65 @@ export class NoOpMockNotifier extends AuthorNotifier {
 
 ### Test Module Helper
 
+Controller tests follow the documented strategy: **mock service/repo, NO DB.**
+The slim helper imports only `AuthorsModule` plus the global pipe + filter — it
+never touches `TypeOrmPersistenceModule`, so `app.init()` opens no Postgres
+connection. (Booting the full `AppModule` is the E2E path — it triggers
+`TypeOrmModule.forRootAsync`, which connects to a real database on `init()`; do
+that in `tests/e2e/**` against a throw-away DB, not in fast controller tests.)
+
 ```typescript
 // tests/helpers.ts
 import { Test, type TestingModule } from "@nestjs/testing";
 import { type INestApplication } from "@nestjs/common";
-import { AppModule } from "../src/app.module";
+import { APP_FILTER, APP_PIPE } from "@nestjs/core";
+import { ClsModule } from "nestjs-cls";
+import { AuthorsModule } from "../src/authors.module";
 import { AuthorRepository } from "../src/domain/authors/ports";
+import { ZodValidationPipe } from "../src/inbound/http/pipes/zod-validation.pipe";
 import { DomainExceptionFilter } from "../src/inbound/http/filters/domain-exception.filter";
-import type { MockAuthorRepository } from "./mocks";
+import { MockAuthorRepository } from "./mocks";
 
 /**
- * Build a test app with overridden providers.
- * Uses the real AppModule but swaps adapters via overrideProvider().
+ * Fast controller test app — NO database.
+ *
+ * Imports only AuthorsModule and re-declares the two globals the controller
+ * relies on (the ZodValidationPipe and the DomainExceptionFilter). The repo
+ * port is bound to a mock, so the service runs for real but persistence is
+ * stubbed and `app.init()` opens no DB connection.
+ *
+ * ClsModule is registered (without middleware) so DomainExceptionFilter can
+ * inject ClsService for the X-Request-Id header. For E2E, import AppModule
+ * instead — see tests/e2e/**.
  */
 export async function createTestApp(overrides?: {
   repo?: MockAuthorRepository;
 }): Promise<{ app: INestApplication; module: TestingModule }> {
-  let builder = Test.createTestingModule({ imports: [AppModule] });
+  const module = await Test.createTestingModule({
+    imports: [ClsModule.forRoot({ global: true }), AuthorsModule],
+    providers: [
+      { provide: APP_PIPE, useClass: ZodValidationPipe },
+      { provide: APP_FILTER, useClass: DomainExceptionFilter },
+    ],
+  })
+    // Mock the persistence port — AuthorsModule's service resolves it normally,
+    // but it never reaches TypeORM. AuthorRepository is provided by the @Global
+    // persistence module in prod; here we supply it directly.
+    .overrideProvider(AuthorRepository)
+    .useValue(overrides?.repo ?? new MockAuthorRepository())
+    .compile();
 
-  if (overrides?.repo) {
-    builder = builder.overrideProvider(AuthorRepository).useValue(overrides.repo);
-  }
-
-  const module = await builder.compile();
   const app = module.createNestApplication();
-  // ZodValidationPipe comes from AppModule's APP_PIPE provider — nothing to wire here.
-  app.useGlobalFilters(new DomainExceptionFilter());
   await app.init();
   return { app, module };
 }
 ```
+
+> AuthorsModule injects `AuthorRepository` (normally exported by the `@Global`
+> `TypeOrmPersistenceModule`). In the slim test module that global provider is
+> absent, so `.overrideProvider(AuthorRepository).useValue(...)` supplies it.
+> NestJS's `overrideProvider` registers the token even when the original
+> provider isn't present in the compiled graph.
 
 ### Controller Tests (Vitest + supertest)
 
@@ -683,6 +729,11 @@ describe("TypeOrmAuthorRepository (integration)", () => {
 DATABASE_URL="postgres://postgres:postgres@localhost:5432/myapp"
 PORT=3000
 CORS_ORIGIN="http://localhost:3000"
+# Asymmetric JWT (canonical guard)
+JWT_JWKS_URL="https://issuer.example.com/.well-known/jwks.json"
+JWT_AUDIENCE="https://api.example.com"
+JWT_ISSUER="https://issuer.example.com"
+# Symmetric secret — single-service / dev HS256 fallback only
 JWT_SECRET="your-secret-key-at-least-16-chars"
 NODE_ENV="development"
 ```

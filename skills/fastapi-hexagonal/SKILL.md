@@ -39,12 +39,14 @@ src/
 │       ├── ports.py             # AuthorRepository, AuthorService (Protocol)
 │       └── service.py           # AuthorServiceImpl
 ├── inbound/
+│   ├── shared/
+│   │   └── dependencies.py      # with_author_service — neutral, shared by all inbound adapters
 │   └── http/
-│       ├── shell.py             # Shell class — wraps FastAPI, owns uvicorn
-│       ├── errors.py            # exception handlers → RFC 9457
-│       ├── dependencies.py      # with_author_service
+│       ├── shell.py             # Shell class — wraps FastAPI, owns uvicorn, Request-ID + CORS middleware
+│       ├── errors.py            # exception handlers → RFC 9457 (application/problem+json)
+│       ├── dependencies.py      # HTTP-specific deps; re-exports shared with_author_service
 │       ├── health.py            # /healthz, /readyz — no domain involvement
-│       ├── response.py          # ApiSuccess, Created, Ok, PaginatedList
+│       ├── response.py          # ApiSuccess, Created, Ok, CursorPageResponse
 │       └── authors/
 │           ├── router.py        # Parse → call service → map response
 │           ├── request.py       # CreateAuthorHttpRequestBody
@@ -109,10 +111,12 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 - **Request types** decoupled from domain — `try_into_domain()` validates into domain type.
 - **Response types** built via `from_domain()` classmethod — never expose domain models directly.
 - **API errors** mapped via `@app.exception_handler`. Never leak domain strings to users.
-  `UnknownAuthorError` → log server-side, return generic message. Use RFC 9457 ProblemDetails.
+  `UnknownAuthorError` → log server-side, return generic message. Use RFC 9457 ProblemDetails, served as `application/problem+json` with an `instance` member. 422s populate the `errors` array (`[{field, code, message}]`).
+- **Routes mounted under `/v1/`** — author routes at `/v1/authors`. 201 responses set a `Location` header.
 - **API docs** — use Pydantic models for request/response definition. FastAPI auto-generates OpenAPI docs at `/docs`. Consult `references/api-design.md` for conventions and `references/api-patterns.md` for HTTP patterns.
 - **Middleware** — lives in inbound layer, invisible to domain.
-  **CORS middleware before routers** (order matters).
+  **CORS middleware before routers** (order matters). Drive `allow_methods`/`allow_headers`/`allow_credentials` from config — no wildcards.
+- **Request-ID middleware** — read/generate `X-Request-Id`, store on `request.state`, echo it in the response header (correlation id lives in the header, not the body).
 
 ### Non-HTTP Inbound Adapters
 
@@ -148,9 +152,9 @@ All three are wired into the same Shell. Domain doesn't know which triggered it.
 
 ## Outbound Layer
 
-- Wrap engine/session factory in own class (`PostgresAuthorRepository`).
-- Expose `from_engine()` constructor for tests.
-- **Transactions encapsulated in adapter**, invisible to callers.
+- **Repository takes an `AsyncSession`** (`__init__(self, session)`) — don't let `AuthorRepository` create its own engine/session in `__init__`. A supplied session is what lets a `UnitOfWork` share one transaction across repos.
+- Expose `from_engine()` for standalone wiring (bootstrap, tests) — it wraps each call in its own short-lived session + transaction.
+- **Transactions encapsulated in adapter** (or the UoW), invisible to callers.
 - Keep transactions short. **No external calls (HTTP, queues) inside tx.**
 - Map DB-specific errors (e.g. `IntegrityError`) to domain error types.
 - ORM models live in `outbound/`. Use explicit mapper (`AuthorMapper.to_domain()`) to translate.
@@ -196,7 +200,7 @@ create_async_engine(url, pool_size=10, pool_timeout=3, pool_pre_ping=True)
 List endpoints need pagination. **Default to cursor-based pagination.** The pattern flows through all three layers:
 - **Domain port**: `list_authors(cursor: str | None, limit: int) -> CursorPage[Author]`
 - **Outbound adapter**: `WHERE (created_at, id) > (:cursor) ORDER BY created_at, id LIMIT :limit`
-- **Inbound handler**: return `CursorPageResponse[T]` with `data`, `limit`, `next_cursor`, `has_more`
+- **Inbound handler**: return `CursorPageResponse[T]` — `{ "data": [...], "meta": { "limit", "next_cursor", "has_more" } }` (pagination nested under `meta`)
 
 Cap `limit` at the handler level (e.g. `Query(20, ge=1, le=100)`). The domain doesn't care about max page size — that's a transport concern.
 
@@ -217,7 +221,9 @@ Use for admin panels and small/static datasets. Provides `total` count for page 
 Healthcheck endpoints are infrastructure — they bypass the domain entirely. Wire them directly in Shell.
 
 - `/healthz` — always returns 200 (liveness, "is the process alive?")
-- `/readyz` — checks DB connectivity (readiness, "can it serve traffic?")
+- `/readyz` — checks DB connectivity (readiness, "can it serve traffic?"). Returns **503** (not 500) when the DB is unreachable, so the load balancer stops routing traffic.
+
+The healthcheck needs the engine. Thread it explicitly: bootstrap creates the engine and passes it into `Shell(config, service, engine=...)`; `_build_app`/`build_test_app` accept it and call `app.include_router(health_routes(engine))`.
 
 > Healthcheck example: `references/examples-adapters.md`
 
@@ -271,9 +277,10 @@ Ensure `engine.dispose()` in a `finally` block for clean shutdown.
 | Refresh token rotation | **Required** — issue new refresh token on each use, revoke old immediately |
 | Refresh token storage | DB table with `jti`, `user_id`, `revoked_at`, `expires_at` |
 | Timestamps | `datetime.now(UTC)` (not deprecated `utcnow()`) |
-| CORS | Explicit origins only (no wildcard) |
+| CORS | Explicit origins, methods, headers from config (no wildcard); set `allow_credentials` explicitly |
+| JWT signing | **ES256/EdDSA** (asymmetric) for multi-service user-facing auth; `HS256` only as a labeled single-service/dev fallback |
 
-Auth dependency (`get_current_user`) lives in inbound layer. Domain never handles raw tokens.
+Auth dependency (`get_current_user`) lives in inbound layer. Domain never handles raw tokens. Never sign tokens with the dev placeholder secret — require a real `SECRET_KEY` from the environment in every non-dev deployment.
 
 ---
 

@@ -63,11 +63,11 @@ Service --> LLM Gateway --> Provider A (primary)
 ```
 
 **When**: Multiple models or providers, need automatic failover, want unified cost tracking, or need request/response logging.
-**Trade-offs**: Adds 50-200ms latency per request. Worth it for production reliability.
+**Trade-offs**: Adds latency overhead — typically single-digit to low-tens of milliseconds for a self-hosted/co-located gateway, ~20-40ms for a managed cloud gateway (mostly network hops). Negligible next to LLM call time (often 500ms-5s), and worth it for production reliability — benchmark your specific setup.
 
 ### Tier 3: Model Cascading
 
-Route queries to progressively more expensive models based on complexity. A cheap model handles 80-90% of requests; expensive models handle the rest.
+Route queries to progressively more expensive models based on complexity. A cheap model can often handle the majority of requests (frequently ~70-90% in routed workloads); expensive models handle the rest. The exact split depends on your confidence threshold and the mix of query difficulty.
 
 ```
 Query --> Router/Classifier
@@ -77,7 +77,7 @@ Query --> Router/Classifier
 ```
 
 **When**: High request volume where cost matters, queries vary significantly in difficulty, and you can define a confidence threshold.
-**Impact**: 70-87% cost reduction in production deployments.
+**Impact**: Large but highly workload-dependent — published benchmarks report roughly 45-85% cost reduction (e.g., RouteLLM ~85% on MT-Bench but ~35-45% on MMLU/GSM8K at ~95% of GPT-4 quality; FrugalGPT up to ~98%). Verify for your own workload.
 
 **Implementation**: Use a lightweight classifier (rule-based: token count, keyword presence, conversation depth) that routes to appropriate models. Or use the gateway's built-in router if available.
 
@@ -104,7 +104,7 @@ Client --POST /chat--> API Server --SSE stream--> LLM Provider
 - **Backpressure**: Use your framework's streaming response primitive (e.g., `ReadableStream`, SSE helpers). For raw byte passthrough (proxying LLM SSE directly), pipe the provider's stream through.
 - **Structured output streaming**: When the LLM emits structured JSON token-by-token, use a partial JSON parser to render progressive UI updates. Plan for this if your feature requires structured generation.
 - **Frontend consumption**: Use an AI SDK that handles SSE parsing, streaming state, and error recovery. For custom implementations, use `fetch` + `ReadableStream`.
-- **Timeout budgets**: LLM responses can take 30-60 seconds for long generations. Set request timeout to 300s for LLM-facing endpoints. Standard 60s timeouts will cause truncated responses.
+- **Timeout budgets**: a complete response typically takes 5-30s, but long generations can run 30-60s+. Set the request timeout to ~300s for **streaming** LLM endpoints (a defensive ceiling — standard 60s timeouts truncate long responses). For **non-streaming** calls, 60-120s is the usual budget (see the resilience tables in `design-flow.md` Stage 8 and `operational-patterns.md`).
 
 ---
 
@@ -122,7 +122,7 @@ RAG connects the LLM to your data. Instead of relying on the model's training da
 ### When NOT to Use RAG
 
 - The task is creative generation (writing, brainstorming) — retrieval adds noise
-- The knowledge fits comfortably in the system prompt (< 100K tokens)
+- The knowledge fits comfortably in the system prompt (e.g. under ~100K tokens — model-dependent)
 - Real-time data is needed — use tool calls to live APIs instead
 
 ### RAG Architecture Tiers
@@ -131,7 +131,7 @@ RAG connects the LLM to your data. Instead of relying on the model's training da
 
 **Tier 2 — Advanced RAG**: Adds pre-retrieval and post-retrieval optimization:
 - **Hybrid search**: Combine dense (semantic embeddings) + sparse (BM25 keyword matching). Hybrid improves retrieval quality significantly over dense-only.
-- **Reranking**: After initial retrieval, re-score candidates with a cross-encoder reranking model. Dramatically improves precision for the cost of ~50ms latency.
+- **Reranking**: After initial retrieval, re-score candidates with a cross-encoder reranking model. Dramatically improves precision; typically adds tens to a few hundred ms (roughly 50-300ms) depending on candidate-pool size, model, and self-hosted-GPU vs hosted rerank API.
 - **Contextual retrieval**: Before embedding, prepend a concise context summary to each chunk explaining where it fits in the source document. Reduces retrieval failures substantially.
 - **Graph-based RAG**: Build entity-relationship graphs from documents. Useful for questions that require understanding relationships across the corpus.
 
@@ -143,7 +143,7 @@ RAG connects the LLM to your data. Instead of relying on the model's training da
 |---|---|---|
 | Dense only (embeddings) | Homogeneous content, semantic queries | Baseline |
 | Hybrid (dense + BM25) | Mixed content, exact term matching matters | +10-20ms |
-| + Reranking | Precision-critical, top-k has noise | +50-100ms |
+| + Reranking | Precision-critical, top-k has noise | +50-300ms (GPU/self-hosted low end, hosted API higher) |
 | + Query decomposition | Multi-hop questions, complex queries | +1-2s (extra LLM call) |
 | + Contextual retrieval | Chunks lose meaning without document context | Build-time cost only |
 | Graph-based | Thematic/relational questions across corpus | Variable |
@@ -248,7 +248,7 @@ Extending RAG to handle non-text content:
 
 ### Multimodal Anti-Patterns
 
-**Sending raw high-res images to LLMs**: Resize to the minimum resolution the model needs. A 4000x3000 image costs 10x more tokens than 1000x750 with negligible quality difference for most tasks.
+**Sending raw high-res images to LLMs**: Resize to the minimum resolution the model needs. Providers downscale or tile large images, so a ~16x pixel increase often yields only ~1x-5x more tokens (with rarely any quality benefit) — the exact ratio depends on the model's tiling scheme and max-resolution cap.
 
 **Synchronous video processing**: Video analysis is inherently slow. Always use async processing with progress callbacks.
 
@@ -266,13 +266,13 @@ AI inference costs can dominate cloud spend. Address this architecturally, not a
 |---|---|---|
 | **Prompt optimization** (trim unnecessary context) | 15-30% reduction | Low |
 | **Semantic caching** (cache semantically similar queries) | 30-70% reduction for repetitive workloads | Medium |
-| **Model cascading** (cheap model first, expensive for hard cases) | 70-87% reduction | Medium |
+| **Model cascading** (cheap model first, expensive for hard cases) | ~45-85% (workload-dependent) | Medium |
 | **Batch API** (for non-real-time workloads) | ~50% reduction | Low |
 | **Reduced embedding dimensions** | 50-75% storage reduction | Low |
 
 **Semantic caching**: Use vector similarity to identify queries with the same meaning and serve cached responses. Cache hit rates of 60-85% are typical for support/docs workloads.
 
-**Self-hosting threshold**: When monthly inference spend exceeds ~$50K, evaluate self-hosted GPU clusters vs managed APIs. Factor in operational overhead.
+**Self-hosting threshold**: Once monthly inference spend reaches the tens of thousands of dollars (roughly $20-50K/month), evaluate self-hosted GPU clusters vs managed APIs. The break-even is highly model- and utilization-dependent — model it on token volume, target model quality, and sustained GPU utilization, not a single dollar figure. Factor in operational overhead (self-hosting TCO often runs 3-5x raw GPU rental once engineering time is included).
 
 ### Guardrails & Safety
 
@@ -291,7 +291,7 @@ Output -> [Format validation ~1ms] -> [Factuality check ~10ms] -> [Safety review
 - **Indirect Prompt Injection (IPI)**: The most dangerous vulnerability for RAG systems. Malicious instructions embedded in retrieved documents can manipulate agent behavior. Mitigations: separate user instructions from retrieved context, validate tool calls against permissions, monitor for anomalous agent behavior.
 - **Sync vs. async**: For real-time chat, heavy guardrails can add 200ms+ latency. Consider async monitoring — let the response through immediately but run background checks and flag/retract if needed.
 
-**Regulatory awareness**: AI regulations (EU AI Act, NIST AI RMF, ISO 42001) increasingly mandate specific guardrails. Check current regulatory requirements for your domain and region.
+**Regulatory awareness**: The EU AI Act (Regulation (EU) 2024/1689, binding law) increasingly mandates specific guardrails; voluntary frameworks like NIST AI RMF 1.0 and ISO/IEC 42001:2023 provide governance scaffolding to evidence compliance. Check current regulatory requirements for your domain and region.
 
 ### Observability for AI Systems
 
@@ -333,12 +333,14 @@ Inspired by TDD/BDD but reimagined for LLM systems:
 
 ### RAG Quality Evaluation
 
-| Metric | What It Measures | Target |
+| Metric | What It Measures | Reasonable starting target (tune per use case) |
 |---|---|---|
-| **Precision@k** | % of retrieved chunks that are relevant | > 80% |
+| **Precision@k** | % of retrieved chunks that are relevant | depends heavily on k — often 0.4-0.6 when you deliberately over-retrieve |
 | **Recall@k** | % of relevant chunks that were retrieved | > 70% |
 | **Faithfulness** | Does the answer stick to retrieved context? | > 90% |
 | **Answer relevance** | Does the answer address the question? | > 85% |
+
+These are illustrative starting points, not industry standards — set thresholds against your own golden set and tolerance (recall@k and faithfulness are usually the gating metrics, not precision@k).
 
 **Evaluation approach**: Build a golden test set (50-100 question-answer pairs with source documents). Run retrieval + generation on each, score with an LLM-as-judge. Automate this as a CI step.
 

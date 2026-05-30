@@ -111,10 +111,11 @@ Audiences don't just want the process — they want to see how YOU execute the p
 
 ## Show, Don't Just Tell
 
-Proof is mandatory:
-- Always include case studies, testimonials, and behind-the-scenes evidence
+Back every claim with proof — and only claims you can truthfully support:
+- Include real case studies, testimonials, and behind-the-scenes evidence when you have them
 - Use specific metrics and results wherever possible
 - "Always be gathering" proof and social validation
+- No real proof yet? Don't invent any. Soften the claim to what's truthfully supportable — describe the mechanism, the design intent, or an honest early-access framing — never fabricate metrics or testimonials (see Writing Style Rule 6)
 
 ---
 

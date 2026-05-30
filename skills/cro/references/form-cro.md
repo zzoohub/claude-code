@@ -1,6 +1,6 @@
 # Form CRO
 
-Optimize any form that is NOT signup/registration — lead capture, contact, demo request, application, survey, checkout forms.
+Optimize any form that is NOT signup/registration — lead capture, contact, demo request, application, survey. (Checkout/payment forms are covered in checkout-cro.md.)
 
 ---
 
@@ -53,6 +53,7 @@ One question per field. Clear labels. Logical grouping. Smart defaults.
 - Multi-column only for short related fields (First/Last name)
 - Sufficient spacing, clear hierarchy, CTA stands out
 - Mobile-friendly tap targets (44px+)
+- Accessibility is conversion recovery: sufficient CTA contrast (WCAG ~4.5:1 text, ~3:1 large/UI), a visible focus ring, and inline errors announced to screen readers (aria-live / role=alert)
 
 ---
 

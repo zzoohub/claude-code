@@ -8,6 +8,8 @@ Config, main.rs, graceful shutdown, CI, and hex-specific test mocks.
 
 ```rust
 // src/config.rs
+use anyhow::Context;
+
 #[derive(Debug, Clone)]
 pub struct Config {
     pub database_url: String,
@@ -35,6 +37,7 @@ impl Config {
 // src/bin/server/main.rs — `sqlx` import is allowed in bootstrap because
 // the pool is the one infrastructure handle the readiness probe needs.
 // Domain code never sees it.
+use std::sync::Arc;
 use sqlx::sqlite::SqlitePoolOptions;
 
 use myapp::config::Config;
@@ -167,9 +170,53 @@ impl AuthorNotifier for NoOpNotifier {
 
 ### Test app helper
 
+Tests use a different concrete composition (NoOp adapters) than production. The test helper must actually type-check, so `build_router` has to accept the test service type. There are two ways to make that work — pick one:
+
+**Option A — `cfg(test)` alias (no signature change).** The `AppAuthorService` alias *is* the seam. Define it per build profile so `AppState`/`build_router` stay concrete and handler code is untouched; tests just swap the adapters behind the same alias name:
+
 ```rust
-// Tests use a different concrete composition (NoOp adapters) than production.
-// Define a test-only alias so `AppState` keeps a single concrete type per binary.
+// src/composition.rs
+#[cfg(not(test))]
+pub type AppAuthorService = AuthorServiceImpl<Sqlite, Prometheus, EmailClient>;
+#[cfg(test)]
+pub type AppAuthorService = AuthorServiceImpl<Sqlite, NoOpMetrics, NoOpNotifier>;
+```
+
+```rust
+// Under #[cfg(test)], `AppAuthorService` already names the NoOp composition,
+// so `build_router` accepts it directly — no generics needed.
+async fn test_app() -> Router {
+    let pool = setup_test_db().await;
+    let service: Arc<AppAuthorService> = Arc::new(
+        AuthorServiceImpl::new(Sqlite::from_pool(pool.clone()), NoOpMetrics, NoOpNotifier),
+    );
+    let cfg = HttpServerConfig {
+        port: "0",                          // unused — we don't bind a listener
+        cors_origin: "http://localhost",
+    };
+    HttpServer::build_router(service, pool, &cfg).unwrap()  // Pool shared with readiness probe.
+}
+```
+
+**Option B — generic `build_router` (one signature change).** Make `AppState` and `build_router` generic over `S: AuthorService`. Then any concrete service composition type-checks, production and test alike:
+
+```rust
+// src/inbound/http/server.rs
+#[derive(Clone)]
+pub struct AppState<S: AuthorService> {
+    pub author_service: Arc<S>,
+    pub db_pool: sqlx::SqlitePool,
+}
+
+impl HttpServer {
+    pub fn build_router<S: AuthorService>(
+        author_service: Arc<S>,
+        db_pool: sqlx::SqlitePool,
+        config: &HttpServerConfig<'_>,
+    ) -> anyhow::Result<Router> { /* ... as before, State<AppState<S>> in handlers ... */ }
+}
+
+// Test then names its own composition and it just works:
 type TestAuthorService = AuthorServiceImpl<Sqlite, NoOpMetrics, NoOpNotifier>;
 
 async fn test_app() -> Router {
@@ -177,27 +224,30 @@ async fn test_app() -> Router {
     let service: Arc<TestAuthorService> = Arc::new(
         AuthorServiceImpl::new(Sqlite::from_pool(pool.clone()), NoOpMetrics, NoOpNotifier),
     );
-    let cfg = HttpServerConfig {
-        port: "0",                          // unused — we don't bind a listener
-        cors_origin: "http://localhost",
-    };
-    // For tests, switch the AppState definition over to `Arc<TestAuthorService>`,
-    // or split AppState behind a `cfg(test)` alias. Pool shared with readiness probe.
+    let cfg = HttpServerConfig { port: "0", cors_origin: "http://localhost" };
     HttpServer::build_router(service, pool, &cfg).unwrap()
 }
+```
 
+Option A keeps handler signatures (`State<AppState>`) unchanged and is the lighter touch for a single binary; Option B is better if you genuinely want one router builder reused across multiple compositions. Either way the canonical `test_app` compiles — the version that passed `Arc<TestAuthorService>` into a `build_router` hardcoded to `Arc<AppAuthorService>` did not.
+
+```rust
 // Pattern 1: oneshot — single request per test
 let app = test_app().await;
 let res = app.oneshot(
-    Request::post("/authors")
+    Request::post("/v1/authors")        // routes are nested under /v1
         .header("Content-Type", "application/json")
         .body(Body::from(r#"{"name":"Test"}"#)).unwrap(),
 ).await.unwrap();
 assert_eq!(res.status(), StatusCode::CREATED);
+// 201 carries the created resource's URI in the Location header.
+let location = res.headers()["location"].to_str().unwrap().to_string();
+assert!(location.starts_with("/v1/authors/"));
 
-// Read response body
+// Read response body — single resource is wrapped: `{ "data": { ... } }`.
 let body = res.into_body().collect().await.unwrap().to_bytes();
-let data: serde_json::Value = serde_json::from_slice(&body).unwrap();
+let json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+assert_eq!(json["data"]["name"], "Test");
 ```
 
 ### Multiple requests in one test
@@ -209,7 +259,7 @@ use tower::{Service, ServiceExt};
 let mut app = test_app().await.into_service();
 
 // First request
-let req = Request::post("/authors")
+let req = Request::post("/v1/authors")
     .header("Content-Type", "application/json")
     .body(Body::from(r#"{"name":"Alice"}"#)).unwrap();
 let res = ServiceExt::<Request<Body>>::ready(&mut app)
@@ -217,7 +267,7 @@ let res = ServiceExt::<Request<Body>>::ready(&mut app)
 assert_eq!(res.status(), StatusCode::CREATED);
 
 // Second request on same service
-let req = Request::get("/authors").body(Body::empty()).unwrap();
+let req = Request::get("/v1/authors").body(Body::empty()).unwrap();
 let res = ServiceExt::<Request<Body>>::ready(&mut app)
     .await.unwrap().call(req).await.unwrap();
 assert_eq!(res.status(), StatusCode::OK);

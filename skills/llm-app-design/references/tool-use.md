@@ -1,5 +1,7 @@
 # Tool Use / Function Calling
 
+**Layer:** design-level (when tools are right, tool/schema design, the tool-calling loop, error handling). For tool/function-calling **system architecture** (tool gateways, MCP server deployment, agent protocols), see `software-architecture/references/ai-agents.md` § Tool Schema Design and § Agent Protocols.
+
 Tool use lets the model call your functions during a conversation. Well-designed tools turn LLMs from talkers into doers — badly designed ones turn them into expensive random-function-call generators.
 
 ## When tools are right
@@ -86,8 +88,10 @@ These are different mechanisms with overlapping use cases.
 **Structured output** (JSON mode, schema-constrained decoding) — the model's direct response is a structured object. One call, no tool. Use when you want a single structured answer.
 
 - **OpenAI `response_format=json_schema`** — strict schema-enforced JSON. Native, recommended over `json_object` mode.
-- **Anthropic** — tool-use is the canonical structured-output mechanism (define a tool with the target schema; force the model to call it). Pure JSON mode also works.
+- **Anthropic** — native structured outputs enforce a strict JSON Schema on the response on current Claude models; tool-use (define a tool with the target schema and force the model to call it) remains a portable fallback and is still the right mechanism when the structured object *is* a tool call.
 - **Local / OSS models** — `xgrammar`, `llguidance`, `outlines`, `guidance` enforce JSON Schema, regex, or context-free grammars at the token-sampling layer. Free correctness at the cost of some latency.
+
+(Exact request/response shapes for each are SDK mechanics — see `claude-api` for Anthropic, `vercel:ai-sdk` for multi-provider TypeScript. Verify the current structured-output API against provider docs; this surface changes often.)
 
 Even with constrained decoding, **validate every output**. The schema can be satisfied while the *content* is wrong (right shape, wrong category).
 

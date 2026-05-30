@@ -304,24 +304,47 @@ For atomicity that spans multiple repositories (aggregate write + outbox enqueue
 // src/inbound/http/pipes/zod-validation.pipe.ts
 import { UnprocessableEntityException } from "@nestjs/common";
 import { createZodValidationPipe } from "nestjs-zod";
-import type { ZodError } from "zod";
+import type { ZodError, ZodIssue } from "zod";
 
 /**
  * nestjs-zod's pipe, customized so validation failures match the API's
  * RFC 9457 ProblemDetails error shape instead of nestjs-zod's default body.
+ * The object thrown here IS a ProblemDetails body — `DomainExceptionFilter`
+ * passes it through verbatim (only stamping `instance`), so the validation
+ * shape and the filter's `problem()` shape can't drift apart.
  *
  * Status: 422 Unprocessable Entity (matches api-design.md — schema parsed,
  * semantic validation failed). Use 400 only for malformed transport
  * (unparseable JSON, missing Content-Type, etc.).
  */
+
+/**
+ * For z.discriminatedUnion / nested unions the failing issue can carry an
+ * empty (root) path → `field: ""`, which names nothing. Recurse into the
+ * union's sub-issues and prefer one with a non-empty path so `errors[]`
+ * always names a meaningful field. (Zod 4 also offers `z.treeifyError` /
+ * `z.flattenError`; this keeps the flat `errors[]` contract.)
+ */
+function fieldOf(issue: ZodIssue): string {
+  if (issue.path.length > 0) return issue.path.join(".");
+  if (issue.code === "invalid_union" && Array.isArray(issue.unionErrors)) {
+    for (const sub of issue.unionErrors) {
+      const named = sub.issues.find((i) => i.path.length > 0);
+      if (named) return named.path.join(".");
+    }
+  }
+  return "";
+}
+
 export const ZodValidationPipe = createZodValidationPipe({
   createValidationException: (error: ZodError) =>
     new UnprocessableEntityException({
       type: "https://api.example.com/errors/validation-failed",
       title: "Validation Failed",
       status: 422,
+      detail: "Request body failed validation",
       errors: error.issues.map((e) => ({
-        field: e.path.join("."),
+        field: fieldOf(e),
         code: e.code,
         message: e.message,
       })),
@@ -365,11 +388,14 @@ import { ApiProperty } from "@nestjs/swagger";
 import type { Author } from "../../../domain/authors/models";
 
 export class AuthorResponse {
+  // Definite-assignment `!` — fields are populated by fromDomain(), never the
+  // constructor, so `strict: true` (strictPropertyInitialization) is satisfied.
+  // Matches the entity style, which uses `!` for the same reason.
   @ApiProperty({ example: "550e8400-e29b-41d4-a716-446655440000" })
-  id: string;
+  id!: string;
 
   @ApiProperty({ example: "Alice" })
-  name: string;
+  name!: string;
 
   static fromDomain(author: Author): AuthorResponse {
     const dto = new AuthorResponse();
@@ -386,21 +412,25 @@ export class AuthorResponse {
  */
 export class CursorPageMeta {
   @ApiProperty({ example: 20 })
-  limit: number;
+  limit!: number;
 
-  @ApiProperty({ nullable: true, example: "eyJjcmVhdGVkQXQiOiIuLi4ifQ==" })
-  next_cursor: string | null;
+  // base64url of `<isoDate>|<uuid>` — see encodeCursor/decodeCursor in cursor.ts.
+  @ApiProperty({
+    nullable: true,
+    example: "MjAyNi0wNS0yOVQxMjowMDowMC4wMDBafDU1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwMA",
+  })
+  next_cursor!: string | null;
 
   @ApiProperty()
-  has_more: boolean;
+  has_more!: boolean;
 }
 
 export class CursorPageResponse {
   @ApiProperty({ type: [AuthorResponse] })
-  data: AuthorResponse[];
+  data!: AuthorResponse[];
 
   @ApiProperty({ type: CursorPageMeta })
-  meta: CursorPageMeta;
+  meta!: CursorPageMeta;
 }
 ```
 
@@ -409,13 +439,15 @@ export class CursorPageResponse {
 ```typescript
 // src/inbound/http/authors/authors.controller.ts
 import {
-  Controller, Get, Post, Param, Body, Query,
+  Controller, Get, Post, Param, Body, Query, Res,
   HttpCode, HttpStatus,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
+import type { Response } from "express";
 import { AuthorService } from "../../../domain/authors/ports";
 import { CreateAuthorDto, PaginationQueryDto, toDomain } from "./request.dto";
 import { AuthorResponse, CursorPageResponse } from "./response.dto";
+import { ProblemDetail } from "../filters/problem-detail.dto";
 import { AuthorNotFoundError } from "../../../domain/authors/errors";
 
 @ApiTags("authors")
@@ -427,10 +459,16 @@ export class AuthorsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: "Create an author" })
   @ApiResponse({ status: 201, type: AuthorResponse })
+  @ApiResponse({ status: 409, type: ProblemDetail })
+  @ApiResponse({ status: 422, type: ProblemDetail })
   async create(
+    // passthrough: true → we set headers but still return a body Nest serialises.
+    @Res({ passthrough: true }) res: Response,
     @Body() body: CreateAuthorDto,
   ): Promise<{ data: AuthorResponse }> {
     const author = await this.authorService.createAuthor(toDomain(body));
+    // 201 responses carry a Location header pointing at the new resource.
+    res.header("Location", `/v1/authors/${author.id}`);
     return { data: AuthorResponse.fromDomain(author) };
   }
 
@@ -452,6 +490,8 @@ export class AuthorsController {
 
   @Get(":id")
   @ApiOperation({ summary: "Get an author by ID" })
+  @ApiResponse({ status: 200, type: AuthorResponse })
+  @ApiResponse({ status: 404, type: ProblemDetail })
   async findOne(@Param("id") id: string): Promise<{ data: AuthorResponse }> {
     const author = await this.authorService.findAuthor(id);
     if (!author) {
@@ -462,7 +502,22 @@ export class AuthorsController {
 }
 ```
 
+> **Not-found semantics note:** `findAuthor()` returns `Author | null` and the
+> controller maps `null → AuthorNotFoundError`. That's fine for a single inbound
+> adapter. With multiple adapters (controller + job + gRPC), prefer a
+> `getAuthor(id): Promise<Author>` use case in the service that throws
+> `AuthorNotFoundError` itself, so every adapter inherits identical semantics
+> instead of re-implementing the null check.
+
 ## Inbound: Exception Filter (RFC 9457)
+
+Every error response — domain errors, `HttpException` bodies (incl. the
+`ZodValidationPipe` output and the throttler's 429) — flows through ONE
+`problem()` builder, so the shape can't diverge field-to-field. The body
+always carries `type`/`title`/`status` and optionally `detail`, `instance`,
+and the `errors[]` validation extension. The correlation id is set on the
+`X-Request-Id` **response header** (the CLS/pino id), never in the body, so
+it survives bodiless 204/304 responses too.
 
 ```typescript
 // src/inbound/http/filters/domain-exception.filter.ts
@@ -472,67 +527,192 @@ export class AuthorsController {
 // (@nestjs/platform-fastify), replace these calls with the Fastify reply
 // API or use NestJS's platform-agnostic HttpAdapterHost.
 import {
-  Catch, ExceptionFilter, ArgumentsHost, Logger, HttpException,
+  Catch, ExceptionFilter, ArgumentsHost, Logger, HttpException, HttpStatus,
 } from "@nestjs/common";
-import type { Response } from "express";
+import { ThrottlerException } from "@nestjs/throttler";
+import { ClsService } from "nestjs-cls";
+import type { Request, Response } from "express";
 import { DomainError } from "../../../domain/shared/errors";
 import { UnknownAuthorError } from "../../../domain/authors/errors";
 
+/**
+ * RFC 9457 ProblemDetails. `detail`, `instance`, and the `errors[]` extension
+ * are all optional — but every body is built by `problem()` so the field set
+ * is uniform regardless of which branch produced it.
+ */
 interface ProblemDetails {
-  type: string; title: string; status: number; detail: string;
+  type: string;
+  title: string;
+  status: number;
+  detail?: string;
+  instance?: string;
+  errors?: Array<{ field: string; code: string; message: string }>;
 }
 
-function problem(slug: string, title: string, status: number, detail: string): ProblemDetails {
-  return { type: `https://api.example.com/errors/${slug}`, title, status, detail };
+interface ProblemInput {
+  slug: string;
+  title: string;
+  status: number;
+  detail?: string;
+  instance?: string;
+  errors?: ProblemDetails["errors"];
+}
+
+function problem(input: ProblemInput): ProblemDetails {
+  const { slug, title, status, detail, instance, errors } = input;
+  return {
+    type: `https://api.example.com/errors/${slug}`,
+    title,
+    status,
+    ...(detail !== undefined ? { detail } : {}),
+    ...(instance !== undefined ? { instance } : {}),
+    ...(errors !== undefined ? { errors } : {}),
+  };
 }
 
 @Catch()
 export class DomainExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(DomainExceptionFilter.name);
 
+  constructor(private readonly cls: ClsService) {}
+
+  private send(res: Response, body: ProblemDetails): void {
+    res.status(body.status).header("Content-Type", "application/problem+json");
+    // Correlation id → response header (CLS/pino request id), never the body.
+    // getId() is set per request by ClsModule's middleware (generateId: true);
+    // guard for setups without it so we never write an `undefined` header.
+    const requestId = this.cls.getId();
+    if (requestId) res.header("X-Request-Id", requestId);
+    res.json(body);
+  }
+
   catch(exception: unknown, host: ArgumentsHost): void {
-    const response = host.switchToHttp().getResponse<Response>();
+    const http = host.switchToHttp();
+    const response = http.getResponse<Response>();
+    const request = http.getRequest<Request>();
+    const instance = request.url;
+
+    // 429 from @nestjs/throttler: its default body is NOT problem+json. Re-map
+    // it here so even rate-limit responses honour the error contract.
+    if (exception instanceof ThrottlerException) {
+      this.send(response, problem({
+        slug: "rate-limited",
+        title: "Too Many Requests",
+        status: HttpStatus.TOO_MANY_REQUESTS,
+        detail: "Rate limit exceeded; retry after the Retry-After interval",
+        instance,
+      }));
+      return;
+    }
 
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
-      const body = exception.getResponse();
-      response.status(status).header("Content-Type", "application/problem+json")
-        .json(typeof body === "string" ? problem("error", body, status, body) : body);
+      const raw = exception.getResponse();
+      // A string response → wrap it. An object response is assumed to already
+      // be a ProblemDetails-shaped body (e.g. ZodValidationPipe, Conflict
+      // exceptions thrown with a problem body); normalise `instance` onto it.
+      const body: ProblemDetails =
+        typeof raw === "string"
+          ? problem({ slug: "error", title: raw, status, detail: raw, instance })
+          : { ...(raw as ProblemDetails), instance };
+      this.send(response, body);
       return;
     }
 
     // `instanceof DomainError` rules out third-party Error objects that
     // might happen to carry a `tag` field. Switch on the string-literal
     // discriminant; unmapped tags fall through to the 500 below.
+    //
+    // Domain-agnostic note: this switch is author-specific by design (it's the
+    // illustration). In a multi-domain app a new feature's DomainError tag would
+    // fall through to 500. Scale this one of three ways:
+    //   (a) give `DomainError` an abstract `toProblem(): { slug; title; status }`
+    //       so each error maps itself and the filter never switches on tags;
+    //   (b) a tag→problem registry each feature module contributes to at boot;
+    //   (c) keep per-domain filters. Pick one before you have a second domain.
     if (exception instanceof DomainError) {
       switch (exception.tag) {
         case "DuplicateAuthorError":
-          response.status(409).header("Content-Type", "application/problem+json")
-            .json(problem("duplicate-author", "Conflict", 409, exception.message));
+          this.send(response, problem({
+            slug: "duplicate-author", title: "Conflict", status: 409,
+            detail: exception.message, instance,
+          }));
           return;
         case "AuthorNameEmptyError":
-          response.status(422).header("Content-Type", "application/problem+json")
-            .json(problem("validation-error", "Unprocessable Entity", 422, exception.message));
+          this.send(response, problem({
+            slug: "validation-error", title: "Unprocessable Entity", status: 422,
+            detail: exception.message, instance,
+          }));
           return;
         case "AuthorNotFoundError":
-          response.status(404).header("Content-Type", "application/problem+json")
-            .json(problem("not-found", "Not Found", 404, exception.message));
+          this.send(response, problem({
+            slug: "not-found", title: "Not Found", status: 404,
+            detail: exception.message, instance,
+          }));
           return;
         case "UnknownAuthorError":
           this.logger.error("Unexpected error:", (exception as UnknownAuthorError).cause);
           break;
         default:
-          // New domain errors fall through here. Add a case above before
-          // shipping; the request gets a 500 in the meantime.
+          // New domain errors fall through here. Add a case above (or adopt
+          // toProblem()) before shipping; the request gets a 500 meanwhile.
           this.logger.error(`Unhandled domain error tag "${exception.tag}":`, exception);
       }
     } else {
       this.logger.error("Unhandled error:", exception);
     }
 
-    response.status(500).header("Content-Type", "application/problem+json")
-      .json(problem("internal-error", "Internal Server Error", 500, "An unexpected error occurred"));
+    this.send(response, problem({
+      slug: "internal-error", title: "Internal Server Error", status: 500,
+      detail: "An unexpected error occurred", instance,
+    }));
   }
+}
+```
+
+> **DomainExceptionFilter now depends on `ClsService`** for the request id, so
+> register it via DI (`{ provide: APP_FILTER, useClass: DomainExceptionFilter }`)
+> rather than `new DomainExceptionFilter()` — see `examples-bootstrap.md`.
+
+### ProblemDetail OpenAPI DTO
+
+A documentation-only class so `@ApiResponse({ status, type: ProblemDetail })`
+renders the RFC 9457 error shape in the generated OpenAPI. It is never
+constructed at runtime — the filter emits plain objects via `problem()`.
+
+```typescript
+// src/inbound/http/filters/problem-detail.dto.ts
+import { ApiProperty } from "@nestjs/swagger";
+
+class ProblemErrorItem {
+  @ApiProperty({ example: "name" })
+  field!: string;
+
+  @ApiProperty({ example: "too_small" })
+  code!: string;
+
+  @ApiProperty({ example: "name is required" })
+  message!: string;
+}
+
+export class ProblemDetail {
+  @ApiProperty({ example: "https://api.example.com/errors/not-found" })
+  type!: string;
+
+  @ApiProperty({ example: "Not Found" })
+  title!: string;
+
+  @ApiProperty({ example: 404 })
+  status!: number;
+
+  @ApiProperty({ required: false, example: 'author with id "123" not found' })
+  detail?: string;
+
+  @ApiProperty({ required: false, example: "/v1/authors/123" })
+  instance?: string;
+
+  @ApiProperty({ required: false, type: [ProblemErrorItem] })
+  errors?: ProblemErrorItem[];
 }
 ```
 
@@ -544,12 +724,18 @@ export class DomainExceptionFilter implements ExceptionFilter {
 // `jose` (https://github.com/panva/jose) is the modern JWT/JOSE library:
 // EdDSA/ES256 first-class, ESM/CJS, JWK/JWKS, no CVE backlog. Prefer it
 // over `jsonwebtoken` (CJS-only, slow-to-patch security history).
+//
+// Canonical example below is ASYMMETRIC (ES256 over a JWKS) — matches
+// api-design.md ("prefer ES256/EdDSA once multiple services verify"):
+// only the issuer holds the private key; verifiers fetch the public key
+// from the issuer's JWKS endpoint. `aud` and `iss` are validated so a
+// token minted for another audience can't be replayed here.
 import {
   CanActivate, ExecutionContext, Injectable, UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import type { Request } from "express";
-import { jwtVerify, createSecretKey, type KeyObject } from "jose";
+import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from "jose";
 import { z } from "zod";
 import type { AppConfig } from "../../../config";
 
@@ -569,13 +755,15 @@ interface AuthedRequest extends Request {
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  private readonly secret: KeyObject;
+  private readonly jwks: JWTVerifyGetKey;
+  private readonly audience: string;
+  private readonly issuer: string;
 
   constructor(config: ConfigService<AppConfig, true>) {
-    // Encode once, reuse — createSecretKey is cheap but `jwtVerify` accepts
-    // either a KeyObject or a Uint8Array, and a stable key object is friendlier
-    // to swap to JWKS / RSA later.
-    this.secret = createSecretKey(config.get("JWT_SECRET"), "utf-8");
+    // createRemoteJWKSet caches keys and refreshes on unknown `kid` rotation.
+    this.jwks = createRemoteJWKSet(new URL(config.get("JWT_JWKS_URL")));
+    this.audience = config.get("JWT_AUDIENCE");
+    this.issuer = config.get("JWT_ISSUER");
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -586,9 +774,11 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const { payload } = await jwtVerify(authHeader.slice(7), this.secret, {
-        // Tighten this to your real algorithms — never accept "none".
-        algorithms: ["HS256"],
+      const { payload } = await jwtVerify(authHeader.slice(7), this.jwks, {
+        // Pin asymmetric algorithms — never accept "none" or symmetric HS*.
+        algorithms: ["ES256"], // or ["EdDSA"]
+        audience: this.audience,
+        issuer: this.issuer,
       });
       const validated = JwtPayload.parse(payload);
       request.userId = validated.sub;
@@ -601,6 +791,51 @@ export class JwtAuthGuard implements CanActivate {
 ```
 
 For OAuth / multiple strategies in the same app, layer `@nestjs/passport` on top — the guard above stays as the JWT case.
+
+### Single-service / dev fallback: HS256 symmetric secret
+
+When **one** service both issues and verifies tokens (no JWKS to publish),
+a symmetric secret is acceptable — see api-design.md. Note `createSecretKey`
+and `KeyObject` are exported by **`node:crypto`**, not `jose`; the simplest
+form skips the key object entirely and passes the encoded secret to
+`jwtVerify`:
+
+```typescript
+import { jwtVerify } from "jose";
+// Option A — encode the secret inline (simplest):
+const secret = new TextEncoder().encode(config.get("JWT_SECRET"));
+// Option B — a reusable KeyObject (from node:crypto, NOT jose):
+//   import { createSecretKey, type KeyObject } from "node:crypto";
+//   const secret: KeyObject = createSecretKey(config.get("JWT_SECRET"), "utf-8");
+
+const { payload } = await jwtVerify(authHeader.slice(7), secret, {
+  algorithms: ["HS256"], // symmetric — single-service / dev only
+});
+```
+
+Prefer the asymmetric guard above for anything multi-service.
+
+### Applying the guard to a protected route
+
+`addBearerAuth()` in `main.ts` only *registers* the scheme — Swagger won't mark
+any operation as protected until you decorate it. Apply `@UseGuards(JwtAuthGuard)`
+(enforcement) **and** `@ApiBearerAuth()` (documentation) together on each
+protected handler. The author CRUD routes in this skill are intentionally public;
+a mutation that must be authenticated looks like this:
+
+```typescript
+import { UseGuards } from "@nestjs/common";
+import { ApiBearerAuth } from "@nestjs/swagger";
+import { JwtAuthGuard } from "../guards/jwt-auth.guard";
+
+@Post()
+@UseGuards(JwtAuthGuard)   // enforce: 401 without a valid bearer token
+@ApiBearerAuth()           // document: shows the lock icon + 401 in OpenAPI
+async create(/* ... */) { /* ... */ }
+```
+
+If *no* route is protected, drop `addBearerAuth()` from `main.ts` so the OpenAPI
+doc doesn't advertise a security scheme nothing uses.
 
 ## Inbound: Healthcheck
 
@@ -670,7 +905,7 @@ For cross-repository atomicity, the `UnitOfWork` port wraps `DataSource.transact
 ```typescript
 // src/outbound/typeorm/typeorm-unit-of-work.ts
 import { Injectable } from "@nestjs/common";
-import { DataSource } from "typeorm";
+import { DataSource, EntityManager } from "typeorm";
 import { ClsService } from "nestjs-cls";
 import { UnitOfWork } from "../../domain/shared/unit-of-work";
 
@@ -689,6 +924,16 @@ export class TypeOrmUnitOfWork extends UnitOfWork {
   ) { super(); }
 
   run<T>(fn: () => Promise<T>): Promise<T> {
+    // REQUIRED propagation: if a UoW is already active (nested uow.run), join
+    // it — run the callback in the SAME transaction rather than opening a
+    // second, independent one. Without this, a nested run() would commit/roll
+    // back on its own boundary and the two writes wouldn't be atomic.
+    const existing = this.cls.get<EntityManager>(TYPEORM_EM_KEY);
+    if (existing) {
+      return fn();
+    }
+
+    // No active UoW → open a fresh transaction and publish its scoped EM.
     // DataSource.transaction opens the tx and supplies the scoped EM.
     // cls.run nests a CLS frame inside the tx so this.em() in repos sees it.
     return this.dataSource.transaction(async (em) =>
@@ -952,9 +1197,19 @@ import {
   CallHandler, ExecutionContext, Injectable, NestInterceptor, ConflictException,
 } from "@nestjs/common";
 import { createHash } from "node:crypto";
-import { Observable, from, of, switchMap, tap } from "rxjs";
+import { Observable, concatMap, from, of, switchMap } from "rxjs";
 import type { Request, Response } from "express";
 import { IdempotencyStore } from "../../../domain/shared/idempotency";
+
+// Headers worth replaying on a cached response. Location (created resource)
+// and Content-Type matter; skip hop-by-hop / per-connection headers.
+const REPLAYABLE_HEADERS = ["location", "content-type"] as const;
+
+interface StoredResponse {
+  status: number;
+  body: unknown;
+  headers: Record<string, string>;
+}
 
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
@@ -966,8 +1221,10 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const key = req.header("idempotency-key");
     if (!key) return next.handle();
 
-    // Scope per route so the same key reused on different endpoints can't collide.
-    const scope = `${req.method}:${req.route?.path ?? req.path}`;
+    // Scope from controller + handler, NOT req.route?.path — the latter is
+    // often undefined under Express 5 inside a Nest interceptor. The class +
+    // method name is stable and unique per endpoint.
+    const scope = `${context.getClass().name}.${context.getHandler().name}`;
     const hash = createHash("sha256")
       .update(JSON.stringify(req.body ?? null))
       .digest("hex");
@@ -984,19 +1241,30 @@ export class IdempotencyInterceptor implements NestInterceptor {
         }
         if (outcome.tag === "replay") {
           // Replay path — short-circuit the handler, return the cached body
-          // verbatim. Stored body includes status + serialised JSON.
-          const cached = JSON.parse(outcome.response.toString("utf8")) as {
-            status: number; body: unknown;
-          };
+          // verbatim. Stored body includes status, headers + serialised JSON.
+          const cached = JSON.parse(outcome.response.toString("utf8")) as StoredResponse;
           res.status(cached.status);
+          for (const [name, value] of Object.entries(cached.headers)) {
+            res.header(name, value);
+          }
           return of(cached.body);
         }
         // "new" — run the handler, then persist the response for future replays.
+        // concatMap (not tap(async ...)) so the store write is AWAITED before
+        // the response flushes and any rejection propagates to the client
+        // instead of being swallowed by a floating promise.
         return next.handle().pipe(
-          tap(async (body) => {
-            const status = res.statusCode;
-            const serialised = Buffer.from(JSON.stringify({ status, body }));
+          concatMap(async (body) => {
+            const headers: Record<string, string> = {};
+            for (const name of REPLAYABLE_HEADERS) {
+              const value = res.getHeader(name);
+              if (typeof value === "string") headers[name] = value;
+            }
+            const serialised = Buffer.from(
+              JSON.stringify({ status: res.statusCode, body, headers } satisfies StoredResponse),
+            );
             await this.store.store(scope, key, serialised);
+            return body;
           }),
         );
       }),
@@ -1033,6 +1301,16 @@ import { APP_GUARD } from "@nestjs/core";
 })
 export class AppModule {}
 ```
+
+> **429 must be `application/problem+json` too.** `ThrottlerException`'s default
+> body is `{ statusCode, message }`, which breaks the error contract. The
+> `DomainExceptionFilter` above already has a `ThrottlerException` branch that
+> re-maps it to a problem document — so as long as the global filter is
+> registered (it catches everything via `@Catch()`), the 429 is uniform with the
+> rest of the API. The throttler still sets `Retry-After` / `X-RateLimit-*`
+> headers itself. (Alternative: subclass `ThrottlerGuard` and override
+> `throwThrottlingException()` to throw a problem-shaped exception — the filter
+> branch is the lower-friction path and keeps all error shaping in one place.)
 
 For Redis-backed limits (multi-instance), swap the storage with `@nest-lab/throttler-storage-redis`.
 

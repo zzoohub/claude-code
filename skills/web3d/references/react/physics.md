@@ -39,7 +39,7 @@ Physics must be wrapped in `<Suspense>` (lazy WASM init).
 | `updateLoop` | `"follow"` | `"follow"` syncs with R3F, `"independent"` runs own rAF |
 | `debug` | `false` | Render collider wireframes |
 | `numSolverIterations` | `4` | Constraint solver iterations |
-| `colliders` | -- | Default auto-collider for all RigidBodies |
+| `colliders` | `"cuboid"` | Default auto-collider for all RigidBodies (set `false` to opt out) |
 
 ## RigidBody
 
@@ -134,6 +134,8 @@ import { interactionGroups } from '@react-three/rapier'
 ## Joints
 
 ```tsx
+import { useRevoluteJoint, useSpringJoint, type RapierRigidBody } from '@react-three/rapier'
+
 const bodyA = useRef<RapierRigidBody>(null)
 const bodyB = useRef<RapierRigidBody>(null)
 

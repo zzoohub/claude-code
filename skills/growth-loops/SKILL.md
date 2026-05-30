@@ -4,15 +4,18 @@ description: |
   Growth loop design — referral programs, viral loops, content loops, paid loops.
   Use when: designing a referral program, modeling viral coefficients (K factor),
   identifying acquisition loops, choosing loop type for a product, debugging a stalled loop,
-  or when user mentions "viral loop", "referral program", "K factor", "growth loop",
-  "viral coefficient", "amplification", "compounding growth".
-  Do NOT use for: page-level conversion optimization (use cro), pricing of referrals
-  (use pricing), or analytics of loop performance (use product-analytics).
+  designing an invite flow or ambassador/affiliate program,
+  or when user mentions "viral loop", "referral program", "refer a friend", "invite flow",
+  "ambassador program", "affiliate program", "K factor", "growth loop", "viral coefficient",
+  "amplification", "two-sided incentive", "compounding growth", "product-led growth", "PLG".
+  Do NOT use for: page-level conversion optimization (use cro), the dollar amount of a
+  referral reward (use pricing — this skill owns the incentive structure), or instrumented
+  measurement of live loop performance (use product-analytics — this skill owns the K model).
 ---
 
 # Growth Loops
 
-A growth loop is a self-reinforcing system: action → output → reinvestment that drives more of the same action. Loops *compound* (network effects, viral spread, content moats); funnels *deplete* (one-time visitors). Most durable growth comes from loops, not funnels.
+A growth loop is a self-reinforcing system: input → action → output → re-entry, where each cycle's output feeds the next cycle of the same action. Loops *compound* (network effects, viral spread, content moats); funnels *deplete* (one-time visitors). Most durable growth comes from loops, not funnels.
 
 For loop types, K factor math, the 5-stage design framework, amplification techniques, cycle time, anti-patterns, and output format, read `references/loops.md`.
 
@@ -28,8 +31,8 @@ For loop types, K factor math, the 5-stage design framework, amplification techn
 ## Boundary
 
 - **Not CRO**: signup form conversion goes to `cro`. Loop design is about what triggers acquisition, not how an individual page converts.
-- **Not pricing**: incentive economics for referrals go through `pricing`. Loop design picks the structure (double-sided, single-sided, milestone-based); pricing decides the dollar amount.
-- **Not analytics**: K factor measurement methodology is in `product-analytics`. Loop design uses K factor; analytics computes it.
+- **Pricing handoff**: this skill owns the *structure* of a referral incentive (one-sided, two-sided, milestone, tiered) and its abuse guardrails. For the *dollar value* of a reward tied to subscription/usage pricing, consult `pricing`.
+- **Analytics handoff**: this skill owns the K-factor *model* — the formula, the amplification math, and target-setting. `product-analytics` owns *instrumented measurement* of live K from event data. Design the loop and its targets here; measure the running loop there.
 
 ## Output
 

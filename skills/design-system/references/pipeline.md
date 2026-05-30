@@ -16,9 +16,9 @@ tokens/                          ← Source (JSON, W3C DTCG format)
    Style Dictionary              ← Transform engine
          │
          ├──→  web/variables.css       (CSS custom properties)
-         ├──→  web/tailwind.config.js  (Tailwind theme extension)
          ├──→  rn/tokens.ts            (TypeScript const object)
-         └──→  figma/tokens.json       (Figma Variables import)
+         ├──→  web/tailwind.config.js  (optional — legacy Tailwind v3 only; v4 reuses variables.css via @theme)
+         └──→  figma/tokens.json       (optional — Figma Variables import)
 ```
 
 ## Style Dictionary Setup
@@ -116,10 +116,24 @@ If using Tailwind, add a pipeline output that generates Tailwind theme config fr
 
 For Tailwind v4 (CSS-based), the CSS custom properties output already works — just reference them in `@theme`. No extra pipeline step needed.
 
-For Tailwind v3 (JS config), add a custom Style Dictionary format:
+For Tailwind v3 (JS config), register a custom format first — `tailwind/theme` is **not** a built-in Style Dictionary format, so referencing it without registering it fails the build with "format not found":
 
 ```javascript
-// In style-dictionary.config.js, add:
+const StyleDictionary = require('style-dictionary');
+
+// Register the custom format BEFORE building.
+StyleDictionary.registerFormat({
+  name: 'tailwind/theme',
+  format: ({ dictionary }) => {
+    const theme = {}; // build a nested theme.extend object from token.path (omitted for brevity)
+    for (const token of dictionary.allTokens) {
+      // e.g. set theme[token.attributes.category]?.[token.attributes.type] = token.value
+    }
+    return `module.exports = ${JSON.stringify(theme, null, 2)};`;
+  },
+});
+
+// ...then reference the registered format from a platform:
 platforms: {
   // ...existing platforms...
   tailwind: {
@@ -127,7 +141,7 @@ platforms: {
     buildPath: 'src/shared/ui/generated/',
     files: [{
       destination: 'tailwind-tokens.js',
-      format: 'tailwind/theme',
+      format: 'tailwind/theme', // the custom format registered above
     }],
   },
 }

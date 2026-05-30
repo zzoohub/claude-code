@@ -5,13 +5,16 @@ description: |
   global navigation, shared interaction conventions, and accessibility standards.
   Produces `docs/ux/ux-design.md` plus per-screen specs for every screen in the
   initial design.
-  Use when: starting UX for a new product, designing the overall app structure,
-  defining IA / global patterns / accessibility standards, or designing for
-  3D/XR/spatial computing (AR, VR, MR, visionOS, Quest, spatial UI).
+  Use when: starting UX for a new web, mobile, or native (iOS/Android) product;
+  designing the overall app structure (IA, navigation, onboarding flows,
+  dashboards, wireframes); defining IA / global patterns / accessibility
+  standards; or designing for 3D/XR/spatial computing (AR, VR, MR, visionOS,
+  Quest, spatial UI). Also use to review or diagnose an existing app's UX — a
+  read-only audit that produces findings without rewriting the design docs.
   Do NOT use for: designing a single screen on an existing app (use
   screen-design — lighter, doesn't rewrite ux-design.md). Do NOT use for visual
   styling, color palettes, component implementation, design tokens (use
-  design-system skill), or ui code.
+  design-system skill), or frontend/UI implementation code.
 ---
 
 # UX Design — Full App Pass
@@ -22,7 +25,16 @@ specs for every screen in the initial design.
 ## Context Check
 
 If `docs/prd/prd.md` or `docs/prd/features/*.md` exists, read it first. Use as
-input, not constraint. If your project keeps PRDs elsewhere, see `AGENTS.md`.
+input, not constraint. If your project keeps PRDs elsewhere, see `AGENTS.md` at
+the repo root.
+
+**If `docs/ux/ux-design.md` already exists**, this is not a fresh greenfield
+pass — do not rewrite it blindly. Branch:
+- Single screen to add or change → stop and use `screen-design` instead.
+- Audit/critique request ("review my UX", "what's wrong with this flow") → run
+  **Review / Diagnose Mode** (below).
+- Genuine app-wide restructure the user explicitly asked for → proceed, but
+  consolidate rather than regenerate from scratch.
 
 ---
 
@@ -55,6 +67,7 @@ When something "feels wrong" or needs improvement:
 | User doesn't know what to do | Copy failure | Rewrite labels, add guidance, fix empty states | `ux-writing.md` |
 | System feels slow | Doherty Threshold | Optimistic UI, skeleton screens, background processing | `interaction-patterns.md` |
 | 3D/XR issue | See dedicated reference | Load the appropriate reference for diagnosis | `3d-design.md` / `xr-design.md` |
+| AI feature issue | See dedicated reference | Streaming, citations, agent transparency, AI error states | `ai-feature-ux.md` |
 
 ---
 
@@ -74,7 +87,7 @@ These fail the "Does this help the user complete their goal?" test:
 - Custom patterns for standard tasks (violates Jakob's Law)
 - Hover-only interactions on touch devices
 - Org-chart navigation (structure matches company, not user mental model)
-- 3D/XR anti-patterns: see `3d-design.md` and `xr-design.md` for domain-specific lists
+- 3D/XR/AI anti-patterns: see `3d-design.md`, `xr-design.md`, and `ai-feature-ux.md` for domain-specific lists
 
 **Rule: If adding something "just in case" — don't. If unsure, mark it for user testing.**
 
@@ -96,7 +109,7 @@ These fail the "Does this help the user complete their goal?" test:
 
 ## Design Domains
 
-This skill covers eight interconnected domains. Each has a dedicated reference file:
+This skill covers nine interconnected domains. Each has a dedicated reference file:
 
 ### 1. Design Process
 How to go from problem to validated solution in 5 steps.
@@ -157,7 +170,7 @@ Before finalizing any UX decision:
 ### Screen Design
 - [ ] Primary action is ONE and visually dominant per screen
 - [ ] Information shown is only what's needed for current decision
-- [ ] All 7 screen states designed (empty, loading, loaded, error, partial, refreshing, offline)
+- [ ] All 7 screen states designed (empty, loading, loaded, error, partial, refreshing, offline — defined in `references/interaction-patterns.md`)
 - [ ] Content hierarchy: most important first
 
 ### Interaction
@@ -190,8 +203,31 @@ Before finalizing any UX decision:
 - [ ] Checked against Anti-patterns list above — none present
 - [ ] Cognitive principles cited for key design decisions
 
-### 3D / XR (if applicable)
-- [ ] Run validation checklist from `3d-design.md` and/or `xr-design.md`
+### 3D / XR / AI (if applicable)
+- [ ] Run validation checklist from `3d-design.md`, `xr-design.md`, and/or `ai-feature-ux.md`
+
+---
+
+## Review / Diagnose Mode
+
+When the request is to **review, audit, or diagnose** an existing app's UX
+("review my UX", "what's wrong with this flow") — not to build — operate
+read-only:
+
+1. **Read, don't write.** Load the existing `docs/ux/ux-design.md` and any
+   relevant `docs/ux/screens/*.md`. Do **not** regenerate or overwrite them.
+2. **Score against the rubric.** Walk the flow against the Quick Diagnosis
+   table, the Anti-patterns list, and the Quick Checklist above. For 3D/XR/AI
+   surfaces, also run the relevant reference's validation checklist.
+3. **Output a prioritized critique, not a rewritten doc.** Produce a findings
+   list: each finding = location + the principle it violates (cite the
+   reference) + severity + a concrete fix. Lead with the highest-impact issues.
+4. **Edit only if explicitly asked.** If the user then says "apply the fixes",
+   make the minimal targeted edits — still no full-doc rewrite unless they ask
+   for a restructure.
+
+This mirrors the Review / Audit pattern in `prd-craft`: a critique by default,
+edits only on request.
 
 ---
 
@@ -209,7 +245,9 @@ The single source of truth for app-wide UX decisions. Covers:
 - Shared state patterns (auth states, offline, loading)
 - Platform-specific conventions (iOS vs Android vs Web)
 - Accessibility standards applied globally
-- Phase Implementation Summary (if phases exist)
+- Phase Implementation Summary, if the PRD's Dev Order defines version buckets
+  (tag each screen with the bucket it belongs to, matching the PRD vocabulary —
+  e.g. `[v0.1]`, `[v0.2]` — not an invented "Phase" numbering)
 
 Start with a **Table of Contents** linking to each section and to individual screen files.
 
@@ -219,21 +257,27 @@ One file per screen or distinct view. Each screen file covers:
 
 - Screen purpose and user goal (JTBD)
 - Screen layout and content hierarchy
-- All 7 states (empty, loading, loaded, error, partial, refreshing, offline)
+- All 7 states (empty, loading, loaded, error, partial, refreshing, offline — defined in `references/interaction-patterns.md`)
 - User flows and decision points within the screen
 - Interaction details specific to this screen
 - UX copy (labels, errors, empty states, tooltips)
-- Phase tag (e.g., `[Phase 1]`) if phases exist
+- Dev Order tag matching the PRD's version buckets (e.g., `[v0.1]`), if the PRD defines them
 
 **Naming:** Use kebab-case matching the screen name (e.g., `account-settings.md`, `project-dashboard.md`, `onboarding-welcome.md`).
 
 **When to create a new file vs. add to an existing one:** Each independently navigable screen gets its own file. Modals, drawers, and sheets that belong to a specific screen go in that screen's file. If a flow spans multiple screens, each screen still gets its own file — cross-reference between them.
 
-If your project keeps UX docs elsewhere, see `AGENTS.md`.
+If your project keeps UX docs elsewhere, see `AGENTS.md` at the repo root.
 
 ### Line Limits
 
-Before updating, check the file's line count. If it exceeds the limit, first consolidate — tighten wording, merge redundant content, collapse outdated details — then apply changes.
+Before updating, check the file's line count. If it exceeds the limit, first consolidate — tighten wording, merge redundant content, collapse outdated details — then apply changes. Line counts are guidance, not hard truncation points.
 
-- `docs/ux/ux-design.md`: **500 lines**
+- `docs/ux/ux-design.md`: **500 lines** — if consolidation can't get it under, extract a section (e.g. accessibility standards or platform conventions) into `docs/ux/<topic>.md` and link it from the Table of Contents.
 - `docs/ux/screens/<screen-name>.md`: **300 lines** — if a screen file exceeds this, split into child screens (e.g., `settings-profile.md`, `settings-billing.md`)
+
+### Next
+
+Routing hints, not steps this skill performs: once the UX is approved, hand
+visual styling and design tokens to `design-system`, and break the screens into
+implementation work with `task-add`.

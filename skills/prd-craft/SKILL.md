@@ -38,12 +38,12 @@ A PRD answers **WHAT are we building** and **WHY**. It does NOT answer HOW
 ```
 docs/prd/
  ├─ product-brief.md       # Upstream strategic one-pager (if present)
- ├─ prd.md                 # Vision + requirements + dev order (~300 lines)
+ ├─ prd.md                 # Vision + requirements + dev order (target ~300, max 400 lines)
  └─ features/
      └─ [feature].md       # Feature spec: requirements, journeys, decisions
 ```
 
-**Every file is a single source of truth (SSOT).** If a file already exists, update it in place — never create duplicates. The file should always reflect the latest state.
+**Every file is a single source of truth (SSOT).** If a file already exists, update it in place — never create duplicates. The file should always reflect the latest state. Note: when `prd.md` already exists, "update in place" is honored by the `feature-spec` skill (which patches it) or Review Mode — not by re-running prd-craft to rewrite the vision (see Phase 0).
 
 If your project keeps PRDs elsewhere, see `AGENTS.md` at the repo root.
 
@@ -62,7 +62,9 @@ Scale document depth to your product's complexity.
 
 - **Lightweight** (personal tool, single-purpose CLI, experiment): prd.md 100-150 lines, feature specs optional, success signal 1-2 sentences
 - **Moderate** (team tool, multi-feature app): prd.md 200-300 lines, feature specs per feature, bullet-point metrics
-- **Large** (external users, complex state, many features): prd.md ~300 lines, full feature specs, metrics table with targets and timeframes
+- **Large** (external users, complex state, many features): prd.md 300-400 lines, full feature specs, metrics table with targets and timeframes
+
+These are writing **targets**. The hard cap before consolidation is 400 lines (see Line Limits).
 
 ## Step-by-Step PRD Creation Process
 
@@ -72,8 +74,14 @@ Before discovery, check if a product brief already exists at
 `docs/prd/product-brief.md`. If a brief exists, use it as a starting point to
 accelerate discovery.
 
-Also check if `docs/prd/prd.md` already exists. If yes, this is probably a
-single-feature add — return to the user before rewriting the PRD.
+Also check if `docs/prd/prd.md` already exists. If yes, do **not** rewrite it
+blindly — branch:
+
+- The user asked to **review / audit / improve** the PRD → go to **Review /
+  Audit Mode** (below). Do not run the creation flow.
+- Otherwise it's probably a **single-feature add** → return to the user and
+  suggest the `feature-spec` skill, which patches the PRD in place without
+  rewriting the vision.
 
 ### Phase 1: Discovery Interview
 
@@ -86,10 +94,12 @@ Start with the problem — it's the foundation everything else builds on. Based
 on the user's answer, follow the thread naturally:
 
 1. **Open with the problem:** "What's the specific problem here? What evidence do you have?" If they describe a solution instead of a problem, gently redirect: "That sounds like a potential solution — what's the underlying pain point driving it?"
-2. **Understand the user:** "Who experiences this problem most acutely? What are they trying to accomplish?"
-3. **Map the current state:** "How is this handled today? What's painful about that?"
-4. **Define success:** "If we nail this, what changes? How would we know it's working?"
-5. **Scope and constraints:** "What's explicitly out of scope? Any hard constraints — regulatory, performance, compatibility? Existing systems this must work with?"
+2. **Quantify the pain:** "How often does this happen, how much time or money does it cost today, and how many people hit it?" The PRD demands numbers in §1 and §4 — elicit them now rather than inventing them later. If exact figures don't exist, capture an estimate with its assumption.
+3. **Understand the user:** "Who experiences this problem most acutely? What are they trying to accomplish?"
+4. **Map the current state:** "How is this handled today? What's painful about that?"
+5. **Define success:** "If we nail this, what changes? How would we know it's working?"
+6. **Surface the riskiest assumption:** "What has to be true for this to work that we're least sure of?" Note it — it should drive both the §8 Risks section and the Dev Order (sequence the riskiest assumption first).
+7. **Scope and constraints:** "What's explicitly out of scope? Any hard constraints — regulatory, performance, compatibility? Existing systems this must work with?"
 
 Don't ask all of these if answers are already clear from context. Skip what you
 know, dig deeper on what's vague.
@@ -105,8 +115,8 @@ Offer the **Problem-User-Success** rapid discovery — just 3 questions:
 ### Phase 2: Write the PRD (`docs/prd/prd.md`)
 
 The PRD is the **vision document** — concise enough to read every session,
-comprehensive enough to guide all feature work. Target ~300 lines (scale down
-for lightweight products per Complexity Calibration).
+comprehensive enough to guide all feature work. Target ~300 lines (400 hard
+cap; scale down for lightweight products per Complexity Calibration).
 
 Read `references/examples.md` for concrete good/bad examples.
 
@@ -157,6 +167,10 @@ For products with multiple user types, define personas with context and needs.
 
 **Core value propositions:** Top 3 benefits, each mapped to a problem.
 
+**Alternatives considered** (moderate/large products): The main solution
+approaches you weighed, with a one-line "why not" for each. Keeps the chosen
+direction from reading as a foregone conclusion. Lightweight products can skip.
+
 ---
 
 ## 4. Success Metrics
@@ -183,6 +197,11 @@ Large — full table:
 List all features with one-line descriptions. Each has a detailed spec
 in `docs/prd/features/`.
 
+Feature names are **kebab-case** (e.g. `file-parser`). The same token is the
+Feature Overview key, the Dev Order entry, the `docs/prd/features/{feature}.md`
+filename, and later the task board `feature` column — keep it identical across
+all four so downstream skills can join on it.
+
 | Feature | Description | Spec |
 |---------|-------------|------|
 | file-parser | Read and validate input files | [features/file-parser.md](features/file-parser.md) |
@@ -192,19 +211,24 @@ in `docs/prd/features/`.
 
 ## 6. Dev Order
 
-Features ordered by dependency and priority.
+Features ordered by dependency and priority. State **why** this order, don't just
+assert it: for each version bucket give a one-line rationale (riskiest-assumption-first,
+core-value-first, or unblocks-the-most). For moderate/large products, tag each
+feature Must / Should / Could (MoSCoW) or note its value-vs-effort. Annotate
+cross-feature dependencies inline (`depends on: file-parser`) so task-craft can
+consume the graph rather than re-deriving it.
 
-### v0.1 — Core (minimum usable state)
-1. file-parser — everything depends on parsed input
-2. transform-engine — core value of the tool
+### v0.1 — Core (minimum usable state) — core value first
+1. file-parser — everything depends on parsed input [Must]
+2. transform-engine — core value of the tool [Must] (depends on: file-parser)
 
 ### v0.2 — Workflow
-3. config-loader — user-defined rules
-4. output-formatter — multiple output formats
+3. config-loader — user-defined rules [Should] (depends on: transform-engine)
+4. output-formatter — multiple output formats [Should] (depends on: transform-engine)
 
 ### v0.3 — Polish
-5. error-reporting — detailed diagnostics
-6. watch-mode — re-run on file changes
+5. error-reporting — detailed diagnostics [Could]
+6. watch-mode — re-run on file changes [Could] (depends on: file-parser)
 
 ---
 
@@ -218,28 +242,64 @@ Features ordered by dependency and priority.
 ## 8. Assumptions, Constraints & Risks
 
 - **Assumptions:** Things believed true but not yet validated
-- **Constraints:** Hard limits (performance, compatibility, platform)
-- **Risks:** What could go wrong, with severity and mitigation
+- **Constraints:** Hard limits (performance, compatibility, platform). For
+  external-user products, state non-functional requirements explicitly here —
+  performance targets, security/compliance, accessibility level, reliability/SLA.
+- **Risks:** What could go wrong, with severity and mitigation. Cover more than
+  technical risk — weigh **value** (will users want it?), **usability**,
+  **feasibility**, and **viability** (does it work for the business / who pays?).
+  Naming a value or viability risk is not pessimism; it's what keeps the PRD from
+  being a one-sided coin.
 
 ---
 
-## 9. Appendix
+## 9. Open Questions
+
+Vision-level unknowns still being resolved (a home for open questions that
+graduate up from the product brief). Use a checkbox list; remove items as they
+resolve — don't let it become a changelog.
+
+- [ ] [e.g., Build or buy for the X component?]
+- [ ] [e.g., Which input format ships first?]
+
+---
+
+## 10. Appendix
 
 Links to supporting materials (don't inline them).
 ```
 
 ### Phase 3: Extract Features into Specs
 
-For each feature listed in the PRD, create a spec file in `docs/prd/features/`.
+For each feature in the PRD's Feature Overview table, create
+`docs/prd/features/{feature}.md` (kebab-case filename matching the §5 name).
 
-Read `references/feature-spec.md` for the feature spec template.
+The **`feature-spec` skill owns the canonical template, field guidance, and
+quality bar** — invoke it per feature, or generate inline from the same template
+if batch-generating. Read `references/feature-spec.md` for the batch-generation
+flow and how it differs from standalone use. Do not maintain a second copy of the
+template here.
 
-Each feature file contains:
-- Overview and context
-- Functional requirements (testable, specific)
-- User journeys (step-by-step flows)
-- Technical decisions specific to this feature
-- Edge cases and error states
+---
+
+## Review / Audit Mode
+
+Use this when the user asks to **review, audit, or improve an existing PRD**
+(Phase 0 routes here). Do **not** run the creation flow and do **not** rewrite
+the document.
+
+1. **Read** the existing `docs/prd/prd.md` (and its feature specs if relevant).
+2. **Score** it against two rubrics:
+   - The **5 Qualities of an Excellent PRD** (above).
+   - The **anti-patterns** in `references/anti-patterns.md` — treat each as a
+     checklist item.
+3. **Report** a prioritized findings list: for each issue, name the section, quote
+   the problem, and give a concrete section-level fix. Lead with the highest-impact
+   gaps (missing/weak problem evidence, no metrics, scope undefined).
+4. **Do not edit unless asked.** Offer to apply fixes section-by-section; if the
+   user accepts, follow Iteration & Feedback below.
+
+Output a critique, not a rewritten PRD.
 
 ---
 
@@ -260,7 +320,7 @@ Before updating, check the file's line count. If it exceeds the limit,
 consolidate — merge redundant sections, tighten wording, remove resolved
 questions — then apply changes.
 
-- `prd.md`: **400 lines**
+- `prd.md`: aim for ~300, **400 lines** hard cap — consolidate before exceeding it
 - `features/*.md`: **200 lines** per feature
 
 ## Iteration & Feedback
@@ -272,3 +332,19 @@ After presenting the initial draft:
 - If feedback reveals a gap in discovery, update Problem and Target Users
   first — then cascade through downstream sections
 - When requirements change, update the feature spec
+
+## Next Steps
+
+Once the PRD + feature specs are approved, the PRD is an input — not the finish
+line. Hand off to the next stages of the planning pipeline (routing hints, not
+inline reads):
+
+1. **Architecture** — `software-architecture` for a new system, or `arch-decision`
+   for a brownfield change → `docs/arch/`
+2. **UX** — `ux-design` for app-wide design, or `screen-design` for a single
+   screen → `docs/ux/`
+3. **Tasks** — `task-craft` to generate the initial phased board from the PRD +
+   arch + UX → `tasks/board.md`
+
+This skill stays at the WHAT/WHY altitude and does not produce any of those
+artifacts itself.

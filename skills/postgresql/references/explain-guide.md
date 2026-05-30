@@ -18,20 +18,22 @@ EXPLAIN ANALYZE UPDATE orders SET status = 'shipped' WHERE id = 1;
 ROLLBACK;
 ```
 
-## Scan Types (best → worst for large tables)
+## Scan Types (typical cost order — NOT absolute; depends on selectivity)
 
 | Scan Type | Meaning | Action |
 |-----------|---------|--------|
-| Index Only Scan | All data from index alone | Best case — covering index working |
+| Index Only Scan | Data from index alone (visibility-map permitting) | Best case — covering index working |
 | Index Scan | Find rows via index, fetch from table | Good — index is being used |
 | Bitmap Index Scan | Combine multiple indexes, then fetch | Acceptable — multiple conditions |
 | Seq Scan | Full table scan | Bad for large tables — add index or check statistics |
+
+> This is a rough guide, not a ranking. A **Bitmap Heap Scan** or **Seq Scan** can be the cheapest plan when a large fraction of rows match, and an **Index Only Scan** still does heap visibility checks (and falls back to heap fetches) when pages aren't marked all-visible.
 
 ## Key Indicators
 
 ### Index Cond vs Filter
 ```
-Index Scan using idx_orders_user_status on "order"
+Index Scan using idx_orders_user_status on orders
   Index Cond: (user_id = 42)
   Filter: (status = 'pending')
   Rows Removed by Filter: 3847
@@ -61,9 +63,9 @@ ANALYZE orders;
 ```
 Buffers: shared hit=128 read=4096
 ```
-- **shared hit**: pages read from PostgreSQL cache (fast)
-- **shared read**: pages read from disk (slow)
-- High `read` relative to `hit` = data not cached, consider if table/index fits in shared_buffers
+- **shared hit**: pages read from PostgreSQL's shared_buffers cache (fast)
+- **shared read**: pages read from outside shared_buffers (may still be served by the OS page cache, not necessarily physical disk)
+- High `read` relative to `hit` = data not cached, consider if table/index fits in shared_buffers (on PG16+, `pg_stat_io` breaks this down per IO type)
 
 ### Sort Methods
 ```
@@ -91,14 +93,14 @@ Nested Loop (actual rows=500000)
 **Fix**: Consider Hash Join (may need more work_mem) or restructure query.
 
 ### 3. Index scan followed by Sort
-**Cause**: Index doesn't match ORDER BY direction.
+**Cause**: The index's sort order can't produce the requested **mixed-direction** ORDER BY, so a Sort is added. A *pure* single-direction DESC does NOT trigger this — an all-ASC index is scanned backward. See `indexing-pitfalls.md` Pitfall 5.
 ```sql
--- Index is ASC but query needs DESC
+-- A Sort appears only for MIXED directions an all-ASC index can't satisfy:
 CREATE INDEX idx_items_published ON items (category, published_at);
-SELECT * FROM items WHERE category = 'books' ORDER BY published_at DESC LIMIT 10;
+SELECT * FROM items WHERE category = 'books' ORDER BY category, published_at DESC LIMIT 10;
 
--- Fix: match index direction
-CREATE INDEX idx_items_published ON items (category, published_at DESC);
+-- Fix: encode the mixed direction in the index
+CREATE INDEX idx_items_published_mixed ON items (category ASC, published_at DESC);
 ```
 
 ## Diagnostic Queries

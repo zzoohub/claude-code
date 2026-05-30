@@ -9,8 +9,8 @@ Compiler-based i18n — translations compile into tree-shakable JS functions. Un
 ## Setup
 
 ```bash
+# init scaffolds project.inlang/ + messages/ and installs the package — no separate `bun add` needed
 bunx @inlang/paraglide-js@latest init
-bun add -D @inlang/paraglide-js
 ```
 
 ### Project Structure
@@ -122,8 +122,11 @@ Uses `Intl.PluralRules`. Each language needs only its relevant plural categories
 
 | Language | Plural categories |
 |---|---|
-| en, es, pt-BR, id | `one`, `other` |
-| ja, ko | `other` only |
+| en | `one`, `other` |
+| es, pt-BR | `one`, `other` (+ `many` for large/compact magnitudes) |
+| ja, ko, id | `other` only |
+
+Indonesian (`id`) has no grammatical plural — use the `other`-only shape shown for ja/ko above. For any locale, confirm with `new Intl.PluralRules(locale).resolvedOptions().pluralCategories`.
 
 ### Number & Date Formatting
 
@@ -245,8 +248,20 @@ const segments = parseRichText(m.terms());
 
 ```typescript
 // SvelteKit — src/hooks.server.ts
+// Mutate event.request, then inject %lang%/%dir% (placeholders in app.html) via transformPageChunk.
+import { getLocale } from "./paraglide/runtime";
+const RTL = new Set(["ar", "he", "fa", "ur"]);
 export const handle: Handle = ({ event, resolve }) =>
-  paraglideMiddleware(event.request, ({ request }) => resolve({ ...event, request }));
+  paraglideMiddleware(event.request, ({ request }) => {
+    event.request = request;
+    return resolve(event, {
+      transformPageChunk: ({ html }) => {
+        const locale = getLocale(); // valid inside the middleware's AsyncLocalStorage scope
+        const dir = RTL.has(new Intl.Locale(locale).language) ? "rtl" : "ltr";
+        return html.replace("%lang%", locale).replace("%dir%", dir);
+      },
+    });
+  });
 
 // TanStack Start — server.ts (pass original req to handler, NOT the modified one)
 export default {
@@ -377,5 +392,6 @@ Fully automatic — the compiler generates typed functions:
 | Strategy order wrong for SEO | URL first: `["url", "cookie", "baseLocale"]` |
 | `AsyncLocalStorage` unavailable | Edge runtimes: `disableAsyncLocalStorage: true` |
 | Forgetting `--watch` in dev | Without Vite plugin, add `--watch` to compiler script |
-| Rich text needs components | Use `richText()` helper (see Usage section) |
+| Rich text needs components | Parse tags with `parseRichText()`, render segments per framework (see Rich Text Pattern) |
+| Keys missing in a locale | Paraglide falls back to `baseLocale`; catch per-locale gaps with inlang lint / Sherlock, not the compiler |
 | Cookie not scoped for subdomains | Set `cookieDomain` in plugin config |

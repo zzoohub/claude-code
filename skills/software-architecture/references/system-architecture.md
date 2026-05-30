@@ -4,6 +4,14 @@ System architecture defines **what components exist and how they connect** — s
 
 For internal service structure (layers, domain isolation, code organization), see `service-architecture.md`.
 
+## Contents
+
+- **Communication Patterns** — Request-Response, EDA, CQRS, Event Sourcing, Saga, Modular Monolith
+- **Composition Decision Flowchart** + Real-World Architecture Compositions
+- **Additional Patterns** — Strangler Fig, BFF, Cell-based, Event Lakehouse
+- **Anti-Patterns**
+- **Cross-Cutting Architecture Decisions** — Multi-Tenancy, Real-Time, API Versioning, Event Schema Evolution, Feature Flags
+
 ---
 
 ## Communication Patterns
@@ -58,7 +66,7 @@ User Input --+                         |
 **Choose when**: Read/write ratio is heavily skewed (10:1+), different consumers need different views of the same data, or you need to optimize read performance without compromising write consistency.
 
 **Who uses it**:
-- **Netflix**: Personalization system — writes capture viewing events, reads serve pre-computed recommendation lists optimized per device type.
+- **Netflix**: their personalization pipeline is CQRS-like — viewing events feed a write path, while reads serve pre-computed recommendation lists per device type (Netflix's own term for this is offline/nearline/online computation; its explicitly-documented CQRS system is Tudum, the companion content site).
 - Financial systems where audit trails (write side) and reporting dashboards (read side) have completely different performance characteristics.
 
 ### Event Sourcing
@@ -121,8 +129,8 @@ One deployable unit, but internally organized into strictly isolated modules wit
 **Choose when**: Small team (1-5 engineers), you want domain separation without microservice overhead, or you're at a stage where operational simplicity matters more than independent scaling.
 
 **Who uses it**:
-- **Toss** (Korean fintech): Modular monolith with clear module boundaries — team autonomy without microservice overhead. Proven at massive scale.
-- **Shopify**: Started as a monolith, evolved to modular monolith before selective extraction to services.
+- **Shopify**: Started as a monolith, evolved to a modular monolith (Rails + Packwerk enforcing module boundaries) before selective extraction to services.
+- **GitHub**: A large Rails monolith that invested in internal modular boundaries rather than splitting into microservices.
 
 ---
 
@@ -154,10 +162,10 @@ Is this a single-purpose service or product?
 
 | Company | System Architecture | Code Structure | Key Insight |
 |---|---|---|---|
-| **Netflix** | Microservices + Event-Driven (Kafka) + CQRS (personalization) | Hexagonal internally per service | Different patterns per domain. Playback is sync; analytics is event-driven; recommendations use CQRS. |
+| **Netflix** | Microservices + Event-Driven (Kafka) + CQRS-like read paths (e.g., Tudum) | Varies per service; some teams (e.g., Studio Engineering) use ports-and-adapters/hexagonal | Different patterns per domain. Playback is sync; analytics is event-driven; some read-heavy domains use CQRS-style read/write separation. |
 | **Uber** | Microservices organized by domain (DOMA) + Event-Driven + Saga (trip lifecycle) | Domain-driven internally | Organize services by business domain, not technical layer. Orchestrated sagas for multi-service transactions. |
 | **Stripe** | SOA + Event Sourcing (payment state) + Request-Response (API surface) | Clean/hexagonal per service | Synchronous API surface, event-sourced internals for audit. Design docs before code. |
-| **Toss** | Modular Monolith + Event-Driven (inter-module) | Clean Architecture per module | Modular monolith proven at massive scale. Team autonomy without microservice overhead. |
+| **Toss** (Toss Bank) | Microservices (MSA) + Event-Driven (Kafka) | Spring Boot/Kotlin per service | Migrated core banking from a monolith to MSA for independent scaling and fault isolation. |
 | **Discord** | Microservices + hybrid sync/async | Rust for hot paths, Elixir for real-time | Choose language per service based on performance profile. |
 | **Shopify** | Modular Monolith -> selective extraction | Rails conventions | Start monolithic, extract only when data proves the boundary. |
 | **Airbnb** | Monolith -> SOA by domain boundary | Service-specific | Split only when natural domain boundaries are clear. |
@@ -213,7 +221,7 @@ Partition the system into independent, self-contained cells. Each cell serves a 
 **Trade-offs**: Data isolation means cross-cell queries are hard, operational overhead of managing many cells.
 **Choose when**: You need to limit blast radius (regulatory or high-availability requirements), or you're at a scale where a single deployment unit is a risk.
 
-**Who uses it**: AWS (all major services are cell-based internally), DoorDash, Slack.
+**Who uses it**: AWS (cell-based architecture is a core AWS resilience pattern, used internally by many of its highest-availability services), DoorDash, Slack.
 
 ### Event Lakehouse
 
@@ -257,7 +265,7 @@ How to isolate data and compute between tenants (customers, organizations, works
 
 **Default**: Shared everything with `tenant_id` on every table + Row-Level Security (RLS). This covers 90% of SaaS products. RLS enforces isolation at the database level — application bugs can't leak data across tenants.
 
-**Who uses it**: Slack (workspace-per-tenant, shared infrastructure), Salesforce (shared database with org isolation), Neon (database-per-tenant for their own product).
+**Who uses it**: Slack (workspace-per-tenant, shared infrastructure), Salesforce (shared database with org isolation), Neon (purpose-built to make database-per-tenant cheap for its customers via scale-to-zero).
 
 ### Real-Time Communication
 

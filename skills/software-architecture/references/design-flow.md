@@ -2,9 +2,23 @@
 
 10-stage methodology for software architecture. Stage 0 (Auto-Classification) lives in SKILL.md. This file covers stages 1-9.
 
-Stages 2, 3, and 4 co-evolve (Twin Peaks model) — domain modeling reveals new ASRs, pattern selection changes domain boundaries. One iteration is usually sufficient.
+Stages 2, 3, and 4 co-evolve — domain modeling reveals new ASRs, pattern selection changes domain boundaries. One iteration is usually sufficient. (This generalizes Nuseibeh's two-peak requirements↔architecture co-evolution: Stage 2 ASRs are the requirements peak, Stages 3-4 the architecture peak.)
 
 ADRs are written immediately when decisions occur, not batched at the end.
+
+---
+
+## Contents
+
+- Stage 1 — Problem Definition
+- Stage 2 — ASR Extraction & Utility Tree
+- Stage 3 — Domain Model
+- Stage 4 — Pattern Selection & ATAM Gate · *(Stages 2↔3↔4 co-evolve)*
+- Stage 5 — Component Design
+- Stage 6 — Data Architecture
+- Stage 7 — Deployment
+- Stage 8 — Cross-cutting Concerns
+- Stage 9 — ADR & Risk Review
 
 ---
 
@@ -21,7 +35,7 @@ ADRs are written immediately when decisions occur, not batched at the end.
 
 ### Output
 
-Write to `docs/arch/context.md` §1 (Problem) and §2 (System Boundary).
+Write to `docs/arch/context.md` §1 (Problem), §2 (System Boundary), §5 (Constraints), and §6 (Assumptions). The constraint/assumption inputs come from Stage 0 auto-classification (scale, latency, deployment, regulatory, PRD gaps).
 
 ---
 
@@ -193,9 +207,9 @@ Write to `docs/arch/system.md` §1 (Patterns). Write ADRs for pattern decisions 
 
 ---
 
-## Twin Peaks: Stages 2 <-> 3 <-> 4
+## Stages 2 <-> 3 <-> 4 Co-Evolution
 
-These three stages co-evolve iteratively:
+These three stages co-evolve iteratively (a generalization of Nuseibeh's two-peak requirements↔architecture model — Stage 2 is the requirements peak, Stages 3-4 the architecture peak):
 
 - **Domain modeling (3) reveals new ASRs (2)**: "We need real-time sync across workspace members" emerges when modeling the collaboration domain.
 - **Pattern selection (4) changes domain boundaries (3)**: Choosing CQRS splits a bounded context into read and write sides.
@@ -254,7 +268,7 @@ src/
 
 ### Container Diagram
 
-Produce a C4 Level 2 container diagram in D2. Show:
+Produce a C4 Level 2 container diagram in D2 (or Mermaid/ASCII — see SKILL.md Writing Style). Show:
 - Runtime containers (services, databases, queues)
 - Communication protocols between them
 - External system integrations
@@ -294,7 +308,7 @@ For each data store, document:
 
 | Concern | Guidance |
 |---|---|
-| Chunking | Semantic chunking with 10-20% overlap. Chunk size depends on retrieval use case (512-1024 tokens typical). |
+| Chunking | Semantic chunking with 10-20% overlap. Start at ~400-512 tokens; size up to 512-1024 for long-form. See `ai-architecture.md` §3 for per-document-type sizing. |
 | Search | Hybrid search (dense vectors + BM25 keyword) outperforms either alone. |
 | Context window | Budget tokens: system prompt + retrieved context + conversation history + output must fit model limit. Track and alert on overflow. |
 
@@ -417,7 +431,7 @@ Principle of least privilege: each component gets only the permissions it needs.
 
 ### AI Security
 
-OWASP LLM Top 10 awareness. 3-layer defense:
+OWASP Top 10 for LLM Applications (2025, from the OWASP Gen AI Security Project) awareness. 3-layer defense:
 
 1. **Input classification**: Detect and reject prompt injection, PII in prompts
 2. **RAG trust boundary**: Treat retrieved context as untrusted — validate, sanitize, attribute
@@ -432,9 +446,11 @@ For each external dependency, decide upfront:
 | Service | Timeout | Retry | If It's Down |
 |---|---|---|---|
 | Database | 5s | Backoff x3 | System offline |
-| LLM API | 120s | Backoff x2 | "AI unavailable" + cached fallback |
+| LLM API | 60-120s* | Backoff x2 | "AI unavailable" + cached fallback |
 | Payment provider | 15s | Idempotency key | "Payments temporarily unavailable" |
 | Email service | 5s | Queue for later | Silent — never block user action |
+
+*Non-streaming LLM calls; streaming endpoints need up to ~300s (see `ai-architecture.md` §2). These are starting defaults — `operational-patterns.md` is the source of truth for timeout ranges and rationale.
 
 Key patterns: timeout budgets (outer caller owns the budget), retry at outermost layer only (prevents retry storms), graceful degradation (degrade features, not the whole system).
 
@@ -472,7 +488,7 @@ Most ADRs are already written during stages 4-8. This stage reviews completeness
 
 ### ADR Format
 
-Use the Y-statement format for consistency:
+Use this structured ADR format (Nygard/MADR-style fields) for consistency:
 
 ```
 ## ADR-NNN: [Title] — YYYY-MM-DD
@@ -513,13 +529,13 @@ Use the Y-statement format for consistency:
 
 ### AI-Specific Risks
 
-| Risk | Mitigation |
-|---|---|
-| Hallucination in critical output | Schema validation, citation requirements, human review for high-stakes |
-| Model deprecation | Version pinning, abstraction layer, evaluation suite for migration testing |
-| Vendor lock-in | LLM Gateway pattern, standardized prompt format |
-| Cost explosion | Per-request cost tracking, daily budget alerts, model cascading |
-| RAG poisoning | Source trust scoring, content validation pipeline |
+| Risk | Impact | Probability | Mitigation |
+|---|---|---|---|
+| Hallucination in critical output | High | Medium | Schema validation, citation requirements, human review for high-stakes |
+| Model deprecation | Medium | Medium | Version pinning, abstraction layer, evaluation suite for migration testing |
+| Vendor lock-in | Medium | Medium | LLM Gateway pattern, standardized prompt format |
+| Cost explosion | High | Medium | Per-request cost tracking, daily budget alerts, model cascading |
+| RAG poisoning | High | Low | Source trust scoring, content validation pipeline |
 
 ### Tech Debt Tracking
 
@@ -530,6 +546,10 @@ Use the Y-statement format for consistency:
 ### Conway's Law as Growth Risk
 
 Architecture built by a small team mirrors that team's communication structure — which is optimal for the current team size. If the team grows, the architecture may need to evolve to match team boundaries. Document which module boundaries could become service boundaries if team structure demands it.
+
+### Open Questions
+
+Capture unresolved decisions that block nothing yet but need an answer before the relevant stage ships — each with the options on the table and the information needed to decide. Record them in the **Open Questions** section of `docs/arch/decisions.md` and promote each to an ADR once decided.
 
 ### Output
 

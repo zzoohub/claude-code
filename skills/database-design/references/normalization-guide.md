@@ -1,5 +1,7 @@
 # Normalization & Denormalization Guide (PostgreSQL)
 
+> Examples use the skill's PK default `UUID DEFAULT uuidv7()` (PG18+); on PG ≤17 generate v7 at the application layer — see SKILL.md.
+
 ## Normalization Levels
 
 ### 1NF (First Normal Form)
@@ -38,7 +40,8 @@ CREATE TABLE articles (
 CREATE INDEX idx_articles_tags ON articles USING GIN (tags);
 
 -- Query
-SELECT * FROM articles WHERE 'postgresql' = ANY(tags);
+-- Use @> (containment), && (overlap), or <@ for GIN-indexed array lookups; scalar = ANY(tags) is NOT GIN-indexable and seq-scans.
+SELECT * FROM articles WHERE tags @> ARRAY['postgresql'];
 ```
 
 ### 2NF (Second Normal Form)
@@ -61,9 +64,14 @@ CREATE TABLE students (
     name TEXT NOT NULL
 );
 
+CREATE TABLE courses (
+    id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
+    title TEXT NOT NULL
+);
+
 CREATE TABLE enrollments (
     student_id UUID REFERENCES students(id),
-    course_id UUID REFERENCES course(id),
+    course_id UUID REFERENCES courses(id),
     grade CHAR(2),
     PRIMARY KEY (student_id, course_id)
 );
@@ -125,10 +133,10 @@ SELECT
     p.id AS product_id,
     p.name,
     COUNT(r.id) AS review_count,
-    AVG(r.rating)::NUMERIC(3,2) AS avg_rating,
+    AVG(r.rating)::NUMERIC(3,2) AS avg_rating,  -- NUMERIC(3,2) assumes a single-digit rating scale (e.g. 1-5); widen to NUMERIC(4,2) for 0-10/0-100 scales
     SUM(oi.quantity) AS total_sold
 FROM products p
-LEFT JOIN review r ON r.product_id = p.id
+LEFT JOIN reviews r ON r.product_id = p.id
 LEFT JOIN order_items oi ON oi.product_id = p.id
 GROUP BY p.id, p.name;
 

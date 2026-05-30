@@ -93,14 +93,19 @@ export async function handleMetaCommand(
     }
 
     case 'stop': {
-      await shutdown();
+      // Defer shutdown so this HTTP response is flushed to the client before the
+      // process exits. Running shutdown() inline (it calls process.exit) drops the
+      // response, which makes the client treat a clean stop as a crashed server.
+      setTimeout(() => { void shutdown(); }, 100);
       return 'Server stopped';
     }
 
     case 'restart': {
-      // Signal that we want a restart — the CLI will detect exit and restart
-      console.log('[browse] Restart requested. Exiting for CLI to restart.');
-      await shutdown();
+      // Same deferral as 'stop'. NOTE: the `browse` CLI handles restart directly via
+      // process signals (see cli.ts); this path only runs for direct HTTP / chain use,
+      // where it stops the daemon — the next command auto-starts a fresh one.
+      console.log('[browse] Restart requested.');
+      setTimeout(() => { void shutdown(); }, 100);
       return 'Restarting...';
     }
 

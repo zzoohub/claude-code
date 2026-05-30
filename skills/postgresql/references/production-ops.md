@@ -2,7 +2,7 @@
 
 Patterns for running PostgreSQL reliably in production.
 
-For runnable diagnostic queries against a live database (high-filter queries, lock waits, bloat, vacuum lag, slow planner stats), see `../scripts/query_diagnostics.sql` — psql-ready queries you can execute directly.
+For runnable diagnostic queries against a live database (slowest queries, lock waits, bloat, vacuum lag, stale planner stats), see `../scripts/query_diagnostics.sql` — psql-ready queries you can execute directly.
 
 ## 1. Zero-Downtime Migrations
 
@@ -28,10 +28,13 @@ ALTER TABLE user_accounts DROP CONSTRAINT chk_user_email_nn;
 CREATE INDEX CONCURRENTLY idx_user_email ON user_accounts (email);
 
 -- ⚠️ Cannot run inside a transaction block
--- ⚠️ If it fails, clean up the invalid index:
-SELECT indexname, indisvalid FROM pg_indexes
-JOIN pg_index ON pg_indexes.indexname::regclass = pg_index.indexrelid
-WHERE NOT indisvalid;
+-- ⚠️ If it fails, find the invalid index (OID join — robust across schemas;
+--    avoid casting an unqualified name to ::regclass, which resolves via search_path):
+SELECT n.nspname AS schema, c.relname AS index_name, i.indisvalid
+FROM pg_index i
+JOIN pg_class c ON c.oid = i.indexrelid
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE NOT i.indisvalid;
 
 DROP INDEX IF EXISTS idx_user_email;  -- then retry
 ```
@@ -65,6 +68,8 @@ Single UPDATE on millions of rows = table lock + WAL bloat. Always batch.
 
 Transaction control (COMMIT between batches) requires a `PROCEDURE` — `DO` blocks run in a single transaction and cannot commit mid-execution.
 
+Use plain `FOR UPDATE` (not `SKIP LOCKED`) for a backfill that must touch every row: `SKIP LOCKED` omits rows currently locked by concurrent writers, and a batch that skips all of its candidates returns 0 rows — prematurely ending an `EXIT WHEN affected = 0` loop with rows still un-backfilled. (`SKIP LOCKED` is for competing-worker queues, not exhaustive backfills.)
+
 ```sql
 CREATE OR REPLACE PROCEDURE backfill_new_column(batch_size INT DEFAULT 5000)
 LANGUAGE plpgsql AS $$
@@ -76,7 +81,7 @@ BEGIN
             SELECT id FROM user_accounts
             WHERE new_column IS NULL
             LIMIT batch_size
-            FOR UPDATE SKIP LOCKED
+            FOR UPDATE  -- NOT skip locked: an exhaustive backfill must touch every row
         )
         UPDATE user_accounts u
         SET new_column = compute_value(u.old_column)
@@ -103,13 +108,12 @@ WITH batches AS (
     SELECT id FROM user_accounts
     WHERE new_column IS NULL
     LIMIT 5000
-    FOR UPDATE SKIP LOCKED
+    FOR UPDATE  -- plain FOR UPDATE: every row must be backfilled (see note above)
 )
 UPDATE user_accounts u
 SET new_column = compute_value(u.old_column)
 FROM batches b WHERE u.id = b.id;
 -- Check affected rows; stop when 0
-```
 ```
 
 ## 3. VACUUM & ANALYZE Strategy
@@ -154,7 +158,7 @@ ANALYZE;                   -- entire database (use sparingly)
 
 ## 4. Connection Pooling
 
-PostgreSQL forks ~10MB per connection. 500 connections = 5GB RAM just for processes.
+Each PostgreSQL backend uses roughly 2-10MB of private memory (more with large `work_mem` or many prepared statements), plus connection and context-switch overhead. Hundreds of idle connections waste RAM and CPU — put a pooler in front.
 
 ### PgBouncer Configuration
 ```ini
@@ -167,7 +171,7 @@ reserve_pool_size = 5          # emergency extra connections
 
 | Pool Mode | Description | Caveat |
 |-----------|-------------|--------|
-| transaction | Released after each TX | **Recommended**. Breaks SET, LISTEN/NOTIFY, prepared statements |
+| transaction | Released after each TX | **Recommended**. Breaks cross-statement session state (SET, LISTEN/NOTIFY); prepared statements work with PgBouncer 1.21+ via `max_prepared_statements`, break on older versions |
 | session | Held for entire session | Use for legacy apps needing session state |
 | statement | Released after each statement | Only for simple read-only queries |
 
@@ -217,6 +221,8 @@ LIMIT 20;
 | work_mem | 4-64MB | 64MB-1GB | Per-operation sort/hash |
 | maintenance_work_mem | 512MB-2GB | 1-4GB | VACUUM, CREATE INDEX |
 | effective_cache_size | 75% RAM | 75% RAM | Planner estimate of OS cache |
+
+> `work_mem` is allocated **per sort/hash node, per connection** — worst-case total ≈ `work_mem` × concurrent operations. On high-connection OLTP, keep the global default low (4-16MB) and raise it per-session/per-query where a specific query needs it.
 
 ### Verify Cache Hit Rate
 ```sql

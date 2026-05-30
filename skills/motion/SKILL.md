@@ -8,7 +8,7 @@ description: |
 
 # Interactive Motion
 
-**TDD**: Write all tests first as a spec, then implement, then verify all pass. (Tests → Impl → Green)
+**Verification**: Motion is judged perceptually, not by unit tests. Before shipping, confirm: the `prefers-reduced-motion` fallback renders the final state (not a broken mid-state), no layout shift (CLS), 60fps on the target device, and every gesture-driven action has a non-gesture accessibility fallback. The genuinely unit-testable surface is narrow — D3 chart-factory `update`/`destroy` contracts and pure interpolation/worklet functions.
 
 ## Philosophy
 
@@ -61,10 +61,10 @@ What platform?
 |   |   Hover reveals possibilities. Larger viewport = cinematic scroll storytelling.
 |   |   Hero moment: first viewport + first scroll.
 |   +-- Conventions: references/web-conventions.md
-|      For React: also read references/react-conventions.md
+|      For React: also read references/react-conventions.md (delta layered on web-conventions.md)
 |
 +-- Mobile / React Native (Expo)
-    +-- Stack: Reanimated 3 + Gesture Handler + Skia
+    +-- Stack: Reanimated 4 (New Arch; stay on v3 for Old Arch) + Gesture Handler + Skia
     +-- Philosophy: Efficiency & Immediacy
     |   No hover -- every affordance visible. Touch requires instant feedback.
     |   Hero moment: first tap response + gesture fluidity.
@@ -79,16 +79,18 @@ What platform?
 
 | Library | Role | Size | When to Use |
 |---------|------|------|-------------|
-| **GSAP** + ScrollTrigger | Timeline, scroll choreography, stagger, text split, cursor | ~35KB | Primary engine for all complex DOM animation |
+| **GSAP** + ScrollTrigger | Timeline, scroll choreography, stagger, text split, cursor | ~35KB | Scroll/timeline/SVG-morph and framework-agnostic DOM work |
 | **D3.js** | Interactive charts: scales, axes, data binding, transitions | ~30KB (tree-shaken) | Any data visualization (bar, line, area, donut) |
-| **Lenis** | Smooth scroll feel | ~8KB | Marketing/portfolio sites (skip for blogs, docs, dashboards) |
+| **Lenis** | Smooth scroll feel | ~5KB | Marketing/portfolio sites (skip for blogs, docs, dashboards) |
 | **CSS native** | Scroll-driven, View Transitions, `@starting-style` | 0KB | Simple cases where zero-JS is advantageous |
 
-### GSAP as Primary Engine
+### Choosing GSAP vs Motion
 
-GSAP is the default animation engine for web. It outperforms alternatives for interactive work: ScrollTrigger (pin, scrub, snap, stagger), timeline sequencing, text splitting, cursor/mouse tracking. It operates directly on the DOM — framework-agnostic.
+GSAP is the default for scroll/timeline-heavy and framework-agnostic work: ScrollTrigger (pin, scrub, snap, stagger), timeline sequencing, text splitting, cursor/mouse tracking, SVG morph. It operates directly on the DOM.
 
-**Default to GSAP; use Motion (formerly Framer Motion) selectively.** GSAP for timeline choreography, scroll-pinning, SVG morph, page-level sequences. Motion for component enter/exit, layout (FLIP) animations, gesture/drag, simple state-tied tweens — especially in shadcn-heavy React projects where Motion is already a dep. **Never animate the same property on the same element with both engines** — they will fight. Pick per-component, not per-project.
+In React component-driven UIs, default to **Motion** (formerly Framer Motion — package `motion`, install `npm i motion`, React import `motion/react`) for component enter/exit, layout (FLIP) animations, gesture/drag, and state-tied tweens. Reach for GSAP for scroll-pin/scrub, timeline sequences, and SVG morph.
+
+**Never animate the same property on the same element with both engines** — they will fight. Pick per-component, not per-project. (The legacy `framer-motion` package still works and tracks the same versions, but `motion` is the canonical name. Licensing: GSAP's license is Webflow-owned; Motion is MIT.)
 
 ### Web Decision Flowchart
 
@@ -127,7 +129,7 @@ Need animation?
 
 | Library | Role | Thread |
 |---------|------|--------|
-| **Reanimated 3** | All view animation: timing, spring, decay, scroll, layout | UI thread (worklet) |
+| **Reanimated 4** | All view animation: timing, spring, decay, scroll, layout | UI thread (worklet) |
 | **react-native-skia** | GPU-rendered graphics: shaders, particles, custom drawing | GPU via Skia |
 | **Gesture Handler** | Touch input: tap, pan, pinch, rotation, fling | UI thread (native) |
 
@@ -168,12 +170,12 @@ Need animation?
 | Anti-Pattern | Why It's Bad | Fix |
 |-------------|-------------|-----|
 | **Animate everything** | No hierarchy = no attention guidance | Pick 1-2 hero moments per viewport. Stillness is a design choice. |
-| **3+ second loading animation** | Users bounce at 1.5s | Progressive reveal. Skeleton loaders for structure. |
+| **3+ second loading animation** | Long load animations drive abandonment (~53% of mobile users abandon a site that takes >3s — Think with Google) | Progressive reveal. Skeleton loaders for structure. |
 | **Parallax on text** | Brain can't read and track motion simultaneously | Parallax on images/backgrounds only. |
 | **Mixed emotional registers** | Bouncy elastic on a luxury brand = cognitive dissonance | Commit to one register. |
 | **Scroll hijacking on content** | Users prefer control | Reserve for immersive storytelling only. Never on blogs, docs, dashboards. |
-| **Hover-only discovery** | ~60% of web traffic has no hover | All info visible by default. Hover enhances, never reveals. |
-| **Stagger > 10 items** | After ~6, brain predicts pattern and stops noticing | Stagger first 4-6, batch-reveal the rest. |
+| **Hover-only discovery** | ~60% of web traffic is touch (no hover) | All info visible by default. Hover enhances, never reveals. |
+| **Stagger > 10 items** | Beyond ~6, the effect adds perceived load and total duration without adding clarity | Stagger first 4-6, batch-reveal the rest. |
 | **Porting web hover to mobile** | Mobile has no hover | Rethink: magnetic hover -> spring tap, hover reveal -> always visible. |
 | **Timing-based everything (RN)** | `withTiming` can't be interrupted mid-flight | Default to `withSpring` for touch-related animations. |
 | **Same property animated by two engines** | Property conflicts, flickering | Pick GSAP or Motion per component (not per project). Reanimated only on mobile. |
@@ -194,13 +196,16 @@ Every animation must handle reduced motion. No content hidden behind animation. 
 }
 ```
 
-**Web (JS level — for GSAP):**
+**Web (JS level — for GSAP):** Don't speed animations up to "fake" reduced motion — flashing through at 100× still triggers vestibular issues. Skip the animation and render the final state instead:
 ```typescript
 const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 if (prefersReduced) {
-  gsap.globalTimeline.timeScale(100);
+  gsap.set(targets, finalStateVars); // jump to end state, no motion
+} else {
+  // build the animation
 }
 ```
+Prefer `gsap.matchMedia()` scoped to `(prefers-reduced-motion: no-preference)` so reduced-motion users never get the animation registered. See `references/web-conventions.md` → "Reduced Motion (JS)" for the live OS-toggle listener (a one-shot `.matches` check goes stale).
 
 **React Native:**
 ```tsx
@@ -212,13 +217,15 @@ For conditional UI paths, use `useReducedMotion()` hook from Reanimated.
 
 ## Measuring Impact
 
-| Context | Key Metric | Target |
+Motion's effect on these is highly context-dependent — treat the column as a direction to measure against your own baseline (A/B vs a static control), not a guaranteed benchmark.
+
+| Context | Key Metric | Direction |
 |---------|-----------|--------|
-| Marketing / Portfolio | Scroll depth | 70%+ |
-| Marketing / Portfolio | Time on page | +30-50% vs static |
+| Marketing / Portfolio | Scroll depth | Track how far users reach; set your own threshold |
+| Marketing / Portfolio | Time on page | Aim to increase vs the static baseline |
 | SaaS / Dashboard | Task completion time | Never increase |
-| SaaS / Dashboard | Perceived performance | Skeleton + shimmer > spinner |
-| E-commerce | Add-to-cart rate | +5-15% with product hover effects |
+| SaaS / Dashboard | Perceived performance | Skeleton + shimmer often > spinner (context-dependent) |
+| E-commerce | Add-to-cart rate | Measure lift from interactive product media; hover only reaches the ~40% with a pointer — give touch an equivalent tap/zoom affordance |
 | Mobile app | Gesture success rate | Users complete swipe/drag interactions |
 | All | Core Web Vitals / frame rate | No CLS, 60fps maintained |
 

@@ -232,7 +232,7 @@ For faster reviews when a full seven-sweep process isn't needed.
 - Vary sentence length
 - Front-load important information
 - Max 3 conjunctions per sentence
-- No more than 25 words (usually)
+- Keep most sentences short — aim well under ~13 words for scannability; treat ~25 words as the outer bound (see `transitions.md` → Scannable Flow)
 
 ### Paragraph-Level
 - One topic per paragraph

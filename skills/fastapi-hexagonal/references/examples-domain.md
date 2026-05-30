@@ -99,7 +99,13 @@ from domain.authors.models import Author, CreateAuthorRequest, CursorPage
 
 
 class AuthorRepository(Protocol):
-    """Port shaped by use cases. MUST raise DuplicateAuthorError if name exists."""
+    """Port shaped by use cases. MUST raise DuplicateAuthorError if name exists.
+
+    Uniqueness is enforced by a DB UNIQUE constraint (a race-safe backstop) —
+    NOT an app-side check-then-insert, which is TOCTOU under concurrency. Any
+    mock/fake of this port must replicate the constraint, or it claims behavior
+    the real adapter doesn't have.
+    """
     async def create_author(self, req: CreateAuthorRequest) -> Author: ...
     async def find_author(self, author_id: UUID) -> Author | None: ...
     async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]: ...

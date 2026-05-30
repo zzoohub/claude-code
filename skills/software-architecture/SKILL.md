@@ -61,7 +61,7 @@ This skill produces architecture-level decisions. It deliberately **excludes** t
 | Stage | Name | What It Answers | Output File |
 |---|---|---|---|
 | 0 | Auto-Classification | What type of software? What dimensions matter? | — |
-| 1 | Problem Definition | What problem, for whom, why now? | `docs/arch/context.md` §1-2 |
+| 1 | Problem Definition | What problem, for whom, why now? | `docs/arch/context.md` §1-2, §5-6 |
 | 2 | ASR Extraction & Utility Tree | Which quality attributes drive the architecture? | `docs/arch/context.md` §3 |
 | 3 | Domain Model | What are the core concepts and boundaries? | `docs/arch/context.md` §4 |
 | 4 | Pattern Selection & ATAM Gate | What patterns satisfy the architecture drivers? | `docs/arch/system.md` §1 |
@@ -71,7 +71,7 @@ This skill produces architecture-level decisions. It deliberately **excludes** t
 | 8 | Cross-cutting Concerns | What properties hold across all components? | `docs/arch/system.md` §5 |
 | 9 | ADR & Risk Review | Are all decisions recorded? What could go wrong? | `docs/arch/decisions.md` |
 
-**Stages 2 <-> 3 <-> 4 co-evolve** (Twin Peaks model): Domain modeling reveals new ASRs, pattern selection changes domain boundaries. One iteration is usually sufficient.
+**Stages 2 <-> 3 <-> 4 co-evolve**: Domain modeling reveals new ASRs, pattern selection changes domain boundaries. One iteration is usually sufficient.
 
 **ADRs are written immediately** when decisions occur — not batched at the end.
 
@@ -125,7 +125,7 @@ The design flow produces three output files:
 
 | File | Stages | Purpose | Template |
 |---|---|---|---|
-| `docs/arch/context.md` | 0-3 | What and why — problem, ASRs, domain model | `templates/context.md` |
+| `docs/arch/context.md` | 0-3 | What and why — problem, ASRs, domain model, constraints, assumptions | `templates/context.md` |
 | `docs/arch/system.md` | 4-8 | How — patterns, components, data, deployment, cross-cutting | `templates/system.md` |
 | `docs/arch/decisions.md` | All | Decisions and risks — ADRs, risk register, tech debt | `templates/decisions.md` |
 
@@ -139,9 +139,12 @@ Before updating, check the file's line count. If it exceeds the limit,
 **consolidate** — merge redundant sections, tighten wording, remove items
 already resolved. Trust git history.
 
-Exception for `docs/arch/decisions.md`: ADRs are append-only. If the limit is
-hit, summarize superseded ADRs to one-line form and mark them
-`[superseded by ADR-NNN]` rather than deleting.
+Exception for `docs/arch/decisions.md`: ADRs are additive — prepend each new ADR
+at the top (newest first), never rewrite existing ones. If the limit is hit,
+summarize superseded ADRs to one-line form and mark them
+`[superseded by ADR-NNN]` rather than deleting. This skill always writes a
+single-file `decisions.md`; the split-file layout (`decisions/ADR-NNN-{slug}.md`)
+is opt-in via the `arch-decision` skill.
 
 | File | Limit |
 |---|---|
@@ -157,7 +160,7 @@ For future Claude sessions working on this project:
 
 - **New session** -> always load `docs/arch/context.md` first
 - **Implementation work** -> also load `docs/arch/system.md`
-- **Decision point** -> append to `docs/arch/decisions.md` immediately
+- **Decision point** -> prepend a new ADR at the top of `docs/arch/decisions.md` (newest first) immediately
 
 ---
 
@@ -166,7 +169,7 @@ For future Claude sessions working on this project:
 - **Direct and opinionated**. State what you chose and why. Don't hedge excessively.
 - **Trade-offs over descriptions**. Every choice should discuss what was gained and what was sacrificed.
 - **Concrete over abstract**. "Redis with 15-minute TTL" beats "a caching layer."
-- **Diagrams with D2**. Use D2 classes for consistent styling — `person` for actors, `cylinder` for databases, `queue` for message brokers, dashed borders for system boundaries. Minimum: System Context (C4 L1) + Container (C4 L2) diagrams. Invoke the `d2:diagram` skill; if unavailable, use Mermaid or ASCII.
+- **Diagrams with D2**. Write D2 source directly in the doc — D2 classes give consistent styling (`person` for actors, `cylinder` for databases, `queue` for message brokers, dashed borders for system boundaries). Minimum: System Context (C4 L1) + Container (C4 L2) diagrams. If a D2 rendering tool/skill is installed, use it; otherwise leave the D2 source as-is, or fall back to Mermaid or ASCII.
 - **No filler**. If you catch yourself writing "it is important to note that" — delete it.
 - **Reference real-world precedent** when helpful: "Netflix uses a similar circuit-breaker pattern for their API gateway" adds credibility and context.
 
@@ -181,7 +184,7 @@ Before finalizing, verify:
 - [ ] Ubiquitous language terms match code terms 1:1
 - [ ] Fitness functions defined for key architectural properties (3-5 CI checks)
 - [ ] Quality targets have numbers (not "fast" or "reliable" — actual thresholds)
-- [ ] Cost estimate exists for at least one traffic level
+- [ ] Cost estimate exists for two traffic levels (baseline + growth)
 - [ ] Every external dependency has a timeout, retry policy, and degradation strategy
 - [ ] Data flow is traceable for the main user journey
 - [ ] No section exists just because "a design doc should have it" — every section earns its place
@@ -199,6 +202,7 @@ Before finalizing, verify:
 
 **Read based on Stage 0 findings**:
 - Pattern selection -> `system-architecture.md`, `service-architecture.md`
+- Technology selection (Stage 5, Component Design) -> `tech-stack.md` (house stack; deviations need an ADR)
 - AI features in PRD -> `ai-architecture.md` (+ `ai-agents.md` if agents needed)
 - Cross-cutting -> `operational-patterns.md`
 - Writes that must not be lost / duplicated / interleaved -> `reliability-patterns.md`

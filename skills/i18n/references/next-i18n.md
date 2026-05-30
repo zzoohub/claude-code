@@ -26,14 +26,14 @@ src/
 │   ├── routing.ts          # Locale routing config
 │   ├── request.ts          # Per-request i18n config
 │   └── navigation.ts       # Localized Link, redirect, etc.
-├── middleware.ts
+├── proxy.ts                # Next.js 16+ (was middleware.ts)
 └── messages/
     ├── en.json
     ├── es.json
     ├── id.json
     ├── ja.json
-    ├── pt-BR.json
-    └── ko.json
+    ├── ko.json
+    └── pt-BR.json
 ```
 
 ### 3. Routing Config
@@ -43,7 +43,7 @@ src/
 import { defineRouting } from 'next-intl/routing';
 
 export const routing = defineRouting({
-  locales: ['en', 'ko', 'es', 'id', 'ja', 'pt-BR'],
+  locales: ['en', 'es', 'id', 'ja', 'ko', 'pt-BR'],
   defaultLocale: 'en',
   // v4: localeCookie controls persistence (false to disable, or customize)
   localeCookie: {
@@ -52,12 +52,14 @@ export const routing = defineRouting({
 });
 ```
 
-**v4 change:** `localeCookie` replaces the old `localeDetection: false`. Use `localeCookie: false` to disable cookie-based locale persistence.
+**v4 note:** Use `localeCookie: false` to disable the locale-persistence cookie. `localeCookie` and `localeDetection` coexist with distinct jobs — `localeCookie` controls the cookie, `localeDetection` controls automatic locale negotiation. (Previously `localeDetection: false` ambiguously also disabled the cookie.)
 
-### 4. Middleware
+### 4. Proxy (Middleware)
+
+On **Next.js 16+** this file must be named `proxy.ts` (`middleware.ts` is deprecated). The `next-intl/middleware` import path and `createMiddleware` API are unchanged.
 
 ```typescript
-// src/middleware.ts
+// src/proxy.ts  (was src/middleware.ts before Next.js 16)
 import createMiddleware from 'next-intl/middleware';
 import { routing } from './i18n/routing';
 
@@ -90,6 +92,16 @@ export default getRequestConfig(async ({ requestLocale }) => {
 ```
 
 **v4 change:** The old `locale` argument was removed. Use `requestLocale` (async) and explicitly return `locale`. Use `hasLocale()` for type-safe locale validation instead of `.includes()`.
+
+**Missing-key fallback:** A missing message logs an error and renders the key path (`Namespace.key`) — next-intl does *not* fall back to another locale. To degrade partial translations to the base locale instead, deep-merge the default-locale messages under the requested locale:
+
+```typescript
+const base = (await import(`../../messages/${routing.defaultLocale}.json`)).default;
+const localeMessages = (await import(`../../messages/${locale}.json`)).default;
+return { locale, messages: { ...base, ...localeMessages } }; // deep-merge for nested namespaces
+```
+
+Or customize per-key via `getMessageFallback` / `onError` (inspect `IntlErrorCode.MISSING_MESSAGE`).
 
 ### 6. Next Config Plugin
 
@@ -388,7 +400,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 ### Alternate Links
 
-next-intl automatically generates `<link rel="alternate" hreflang="...">` tags when using locale-based routing with the middleware. No manual configuration needed — verify by inspecting the `<head>` of your rendered pages.
+With locale-based routing, the proxy/middleware automatically sets an HTTP **`Link` response header** advertising alternate language versions (e.g. `link: <https://example.com/en>; rel="alternate"; hreflang="en", <https://example.com/de>; rel="alternate"; hreflang="de", <https://example.com/>; rel="alternate"; hreflang="x-default"`). Google accepts hreflang via HTTP headers, so this is valid for SEO.
+
+- These are **HTTP headers, not `<head>` tags** — verify with `curl -I <url>`, not by inspecting the rendered HTML `<head>`.
+- Controlled by the `alternateLinks` routing option (default `true`). Set `alternateLinks: false` in `defineRouting` for pages not available in every locale, or when pathnames come from a CMS.
+- If you also need hreflang as `<head>` tags (e.g. for tools that only scrape HTML), add them via `alternates.languages` in `generateMetadata`.
 
 ---
 
@@ -430,7 +446,9 @@ export function LocaleSwitcher() {
 | Using `t()` outside React components | Use `getTranslations` from `next-intl/server` in Server Actions, Route Handlers, metadata |
 | String concatenation for translated text | Use ICU interpolation: `{name}`, rich text: `<bold>text</bold>` |
 | Forgetting `await` on `getTranslations` | It's async in Server Components — always `await` |
-| Using old `localeDetection: false` | v4 uses `localeCookie: false` instead |
+| Disabling the locale cookie | Use `localeCookie: false` (not `localeDetection: false`, which controls negotiation) |
+| `middleware.ts` on Next.js 16+ | Rename to `proxy.ts`; import path stays `next-intl/middleware` |
+| Expecting hreflang in `<head>` | It's an HTTP `Link` header (`curl -I`); add `<head>` tags via `generateMetadata` if needed |
 | Using `.includes()` for locale checks | Use `hasLocale()` for type-safe narrowing |
 | Old `declare global` type augmentation | v4 uses `declare module 'next-intl'` with `AppConfig` interface |
 | Passing `null`/`undefined` as ICU args | v4 disallows — use empty string or omit |
@@ -454,4 +472,4 @@ const clientMessages = Object.fromEntries(
 </NextIntlClientProvider>
 ```
 
-No external dependency needed — native `Object.fromEntries` / `filter` does the job.
+No external dependency needed — native `Object.fromEntries` / `filter` does the job. (next-intl's docs show `pick(messages, ['Auth', 'common'])` from `lodash/pick`, which preserves the typed `Messages` shape; the native version widens the picked subset's type.)

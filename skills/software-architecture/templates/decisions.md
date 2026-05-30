@@ -2,7 +2,7 @@
 
 **Context**: See `docs/arch/context.md` for problem definition and ASRs. See `docs/arch/system.md` for architecture.
 
-<!-- Newest first. ADRs are written immediately when decisions occur, not batched at end. -->
+<!-- Newest first (prepend each new ADR at the top). ADRs are written immediately when decisions occur, not batched at end. -->
 
 ---
 
@@ -19,21 +19,22 @@
 
 ---
 
-## Minimum ADRs to record:
+<!-- Minimum ADRs to record (guidance — this comment is scaffolding, not document content):
 
-**Always (all software types):**
+Always (all software types):
 1. System architecture pattern
 2. Service architecture pattern
 3. Primary data storage approach
 4. Communication style (sync/async/event-driven)
 
-**When applicable:**
+When applicable:
 - AI integration approach — when AI features exist
 - Authentication/authorization — when users exist
 - API design philosophy — when external consumers exist
 - Offline/sync strategy — when offline capability is needed
 - Distribution/packaging — for libraries, CLIs, desktop apps
 - Concurrency model — for high-throughput or real-time systems
+-->
 
 ---
 

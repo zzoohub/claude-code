@@ -32,6 +32,7 @@ CREATE TABLE payments (
     amount NUMERIC(15, 2) NOT NULL CHECK (amount >= 0),
     currency CHAR(3) NOT NULL DEFAULT 'USD'
 );
+-- Multi-currency note: scale must match the currency minor-unit exponent (JPY/KRW = 0, most = 2, BHD/KWD = 3). A fixed NUMERIC(_,2) is wrong for those — store integer minor units (BIGINT) with the currency code and resolve the exponent from the currency, or constrain the table to a single currency.
 
 -- Alternative: store as smallest unit (cents, won)
 CREATE TABLE payments_int (
@@ -130,9 +131,11 @@ CREATE TABLE orders (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Adding values is possible; removing/renaming is difficult
+-- Adding values is easy; a label can be renamed (ALTER TYPE ... RENAME VALUE, PG10+); removing a value or reordering is not supported
 ALTER TYPE order_status ADD VALUE 'refunded' AFTER 'cancelled';
 ```
+
+Since PG12, `ADD VALUE` can run inside a transaction, but the new value cannot be referenced (INSERT/compare) until that transaction commits — a migration that adds AND uses a value in one transaction will fail; split it into two migrations/transactions, or run `ADD VALUE` in its own transaction first.
 
 **ENUM alternative**: Use a lookup table when values change frequently
 
@@ -154,7 +157,7 @@ CREATE TABLE orders (
 );
 ```
 
-## JSONB Type
+## JSONB Hybrid (relational + flexible)
 
 Best for data with a flexible or frequently changing structure.
 
@@ -255,7 +258,7 @@ CREATE TABLE invoices (
 
 **When NOT to use**: For one-off constraints on a single column — just use inline CHECK.
 
-## Generated Columns (PostgreSQL 12+)
+## Generated Columns (PostgreSQL 12+; VIRTUAL added in 18)
 
 Computed columns stored on disk, automatically maintained by PostgreSQL.
 
@@ -276,7 +279,7 @@ CREATE TABLE articles (
     title TEXT NOT NULL,
     body TEXT NOT NULL,
     search_vector TSVECTOR GENERATED ALWAYS AS (
-        to_tsvector('english', title || ' ' || body)
+        to_tsvector('english', coalesce(title,'') || ' ' || coalesce(body,''))
     ) STORED,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -289,4 +292,6 @@ SELECT * FROM articles WHERE search_vector @@ to_tsquery('english', 'postgresql 
 
 **When to use**: Computed values queried frequently (full-text vectors, derived amounts, normalized strings). Trades write-time computation for read-time performance.
 
-**Limitation**: Only `STORED` is supported (not virtual). The expression cannot reference other tables or use subqueries.
+⚠️ Concatenating a NULL operand yields NULL, collapsing the whole `tsvector` to NULL and silently excluding the row from full-text results — `coalesce` each nullable operand. The regconfig must be a constant literal (`'english'`): `to_tsvector(constant_config, text)` is IMMUTABLE and legal in a generated column, but a column-driven config is only STABLE and the `CREATE TABLE` is rejected.
+
+**Storage modes**: `STORED` (computed on write, persisted, **indexable**) and `VIRTUAL` (computed on read, no storage; PostgreSQL 18+). On PG18, `VIRTUAL` is the **default** when the keyword is omitted — so always write `STORED` explicitly whenever you intend to index the column (e.g. the `search_vector` GIN index above) or amortize compute. On PG12–17 only `STORED` exists and the keyword is mandatory. In both modes the expression cannot reference other tables, other generated columns, or subqueries; `STORED` additionally requires the expression to be `IMMUTABLE`.

@@ -1,12 +1,18 @@
 # Drei Essentials Reference
 
+All helpers below render inside `<Canvas>`.
+
 ## Environment & Lighting
 
 ```tsx
 import { Environment, ContactShadows, Float, Sky } from '@react-three/drei'
 
+<Sky sunPosition={[100, 20, 100]} />
 <Environment preset="sunset" background backgroundBlurriness={0.05} />
 <ContactShadows position={[0, -0.5, 0]} opacity={0.5} blur={1} frames={1} />
+<Float speed={2} rotationIntensity={1} floatIntensity={1}>
+  <mesh>{/* gently bobs / rotates */}</mesh>
+</Float>
 ```
 
 Presets: `apartment`, `city`, `dawn`, `forest`, `lobby`, `night`, `park`, `studio`, `sunset`, `warehouse`.
@@ -26,6 +32,8 @@ import { Text } from '@react-three/drei'
   Hello World
 </Text>
 ```
+
+`<Text>` loads glyphs asynchronously (wrap in `<Suspense>`); for non-Latin scripts pass `font={url}` to a font that contains the glyphs. Add the `occlude` prop for depth-aware labels that hide behind geometry.
 
 ## HTML Overlay in 3D
 

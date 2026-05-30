@@ -74,7 +74,11 @@ All use `Content-Type: application/problem+json`.
 
 **409 Conflict**: `{ "type": ".../duplicate", "status": 409, "detail": "Email already exists" }`
 
-**429 Rate Limited**: Headers `Retry-After: 30`, `X-RateLimit-Remaining: 0`
+**429 Rate Limited**: `application/problem+json` body **plus** headers `Retry-After: 30`, `X-RateLimit-Remaining: 0` (every error — including the limiter's 429 — is a problem document, not a bare `{statusCode, message}`):
+```json
+{ "type": ".../rate-limited", "title": "Too Many Requests", "status": 429,
+  "detail": "Rate limit exceeded; retry after 30s" }
+```
 
 ---
 
@@ -200,7 +204,7 @@ POST /v1/users/batch
          "summary": { "total": 2, "succeeded": 1, "failed": 1 } } }
 ```
 
-Use 200 (not 201/204) — each item may have a different outcome.
+Use 200 (not 201/204) — each item may have a different outcome. Each failed item's `error` is an embedded RFC 9457 problem object (`type`/`title`/`status`/`detail`, minus the `application/problem+json` content-type since the envelope itself is `application/json`) so per-item failures reuse the same error taxonomy as top-level errors.
 
 ---
 

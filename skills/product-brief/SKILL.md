@@ -2,18 +2,22 @@
 name: product-brief
 description: |
   Creates lean product briefs — strategic one-pagers that define the problem,
-  direction, and success signal. Sits upstream of the PRD. Focuses on "what" and
-  "why", not features, detailed metrics, or scope boundaries.
+  direction, and success signal for a NEW product or product direction. Sits
+  upstream of the PRD. Focuses on "what" and "why", not features, detailed
+  metrics, or scope boundaries.
   Use when: the user asks to "write a product brief", "create a product one-pager",
-  "product pitch", "product concept", or needs help organizing product goals and
-  direction. Also trigger when a user says "I have an idea for a product", "help
-  me think through this feature", "I want to build X", or describes a product
-  concept without naming a specific document type. Also use when reviewing or
-  improving existing product briefs.
-  Do NOT use for: detailed requirements, user journeys, success metrics with
-  timeframes, scope boundaries, feature specs, timelines, UI/UX design, or
-  technical architecture — those belong in the PRD (use prd-craft), UX docs
-  (use ux-design), or architecture docs (use software-architecture).
+  "product pitch", "product concept", or wants to validate/explore whether to build
+  a NEW product idea (the why, before requirements exist). Also trigger on "I have
+  an idea for a new product", "I want to build a new product/app X", or a described
+  product concept without a named document type. Also use when reviewing or
+  improving an existing product brief / one-pager.
+  Do NOT use for: a single feature on an existing product (use feature-spec); a full
+  PRD or structured requirements, or reviewing/auditing a PRD (use prd-craft);
+  detailed success metrics with timeframes, scope boundaries, feature specs, user
+  journeys, timelines; UI/UX design (use ux-design); technical architecture (use
+  software-architecture); investor pitch decks, business plans, market sizing /
+  TAM-SAM-SOM, fundraising or go-to-market documents — a product brief is an
+  internal strategic one-pager, not any of these.
 ---
 
 # Product Brief — Strategic One-Pager
@@ -26,9 +30,9 @@ Keep the brief lean — anything the PRD covers in depth does not belong here.
 
 ## When to skip the brief
 
-Brownfield projects adding a feature to an existing product don't need a brief.
 A brief is a discovery tool for *new product directions*, not for incremental
-feature work on an existing product.
+feature work on an existing product. For one feature on a product that already has
+`docs/prd/prd.md`, use **feature-spec**; for a full new-product PRD, use **prd-craft**.
 
 ## What a Product Brief Is (and Is Not)
 
@@ -51,14 +55,14 @@ These belong in the PRD or feature specs:
 ## Core Principles
 
 1. **Problem-first.** The brief exists to articulate a problem worth solving.
-2. **Brief means brief.** One page. If you're adding detail, it belongs in the PRD.
+2. **Brief means brief.** One page. Detail belongs downstream (see above).
 3. **No jargon.** Write it so anyone can understand.
 4. **Living document.** Evolves through discovery. Never "done."
 
 ## Tone
 
-Direct, confident, jargon-free. Active voice, short sentences.
-Match the user's formality level; when in doubt, lean conversational.
+Direct, confident. Active voice, short sentences. Match the user's formality level;
+when in doubt, lean conversational.
 
 ## Process
 
@@ -66,19 +70,22 @@ Match the user's formality level; when in doubt, lean conversational.
 
 Ask clarifying questions only for what is genuinely missing. Three questions max, then draft.
 
-- **Rich context** (paragraph+): Draft the full brief in one pass. Flag gaps with "[Assumption — verify]".
+- **Rich context** (paragraph+): Draft the full brief in one pass; ask at most one
+  question, and only if a load-bearing fact (target user, core problem) is genuinely
+  ambiguous — otherwise flag gaps with "[Assumption — verify]".
 - **Thin prompt** (e.g., "product brief for a todo app"): Ask 2-3 targeted questions — problem, audience, success — then draft.
 - **Unstructured dump** (meeting notes, braindumps): Synthesize into the brief structure.
 - **Always present a complete draft**, not section-by-section.
 
 ### Step 2: Draft the Brief
 
-Use this template. All four sections are always present.
+Use this template. All four sections — Problem, Direction, Success Signal, Open
+Questions — are always present.
 
 ```markdown
 # [Product Name] — Product Brief
 
-**Date:** [Date] | **Status:** [Discovery / In Progress / Approved]
+**Date:** [today's actual date, e.g. 2026-05-30] | **Status:** [Discovery / In Progress / Approved]
 **Tagline:** One sentence that captures what this does.
 
 ---
@@ -87,9 +94,11 @@ Use this template. All four sections are always present.
 
 **What:** [2-4 sentences. Ground in observed pain — your own, your team's, or your users'. Include how it's handled today and why that's inadequate.]
 
-**Who and when:** [Who has this problem, in what situation? Yourself, a team, or a user group.]
+**Target user:** [Who specifically has this problem, and in what situation? Name a concrete segment, not "everyone".]
 
 **Why now:** [What changed? New capability, pain threshold crossed, opportunity window.]
+
+**Size of prize:** [One line: how many are affected, how often, or what solving it is worth — enough to judge if it deserves a team's time.]
 
 ---
 
@@ -99,11 +108,13 @@ Use this template. All four sections are always present.
 
 **Core bet:** [What insight makes this worth building?]
 
+**Alternatives:** [What exists today — tools, competitors, workarounds — and why building beats adopting them?]
+
 ---
 
 ## Success Signal
 
-[2-3 sentences. What does winning look like? Concrete enough to know if it's working.]
+[2-3 sentences. The observable change that tells you it's working — WITHOUT a numeric target, counter-metric, or timeframe (those are the PRD's job). E.g. "engineers stop skipping post-deploy checks", not "cut check time 50% by Q3".]
 
 ---
 
@@ -117,34 +128,45 @@ Use this template. All four sections are always present.
 
 Before presenting, verify:
 
-- [ ] Problem is grounded in evidence, not assumption
-- [ ] Success signal is concrete enough to measure
+- [ ] Problem is grounded in evidence, not assumption; target user is specific
+- [ ] Direction describes the experience, not a feature list; Core bet names the insight
+- [ ] Success signal is an observable change, not a metric with a target/timeframe
 - [ ] The whole brief fits on one page
 - [ ] Open questions are honest — gaps flagged, not papered over
 
 ## Calibration: Weak vs. Strong
 
-**Weak:**
+**Problem — Weak:**
 > We need a dashboard for our analytics data. Users want better visibility into their metrics.
 
 A solution masquerading as a problem. "Better visibility" is vague.
 
-**Strong:**
+**Problem — Strong:**
 > Engineers spend 10-15 minutes after every deploy manually checking three separate dashboards to confirm nothing broke. Most skip it when rushed, and problems get caught hours later by users.
 
 Grounded in evidence, names a specific situation, quantifies the pain.
 
+**Direction — Weak:** "Build a dashboard with charts, alerts, and a settings page." (a feature list)
+**Direction — Strong:** "Make 'is the deploy healthy?' answerable in one glance, so no one skips the check." (an experience/outcome)
+
+**Success Signal — Weak:** "D1 retention hits 40% by Q3." (a metric with a timeframe — belongs in the PRD)
+**Success Signal — Strong:** "Engineers check deploy health unprompted, and users stop reporting breakages first."
+
 ## When Reviewing an Existing Brief
 
-1. Is there a clear, evidence-based problem — or did they jump to features?
-2. Is the success signal concrete enough to measure?
-3. Is it concise? If it reads like a PRD, suggest moving detail downstream.
+1. Is there a clear, evidence-based problem with a specific target user — or did they jump to features?
+2. Does Direction describe an experience and a Core bet, not a feature list?
+3. Is the success signal an observable change (not a PRD metric)?
+4. Is it concise? If it reads like a PRD, suggest moving detail downstream.
 
 ## Output
 
-Save to `docs/prd/product-brief.md`. Always update this single file in place.
+Save to `docs/prd/product-brief.md`, updating that file in place. When a repo
+explores multiple distinct directions, use `docs/prd/product-brief-{slug}.md` so a
+new direction does not overwrite a prior one.
 
-If your project keeps the brief elsewhere, see `AGENTS.md` at the repo root for
-the override; falls back to the default path above.
+If your project keeps the brief elsewhere, see `AGENTS.md` at the repo root for the
+override; falls back to the default path above.
 
-- **150-line limit:** If the file exceeds 150 lines, consolidate — tighten wording, merge redundant content, remove resolved questions — then apply changes.
+<!-- Author housekeeping: keep this skill under ~175 lines. If it grows past that,
+consolidate — tighten wording, merge redundant content, remove resolved questions. -->

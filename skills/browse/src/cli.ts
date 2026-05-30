@@ -1,8 +1,8 @@
 /**
- * gstack CLI — thin wrapper that talks to the persistent server
+ * browse CLI — thin wrapper that talks to the persistent server
  *
  * Flow:
- *   1. Read .gstack/browse.json for port + token
+ *   1. Read .browse/browse.json for port + token
  *   2. If missing or stale PID → start server in background
  *   3. Health check + version mismatch detection
  *   4. Send command via HTTP POST
@@ -267,7 +267,7 @@ async function main() {
   const args = process.argv.slice(2);
 
   if (args.length === 0 || args[0] === '--help' || args[0] === '-h') {
-    console.log(`gstack browse — Fast headless browser for AI coding agents
+    console.log(`browse — Fast headless browser for AI coding agents
 
 Usage: browse <command> [args...]
 
@@ -307,6 +307,27 @@ Refs:           After 'snapshot', use @e1, @e2... as selectors:
 
   const command = args[0];
   const commandArgs = args.slice(1);
+
+  // Lifecycle commands are process management — handle them directly via signals
+  // rather than over HTTP. Sending 'stop'/'restart' as HTTP commands races the
+  // server's process.exit() against the response, dropping it and tripping the
+  // reconnect-on-disconnect path in sendCommand (which would restart the very
+  // server we are trying to stop).
+  if (command === 'stop' || command === 'restart') {
+    const existing = readState();
+    if (existing && isProcessAlive(existing.pid)) {
+      await killServer(existing.pid); // SIGTERM → graceful shutdown, then SIGKILL
+    }
+    // Clear state even if an older daemon died without cleaning up after itself.
+    try { fs.unlinkSync(config.stateFile); } catch {}
+    if (command === 'stop') {
+      process.stdout.write('Server stopped\n');
+    } else {
+      const fresh = await startServer();
+      process.stdout.write(`Server restarted (PID: ${fresh.pid})\n`);
+    }
+    return;
+  }
 
   // Special case: chain reads from stdin
   if (command === 'chain' && commandArgs.length === 0) {

@@ -27,14 +27,14 @@ Social media content creation, strategy, and multi-platform publishing -- built 
 
 These patterns hold across every platform and every successful practitioner:
 
-1. **Shares > Likes.** Across Instagram (DM shares = top signal), TikTok (+45% share growth), Twitter (retweets = 20x weight) -- sharing is the dominant algorithmic signal. Create content people want to SEND to someone specific.
+1. **Shares > Likes.** Across Instagram (DM shares = top signal), TikTok (+45% share growth), Twitter (replies and retweets far outweigh likes) -- sharing is the dominant algorithmic signal. Create content people want to SEND to someone specific.
 2. **Early engagement drives everything.** Twitter's 2-hour window, HN's 45-minute gravity, TikTok's follower-first testing -- every algorithm rewards fast initial engagement. Build a core community that engages quickly.
 3. **Hook in 3 seconds.** First line of text, first second of video. This determines everything. Invest 80% of creative effort here.
 4. **Platform-native wins.** Same insight, different execution per platform. Adapted repurposing beats copy-paste cross-posting.
 5. **Long-form creates short-form.** Start with one substantial piece, fragment into platform-specific content. This is how Welsh, Hormozi, and every efficient creator operates.
 6. **Consistency is the baseline.** No strategy works without showing up regularly. Algorithms reward predictability.
 7. **Authenticity is non-negotiable.** Personal stories and genuine insights outperform polished corporate messaging on every platform.
-8. **Community > Audience.** 1,000 real fans who interact > 10,000 silent followers. Brands with active communities see 53% higher retention.
+8. **Community > Audience.** 1,000 real fans who interact > 10,000 silent followers. Brands with active communities see materially higher retention -- reported lifts run ~40% (Higher Logic).
 
 ---
 
@@ -109,8 +109,8 @@ Track engagement per pillar and platform. Double down on what works. See `refere
    - Hook-Story-Offer (HSO): hook, relatable narrative, present solution
    - Hook-Retain-Reward (Hormozi): stop scroll, maintain attention, deliver value
    - PAS: Problem, Agitation, Solution
-4. **Apply viral psychology** -- Content spreads via high-arousal emotions (awe 25%, laughter 17%, amusement 15%). Optimize for shares, not just likes. See `references/reverse-engineering.md` for the science.
-5. **Follow 80/20 rule** -- 80% pure value, 20% product mention
+4. **Apply viral psychology** -- Content spreads via high-arousal emotions: awe (positive), anger and anxiety (negative) all boost sharing; low-arousal sadness suppresses it (Berger & Milkman, 2012). Optimize for shares, not just likes. See `references/reverse-engineering.md` for the science.
+5. **Follow 80/20 rule** -- 80% pure value, 20% product mention (stricter on Reddit: 90/10)
 6. **Plan repurposing** -- How does this fragment for other platforms?
 7. **Engage after posting** -- Respond to comments within 30-60 min. Comments-as-content is one of the most underused growth tactics.
 
@@ -161,7 +161,7 @@ Building in public creates authentic content and compounds audience before launc
 - Twitter/X (#buildinpublic), Indie Hackers, Reddit (r/SideProject, r/startups)
 - LinkedIn for professional narrative, personal blog for long-form
 
-**Why it works:** People root for transparent builders. Behind-the-scenes content triggers relatability and trust. Indie-style launches convert 3-8x better than Product Hunt alone because the audience is already invested.
+**Why it works:** People root for transparent builders. Behind-the-scenes content triggers relatability and trust. Launching to an already-invested build-in-public audience typically converts far better than a cold Product Hunt push alone.
 
 ---
 
@@ -170,12 +170,13 @@ Building in public creates authentic content and compounds audience before launc
 Community > broadcast. The shift from audience to community is real.
 
 **Implementation:**
-- **Reply to every comment** thoughtfully (not just "Thanks!"). 76% of consumers feel more loyal to brands that reply.
+- **Reply to every comment** thoughtfully (not just "Thanks!"). 73% of consumers will switch to a competitor if a brand doesn't respond on social (Sprout Social).
 - **Ask follow-up questions** to deepen conversations
 - **Turn great comments** into new post ideas
 - **Create exclusive spaces** (broadcast channels, Discord, groups) for superfans
 - **Feature community members** in your content
 - **Facilitate member-to-member connections** -- not just you-to-them
+- **Have a plan for negative virality.** If a post draws a pile-on, respond calmly once, don't feed the outrage, and know when to mute or disengage -- high-arousal anger spreads fastest
 
 **Micro-communities** (Twitter Communities, LinkedIn Groups, Instagram Broadcast Channels) often outperform large passive followings.
 
@@ -185,7 +186,7 @@ Community > broadcast. The shift from audience to community is real.
 
 | Creator | Platform | Method | Key Insight |
 |---------|----------|--------|-------------|
-| **Justin Welsh** | LinkedIn | Daily post, niche down, 45-min engagement window | Profile = storefront. Content > newsletter > digital products. $8.3M, zero ads. |
+| **Justin Welsh** | LinkedIn | Daily post, niche down, 45-min engagement window | Profile = storefront. Content > newsletter > digital products. ~$4M+/yr solo, zero paid ads. |
 | **Alex Hormozi** | Multi | Long-form first, repurpose everything, Hook-Retain-Reward | "Give 10x more value than expected." Volume + clarity. $4M content budget. |
 | **Naval Ravikant** | Twitter/X | Extreme brevity, timeless principles, low frequency | 5-10 posts/month. Each ignites platform-wide discussion. Quality compounds. |
 | **Sahil Bloom** | Twitter + Newsletter | Zone of Genius, frameworks as pillars, newsletter as hub | Intersection of skills, passion, and market need. |

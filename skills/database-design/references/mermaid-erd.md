@@ -54,12 +54,16 @@ o|--o{   zero or one to zero or more
 
 Read left to right: left side of `--` describes left entity, right side describes right entity.
 
-| Symbol | Meaning |
-|--------|---------|
-| `\|\|` | exactly one |
-| `o\|` | zero or one |
-| `\|{` | one or more |
-| `o{` | zero or more |
+`--` = identifying relationship (child depends on the parent, e.g. the FK is part of the child's PK); `..` (dashed) = non-identifying (the FK is nullable or not part of the PK).
+
+| Meaning | Left | Right |
+|---------|------|-------|
+| exactly one | `\|\|` | `\|\|` |
+| zero or one | `\|o` | `o\|` |
+| zero or more | `}o` | `o{` |
+| one or more | `}\|` | `\|{` |
+
+The crow's-foot (`{`/`}`) and circle (`o`) always sit nearest the entity they qualify, so the glyph flips between the left and right side of `--`. Only `||` (exactly one) is symmetric.
 
 ## Column Markers
 
@@ -68,6 +72,8 @@ Read left to right: left side of `--` describes left entity, right side describe
 | `PK` | Primary Key |
 | `FK` | Foreign Key |
 | `UK` | Unique Key |
+
+Combine markers with a comma when a column has multiple roles, e.g. `uuid order_id PK, FK` for a composite-key (identifying) junction table.
 
 ## Rules for This Skill
 

@@ -1,5 +1,7 @@
 # Evaluation
 
+**Layer:** design-level (eval strategy, golden sets, LLM-as-judge design, what to measure). For AI **testing/eval architecture** (CI integration, evaluation-driven-development pipelines, A/B infrastructure), see `software-architecture/references/ai-architecture.md` §7.
+
 You cannot ship an LLM feature responsibly without evals. Prompts look fine on three test cases and fail on the fourth. Model updates silently change behavior. A "small" prompt tweak breaks 20% of cases you didn't think to check. Evals catch all of this.
 
 ## What an eval is
@@ -12,7 +14,7 @@ The minimum viable eval:
 - **A metric:** how you compare the actual output to the expected one. Exact match, substring match, JSON schema match, LLM-as-judge, etc.
 - **A runner:** a script that runs all examples and reports per-example + aggregate results.
 
-That's it. Build this before optimizing prompts, before shipping, before anything else. It's almost always less work than the first debugging session you avoid.
+That's it. Build this before optimizing prompts, before shipping, before anything else. It's almost always less work than the first debugging session you avoid. The prompt-iteration loop that consumes this eval set lives in `references/prompting.md` § Iteration loop.
 
 ## Types of evals
 
@@ -52,7 +54,7 @@ Judge prompts are themselves prompts, subject to all the same failure modes. Rul
 
 ## The eval workflow
 
-**1. Start small (10 examples).** Write them by hand, representing the common cases and 2-3 known edges. Run them before every prompt change.
+**1. Start small (10 examples).** Write them by hand, representing the common cases and 2-3 known edges. Run them before every prompt change. **Cold start, nothing to hand-write yet?** Bootstrap the set: have an LLM generate synthetic inputs to seed coverage, paraphrase-augment the few real examples you do have, then swap synthetic cases out for real production traces as soon as traffic exists (step 3). Synthetic data seeds the set; real traffic makes it representative.
 
 **2. Diagnose before scaling.** The first time an example fails, understand why. Prompt issue? Example mislabeled? Task genuinely too hard? Fixing the wrong thing wastes the rest of the session.
 
@@ -88,7 +90,7 @@ Complexity you do need (as you grow):
 - Per-example history across runs.
 - Export/import between local and CI.
 
-For LLM-as-judge evals in production, consider tools that automate the judging loop at scale — e.g. `posthog:exploring-llm-evaluations` or dedicated platforms.
+For LLM-as-judge evals in production, consider tools that automate the judging loop at scale — `posthog:instrument-llm-analytics` for trace capture and scoring, or a dedicated eval platform (e.g. Langfuse, Braintrust).
 
 ## When to stop iterating
 

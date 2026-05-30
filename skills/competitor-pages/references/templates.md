@@ -2,6 +2,8 @@
 
 Copy structures and section templates for each competitor page format.
 
+> **Placeholders:** Fill every bracketed placeholder before publishing. `[Year]` = the current year (2026) — year-stamped titles only help time-sensitive roundup / "which is better" listicles, and they decay, so re-stamp the year **and** refresh the underlying content each January, or omit the year if you can't commit to refreshing. Mark data you don't have yet with `[TODO: ...]` (see `content-architecture.md` → Handling Incomplete Data).
+
 ---
 
 ## Format 1: [Competitor] Alternative (Singular)
@@ -77,10 +79,11 @@ Common reasons:
 
 ---
 
-## Format 2: [Competitor] Alternatives (Plural)
+## Format 2: [Competitor] Alternatives / Best [Category] Tools (Roundup)
 
-**URL**: `/alternatives/[competitor]-alternatives`
+**URL**: `/alternatives/[competitor]-alternatives` (competitor-anchored) or `/best/[category]-tools` (category-anchored)
 **Intent**: User researching options, earlier in journey.
+**Note**: This one template covers both roundup variants — a competitor-anchored "[N] Best [Competitor] Alternatives" and a category-anchored "Best [Category] Tools". Swap the H1 and the "Why look for…" framing accordingly; the section skeleton is the same.
 
 ### Page Template
 
@@ -257,6 +260,52 @@ Before evaluating, consider:
 
 ---
 
+## Format 5: Switching from [Competitor] (Migration Guide)
+
+**URL**: `/migrate/[competitor]` or `/switch/[competitor]`
+**Intent**: User has decided to switch and needs to know how — the highest-intent format. Best for technical products where migration effort is the main objection.
+
+### Page Template
+
+```
+# Switching from [Competitor] to [Your Product]
+
+## TL;DR
+[How long a typical switch takes, what transfers automatically, and the support you offer.]
+
+## Who Should Switch (and Who Shouldn't)
+**Switch if you:** [criteria]
+**Stay with [Competitor] if you:** [honest criteria — builds trust]
+
+## What Transfers
+| Data / Setting | Transfers automatically | Needs manual setup |
+|----------------|-------------------------|--------------------|
+| [e.g., Projects] | Yes — via importer | — |
+| [e.g., Integrations] | — | Reconnect after import |
+| [e.g., Custom fields] | Partial | Map remaining fields |
+
+## Migration Steps
+1. [Export from [Competitor] — where/how]
+2. [Import into [Your Product] — tool, CLI, or assisted]
+3. [Reconnect integrations / invite team]
+4. [Verify and go live]
+
+**Estimated time:** [realistic range]
+**Downtime:** [none / ~X min] — [rollback plan if something fails]
+
+## Migration Support
+[White-glove onboarding, migration credits, dedicated support channel, docs links.]
+
+> "[Quote from a customer who migrated — time saved, how smooth it was]" — [Name], [Company]
+
+## Start Your Migration
+[CTA — "Start migrating — we'll help" / book a migration call]
+```
+
+**Important**: A "transfers automatically" promise that breaks erodes trust fast — and it's a comparative claim subject to the same truthfulness bar as the rest of the page. Verify the "What Transfers" table against the competitor's *current* export options and date-stamp it (see `content-architecture.md` → Keeping Data Accurate).
+
+---
+
 ## Section Copy Patterns
 
 ### TL;DR Formulas
@@ -312,9 +361,11 @@ Frame weaknesses as scope decisions, not failures:
 
 ## Schema Templates
 
-> **FAQ schema (Google Aug 2023):** Rich snippets restricted to authoritative health/gov sites. For SaaS comparison pages, FAQPage rarely triggers rich results — keep it only for AI-platform extractability if relevant. Prefer Product + ItemList + Review schema below.
+> **FAQ schema (updated May 2026):** Google fully deprecated FAQ rich results on May 7, 2026 — they no longer appear in Search for any site (the 2023 health/gov carve-out is gone; Rich Results Test support removed June 2026, Search Console API Aug 2026). FAQPage is still valid and Google still parses it to understand the page, so it's harmless to keep and useful as a GEO/AI-extractability signal — but expect zero SERP rich result. Prefer Product + ItemList + Review schema below. (This is the canonical FAQ-schema caveat; `content-architecture.md` points here.)
 
 ### Product + Offer (per product compared)
+
+> **Only include `aggregateRating` if the rating is genuinely displayed on the page AND comes from real reviews.** Don't self-rate your own product or paste placeholder numbers — fake or markup-only ratings risk a Google manual action that strips ALL your rich results, and self-controlled reviews on `Organization`/`LocalBusiness` types are outright ineligible for the star feature. The compliant source is independent third-party reviews you're licensed to display (e.g., aggregated G2/Capterra). For pure SaaS, `SoftwareApplication` (with `Offer`/`AggregateRating` nested) models the product more precisely than bare `Product`. The `price` must match the price shown on the page.
 
 ```json
 {
@@ -324,14 +375,14 @@ Frame weaknesses as scope decisions, not failures:
   "description": "...",
   "offers": {
     "@type": "Offer",
-    "price": "29.00",
+    "price": "[your price — also shown on the page]",
     "priceCurrency": "USD",
     "availability": "https://schema.org/InStock"
   },
   "aggregateRating": {
     "@type": "AggregateRating",
-    "ratingValue": "4.7",
-    "reviewCount": "1247"
+    "ratingValue": "[from real, on-page, third-party reviews]",
+    "reviewCount": "[must match the count shown on the page]"
   }
 }
 ```
@@ -349,7 +400,7 @@ Frame weaknesses as scope decisions, not failures:
 }
 ```
 
-### FAQPage (use sparingly — see caveat above)
+### FAQPage (no SERP rich result since May 2026 — keep only as a GEO/AI-extractability signal; see caveat above)
 
 ```json
 {

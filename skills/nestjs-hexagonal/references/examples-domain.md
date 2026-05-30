@@ -232,13 +232,21 @@ export class AuthorServiceImpl extends AuthorService {
   async createAuthor(req: CreateAuthorRequest): Promise<Author> {
     try {
       const author = await this.repo.createAuthor(req);
+      // Notification is best-effort — the author is already persisted, so a
+      // failed notify must NOT flip the metric to "failure" or fail the
+      // request. Swallow + log here; for guaranteed delivery use the Outbox
+      // port (DB write + event row commit atomically) — see
+      // references/examples-adapters.md → "Outbox via UoW".
+      try {
+        await this.notifier.authorCreated(author);
+      } catch (notifyError) {
+        // eslint-disable-next-line no-console
+        console.error("authorCreated notification failed", notifyError);
+      }
+      // Record success only after the write succeeded. The catch below owns
+      // the failure metric, so a path can never record BOTH success and
+      // failure for the same call.
       await this.metrics.recordCreationSuccess();
-      // ⚠️ Partial-success risk: the row is committed, metrics counted
-      // "success", but if `authorCreated` throws the caller gets an error
-      // and the notification never fires. For real cross-process atomicity
-      // (DB write + event publish), move this to the Outbox port — see
-      // references/examples-adapters.md → "Outbox Adapter".
-      await this.notifier.authorCreated(author);
       return author;
     } catch (error) {
       await this.metrics.recordCreationFailure();

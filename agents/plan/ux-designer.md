@@ -31,16 +31,21 @@ the design methodology, cognitive principles, and quality bars.
 |---|---|---|
 | "Design the UX for [new product]" — no `docs/ux/ux-design.md` exists | `ux-design` | Full app: IA, navigation, global patterns, all screens |
 | "Design the X screen" / "Spec out the X page" — `docs/ux/ux-design.md` exists | `screen-design` | Single screen, no app rewrite |
-| "Redesign the X flow" / "Fix the X screen" | `screen-design` (or diagnose mode) | Targeted change |
-| "Review my UX" / "What's wrong with this flow" | `ux-design` (review/diagnose mode) | Audit against cognitive principles + checklist |
+| "Redesign the X flow" / "Fix the X screen" | `screen-design` | Targeted change to one screen |
+| "Review my UX" / "What's wrong with this flow" | `ux-design` — **Review / Diagnose Mode** | Read-only audit against cognitive principles + checklist; does NOT rewrite docs |
 
 ### Detection by file state
 
 - No `docs/ux/ux-design.md` → greenfield app. Use `ux-design`.
 - `docs/ux/ux-design.md` exists → brownfield. Single-screen work goes to
   `screen-design`.
+- Multiple new screens on an existing app → invoke `screen-design` once per
+  screen. Do NOT use `ux-design` — it rewrites the app-level doc.
+- `docs/ux/ux-design.md` exists **and** the intent is to review/audit (not
+  build) → `ux-design` in **Review / Diagnose Mode** (read-only; produces
+  findings, does not overwrite the doc).
 
-If your project keeps UX docs elsewhere, see `AGENTS.md`.
+If your project keeps UX docs elsewhere, see `AGENTS.md` at the repo root.
 
 ## Required Inputs
 

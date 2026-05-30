@@ -9,9 +9,10 @@
 | Check | Why | CWE |
 |-------|-----|-----|
 | Bcrypt (cost ≥12) or Argon2id for passwords | GPU/ASIC resistance | CWE-916 |
-| NEVER MD5, SHA1, SHA256 alone for passwords | No key stretching, rainbow tables | CWE-328 |
+| bcrypt input length handled — pre-hash (e.g. base64(SHA-256)) passwords >72 bytes; bcrypt silently truncates at 72 bytes / first NULL byte (Argon2id/scrypt have no such limit) | Silent password weakening, hash collisions | CWE-916 |
+| NEVER MD5, SHA1, SHA256 alone for passwords | No key stretching, rainbow tables | CWE-916 |
 | Unique salt per password (auto-handled by bcrypt/argon2) | Pre-computation attacks | CWE-916 |
-| API tokens hashed with SHA-256 before storage | Token theft from DB | CWE-256 |
+| API tokens (high-entropy random ≥128-bit) hashed with SHA-256 before storage — fast unsalted hash is fine since tokens aren't brute-forceable, unlike low-entropy passwords | Token theft from DB | CWE-312 |
 | Timing-safe comparison for all credential checks | Timing side-channel | CWE-208 |
 
 **Patterns to catch:**
@@ -21,6 +22,7 @@
 - Same salt for all users (global salt)
 - String comparison (`===`, `==`) instead of `crypto.timingSafeEqual` for tokens
 - Password stored with reversible encryption (AES) instead of hashing
+- Raw password >72 bytes passed to bcrypt without pre-hashing (excess silently ignored); binary digest with embedded NULL bytes fed to bcrypt
 
 ---
 
@@ -30,7 +32,7 @@
 |-------|-----|-----|
 | AES-256-GCM or ChaCha20-Poly1305 for symmetric encryption | Authenticated encryption required | CWE-327 |
 | NEVER ECB mode (patterns visible in ciphertext) | Pattern preservation | CWE-327 |
-| Unique IV/nonce per encryption operation | IV reuse breaks confidentiality | CWE-329 |
+| Unique IV/nonce per encryption operation | For GCM/Poly1305, nonce reuse is catastrophic: leaks plaintext XOR AND recovers the auth key → ciphertext forgery (2016 "forbidden attack"), not just confidentiality loss | CWE-323 |
 | Encryption keys stored in KMS/HSM, not in code or config files | Key exposure | CWE-321 |
 | Key rotation mechanism exists and is exercised | Compromised key longevity | CWE-324 |
 | Sensitive database columns encrypted at application level | DB breach protection | CWE-311 |
@@ -40,6 +42,7 @@
 - `DES`, `3DES`, `RC4`, `Blowfish` (deprecated algorithms)
 - Hardcoded encryption key in source code: `key = "my-secret-key-123"`
 - IV/nonce set to static value or zeros: `iv = b'\x00' * 16`
+- Counter-based nonce that resets on process restart, or a random 96-bit GCM nonce used beyond ~2³² messages per key (birthday collision) — use XChaCha20-Poly1305 or a SIV mode (AES-GCM-SIV) if uniqueness can't be guaranteed
 - Same key used for encryption and authentication
 - Encryption without authentication (AES-CBC without HMAC)
 - Key derived from password without proper KDF (see Key Derivation below)
@@ -75,7 +78,7 @@
 
 | Check | Why | CWE |
 |-------|-----|-----|
-| Argon2id (preferred) with `m=64MB, t=3, p=4` minimum | Memory-hard, GPU-resistant | CWE-916 |
+| Argon2id (preferred): OWASP floor `m=19456 (19 MiB), t=2, p=1` (equal-defense alts: m=12288/t=3/p=1, m=9216/t=4/p=1, m=7168/t=5/p=1); harden toward `m≥64 MiB, t≥3` where capacity allows | Memory-hard, GPU-resistant | CWE-916 |
 | scrypt with `N=2^17, r=8, p=1` (acceptable alternative) | Memory-hard | CWE-916 |
 | PBKDF2-HMAC-SHA256 ≥600,000 iterations (legacy / FIPS only) | Brute force resistance | CWE-916 |
 | HKDF for deriving multiple keys from shared secret | Proper key separation | CWE-327 |
@@ -145,7 +148,7 @@
 | Check | Why | CWE |
 |-------|-----|-----|
 | Certificates auto-renewed (Let's Encrypt, cert-manager) | Expiration outage | CWE-298 |
-| Certificate revocation checking enabled (OCSP stapling) | Compromised cert usage | CWE-299 |
+| Revocation strategy appropriate to issuer: short-lived certs and/or CRLs, plus OCSP stapling where the CA still issues OCSP URLs (note: Let's Encrypt ended OCSP 2025-08-06, now CRL-only) | Compromised cert usage | CWE-299 |
 | Wildcard certificates scoped appropriately | Over-broad trust | CWE-295 |
 | Private keys have restricted file permissions (0600) | Key theft | CWE-732 |
 | No self-signed certificates in production | Trust chain validation bypass | CWE-295 |
@@ -154,7 +157,7 @@
 - Certificate files with world-readable permissions (`chmod 644 server.key`)
 - Private keys stored in git repository (even `.gitignore`d, check history)
 - Self-signed certificates in production deployment configurations
-- Certificate expiration >1 year (industry standard now 398 days max)
+- Certificate lifetime exceeding the CA/Browser Forum maximum — 200 days (since 2026-03-15), dropping to 100 days (2027-03-15) and 47 days (2029-03-15); any config assuming the old 398-day ceiling is a renewal-automation gap
 - No automated certificate renewal process
 
 ---

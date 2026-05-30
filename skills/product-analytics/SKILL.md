@@ -9,10 +9,15 @@ description: |
   designing event tracking plans, setting up GA4/GTM, analyzing A/B test results,
   or when user mentions "Aha Moment", "retention curve", "cohort analysis", "Carrying Capacity",
   "PMF", "product-market fit", "kill criteria", "activation rate", "retention plateau",
-  "churn analysis", "user segmentation", "tracking plan", "GA4", "UTM", "A/B test results",
+  "retention/revenue churn analysis (GRR/NRR, cohort curves)", "user segmentation",
+  "tracking plan", "GA4", "UTM", "A/B test results",
   "Sean Ellis survey", "GRR", "NRR", "revenue retention".
   Do NOT use for: tracking code implementation (developer task),
-  CRO experiment design (use cro skill), marketing content (use copywriting skill).
+  CRO experiment design (use cro skill), marketing content (use copywriting skill),
+  referral/viral loop design or the K-factor model and targets (use growth-loops skill —
+  this skill measures live K from event data, growth-loops designs the loop and sets the K target),
+  or churn intervention/prevention — cancel-flow, save-offer, dunning/payment-recovery,
+  and at-risk health-scoring design (use churn-prevention skill).
 ---
 
 # Product Analytics Methodology

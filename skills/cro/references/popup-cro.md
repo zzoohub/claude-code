@@ -115,7 +115,8 @@ Optimize popups, modals, overlays, slide-ins, and banners for conversion.
 
 ## Compliance and Accessibility
 
-- GDPR: Clear consent, link to privacy policy, don't pre-check opt-ins
+- GDPR (marketing opt-in): Clear consent, link to privacy policy, don't pre-check opt-ins
+- ePrivacy / UK PECR (EU/UK): popups that set non-essential tracking or profiling storage — behavior-based triggers (cart/pricing-visit detection), cross-page personalization, progressive profiling — need prior consent and should be gated behind the cookie-consent banner, separately from the email opt-in. (Storage used only to remember a dismissal or frequency cap is generally treated as strictly necessary and exempt.)
 - Accessibility: Keyboard navigable, focus trap, screen reader compatible
 - Google: Intrusive interstitials hurt mobile SEO
 

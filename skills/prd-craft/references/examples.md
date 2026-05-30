@@ -1,7 +1,8 @@
 # PRD Section Examples
 
-Concrete examples of what "good" and "bad" look like for each PRD section.
-Reference this when writing a PRD to calibrate quality and depth.
+Concrete good/bad examples for the PRD sections where calibration matters most.
+Reference this when writing a PRD to calibrate quality and depth. (The Appendix
+is mechanical and has no example.)
 
 ---
 
@@ -100,6 +101,51 @@ Reference this when writing a PRD to calibrate quality and depth.
 > "Goals: Improve deploy quality. Increase confidence. Make deploys safer."
 >
 > (No metrics. No targets. No timeframe. Not measurable. "Safer" is not a KPI.)
+
+---
+
+## Section 5: Feature Overview
+
+**Good:**
+
+> | Feature | Description | Spec |
+> |---------|-------------|------|
+> | health-checker | Run configured health checks after deploy and report pass/fail | [features/health-checker.md](features/health-checker.md) |
+> | error-rate-monitor | Compare post-deploy error rate against baseline | [features/error-rate-monitor.md](features/error-rate-monitor.md) |
+>
+> (Crisp one-liners. Kebab-case names that double as filenames. Detail lives in the spec, not the table.)
+
+**Bad:**
+
+> | Feature | Description |
+> |---------|-------------|
+> | Health Checking | The system will provide a comprehensive health-checking capability that runs a configurable battery of checks including HTTP probes, TCP probes, and custom scripts, with retry and backoff... |
+>
+> (Mixed-case name that won't match a filename. The description is a feature spec crammed into a table cell.)
+
+---
+
+## Section 6: Dev Order
+
+**Good:**
+
+> Ordered riskiest-assumption-first: the error baseline is the part we're least
+> sure works, so it leads.
+>
+> **v0.1 — Core**
+> 1. health-checker — nothing reports without checks [Must]
+> 2. error-rate-monitor — carries the core "did we catch a regression" risk [Must] (depends on: health-checker)
+>
+> **v0.2 — Workflow**
+> 3. notifier — push pass/fail to Slack/CLI [Should] (depends on: health-checker)
+
+**Bad:**
+
+> 1. notifier
+> 2. health-checker
+> 3. error-rate-monitor
+>
+> (No versions, no rationale, no dependency notes — and the notifier is listed before the thing it notifies about. Just a list, no reasoning.)
 
 ---
 

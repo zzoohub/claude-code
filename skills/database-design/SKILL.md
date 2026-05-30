@@ -166,7 +166,9 @@ Before writing `docs/arch/database.md` or any migration file, every item below m
 - [ ] NOT NULL on every column that logically cannot be null
 - [ ] CHECK constraints on domain values (email format, positive amounts, status whitelist)
 - [ ] UNIQUE constraints on every business-identity column (email, slug, external_id)
-- [ ] ON DELETE behavior explicit on every FK (CASCADE / RESTRICT / SET NULL)
+- [ ] ON DELETE behavior explicit on every FK (CASCADE / RESTRICT / SET NULL / SET DEFAULT / NO ACTION)
+
+> **NULL semantics:** a `CHECK` passes when its expression is NULL/UNKNOWN — `CHECK (amount > 0)` does *not* reject a NULL `amount`, so pair domain CHECKs with `NOT NULL` when null is invalid. Standard `UNIQUE` treats each NULL as distinct (multiple NULLs allowed); add `NOT NULL`, or use `UNIQUE NULLS NOT DISTINCT` (PG15+), when at most one null-or-distinct row is intended.
 
 **Multi-tenancy (if applicable)**
 - [ ] Every tenant-scoped table has `tenant_id` column AND RLS policy — or schema/database-per-tenant is chosen with ADR
@@ -268,7 +270,7 @@ Enable these when the design requires their capabilities:
 | `pgcrypto` | Cryptographic functions | Hashing passwords, generating UUIDs (pre-PG13) |
 | `pg_stat_statements` | Query performance tracking | Production monitoring (enable always) |
 | `pg_partman` | Automated partition management | Time-series partitioning in production |
-| `uuid-ossp` | UUID generation functions (v1/v3/v5 only) | When you need v1/v3/v5 specifically. For v4, `gen_random_uuid()` is built-in (PG13+). For v7 (this skill's PK default), use PG18 `uuidv7()` or generate at the application layer |
+| `uuid-ossp` | UUID generation functions (v1/v1mc/v3/v4/v5 — no v7) | When you need v1/v3/v5 specifically. For v4, `gen_random_uuid()` is built-in (PG13+). For v7 (this skill's PK default), use PG18 `uuidv7()` or generate at the application layer |
 | `vector` (pgvector) | Vector similarity search (HNSW, IVFFlat) | Embeddings, semantic search, RAG — up to ~100M vectors co-located with relational data |
 
 ```sql
@@ -284,10 +286,11 @@ These prevent data corruption, loss, or major regressions. Not negotiable.
 - **Never use FLOAT for monetary values** → `NUMERIC(precision, scale)`. FLOAT cannot represent decimals exactly; you will lose money.
 - **Always use TIMESTAMPTZ** for timestamps. `TIMESTAMP` (without tz) silently strips timezone info — a footgun across regions/clients.
 - **Index every FK you JOIN or filter on.** PostgreSQL does not auto-create FK indexes. Missing FK indexes turn parent-row updates/deletes into full table scans. Intentionally unindexed FKs must be documented.
-- **`ON DELETE` behavior must be explicit on every FK** (`CASCADE` / `RESTRICT` / `SET NULL` / `NO ACTION`). The default differs by tool/intent and propagates surprises silently.
+- **`ON DELETE` behavior must be explicit on every FK** (`CASCADE` / `RESTRICT` / `SET NULL` / `SET DEFAULT` / `NO ACTION`). The default differs by tool/intent and propagates surprises silently. (`NO ACTION`, the SQL default, can be deferred to end-of-transaction; `RESTRICT` cannot.)
 - **`CREATE INDEX CONCURRENTLY`** for any index added to a table that already serves production traffic. Plain `CREATE INDEX` takes a write lock for the duration.
 - **Destructive ops (`DROP COLUMN`, `RENAME`) follow expand-contract**, never direct. Direct DDL mid-deploy breaks rolling deployments.
 - **Auto-DDL (`synchronize: true` and friends) is forbidden in any deployed environment.** Migrations are the only sanctioned schema-mutation path.
+- **Never store secrets or PII carelessly.** Hash passwords with `pgcrypto` (`crypt()`/`gen_salt()`) — don't encrypt them. For reversible PII, prefer app-layer/envelope encryption (encrypted columns lose B-tree indexability and range/equality search). The audit-trail and event-sourcing patterns dump whole-row `to_jsonb(OLD/NEW)` — mask or exclude sensitive columns there or they leak into `audit_logs`. See `references/design-patterns.md` §3.
 
 ## Conventions — Defensible Defaults
 
@@ -295,13 +298,14 @@ These are choices, not mandates. The skill's defaults are defensible; teams may 
 
 - **PK default: UUID v7.** External-API-safe, distributed/offline-friendly, time-ordered (preserves index locality, unlike v4). BIGINT IDENTITY remains the right pick for internal-only IDs and megatables where 8-byte savings measurably matter — see "Primary Key Type Decision" below.
 - **Strings: TEXT by default.** No performance cost in PostgreSQL. Use `VARCHAR(n)` only when the length cap carries semantic weight you want enforced at the type level. Otherwise enforce length with `CHECK`.
-- **ENUM only when values are stable.** `ALTER TYPE ... ADD VALUE` runs outside transactions and propagates awkwardly. For anything user-extensible, use a lookup table.
+- **ENUM only when values are stable.** `ALTER TYPE ... ADD VALUE` can run inside a transaction (PG12+), but the new value can't be *used* until that transaction commits — so you can't add a value and insert rows using it in the same migration step, and values can't be cleanly removed or reordered. For anything user-extensible, use a lookup table.
 - **Default isolation: Read Committed.** Most OLTP fits. Escalate to Repeatable Read / Serializable per-operation only where correctness demands it (with retry logic).
 - **`created_at` / `updated_at` on entity tables**, except pure association/pivot tables (`user_role`) and append-only event tables (which need only `created_at`).
 - **Multi-tenancy default depends on tenant shape**:
-  - **Many small tenants (B2B SaaS)** → `tenant_id` column + RLS. Single DB, simple ops, isolation enforced in DB.
+  - **Many small tenants (B2B SaaS)** → `tenant_id` column + RLS. Single DB, simple ops, isolation enforced in DB — *but only if RLS is wired correctly*: the table owner bypasses RLS unless `FORCE ROW LEVEL SECURITY` is set, and superuser/`BYPASSRLS` roles always bypass, so the app must connect as a dedicated non-owner role. Wrap `current_setting()` in a scalar subquery (`(SELECT current_setting('app.current_tenant', true))`) so it evaluates once per query, not per row, and still filter by `tenant_id` in the query (RLS predicates can suppress partition pruning and some pushdown). Benchmark before committing RLS for high-QPS tenants. See `references/design-patterns.md` §6.
   - **Few large tenants (enterprise)** → schema-per-tenant or DB-per-tenant. Better blast-radius isolation, easier per-tenant tuning/backup, regulatory-friendlier.
   - Either way, record as an ADR. Tenant-scoped composite indexes lead with `tenant_id` *only when* tenant-scoped queries dominate; cross-tenant analytics paths may want the opposite ordering.
+- **Foreign-key edge cases:** use `DEFERRABLE INITIALLY DEFERRED` for circular references or intra-transaction row reordering; **composite FKs** require a matching composite `UNIQUE`/PK on the parent — in multi-tenant schemas carry the tenant: `FOREIGN KEY (tenant_id, parent_id) REFERENCES parent (tenant_id, id)`.
 - **Design around your query patterns** — indexes serve real WHERE/JOIN, resultsets bounded, computed values cached when worthwhile.
 
 ## Primary Key Type Decision
@@ -322,6 +326,6 @@ PK type is a **one-way door** — changing it later requires rewriting every FK 
 
 - **PostgreSQL 18+**: native `uuidv7()` — `id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7()`.
 - **PostgreSQL ≤17**: generate at the application layer (Node: `uuidv7` package; Python: `uuid_utils.uuid7()`; Rust: `Uuid::now_v7()`; Go: `github.com/gofrs/uuid` v5+; Java: `com.github.f4b6a3:uuid-creator`). Pass the generated UUID into `INSERT` explicitly.
-- The `uuid-ossp` extension covers v1/v3/v5 only — not v7. `gen_random_uuid()` produces v4 (the version we're avoiding).
+- The `uuid-ossp` extension provides v1/v1mc/v3/v4/v5 — not v7. For v4, prefer the built-in `gen_random_uuid()` (PG13+); note it produces v4, the version we avoid for hot-table PKs.
 
 **Mixed strategy is fine**: UUID v7 for most tables, BIGINT for the handful of high-volume internal tables where bytes measurably matter (events, audit logs). Just don't flip a whole schema's convention later.

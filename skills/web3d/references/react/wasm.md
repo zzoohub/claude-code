@@ -6,13 +6,15 @@
 
 ```tsx
 import { useMemo } from 'react'
-import * as THREE from 'three'
+import * as THREE from 'three/webgpu'
 import { TerrainGenerator } from '../crates/my-wasm-3d/pkg'
 
 function WasmTerrain({ width = 128, depth = 128 }) {
   const geometry = useMemo(() => {
     const terrain = new TerrainGenerator(width, depth, 0.5, 10.0)
     const geo = new THREE.BufferGeometry()
+    // positions()/normals()/uvs()/indices() must return OWNED copies (Rust Vec<f32>) —
+    // terrain.free() below invalidates any zero-copy view over wasm memory.
     geo.setAttribute('position', new THREE.BufferAttribute(terrain.positions(), 3))
     geo.setAttribute('normal', new THREE.BufferAttribute(terrain.normals(), 3))
     geo.setAttribute('uv', new THREE.BufferAttribute(terrain.uvs(), 2))
@@ -34,7 +36,7 @@ function WasmTerrain({ width = 128, depth = 128 }) {
 ```tsx
 import { useRef, useMemo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
-import * as THREE from 'three'
+import * as THREE from 'three/webgpu'
 import { ParticleSystem } from '../crates/my-wasm-3d/pkg'
 import { memory } from '../crates/my-wasm-3d/pkg/my_wasm_3d_bg.wasm'
 
@@ -60,12 +62,17 @@ function WasmParticles() {
     if (posAttr.array.buffer !== memory.buffer) {
       const newView = new Float32Array(
         memory.buffer, systemRef.current.positions_ptr(), 500_000 * 3)
-      geometry.setAttribute('position', new THREE.BufferAttribute(newView, 3))
+      const attr = new THREE.BufferAttribute(newView, 3)
+      attr.setUsage(THREE.DynamicDrawUsage)   // re-apply — a fresh attribute reverts to StaticDrawUsage
+      geometry.setAttribute('position', attr)
     }
     geometry.attributes.position.needsUpdate = true
   })
 
-  useEffect(() => () => { systemRef.current?.free() }, [])
+  useEffect(() => () => {
+    systemRef.current?.free()
+    systemRef.current = null   // null out to tolerate React 19 StrictMode double-invoke / remount
+  }, [])
 
   return (
     <points geometry={geometry}>

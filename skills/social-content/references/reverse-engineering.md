@@ -21,11 +21,10 @@ Framework for analyzing top creators, codifying repeatable playbooks, and unders
 
 Content evoking **high-arousal emotions** is significantly more likely to be shared, regardless of whether those emotions are positive or negative.
 
-**Top emotional triggers in most-shared content:**
-- **Awe**: 25% of viral content
-- **Laughter**: 17%
-- **Amusement**: 15%
-- Joy, inspiration, and admiration fuel positive viral content even more effectively than negative emotions
+**What the research shows (Berger & Milkman, 2012, *Journal of Marketing Research*):**
+- **High-arousal emotions drive sharing** -- awe (positive), anger and anxiety (negative) all increase virality
+- **Low-arousal emotions suppress it** -- sadness and contentment reduce sharing
+- Positive content is, on balance, more viral than negative -- but arousal matters more than valence
 
 **The Valence-Arousal-Dominance (VAD) Model:**
 - **Valence**: How positive or negative the emotion (both can go viral)
@@ -92,7 +91,7 @@ Jonah Berger's research on contagious content identified six elements. Aim for 2
    - The more specific and actionable, the more shareable
 
 6. **Stories** -- Wrap in narrative
-   - Facts wrapped in stories are retained 22x better than facts alone
+   - Facts wrapped in stories are remembered far better than bare facts (the popular "22x" figure is unsubstantiated; controlled studies suggest closer to ~12x -- but the effect is real)
    - Ensure the message is integral to the story (not just decoration)
    - People share stories, not bullet points
 
@@ -100,7 +99,7 @@ Jonah Berger's research on contagious content identified six elements. Aim for 2
 
 ## Practitioner Case Studies
 
-### Justin Welsh: LinkedIn Mastery ($8.3M, zero ads)
+### Justin Welsh: LinkedIn Mastery (~$4M+/yr solo, zero paid ads)
 
 **System:**
 - **Niche down aggressively**: Pick a niche > sub-niche > micro-niche. Start micro.
@@ -134,7 +133,7 @@ Jonah Berger's research on contagious content identified six elements. Aim for 2
 - **Extreme brevity**: 5-10 posts per month, yet each ignites platform-wide discussion
 - **Timeless over trendy**: Principles that stand for decades, not days
 - **Simplicity as strategy**: Boil everything to its essence. "Peace is freedom from thought."
-- **Compounding ideas**: The Naval Almanack (2021) still generates discussion in 2026
+- **Compounding ideas**: The Almanack of Naval Ravikant (2020) still generates discussion in 2026
 - **Follow passion**: "Do what feels like play to you, but looks like work to others"
 
 **Key insight**: Low output, colossal impact. Quality compounds exponentially. One perfectly distilled tweet can ignite the platform for days.

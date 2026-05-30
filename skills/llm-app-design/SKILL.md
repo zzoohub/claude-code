@@ -2,13 +2,13 @@
 name: llm-app-design
 description: |
   Provider-neutral LLM application design: prompt engineering, tool use, RAG, agent patterns, evaluation, and production concerns.
-  Use when: designing an AI feature or product (chatbot, copilot, agent, RAG system, semantic search, classification, extraction), deciding whether to use an LLM at all, structuring system prompts, designing tool/function-calling schemas, planning a RAG pipeline, picking an agent architecture, setting up evals before shipping, or reasoning about latency/cost/reliability of LLM features. Also trigger on "AI feature", "LLM app", "chatbot", "copilot", "agent", "RAG", "retrieval augmented", "prompt engineering", "eval", "LLM-as-judge", "tool use", "function calling", "semantic search", "fine-tune vs prompt".
-  Do not use for: provider-specific SDK mechanics (use claude-api for Anthropic, vercel:ai-sdk for multi-provider Vercel apps), tracing/observability setup (use posthog:instrument-llm-analytics or sentry:sentry-setup-ai-monitoring), or pure ML/training.
+  Use when: designing an AI feature or product (chatbot, copilot, agent, RAG system, semantic search, classification, extraction), deciding whether to use an LLM at all, structuring system prompts, designing tool/function-calling schemas, planning a RAG pipeline, choosing between an agent and a fixed pipeline/workflow, picking an agent architecture, setting up evals before shipping, or reasoning about latency/cost/reliability of LLM features. Also trigger on "AI feature", "LLM app", "chatbot", "copilot", "agent", "agentic", "agentic pipeline", "agentic workflow", "LLM workflow", "agent workflow", "RAG", "retrieval augmented", "prompt engineering", "eval", "LLM-as-judge", "tool use", "function calling", "semantic search", "fine-tune vs prompt".
+  Do not use for: system-level AI architecture — LLM gateways, streaming/deployment topology, vector-store and infrastructure choice, multi-agent orchestration infrastructure, protocols (MCP/A2A/AG-UI), durable execution, model lifecycle (use software-architecture; this skill is the design-discipline layer that runs alongside and after it); provider-specific SDK mechanics (use claude-api for Anthropic, vercel:ai-sdk for multi-provider Vercel apps); tracing/observability setup (use posthog:instrument-llm-analytics or sentry:sentry-setup-ai-monitoring); or pure ML/training.
 ---
 
 # LLM Application Design
 
-A design skill, not a coding skill. It helps you decide **what to build, how to structure it, and how to know if it works** — before you touch an SDK.
+A design and operational-planning skill, not a coding skill. It helps you decide **what to build, how to structure it, how to know if it works, and how to operate it** — everything before and around the SDK, but not the SDK calls themselves.
 
 ## The first question: do you need an LLM?
 
@@ -35,6 +35,8 @@ Every LLM feature decomposes into the same four layers. Design them explicitly �
 3. **Output layer** — what comes back: free text, structured JSON, tool calls, streaming. The job is making the output usable by downstream code without a second guessing step.
 4. **Evaluation layer** — how you know it works: golden examples, LLM-as-judge, A/B tests, production monitoring. The job is catching regressions before users do.
 
+These layers map onto the references: the **Context** and **Output** layers are designed in `references/prompting.md` (fed by `references/rag.md` and `references/tool-use.md` when retrieval or tools supply the context); the **Reasoning** layer is the shape table below plus `references/agents.md`; the **Evaluation** layer is `references/evaluation.md`; and `references/production.md` wraps all four with the operational concerns that decide whether the design survives real traffic.
+
 Most "my LLM app is flaky" problems trace back to a missing or vague layer. If you can't answer "what's in the context, how does it reason, what's the output contract, and how do I measure quality?" in one sentence each, the design isn't ready to implement.
 
 ## Picking the shape
@@ -46,16 +48,25 @@ Pick the simplest shape that solves the task. Upgrading to a more complex shape 
 | Classify, extract, rewrite, summarize | Single prompt, structured output | Never — if this works, stop |
 | Answer from a knowledge base | RAG: retrieve → augment → generate | Multi-hop questions need agent retrieval |
 | Call external systems (search, DB, API) | Tool use / function calling | Multi-tool planning needs an agent loop |
-| Multi-step reasoning over a plan | Agent: plan → act → observe → repeat | Most tasks don't actually need this |
+| Several LLM steps in a *known, fixed* order | Workflow / pipeline: chain, route, parallelize, evaluator-optimize | When steps can't be predetermined → agent |
+| Multi-step reasoning where the *model* picks the steps | Agent: plan → act → observe → repeat | Most tasks don't actually need this |
 | Multiple specialized roles collaborating | Multi-agent / orchestrator-worker | Only when one agent demonstrably can't do it |
 
 Read `references/prompting.md` before designing any shape — prompt structure underlies all of them. Then jump to the shape-specific reference:
 
 - `references/tool-use.md` — tool/function-calling design
 - `references/rag.md` — retrieval architecture, chunking, hybrid search, re-ranking
-- `references/agents.md` — agent loops, planning, safety rails
+- `references/agents.md` — the workflow-vs-agent decision, agent loops, planning, safety rails
 - `references/evaluation.md` — eval strategies for all shapes
 - `references/production.md` — latency, cost, caching, rate limits, observability
+
+**Workflow vs agent — the line that matters most.** A *workflow* (a.k.a. agentic pipeline) runs LLM calls through steps *you* fixed in advance: prompt chaining, routing, parallelization, evaluator-optimizer loops. An *agent* lets the *model* choose the next step at runtime. If you can draw the flowchart before running, build the workflow — it's cheaper, faster, and far easier to debug. Reach for an agent only when the steps genuinely can't be predetermined. See `references/agents.md` for both pattern sets and the decision rule.
+
+**Prompt vs RAG vs fine-tune.** Reach for prompting first; add RAG when the model lacks the facts (table above); fine-tune only when prompting and RAG both fall short on a stable, high-volume task — it trades flexibility and iteration speed for lower per-call cost and tighter style control. For the full cost/maintenance decision matrix, see `software-architecture/references/ai-architecture.md` §8.
+
+**Not every "AI" task needs generation.** Semantic search, clustering, dedup, and some classification are embedding problems, not generation problems — an embedding model + vector index (or a small classifier) is often cheaper, faster, and more reliable than an LLM call. Use the embedding/hybrid-search primitives in `references/rag.md` for the retrieval mechanics; reserve a generation call for when you actually need synthesized language out.
+
+**System-level AI architecture lives elsewhere.** LLM gateways, streaming and deployment topology, vector-store and infrastructure choice, multi-agent orchestration infrastructure, protocols (MCP/A2A/AG-UI), durable execution, and model lifecycle are owned by the `software-architecture` skill (`references/ai-architecture.md`, `references/ai-agents.md`). This skill is the design-discipline layer that runs alongside and after it.
 
 ## The design flow
 
@@ -105,6 +116,6 @@ Structure (≤200 lines):
 2. **Shape** — single-prompt / RAG / tool use / agent / multi-agent (from the table in this skill)
 3. **Context** — system prompt outline, retrieval sources, tool list
 4. **Output contract** — structured (JSON schema) or free-form; validation strategy
-5. **Eval set** — link to golden examples, metric, judging strategy
+5. **Eval set** — link to golden examples, metric, judging strategy, and baseline pass rate (record whether the hand-written examples currently pass — closes design-flow step 6)
 6. **Production concerns** — latency budget, cost ceiling, caching, rate limits, observability
 7. **Open questions / risks**

@@ -155,7 +155,7 @@
 | Check | Why | CWE |
 |-------|-----|-----|
 | Refund requires original order validation | Phantom refund | CWE-840 |
-| Partial refund total cannot exceed original payment | Over-refund | CWE-839 |
+| Partial refund total cannot exceed original payment | Over-refund | CWE-840 |
 | Digital goods access revoked upon refund | Consume-then-refund | CWE-840 |
 | Refund velocity monitored per account | Serial refund abuse | CWE-799 |
 | Refund-then-repurchase-at-discount prevented | Price arbitrage | CWE-840 |

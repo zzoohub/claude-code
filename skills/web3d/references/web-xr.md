@@ -36,7 +36,7 @@ W3C Candidate Recommendation. The core API is stable; modules (hit test, hand in
 | Chrome/Edge (desktop + Android) | Full WebXR support |
 | Meta Quest Browser | Full support, 90Hz, hands+controllers |
 | Safari (visionOS 2+) | immersive-vr only (no immersive-ar yet) |
-| Firefox 147+ (Win/macOS) | WebGPU + WebXR |
+| Firefox (Win/macOS) | WebGPU: yes. **WebXR: not supported** — no native implementation (`navigator.xr` is undefined; emulator extension only) |
 | Safari (macOS/iOS) | Not supported |
 
 ## Raw WebXR Session Setup
@@ -51,7 +51,9 @@ const session = await navigator.xr!.requestSession('immersive-vr', {
   optionalFeatures: ['hand-tracking', 'hit-test', 'plane-detection', 'anchors'],
 })
 
-// Create XR-compatible WebGL layer
+// The WebGL context must be XR-compatible BEFORE building the layer, or this throws
+// InvalidStateError. Either create it with { xrCompatible: true } or opt in now:
+await gl.makeXRCompatible()
 const glLayer = new XRWebGLLayer(session, gl)
 session.updateRenderState({ baseLayer: glLayer })
 
@@ -87,7 +89,7 @@ session.addEventListener('inputsourceschange', (event) => {
 
 session.addEventListener('select', (event) => {
   const source = event.inputSource
-  const frame = event.frame
+  const frame = event.frame   // an event frame supports getPose()/getJointPose() only — getViewerPose() throws here
   const pose = frame.getPose(source.targetRaySpace, refSpace)
   if (pose) {
     // pose.transform.position, pose.transform.orientation
@@ -135,6 +137,8 @@ if (hitResults.length > 0) {
   const pose = hitResults[0].getPose(refSpace)
   // Place reticle at pose.transform
 }
+// For pinch/tap (transient-pointer, e.g. Vision Pro), use the transient-input variants instead:
+// session.requestHitTestSourceForTransientInput({ profile }) + frame.getHitTestResultsForTransientInput(source)
 ```
 
 ## Anchors

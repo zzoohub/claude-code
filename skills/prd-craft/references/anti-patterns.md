@@ -23,11 +23,11 @@ includes what it looks like, why it's dangerous, and how to fix it.
 
 ## 3. The Novel
 
-**What it looks like:** 30+ pages that nobody reads.
+**What it looks like:** A PRD so long nobody reads it — pushing past the 400-line cap, or simply not readable in one sitting.
 
 **Why it's dangerous:** Long PRDs get skimmed. Critical details get buried. People build from memory of a conversation, not the document.
 
-**Fix:** Keep the PRD concise. If it's too long, split into PRD + linked feature specs. Each document should be readable in one sitting.
+**Fix:** Keep the PRD concise. If it pushes past the 400-line cap, split into PRD + linked feature specs. Each document should be readable in one sitting.
 
 ## 4. The Design Document in Disguise
 
@@ -100,3 +100,11 @@ includes what it looks like, why it's dangerous, and how to fix it.
 **Why it's dangerous:** Every product has unique context. A recycled PRD gives the illusion of thoroughness while missing the specific insights that make a PRD useful.
 
 **Fix:** Start every PRD from the problem, not from a previous PRD. Use templates for structure, but fill every section with original thinking specific to this product.
+
+## 13. The Output-Metric Trap
+
+**What it looks like:** Success is measured by shipping features or activity counts — "launch X", "10 endpoints built", "1,000 events fired" — rather than user or business outcomes.
+
+**Why it's dangerous:** Distinct from #6 (Metrics-Free Zone): here numbers exist, but they measure the wrong thing. You can hit every output target and still solve nothing for the user. Output metrics feel like progress while masking whether the problem actually moved.
+
+**Fix:** Every metric should answer "what changed for the user / the business?" not "did we ship it?" Pair each goal with the §4 counter-metric so you can't win the headline number by gaming it. "Time-to-detection dropped from 4h to 2min" beats "monitoring feature shipped."

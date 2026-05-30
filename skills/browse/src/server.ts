@@ -1,5 +1,5 @@
 /**
- * gstack browse server — persistent Chromium daemon
+ * browse server — persistent Chromium daemon
  *
  * Architecture:
  *   Bun.serve HTTP on localhost → routes commands to Playwright
@@ -8,8 +8,8 @@
  *   Auto-shutdown after BROWSE_IDLE_TIMEOUT (default 30 min)
  *
  * State:
- *   State file: <project-root>/.gstack/browse.json (set via BROWSE_STATE_FILE env)
- *   Log files:  <project-root>/.gstack/browse-{console,network,dialog}.log
+ *   State file: <project-root>/.browse/browse.json (set via BROWSE_STATE_FILE env)
+ *   Log files:  <project-root>/.browse/browse-{console,network,dialog}.log
  *   Port:       random 10000-60000 (or BROWSE_PORT env for debug override)
  */
 
@@ -55,7 +55,7 @@ function generateHelpText(): string {
     'Visual', 'Snapshot', 'Meta', 'Tabs', 'Server',
   ];
 
-  const lines = ['gstack browse — headless browser for AI agents', '', 'Commands:'];
+  const lines = ['browse — headless browser for AI agents', '', 'Commands:'];
   for (const cat of categoryOrder) {
     const cmds = groups.get(cat);
     if (!cmds) continue;
@@ -268,12 +268,20 @@ async function shutdown() {
   console.log('[browse] Shutting down...');
   clearInterval(flushInterval);
   clearInterval(idleCheckInterval);
-  await flushBuffers(); // Final flush (async now)
 
-  await browserManager.close();
-
-  // Clean up state file
+  // Remove the state file first — it's the source of truth for "is a server up",
+  // so it must be cleared even if the graceful close below stalls.
   try { fs.unlinkSync(config.stateFile); } catch {}
+
+  // Best-effort graceful flush + browser close, BOUNDED: a hung Chromium/CDP
+  // close (observed under Bun) must never stall the daemon's exit.
+  await Promise.race([
+    (async () => {
+      try { await flushBuffers(); } catch {}
+      try { await browserManager.close(); } catch {}
+    })(),
+    new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+  ]);
 
   process.exit(0);
 }

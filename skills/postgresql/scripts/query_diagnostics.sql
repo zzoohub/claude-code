@@ -3,8 +3,10 @@
 -- Run against your database to identify query-level issues
 -- ============================================
 
--- 1. Queries with high Filter (rows removed after index fetch)
--- Indicates index is not selective enough — needs composite index
+-- 1. Slowest queries by average execution time (pg_stat_statements)
+-- pg_stat_statements has NO per-node "rows removed by filter" metric. To find
+-- non-selective-index queries, run EXPLAIN (ANALYZE) on the statements below and
+-- look for "Rows Removed by Filter".
 -- Requires pg_stat_statements extension
 SELECT
     queryid,
@@ -18,7 +20,8 @@ AND mean_exec_time > 100  -- over 100ms average
 ORDER BY mean_exec_time DESC
 LIMIT 20;
 
--- 2. Tables with poor HOT update ratio (overindexed on updated columns)
+-- 2. Tables with poor HOT update ratio (updates hit indexed columns, OR pages lack
+--    free space — consider dropping indexes on hot columns OR lowering fillfactor)
 SELECT
     schemaname, relname,
     n_tup_upd AS total_updates,
@@ -29,20 +32,25 @@ WHERE n_tup_upd > 1000
 ORDER BY hot_pct ASC
 LIMIT 20;
 
--- 3. FK columns without indexes (causes slow CASCADE and JOIN)
+-- 3. FK constraints without a usable supporting index (slow CASCADE and JOIN)
+-- An index helps FK maintenance only when the FK column(s) form a LEADING prefix of
+-- the index key. A non-leading position (e.g. FK (b) under an index on (a, b)) does
+-- NOT count. This compares the full ordered conkey against each index's leading cols.
 SELECT
     c.conrelid::regclass AS table_name,
-    a.attname AS fk_column,
-    c.conname AS constraint_name
+    c.conname AS constraint_name,
+    (SELECT string_agg(a.attname, ', ' ORDER BY x.ord)
+       FROM unnest(c.conkey) WITH ORDINALITY AS x(attnum, ord)
+       JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = x.attnum) AS fk_columns
 FROM pg_constraint c
-JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = ANY(c.conkey)
 WHERE c.contype = 'f'
 AND NOT EXISTS (
     SELECT 1 FROM pg_index i
     WHERE i.indrelid = c.conrelid
-    AND a.attnum = ANY(i.indkey)
+    -- leading index columns (1-based after normalizing the int2vector) must equal conkey
+    AND (string_to_array(i.indkey::text, ' ')::int2[])[1:array_length(c.conkey, 1)] = c.conkey
 )
-ORDER BY table_name, fk_column;
+ORDER BY table_name, constraint_name;
 
 -- 4. Unused indexes (wasting storage and slowing writes)
 SELECT
@@ -105,20 +113,24 @@ WHERE heap_blks_hit + heap_blks_read > 100
 ORDER BY cache_hit_pct ASC
 LIMIT 20;
 
--- 9. Index selectivity check
+-- 9. Per-column distinct fraction (rough index-candidate selectivity, from pg_stats)
+-- Both branches yield distinct_values / row_count: when n_distinct > 0 it is an
+-- absolute count (divide by reltuples); when < 0 it is already that fraction (abs).
+-- Higher = more distinct values = better B-tree candidate. These are planner ESTIMATES.
 SELECT
-    tablename, attname AS column_name,
-    n_distinct,
+    s.schemaname, s.tablename, s.attname AS column_name,
+    s.n_distinct,
     CASE
-        WHEN n_distinct > 0 THEN ROUND((n_distinct / c.reltuples)::NUMERIC, 6)
-        WHEN n_distinct < 0 THEN ROUND(abs(n_distinct)::NUMERIC, 6)
+        WHEN s.n_distinct > 0 THEN ROUND((s.n_distinct / c.reltuples)::NUMERIC, 6)
+        WHEN s.n_distinct < 0 THEN ROUND(abs(s.n_distinct)::NUMERIC, 6)
         ELSE 0
-    END AS selectivity
+    END AS distinct_fraction
 FROM pg_stats s
-JOIN pg_class c ON c.relname = s.tablename
+JOIN pg_namespace nsp ON nsp.nspname = s.schemaname
+JOIN pg_class c ON c.relname = s.tablename AND c.relnamespace = nsp.oid
 WHERE s.schemaname NOT IN ('pg_catalog', 'information_schema')
 AND c.reltuples > 0
-ORDER BY tablename, selectivity DESC;
+ORDER BY s.tablename, distinct_fraction DESC;
 
 -- 10. Long-running active queries
 SELECT

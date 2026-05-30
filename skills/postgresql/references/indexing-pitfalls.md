@@ -79,29 +79,35 @@ PostgreSQL converts `LIKE 'prefix%'` to range comparison (`>= AND <`), but local
 CREATE INDEX idx_files_path_c ON files (path COLLATE "C");
 -- Query must also use: WHERE path COLLATE "C" LIKE '/media/photos/2023/%'
 
--- Option 2: Use text_pattern_ops operator class
+-- Option 2: Use text_pattern_ops operator class (varchar_pattern_ops /
+-- bpchar_pattern_ops for varchar/char). Caveat: a pattern_ops index serves
+-- prefix LIKE but is NOT used for ordinary = / range / ORDER BY under
+-- locale-aware collations — keep a separate default-opclass index if those need one.
 CREATE INDEX idx_files_path_pattern ON files (path text_pattern_ops);
 
 -- Option 3: Set database default collation to "C" (if appropriate for your use case)
 ```
 
-**Rule**: For LIKE 'prefix%' with B-tree, ensure collation allows binary-consistent comparison.
+**Rule**: For LIKE 'prefix%' with B-tree, ensure collation allows binary-consistent comparison. A plain B-tree index already serves `LIKE 'prefix%'` when the column/database collation is `C` (or the built-in `C.UTF-8` / `pg_c_utf8` provider) — the special opclass is only needed under locale-aware (ICU/libc) collations.
 
-## Pitfall 5: Index Direction Doesn't Match ORDER BY
+## Pitfall 5: Mixed-Direction ORDER BY Forces a Sort
+
+A single-direction (all-ASC) composite index already serves a **pure-DESC** ORDER BY on its trailing column via a **backward index scan** — no separate Sort node:
 
 ```sql
--- Index (default ASC)
 CREATE INDEX idx_items_cat_pub ON items (category, published_at);
 
--- Query needs DESC
+-- ✅ Served by an "Index Scan Backward" (no Sort): for a given category the index
+--    range is scanned in reverse to produce published_at DESC.
 SELECT * FROM items WHERE category = 'books' ORDER BY published_at DESC LIMIT 10;
 ```
 
-PostgreSQL can scan B-tree indexes backwards, but only for the entire index. Mixed directions in composite indexes require explicit direction specification.
+A per-column DESC index is only needed for **mixed-direction** sorts, where one all-ASC index cannot be backward-scanned to produce the requested order:
 
-**Fix**:
 ```sql
-CREATE INDEX idx_items_cat_pub_desc ON items (category, published_at DESC);
+-- Needs explicit per-column direction (ASC then DESC can't both come from one scan)
+CREATE INDEX idx_items_cat_pub_mixed ON items (category ASC, published_at DESC);
+SELECT * FROM items WHERE category = 'books' ORDER BY category, published_at DESC LIMIT 10;
 ```
 
 ## Pitfall 6: FK DELETE Slow — Missing Index on Referenced Column
@@ -149,7 +155,7 @@ WHERE relname = 'your_table';
 **Example**: Index on `modified_at` which is updated on every write:
 ```sql
 -- Drop if only used for occasional admin queries
-DROP INDEX idx_document_modified_at;
+DROP INDEX idx_documents_modified_at;
 ```
 
 **Rule**: Don't index columns that are updated frequently unless critical queries depend on it. Check HOT ratio for high-write tables.
@@ -203,10 +209,14 @@ CREATE INDEX idx_user_email_lower ON user_accounts (lower(email));
 |---------------|-----------|---------|
 | `WHERE col = value` | B-tree | `CREATE INDEX ON t (col)` |
 | `WHERE col1 = ? AND col2 > ?` | B-tree composite | `CREATE INDEX ON t (col1, col2)` |
-| `WHERE col LIKE 'prefix%'` | B-tree + text_pattern_ops | `CREATE INDEX ON t (col text_pattern_ops)` |
-| `WHERE jsonb_col @> '{}'` | GIN | `CREATE INDEX ON t USING GIN (col)` |
-| `WHERE col = ANY(array)` | GIN | `CREATE INDEX ON t USING GIN (col)` |
+| `WHERE col LIKE 'prefix%'` | B-tree + text_pattern_ops ¹ | `CREATE INDEX ON t (col text_pattern_ops)` |
+| `WHERE jsonb_col @> '{}'` | GIN | `CREATE INDEX ON t USING GIN (jsonb_col)` |
+| `WHERE scalar_col = ANY(array)` (= IN-list) | B-tree | `CREATE INDEX ON t (scalar_col)` |
+| `WHERE arr_col @> ARRAY[…]` / `&&` (array column) | GIN | `CREATE INDEX ON t USING GIN (arr_col)` |
 | `WHERE func(col) = value` | Expression index | `CREATE INDEX ON t (func(col))` |
 | `WHERE status = 'active'` | Partial index | `CREATE INDEX ON t (col) WHERE status = 'active'` |
-| `WHERE ts > now() - '1 day'` (time-series) | BRIN | `CREATE INDEX ON t USING BRIN (ts)` |
+| `WHERE ts > now() - '1 day'` (time-series) | BRIN ² | `CREATE INDEX ON t USING BRIN (ts)` |
 | Covering for index-only scan | INCLUDE | `CREATE INDEX ON t (filter_col) INCLUDE (select_col)` |
+
+¹ A `text_pattern_ops` index serves prefix `LIKE` but is **not** used for ordinary `=` / range / `ORDER BY` under locale-aware collations — keep a separate default-opclass index if those need one.
+² BRIN only helps when `ts` is physically correlated with on-disk row order (append-only). Without that correlation use B-tree; B-tree is also better for small, highly selective recent windows.

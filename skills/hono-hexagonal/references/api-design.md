@@ -63,9 +63,11 @@ Default to flat routes. Use sub-resources only when parent-child ownership is fu
 
 ## Response Format
 
-**Single**: `{ "data": {...}, "meta": { "request_id": "..." } }`
+**Single**: `{ "data": {...} }` — the resource is always wrapped in `data` so clients handle single and collection responses uniformly (`resp.data`).
 
 **Collection**: `{ "data": [...], "meta": { "limit": 20, "next_cursor": "...", "has_more": true } }`
+
+**Correlation ID**: returned in the `X-Request-Id` response header (and propagated via `traceparent`), **not** in the body — so it is present on bodiless responses (204/304) and on every error. Echo an inbound `X-Request-Id` if present, otherwise generate one.
 
 **Errors** (RFC 9457, `application/problem+json`):
 
@@ -76,10 +78,11 @@ Default to flat routes. Use sub-resources only when parent-child ownership is fu
   "status": 422,
   "detail": "Email is required",
   "instance": "/v1/users",
-  "errors": [{ "field": "email", "code": "required", "message": "Email is required" }],
-  "request_id": "req_abc"
+  "errors": [{ "field": "email", "code": "required", "message": "Email is required" }]
 }
 ```
+
+`errors` is an RFC 9457 **extension** member (the RFC defines only `type`/`title`/`status`/`detail`/`instance`); use it for field-level validation detail. `type` may be a relative URI or `about:blank`.
 
 **Status codes:**
 
@@ -127,9 +130,13 @@ DELETE → 204, mark `deleted_at` internally. Filter deleted by default. `?inclu
 | Service-to-service | mTLS |
 | Webhooks | HMAC-SHA256 |
 
-Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`
+Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`, `X-Request-Id` (correlation)
 
 `Idempotency-Key` for safe POST retries.
+
+> **JWT signing**: HS256 (symmetric) is fine for a single service that both issues and verifies tokens. Prefer asymmetric **ES256/EdDSA** once *multiple* services verify (only the issuer holds the private key; verifiers hold the public key/JWKS). Register the bearer scheme in the OpenAPI doc and apply it to protected operations either way.
+
+> **Authorization ≠ authentication**: proving identity (a valid JWT) is not enough. Add a resource-ownership / policy check (a policy port) before returning or mutating a resource, or `GET /v1/{resource}/{id}` is an IDOR.
 
 ---
 
@@ -142,6 +149,8 @@ Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`
 ## Versioning
 
 `/v1/` prefix. Bump only for breaking changes. `Sunset` header for deprecation.
+
+> **Trade-off**: a URI prefix (`/v1/`) is the simplest and most common option, but it versions the *representation*, not the resource. Header / media-type versioning (`Accept: application/vnd.api+json;version=1`) or a date-pinned version header (à la Stripe's `Stripe-Version`) keep URLs stable at the cost of tooling friction. Pick one per product; this skill family standardizes on `/v1/` for simplicity. Apply it consistently — mount routes under exactly `/v1/...` (no extra `/api`, no missing prefix).
 
 ---
 

@@ -2,6 +2,8 @@
 
 Content pillars, topic clusters, editorial planning, keyword research by buyer stage, the Waterfall repurposing system, and content batching workflow.
 
+> **Scope note:** This skill owns social **content pillars** and repurposing. The keyword/search material below is just enough to align social topics with real demand -- for deep keyword research, search-intent mapping, hub-and-spoke URL architecture, and on-page SEO, hand off to the `search-visibility` skill.
+
 ---
 
 ## Table of Contents
@@ -253,13 +255,13 @@ Same insight, different execution. **Never just copy-paste.**
 
 ### AI-Powered Repurposing
 
-AI reduces manual repurposing from ~9 hours to 1-2 hours (90%+ time savings):
+AI can sharply cut repurposing time -- turning hours of manual reformatting into minutes:
 - **Text adaptation**: Reframe tone for each platform
 - **Caption variants**: Generate 3-5 options per post
 - **Key quote extraction**: Pull most shareable lines from long-form
 - **Summary generation**: Create TL;DRs and abstracts
 
-**Human must own**: Voice authenticity, fact-checking, platform-specific nuance, personal stories.
+**Human must own**: Voice authenticity, fact-checking, platform-specific nuance, personal stories, and disclosure where the platform or audience expects it.
 
 ---
 
@@ -291,6 +293,8 @@ A focused 2-3 hour session can produce an entire week of content:
 - Prepare engagement prompts and CTA variants
 
 ### Lean Weekly Rhythm
+
+This operationalizes the weekly workflow in `SKILL.md` and the platform calendar in `post-templates.md` -- use one, not all three.
 
 | Day | Content | Time |
 |-----|---------|------|

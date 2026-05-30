@@ -1,6 +1,6 @@
 # Persuasion Frameworks
 
-Canonical copywriting frameworks. Single source of truth for the structures — channel-specific skills (ad-creative, email-marketing, social-content, cro) apply them to their medium.
+Canonical copywriting frameworks. Single source of truth for the structures — channel-specific skills (ad-creative, social-content) apply them to their medium; marketing-psychology cross-references them for completeness.
 
 ---
 
@@ -20,7 +20,7 @@ Schwartz's 5 Awareness Levels (Eugene Schwartz, *Breakthrough Advertising*, 1966
 
 ## PAS — Problem, Agitate, Solve
 
-The workhorse of direct response. Works because loss aversion is ~2x stronger than equivalent gain (Kahneman & Tversky, 1979).
+The workhorse of direct response. Works because loss aversion makes losses feel roughly 2x stronger than equivalent gains (λ≈2.25; Tversky & Kahneman, 1992 — the concept was introduced in Kahneman & Tversky, 1979).
 
 | Step | Purpose | Technique |
 |------|---------|-----------|
@@ -100,11 +100,13 @@ The framework for UGC and testimonial-style copy. A relatable protagonist (the S
 
 ## Psychological Triggers Reference
 
+The mechanisms below are owned by the **marketing-psychology** skill (the single source of truth for the biases themselves); this table is the copy-application layer — how to phrase each trigger, not the canonical definition. See marketing-psychology for full mechanisms and ethical guardrails.
+
 Stack 1-2 per piece of copy, never more. Only use where the trigger is *real* (fake scarcity destroys trust).
 
 | Trigger | Mechanism | Copy Application |
 |---------|-----------|------------------|
-| **Loss Aversion** | Pain of loss is ~2x stronger than pleasure of gain | "Don't miss out" > "Get access"; frame as what they'll lose |
+| **Loss Aversion** | Pain of loss is ~2x stronger than pleasure of gain (Tversky & Kahneman, 1992) | "Don't miss out" > "Get access"; frame as what they'll lose |
 | **Social Proof** | People follow the crowd | Numbers ("12,847 teams"), logos, testimonials, ratings |
 | **Scarcity** | Limited availability → perceived value | "Only 23 spots left" (real limits only) |
 | **Urgency** | Deadlines create action pressure | "Offer ends Friday", real countdown timers |
@@ -125,14 +127,14 @@ These triggers work because they tap real human psychology. Use them to help peo
 Channel-specific skills apply these frameworks to their medium:
 
 - **ad-creative** — ad format templates (search, feed, video, carousel, display) per framework
-- **email-marketing** — sequence + subject line patterns
 - **social-content** — hook structures + post-level applications (HSO, Hook-Retain-Reward are platform-native riffs on AIDA/PAS)
-- **cro** — page-level structure decisions for landing pages and paywalls
+
+(email-marketing and cro defer copy to this skill but do not currently template these frameworks; marketing-psychology cross-references the triggers above.)
 
 When writing copy:
 1. Diagnose the audience's awareness level
 2. Pick the framework matching that level (see matrix above)
-3. Apply the medium-specific template from the channel skill
+3. If the deliverable is an ad, organic post, email, or landing page, hand off to the skill that owns that medium and apply its template — ad-creative (ads), social-content (organic posts), email-marketing (email), cro (landing pages/paywalls) — rather than producing it here
 4. Layer 1-2 psychological triggers
 5. Run the editing sweeps from `editing-sweeps.md`
 

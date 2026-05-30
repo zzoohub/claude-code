@@ -2,7 +2,7 @@
 
 DTCG-inspired format. Single source of truth for all platforms.
 
-> **Note on DTCG conformance:** The `shadow` token below uses a raw CSS string for `$value` (not the strict DTCG object form of `{color, offsetX, offsetY, blur, spread}`). If you need strict DTCG conformance for Style Dictionary v4 / Terrazzo / Tokens Studio, expand shadow tokens to the structured object format per the DTCG 2025.10 spec. Otherwise, this CSS-string variant ships fine through custom Style Dictionary transforms.
+> **Note on DTCG conformance:** This file uses CSS-string shorthands for some `$value`s rather than the strict DTCG object forms. The `shadow` tokens use a raw CSS string (not the object form `{color, offsetX, offsetY, blur, spread}`), and `dimension` tokens (spacing, radius) use strings like `"4px"` rather than the DTCG object `{ "value": 4, "unit": "px" }`. If you need strict DTCG conformance for Style Dictionary v4 / Terrazzo / Tokens Studio, expand both the shadow and dimension tokens to the structured object format per the DTCG 2025.10 spec. Otherwise, these CSS-string variants ship fine through custom Style Dictionary transforms.
 
 ## File Structure
 
@@ -201,6 +201,14 @@ Remaps semantic tokens only. Components and primitives stay unchanged.
       "default": { "$value": "{color.gray.700}", "$type": "color" },
       "strong":  { "$value": "{color.gray.600}", "$type": "color" },
       "focus":   { "$value": "{color.blue.400}", "$type": "color" }
+    },
+    "status": {
+      "error":     { "$value": "{color.red.500}",            "$type": "color" },
+      "errorBg":   { "$value": "rgba(239, 68, 68, 0.15)",    "$type": "color" },
+      "warning":   { "$value": "{color.amber.500}",          "$type": "color" },
+      "warningBg": { "$value": "rgba(245, 158, 11, 0.15)",   "$type": "color" },
+      "success":   { "$value": "{color.green.500}",          "$type": "color" },
+      "successBg": { "$value": "rgba(34, 197, 94, 0.15)",    "$type": "color" }
     }
   },
   "shadow": {
@@ -212,7 +220,7 @@ Remaps semantic tokens only. Components and primitives stay unchanged.
 }
 ```
 
-Dark mode shadows use higher opacity values because on dark surfaces, subtle shadows are invisible. The shadow color shifts darker to remain visible against dark backgrounds.
+Dark mode shadows use higher opacity values because on dark surfaces, subtle shadows are invisible. The shadow color stays pure black in both themes — only the opacity (alpha) increases, not the color. Status tokens also remap in dark mode: foregrounds shift to lighter shades (`*.500`) and the `*Bg` fills become low-opacity tints, so alerts and toasts don't render as near-white blocks on a dark surface.
 
 ## Component Tokens (Tier 3 — Use Sparingly)
 

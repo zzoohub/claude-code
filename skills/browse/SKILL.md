@@ -5,14 +5,16 @@ description: |
   elements, verify page state, diff before/after actions, take annotated screenshots, check
   responsive layouts, test forms and uploads, handle dialogs, and assert element states.
   ~100ms per command. Use when you need to test a feature, verify a deployment, dogfood a
-  user flow, or file a bug with evidence.
+  user flow, or file a bug with evidence. For a full systematic QA pass (health score +
+  structured report), use the qa skill, which drives this tool.
 allowed-tools:
   - Bash
   - Read
   - AskUserQuestion
 ---
-<!-- AUTO-GENERATED from SKILL.md.tmpl — do not edit directly -->
-<!-- Regenerate: bun run gen:skill-docs -->
+<!-- Hand-maintained. The upstream gstack doc generator (gen:skill-docs) was not
+     vendored into this fork, so edit this file directly and keep the command
+     tables below in sync with the registry in src/commands.ts. -->
 
 # browse: QA Testing & Dogfooding
 
@@ -27,6 +29,7 @@ State persists between calls (cookies, tabs, login sessions).
 _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 B=""
 [ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/browse/dist/browse" ] && B="$_ROOT/.claude/skills/browse/dist/browse"
+[ -z "$B" ] && [ -n "$_ROOT" ] && [ -x "$_ROOT/skills/browse/dist/browse" ] && B="$_ROOT/skills/browse/dist/browse"
 [ -z "$B" ] && B=~/.claude/skills/browse/dist/browse
 if [ -x "$B" ]; then
   echo "READY: $B"

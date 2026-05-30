@@ -9,20 +9,22 @@ Tokens compile to CSS variables. Components reference variables, never raw value
   /* Color — semantic */
   --color-bg-primary: #f9fafb;
   --color-bg-secondary: #f3f4f6;
+  --color-bg-tertiary: #e5e7eb;
   --color-bg-inverse: #111827;
   --color-bg-overlay: rgba(0, 0, 0, 0.5);
   --color-text-primary: #111827;
   --color-text-secondary: #4b5563;
+  --color-text-inverse: #f9fafb;
   --color-text-link: #2563eb;
   --color-text-link-hover: #1d4ed8;
   --color-interactive-primary: #2563eb;
-  --color-interactive-primaryHover: #1d4ed8;
+  --color-interactive-primary-hover: #1d4ed8;
   --color-border-default: #e5e7eb;
   --color-border-focus: #3b82f6;
   --color-status-error: #dc2626;
-  --color-status-errorBg: #fef2f2;
+  --color-status-error-bg: #fef2f2;
   --color-status-success: #16a34a;
-  --color-status-successBg: #f0fdf4;
+  --color-status-success-bg: #f0fdf4;
 
   /* Spacing */
   --spacing-component-xs: 4px;
@@ -87,12 +89,14 @@ Two-layer approach: respect system preference, allow manual override.
   :root:not([data-theme="light"]) {
     --color-bg-primary: #111827;
     --color-bg-secondary: #1f2937;
+    --color-bg-tertiary: #374151;
     --color-bg-inverse: #f9fafb;
     --color-text-primary: #f9fafb;
+    --color-text-inverse: #111827;
     --color-text-secondary: #d1d5db;
     --color-text-link: #60a5fa;
     --color-interactive-primary: #3b82f6;
-    --color-interactive-primaryHover: #60a5fa;
+    --color-interactive-primary-hover: #60a5fa;
     --color-border-default: #374151;
     --color-border-focus: #60a5fa;
 
@@ -107,6 +111,8 @@ Two-layer approach: respect system preference, allow manual override.
 [data-theme="dark"] {
   --color-bg-primary: #111827;
   --color-bg-secondary: #1f2937;
+  --color-bg-tertiary: #374151;
+  --color-text-inverse: #111827;
   /* ... same color remaps + shadow overrides ... */
 }
 ```
@@ -167,7 +173,7 @@ Visible for keyboard users, hidden for mouse.
 }
 
 .button-primary:hover {
-  background-color: var(--color-interactive-primaryHover);
+  background-color: var(--color-interactive-primary-hover);
 }
 ```
 
@@ -177,21 +183,23 @@ If the project uses Tailwind, map design tokens to the Tailwind config so you ge
 
 ### Tailwind v4 (CSS-based config)
 
-Tailwind v4 uses CSS `@theme` to define tokens, which works directly with CSS custom properties:
+Tailwind v4 uses CSS `@theme` to define tokens. Use `@theme inline` here: the `inline` keyword makes each generated utility emit `var(--color-x)` pointing at the `:root` value defined above, instead of re-declaring `--color-x` inside Tailwind's own `:root`. A plain (non-inline) `@theme { --color-x: var(--color-x); }` would be a circular self-reference — it resolves to the invalid (empty) value and breaks the dark-mode cascade. With `inline`, the `:root` / `[data-theme="dark"]` overrides flow straight through to the utilities:
 
 ```css
 /* globals.css */
 @import "tailwindcss";
 
-@theme {
+@theme inline {
   --color-bg-primary: var(--color-bg-primary);
   --color-bg-secondary: var(--color-bg-secondary);
+  --color-bg-tertiary: var(--color-bg-tertiary);
   --color-bg-inverse: var(--color-bg-inverse);
   --color-text-primary: var(--color-text-primary);
   --color-text-secondary: var(--color-text-secondary);
+  --color-text-inverse: var(--color-text-inverse);
   --color-text-link: var(--color-text-link);
   --color-interactive-primary: var(--color-interactive-primary);
-  --color-interactive-primary-hover: var(--color-interactive-primaryHover);
+  --color-interactive-primary-hover: var(--color-interactive-primary-hover);
   --color-border-default: var(--color-border-default);
   --color-border-focus: var(--color-border-focus);
   --color-status-error: var(--color-status-error);
@@ -237,7 +245,7 @@ module.exports = {
         },
         interactive: {
           primary: 'var(--color-interactive-primary)',
-          'primary-hover': 'var(--color-interactive-primaryHover)',
+          'primary-hover': 'var(--color-interactive-primary-hover)',
         },
         border: {
           DEFAULT: 'var(--color-border-default)',

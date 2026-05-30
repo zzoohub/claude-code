@@ -64,6 +64,8 @@ Deferrable: Account creation, Marketing opt-in, Survey questions
 | **Phone** | Explain why ("For delivery updates only"), make optional if possible |
 | **Billing address** | Default "Same as shipping", only show if unchecked |
 
+**Accessibility (a real conversion segment):** keyboard-operable payment fields, sufficient CTA contrast (WCAG ~4.5:1 text, ~3:1 large/UI), a visible focus ring, and inline errors announced to screen readers (aria-live / role=alert). Inaccessible checkout silently loses conversions — and for EU commerce it's now legally required (European Accessibility Act).
+
 ### Guest vs. Account
 - Default to guest checkout. Always.
 - Offer account creation post-purchase: "Save your info for faster checkout next time?"
@@ -157,6 +159,7 @@ Mobile has 2-3x higher abandonment than desktop. Optimize aggressively:
 - Sticky CTA button at bottom
 - Minimize typing (autocomplete, autofill, saved cards)
 - Single column, generous spacing
+- Page speed is part of this — slow LCP/INP on mobile directly drives abandonment (see page-cro.md "Performance / Core Web Vitals")
 
 ---
 

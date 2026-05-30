@@ -87,12 +87,12 @@ Model Context Protocol (MCP) servers expose tools and resources to LLM agents. T
 
 | Check | Why | CWE/LLM |
 |-------|-----|---------|
-| PII not included in prompts unless strictly necessary | Data exposure to LLM provider | LLM06 |
-| System prompts don't contain API keys, credentials, or secrets | Prompt extraction attacks | LLM06 |
-| Conversation history pruned of sensitive data before context window | Historical data leakage | LLM06 |
-| LLM provider data handling agreement reviewed | Data retention, training | LLM06 |
-| User consent obtained for data processing by LLM | Privacy compliance | LLM06 |
-| Data classification applied before LLM processing | Unintentional exposure | LLM06 |
+| PII not included in prompts unless strictly necessary | Data exposure to LLM provider | LLM02 |
+| System prompts don't contain API keys, credentials, or secrets | Prompt extraction attacks | LLM02 |
+| Conversation history pruned of sensitive data before context window | Historical data leakage | LLM02 |
+| LLM provider data handling agreement reviewed | Data retention, training | LLM02 |
+| User consent obtained for data processing by LLM | Privacy compliance | LLM02 |
+| Data classification applied before LLM processing | Unintentional exposure | LLM02 |
 
 **Patterns to catch:**
 - Database connection strings in system prompts
@@ -132,12 +132,12 @@ Model Context Protocol (MCP) servers expose tools and resources to LLM agents. T
 
 | Check | Why | CWE/LLM |
 |-------|-----|---------|
-| LLM tool access follows least privilege (only needed tools) | Unintended actions | LLM08 |
-| Destructive actions require human confirmation | Irreversible damage | LLM08 |
-| Tool outputs validated before further LLM processing | Tool output injection | LLM08 |
-| Rate limits on LLM tool invocations | Runaway execution | LLM08 |
-| Tool permissions scoped to current user's authorization level | Privilege escalation via LLM | LLM08 |
-| LLM cannot grant itself additional permissions | Self-escalation | LLM08 |
+| LLM tool access follows least privilege (only needed tools) | Unintended actions | LLM06 |
+| Destructive actions require human confirmation | Irreversible damage | LLM06 |
+| Tool outputs validated before further LLM processing | Tool output injection | LLM06 |
+| Rate limits on LLM tool invocations | Runaway execution | LLM06 |
+| Tool permissions scoped to current user's authorization level | Privilege escalation via LLM | LLM06 |
+| LLM cannot grant itself additional permissions | Self-escalation | LLM06 |
 
 **Patterns to catch:**
 - LLM with database write access when it only needs read
@@ -176,12 +176,12 @@ Model Context Protocol (MCP) servers expose tools and resources to LLM agents. T
 
 | Check | Why | CWE/LLM |
 |-------|-----|---------|
-| Retrieved documents respect user's access control | Data access bypass via RAG | LLM06 |
+| Retrieved documents respect user's access control | Data access bypass via RAG | LLM02 |
 | Poisoned document detection (unusual instructions in content) | Indirect injection via knowledge base | LLM01 |
 | Document indexing sanitizes content | Stored injection in vector DB | LLM01 |
 | Retrieved context clearly separated from system instructions | Context confusion | LLM01 |
 | Source attribution for RAG responses (cite which documents) | Verifiability, hallucination detection | LLM09 |
-| Document update pipeline validates source integrity | Knowledge base poisoning | LLM03 |
+| Document update pipeline validates source integrity | Knowledge base poisoning | LLM04 |
 
 **Patterns to catch:**
 - RAG retrieval ignores document-level permissions (user sees other users' data)
@@ -198,9 +198,9 @@ Model Context Protocol (MCP) servers expose tools and resources to LLM agents. T
 | Check | Why | CWE/LLM |
 |-------|-----|---------|
 | API keys for LLM providers stored securely (KMS, not code) | Credential exposure | CWE-798 |
-| Model endpoint not directly accessible to end users | Direct model manipulation | LLM05 |
+| Model endpoint not directly accessible to end users | Direct model manipulation | CWE-284 |
 | Token/cost limits per user/request | Budget exhaustion attacks | LLM10 |
-| Model version pinned (not "latest") | Unexpected behavior changes | LLM05 |
+| Model version pinned (not "latest") | Unexpected behavior changes | LLM03 |
 | Fallback behavior defined for LLM service outages | Availability | CWE-636 |
 | Request/response logging for LLM calls (without PII) | Debugging and audit | CWE-778 |
 
@@ -219,11 +219,11 @@ Model Context Protocol (MCP) servers expose tools and resources to LLM agents. T
 
 | Check | Why | CWE/LLM |
 |-------|-----|---------|
-| Fine-tuning data reviewed for sensitive content | Model memorization | LLM06 |
-| Training data sourced from trusted, validated sources | Training data poisoning | LLM03 |
-| Model access restricted (who can fine-tune, deploy, modify) | Model tampering | LLM03 |
-| Model output monitored for memorized sensitive data | Training data extraction | LLM06 |
-| No user data used for training without explicit consent | Privacy violation | LLM06 |
+| Fine-tuning data reviewed for sensitive content | Model memorization | LLM02 |
+| Training data sourced from trusted, validated sources | Training data poisoning | LLM04 |
+| Model access restricted (who can fine-tune, deploy, modify) | Model tampering | LLM04 |
+| Model output monitored for memorized sensitive data | Training data extraction | LLM02 |
+| No user data used for training without explicit consent | Privacy violation | LLM02 |
 | Model provenance tracked (version, training data, fine-tuning history) | Supply chain integrity | LLM03 |
 
 **Patterns to catch:**

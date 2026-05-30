@@ -1,5 +1,7 @@
 # PostgreSQL Migration Patterns
 
+> Examples use the skill's PK default `UUID DEFAULT uuidv7()` (PG18+); on PG ≤17 generate v7 at the application layer — see SKILL.md → 'Primary Key Type Decision'.
+
 ## Core Principles
 
 1. **Every migration has a rollback** — no exceptions
@@ -18,7 +20,7 @@ pg_restore -d mydb backup_before_migration.dump
 ## Migration File Convention
 
 ```
-migrations/
+db/migrations/
 ├── 001_create_user_accounts.sql
 ├── 001_create_user_accounts.rollback.sql
 ├── 002_create_orders.sql
@@ -28,6 +30,13 @@ migrations/
 ```
 
 ## Zero-Downtime Migration Patterns
+
+### Fail Fast on Locks
+Even 'safe' DDL (e.g. ADD COLUMN) briefly takes an ACCESS EXCLUSIVE lock; if it can't acquire it because of a long-running transaction, it waits AND every subsequent query on that table queues behind it (a leading cause of migration outages). Set a short lock_timeout so the migration fails fast and you retry, instead of stalling all traffic:
+```sql
+SET lock_timeout = '2s';  -- optionally also a bounded statement_timeout
+```
+(CREATE/DROP INDEX CONCURRENTLY can't run inside a transaction block, so set such timeouts at the session level rather than bundling them into one BEGIN...COMMIT with the concurrent build.)
 
 ### Adding a Column (safe)
 ```sql
@@ -48,7 +57,8 @@ ALTER TABLE user_accounts DROP COLUMN is_verified;
 CREATE INDEX CONCURRENTLY idx_user_email ON user_accounts (email);
 
 -- Rollback
-DROP INDEX idx_user_email;
+DROP INDEX CONCURRENTLY idx_user_email;
+-- like CREATE INDEX CONCURRENTLY, this cannot run inside a transaction block
 ```
 
 ⚠️ `CREATE INDEX CONCURRENTLY` cannot run inside a transaction block.
@@ -68,12 +78,32 @@ UPDATE user_accounts SET phone = 'unknown' WHERE phone IS NULL;
 -- Step 3: Add NOT NULL constraint with NOT VALID (no table scan)
 ALTER TABLE user_accounts ADD CONSTRAINT chk_phone_not_null CHECK (phone IS NOT NULL) NOT VALID;
 
--- Step 4: Validate (scans table but does NOT hold ACCESS EXCLUSIVE lock for the full duration)
+-- Step 4: Validate — takes only SHARE UPDATE EXCLUSIVE (reads and writes continue during the scan; never ACCESS EXCLUSIVE)
 ALTER TABLE user_accounts VALIDATE CONSTRAINT chk_phone_not_null;
 
--- Rollback
+-- Step 5: now make the column itself NOT NULL — PG12+ uses the already-validated CHECK to skip a second full scan
+ALTER TABLE user_accounts ALTER COLUMN phone SET NOT NULL;
+-- Step 6 (optional): drop the helper CHECK so the catalog shows only NOT NULL
 ALTER TABLE user_accounts DROP CONSTRAINT chk_phone_not_null;
+
+-- Rollback
+ALTER TABLE user_accounts ALTER COLUMN phone DROP NOT NULL;
+ALTER TABLE user_accounts DROP CONSTRAINT IF EXISTS chk_phone_not_null;
 ```
+
+### Adding a Foreign Key (large table)
+```sql
+-- Step 0: index the child FK column first (PostgreSQL does not auto-index FK columns)
+CREATE INDEX CONCURRENTLY idx_orders_user_id ON orders (user_id);
+
+-- Step 1: add the constraint NOT VALID (brief lock, skips the full validation scan)
+ALTER TABLE orders ADD CONSTRAINT fk_orders_user
+    FOREIGN KEY (user_id) REFERENCES user_accounts (id) NOT VALID;
+
+-- Step 2: validate separately (scans under SHARE UPDATE EXCLUSIVE; does not block DML)
+ALTER TABLE orders VALIDATE CONSTRAINT fk_orders_user;
+```
+Pair Step 1 with `SET lock_timeout` (above): the NOT VALID add still takes a brief exclusive lock on both tables.
 
 ### Renaming a Column (Expand-Contract Pattern)
 
@@ -171,41 +201,51 @@ CREATE TABLE user_accounts_v2 (
 -- otherwise let DEFAULT uuidv7() generate new ones).
 INSERT INTO user_accounts_v2 (id, email, name, created_at, updated_at)
 SELECT id, email, name, created_at, updated_at
-FROM user_accounts_v1
+FROM user_accounts
 WHERE id > $last_migrated_id
 ORDER BY id
 LIMIT 10000;
 
 -- Phase 6
-DROP TABLE user_accounts_v1;
+DROP TABLE user_accounts;
+-- (optionally then: ALTER TABLE user_accounts_v2 RENAME TO user_accounts;)
 ```
 
 ## Large Table Migrations
 
 For tables with millions+ rows, batch all data modifications:
 
+⚠️ This block issues its own COMMITs, so it must NOT run inside a wrapping transaction — disable single-transaction mode in your migration runner (e.g. psql without -1), or move it to a stored PROCEDURE invoked via CALL. Backfills generally should live in a separate idempotent script, not the transactional migration file.
+
 ```sql
--- Batch update pattern
+-- Batch update pattern (keyset walk by primary key)
 DO $$
 DECLARE
     batch_size INT := 5000;
     rows_updated INT;
+    last_id UUID := '00000000-0000-0000-0000-000000000000';
 BEGIN
     LOOP
-        UPDATE user_accounts
-        SET phone = 'unknown'
-        WHERE phone IS NULL
-        AND id IN (
+        -- Walk forward by primary key with a stable ORDER BY cursor.
+        -- (Do NOT use FOR UPDATE SKIP LOCKED here — that is only for concurrent
+        -- queue consumers; a single-writer backfill would silently skip rows.)
+        WITH batch AS (
             SELECT id FROM user_accounts
-            WHERE phone IS NULL
+            WHERE id > last_id
+            ORDER BY id
             LIMIT batch_size
-            FOR UPDATE SKIP LOCKED
-        );
+        ), updated AS (
+            UPDATE user_accounts u
+            SET phone = 'unknown'
+            FROM batch
+            WHERE u.id = batch.id AND u.phone IS NULL
+            RETURNING u.id
+        )
+        SELECT count(*), max(id) INTO rows_updated, last_id FROM batch;
 
-        GET DIAGNOSTICS rows_updated = ROW_COUNT;
-        EXIT WHEN rows_updated = 0;
+        EXIT WHEN last_id IS NULL;  -- no more rows past the cursor
 
-        RAISE NOTICE 'Updated % rows', rows_updated;
+        RAISE NOTICE 'Scanned % rows', rows_updated;
         COMMIT;
         PERFORM pg_sleep(0.1);  -- brief pause to reduce load
     END LOOP;

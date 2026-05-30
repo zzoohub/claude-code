@@ -47,7 +47,7 @@ export class BrowserManager {
     // Chromium crash → exit with clear message
     this.browser.on('disconnected', () => {
       console.error('[browse] FATAL: Chromium process crashed or was killed. Server exiting.');
-      console.error('[browse] Console/network logs flushed to .gstack/browse-*.log');
+      console.error('[browse] Console/network logs flushed to .browse/browse-*.log');
       process.exit(1);
     });
 
@@ -437,7 +437,7 @@ export class BrowserManager {
         const res = await req.response();
         if (res) {
           const url = req.url();
-          const body = await res.body().catch(() => null);
+          const body = await res.body().catch((): Buffer | null => null);
           const size = body ? body.length : 0;
           for (let i = networkBuffer.length - 1; i >= 0; i--) {
             const entry = networkBuffer.get(i);

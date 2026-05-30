@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "build": "bun build --compile src/cli.ts --outfile dist/browse && bun build --compile src/find-browse.ts --outfile dist/find-browse"
   },
   "dependencies": {
     "playwright": "^1.58.2",
     "diff": "^7.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
   }
 }

@@ -22,6 +22,21 @@ shared/ui/
     └── cn.ts            # cn helper
 ```
 
+## CLI config — `components.json`
+
+The shadcn CLI is driven by a project-root `components.json` (style, the Tailwind CSS entry path, RSC/tsx flags, import aliases, and registries). Because this FSD layout puts `cn` at `@/shared/ui/lib/cn` rather than the CLI default `@/lib/utils`, set the aliases so generated components import from the right place:
+
+```json
+{
+  "aliases": {
+    "utils": "@/shared/ui/lib/cn",
+    "components": "@/shared/ui"
+  }
+}
+```
+
+Without this, `npx shadcn@latest add` scaffolds imports like `@/lib/utils` that won't resolve in this structure.
+
 ## The `cn` helper
 
 ```ts
@@ -46,8 +61,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: 'bg-interactive-primary text-white hover:bg-interactive-primary-hover',
-        secondary: 'border border-border bg-bg-secondary hover:bg-bg-secondary-hover',
-        danger: 'bg-status-error text-white hover:bg-status-error-hover',
+        secondary: 'border border-border-default bg-bg-secondary hover:bg-bg-tertiary',
+        danger: 'bg-status-error text-white hover:bg-status-error/90',
         ghost: 'hover:bg-bg-secondary',
       },
       size: {
@@ -78,15 +93,15 @@ export function Button({ className, variant, size, asChild, ...props }: ButtonPr
 
 ## Token integration with Tailwind v4
 
-Tokens defined in `@theme` (see `platform-web.md`) auto-generate the `bg-*`/`text-*`/`hover:*` utilities cva consumes. The `@theme` declarations bridge `:root` tokens into Tailwind's utility generator — the `var(...)` self-reference is intentional so dark-mode overrides on `:root` propagate to Tailwind utilities (note the kebab-case rename for the `-hover` variant):
+Tokens are defined as CSS custom properties in `:root` (see `platform-web.md`); an `@theme inline` block bridges them into Tailwind's utility generator so cva can consume `bg-*`/`text-*`/`hover:*` classes. The `inline` keyword is essential: it makes each generated utility emit `var(--color-x)` pointing at the `:root` value, instead of re-declaring `--color-x` in Tailwind's own `:root`. Without `inline`, a same-name entry like `--color-interactive-primary: var(--color-interactive-primary)` is a circular self-reference that resolves to the invalid (empty) value — and dark-mode `:root` overrides would not cascade. With `inline`, runtime overrides flow through correctly. Keep `:root` and utility names identical (both kebab-case):
 
 ```css
-@theme {
-  --color-interactive-primary: var(--color-interactive-primary);            /* bridge :root → utility */
-  --color-interactive-primary-hover: var(--color-interactive-primaryHover); /* camelCase :root → kebab utility */
+@theme inline {
+  --color-interactive-primary: var(--color-interactive-primary);            /* utility → :root value */
+  --color-interactive-primary-hover: var(--color-interactive-primary-hover);
 }
 ```
-→ Tailwind generates `bg-interactive-primary`, `hover:bg-interactive-primary-hover` automatically.
+→ Tailwind generates `bg-interactive-primary` and `hover:bg-interactive-primary-hover`, both resolving to the `:root` variables — so dark mode just works.
 
 ## Forms — pair with react-hook-form + zod
 

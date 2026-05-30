@@ -100,6 +100,8 @@ function useThemeTokens() {
 Headless hook + tokens = complete component.
 
 ```tsx
+import React from 'react';
+import { Pressable, Text, ActivityIndicator } from 'react-native';
 import { useButton } from '../headless/useButton';
 import { tokens } from '@/shared/ui/tokens';
 
@@ -132,6 +134,9 @@ export function Button({ variant = 'solid', size = 'md', children, ...props }: B
   return (
     <Pressable
       {...buttonProps}
+      disabled={state.isDisabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: state.isDisabled, busy: state.isLoading }}
       style={{
         backgroundColor: v.bg,
         paddingHorizontal: s.px,
@@ -139,7 +144,7 @@ export function Button({ variant = 'solid', size = 'md', children, ...props }: B
         borderRadius: tokens.radius.md,
         borderWidth: 'border' in v ? 1 : 0,
         borderColor: 'border' in v ? v.border : undefined,
-        opacity: state.isDisabled ? 0.5 : 1,
+        opacity: state.isDisabled ? tokens.opacity.disabled : 1,
         minHeight: 44, // touch target
         minWidth: 44,
         alignItems: 'center',
@@ -180,14 +185,14 @@ function useBreakpoint() {
 | `role="button"` | `accessibilityRole="button"` | Semantic role |
 | `aria-label="Close"` | `accessibilityLabel="Close"` | Screen reader text |
 | `aria-disabled={true}` | `accessibilityState={{ disabled: true }}` | State announcement |
-| `aria-hidden={true}` | `accessibilityElementsHidden={true}` | Hide decorative |
+| `aria-hidden={true}` | `accessibilityElementsHidden={true}` (iOS) + `importantForAccessibility="no-hide-descendants"` (Android) | Hide decorative |
 | `tabIndex={-1}` | `focusable={false}` | Remove from tab order |
 
-Touch targets: Enforce `minHeight: 44, minWidth: 44` on all interactive elements.
+Touch targets: Enforce `minHeight: 44, minWidth: 44` on all interactive elements. For icon-only controls that must stay visually small, keep the visual size and extend the tappable area with `hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}` (or a value computed to reach 44pt) instead of enlarging the icon.
 
 ## Reduced Motion
 
-React Native has `AccessibilityInfo.isReduceMotionEnabled()` (since RN 0.59) and a `reduceMotionChanged` listener for live updates. When reduced motion is active, skip animation entirely — set duration to 0 or render the final state.
+React Native has `AccessibilityInfo.isReduceMotionEnabled()` and a `reduceMotionChanged` listener for live updates. When reduced motion is active, skip animation entirely — set duration to 0 or render the final state.
 
 ```ts
 import { AccessibilityInfo } from 'react-native';
@@ -204,5 +209,5 @@ useEffect(() => {
 ## Icons
 
 - Package: `lucide-react-native` (or project's icon set)
-- Decorative: `accessibilityElementsHidden={true}`
+- Decorative: `accessibilityElementsHidden={true}` (iOS) + `importantForAccessibility="no-hide-descendants"` (Android)
 - Meaningful: `accessibilityLabel="description"` on the icon

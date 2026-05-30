@@ -10,7 +10,8 @@ description: |
   "add a feature to the PRD", "feature spec for X".
   Do NOT use for: a new product from scratch (use prd-craft — it creates the
   full PRD plus all feature specs at once). Do NOT use for user stories or
-  sprint tickets.
+  sprint tickets, breaking the feature into tasks (use task-add), architecture
+  decisions (use arch-decision), or screen design (use screen-design).
 ---
 
 # Feature Spec — Single Feature on Existing Product
@@ -23,6 +24,11 @@ rewriting the vision PRD.
 `docs/prd/prd.md` must already exist. If your project keeps PRDs elsewhere,
 see `AGENTS.md` at the repo root.
 
+**If no PRD exists yet**, stop — this is the wrong skill. A single feature spec
+with no product vision to anchor it has nothing to tie back to. Tell the user
+and route to `prd-craft` (which creates the full PRD plus feature specs), or to
+`product-brief` if the idea is still unvalidated.
+
 ## What This Skill Does
 
 1. Reads the existing `docs/prd/prd.md` to understand the product, target users,
@@ -31,14 +37,21 @@ see `AGENTS.md` at the repo root.
 2. Reads existing `docs/prd/features/*.md` to avoid naming conflicts and to
    reference related features.
 3. Asks the minimum questions needed to write the spec (problem, journey,
-   acceptance — 3 questions max). Skip what's already clear from prd.md or the
-   user's request.
+   acceptance — ~3 for a typical feature; ask more only if the feature is
+   genuinely complex — multiple user types, compliance, cross-feature
+   dependencies). Skip what's already clear from prd.md or the user's request.
 4. Writes one new `docs/prd/features/{feature}.md` following the template below.
-5. Patches `docs/prd/prd.md` in place:
-   - Appends one row to the **Feature Overview** table (§5)
-   - Inserts the feature into **Dev Order** (§6) at the right position
-   - Touches §1-4 only if the feature changes the problem framing or success
-     metric — usually it doesn't
+5. Patches `docs/prd/prd.md` in place. Locate sections by **role**, not by fixed
+   number (a hand-written or AGENTS.md-overridden PRD may number or title them
+   differently; §5/§6 are just the prd-craft default layout):
+   - Find the **Feature Overview** table and add a row for the feature. If a row
+     for it already exists, **update it in place** — don't append a duplicate.
+   - Find the **Dev Order** / roadmap section and insert (or update) the feature
+     at the right position.
+   - If the PRD has no such table/section, ask the user where to record it rather
+     than inventing one.
+   - Touch the problem/users/metrics sections only if the feature changes the
+     problem framing or success metric — usually it doesn't.
 
 ## What This Skill Does NOT Do
 
@@ -57,44 +70,55 @@ Same shape used across feature specs:
 # [Feature Name]
 
 ## Overview
-Connects this feature to the product vision (1-2 sentences from prd.md problem statement).
+Connects this feature to the product vision (1-2 sentences tied to the PRD's
+problem statement).
 
 ## Requirements
-Testable, specific. Number them so tasks can reference (R1, R2, ...).
+Testable, specific. Give each a stable ID (`REQ-001`, `REQ-002`, ...) so tasks
+and tests can reference it. (Canonical format — see `conventions/README.md`.)
 
 ## User Journeys
 Step-by-step flows for each user type.
 
 ## Edge Cases & Error States
-What happens when things go wrong.
+The failure modes that matter for THIS feature. Cover the relevant categories —
+invalid/empty input, unauthorized actor, concurrent or duplicate action,
+limit/quota exceeded, upstream/dependency failure, partial success — not a fixed
+checklist.
 
 ## Technical Decisions
 Decisions specific to this feature (not architectural).
 
 ## Out of Scope
 What this feature does NOT do, with rationale.
+
+## Open Questions
+Unknowns still being resolved. Flag them — don't invent answers. Remove as they resolve.
 ```
 
 ## Workflow
 
 1. **Read context** — `docs/prd/prd.md` + relevant existing `docs/prd/features/*.md`
-2. **Discover the feature** — 3 questions max:
+2. **Discover the feature** — ~3 questions for a typical feature (more only if complex):
    - What user problem does this solve? (must tie back to prd.md problem)
    - What's the core user journey, end-to-end?
    - What does "done" look like — what acceptance defines success?
 3. **Draft the spec** — Use the feature-spec template
-4. **Patch prd.md** — Append to §5 Feature Overview and §6 Dev Order
+4. **Patch prd.md** — Add (or update, if already present) the feature's Feature
+   Overview row and Dev Order entry, locating those sections by role. Check
+   prd.md against its 400-line limit first; consolidate if it would exceed.
 5. **Quality check** — see Quality Bar below
 
 ## Quality Bar
 
-- [ ] Feature ties back to a problem stated in `prd.md` §1
-- [ ] Requirements are numbered, testable, specific
+- [ ] Feature ties back to the problem stated in the PRD's problem/opportunity section
+- [ ] Requirements are numbered with `REQ-NNN` IDs, testable, specific
 - [ ] At least one full user journey is mapped
-- [ ] Edge cases include nil input, empty input, upstream error
-- [ ] `prd.md` Feature Overview row added
-- [ ] `prd.md` Dev Order updated with the feature at appropriate position
-- [ ] Filename matches kebab-case feature name from prd.md
+- [ ] Edge cases cover the failure modes relevant to this feature (invalid/empty input, unauthorized, concurrent/duplicate, limit exceeded, upstream failure, partial success)
+- [ ] Open questions are flagged — no invented answers
+- [ ] Passes the critical PRD anti-patterns: no solution-as-problem Overview, no library/framework names in Requirements, every requirement has evidence (see the prd-craft anti-patterns reference)
+- [ ] Feature appears exactly once in `prd.md` Feature Overview and once in Dev Order (update in place on re-run, don't duplicate)
+- [ ] Filename matches the kebab-case feature name from prd.md
 
 ## Output
 
@@ -103,3 +127,8 @@ What this feature does NOT do, with rationale.
 
 **Line limit:** `docs/prd/features/{feature}.md` — 200 lines. Consolidate if
 over.
+
+**Next:** once the spec is approved, the feature flows into the same downstream
+stages as any PRD feature — `arch-decision` (if it needs an architecture call),
+`screen-design` (if it has UI), then `task-add` to break it into tasks. Routing
+hints, not steps this skill performs.

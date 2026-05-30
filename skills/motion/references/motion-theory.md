@@ -17,19 +17,19 @@ Deep reference for the cognitive science, design principles, and planning framew
 Motion decisions are grounded in how the human brain processes movement. Know these so you can explain **why**, not just **what**.
 
 ### Visual Attention
-The human visual system is hardwired to detect motion — a primal survival mechanism (Pratt et al., *Psychological Science*, 2010). In UI, motion instantly sits at the top of the visual hierarchy. Use this power deliberately: if everything moves, nothing stands out.
+The human visual system is hardwired to detect motion — abrupt motion onset captures attention involuntarily (Pratt et al., *Psychological Science*, 2010). In UI, motion instantly sits at the top of the visual hierarchy. Use this power deliberately: if everything moves, nothing stands out.
 
 ### Working Memory Limit
 Humans hold ~4 chunks of information in working memory at once. Stagger and sequencing work because they present information in digestible chunks rather than all at once. A stagger of 50–100ms creates distinct perceptual "events" the brain can individually track. Below 30ms = perceived as simultaneous (hierarchy lost). Above 200ms = feels sluggish, narrative breaks.
 
 ### Physics-Based Expectation
-Our brains expect motion to follow real-world physics — objects decelerate when arriving (ease-out) and accelerate when departing (ease-in). Linear motion feels robotic because nothing in the physical world moves at constant velocity. This is why ease-out on entrance makes elements feel like they're "settling into place" — NN/g research confirms it allows the eye to predict where the object will stop, increasing perceived responsiveness.
+Our brains expect motion to follow real-world physics — objects decelerate when arriving (ease-out) and accelerate when departing (ease-in). Linear motion feels robotic because nothing in the physical world moves at constant velocity. This is why ease-out on entrance makes elements feel like they're "settling into place" — it lets the eye predict where the object will stop, which tends to increase perceived responsiveness.
 
 ### Depth Perception
-Motion parallax (closer objects move faster) is a primary depth cue. Layered parallax triggers spatial perception instantly, creating hierarchy without any explicit visual indicator. But excessive parallax can trigger motion sickness in 8–12% of users — always offer reduced-motion fallback.
+Motion parallax (closer objects move faster) is a primary depth cue. Layered parallax triggers spatial perception instantly, creating hierarchy without any explicit visual indicator. But excessive parallax triggers dizziness or nausea in a non-trivial minority of motion-sensitive users — always offer a `prefers-reduced-motion` fallback.
 
 ### Cognitive Load Reduction
-Well-designed motion reduces cognitive load by providing visual cues about spatial relationships and state changes. Research on staging and tracing animations shows they help users identify patterns more accurately and quickly. Skeleton loaders reduce *perceived* wait time by ~30% compared to spinners because they communicate structure before content arrives.
+Well-designed motion reduces cognitive load by providing visual cues about spatial relationships and state changes. Research on staging and tracing animations shows they help users identify patterns more accurately and quickly. Skeleton loaders can improve *perceived* responsiveness versus spinners by signaling structure before content arrives — but the evidence is mixed and context-dependent (some controlled studies found spinners felt faster). Use them when the layout is predictable and the wait exceeds ~300ms.
 
 ### Cultural Consideration
 Reading direction affects scan patterns (F-pattern in LTR, reversed in RTL). When staggering elements, match the reading direction of your audience for fastest comprehension.
@@ -113,14 +113,14 @@ Platform: [web / mobile]
 
 HERO SECTION
 - Headline: chars reveal L→R, 0.03s stagger, power4.out
-  Why: 30ms stagger on ~20 chars = distinct perceptual events within working memory
+  Why: a fast per-char sweep reads as a single L→R "wash" (one chunk = the headline). Sub-threshold on purpose — the 50–100ms "distinct perceptual events" rule is for grouped, individually-meaningful elements (cards, list items), not letters within a word.
 - Background: CSS gradient or animated gradient mesh
 - CTA: magnetic hover (web) / spring tap (mobile)
 - Timing: headline 0ms → background 200ms → CTA 600ms
 - UX Motion Principles: Easing (#1), Offset & Delay (#2), Parallax (#10)
 
 FEATURES (scroll)
-- Cards stagger from bottom, y:40→0, 0.08s apart, first 6 items only
+- Cards stagger from bottom, y:40→0, 0.08s apart, first 4-6 items only
 - Trigger: section top at 75% viewport
 - No parallax (content-focused)
 
@@ -139,7 +139,7 @@ MOBILE ADAPTATION
 - Replace hover interactions with tap feedback + spring
 
 SUCCESS METRICS
-- Scroll depth: target 70%+
+- Scroll depth: track how far users reach; measure vs your static baseline (don't assume a fixed %)
 - Hero animation load: <1.5s (progressive reveal)
 - CWV: LCP unaffected
 ```

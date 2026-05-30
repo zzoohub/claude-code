@@ -7,8 +7,10 @@ Stack: `expo-localization` + `i18next` + `react-i18next`. TypeScript 5+.
 ## Setup
 
 ```bash
-bun add expo-localization i18next react-i18next
+bun add expo-localization i18next react-i18next @formatjs/intl-pluralrules
 ```
+
+> Hermes (React Native's engine) does **not** implement `Intl.PluralRules` on any version, and i18next's plural backend requires it. `@formatjs/intl-pluralrules` polyfills it — import it before i18next init (see below).
 
 ### File Structure
 
@@ -57,7 +59,15 @@ export const supportedLocales = Object.keys(resources) as SupportedLocale[];
 
 ```typescript
 // src/lib/i18n/index.ts
-import 'expo-sqlite/localStorage/install'; // localStorage polyfill — must be before any localStorage usage
+import 'expo-sqlite/localStorage/install'; // synchronous localStorage polyfill — must be before any localStorage usage
+// Hermes ships no Intl.PluralRules — polyfill before i18next init (all Hermes versions). Import locale-data per language.
+import '@formatjs/intl-pluralrules/polyfill-force';
+import '@formatjs/intl-pluralrules/locale-data/en';
+import '@formatjs/intl-pluralrules/locale-data/es';
+import '@formatjs/intl-pluralrules/locale-data/id';
+import '@formatjs/intl-pluralrules/locale-data/ja';
+import '@formatjs/intl-pluralrules/locale-data/ko';
+import '@formatjs/intl-pluralrules/locale-data/pt';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { getLocales } from 'expo-localization';
@@ -72,7 +82,7 @@ function getDeviceLocale(): SupportedLocale {
 }
 
 function getSavedLocale(): SupportedLocale | null {
-  const saved = localStorage.getItem(LANGUAGE_KEY);
+  const saved = globalThis.localStorage.getItem(LANGUAGE_KEY);
   return saved && supportedLocales.includes(saved as SupportedLocale)
     ? (saved as SupportedLocale) : null;
 }
@@ -90,13 +100,20 @@ export default i18n;
 
 export async function changeLanguage(locale: SupportedLocale) {
   await i18n.changeLanguage(locale);
-  localStorage.setItem(LANGUAGE_KEY, locale);
+  globalThis.localStorage.setItem(LANGUAGE_KEY, locale);
 }
 ```
 
 ```tsx
 // src/app/_layout.tsx
 import '@/lib/i18n'; // Side-effect import — must be first
+```
+
+**Regional fallback chains:** `fallbackLng` also takes an object for region→language→base resolution, paired with `load: 'languageOnly'`:
+
+```typescript
+fallbackLng: { 'pt-BR': ['pt', 'en'], default: ['en'] },
+load: 'languageOnly', // 'pt-BR' device locale loads the 'pt' bundle
 ```
 
 ---
@@ -201,7 +218,8 @@ i18n
   .use(initReactI18next)
   .use(resourcesToBackend(
     (language: string, namespace: string) =>
-      import(`@/locales/${language}/${namespace}.json`)
+      // unwrap the module's default export — dynamic JSON import resolves to { default: {...} }
+      import(`@/locales/${language}/${namespace}.json`).then((m) => m.default ?? m)
   ))
   .init({
     lng: initialLocale,
@@ -263,7 +281,22 @@ Locale file format:
 }
 ```
 
-**expo-localization v17:** `supportedLocales` enables the OS-level "preferred language" picker for your app.
+Two distinct fields — don't conflate them:
+
+- `expo.locales` (above) localizes **app metadata** (display name, permission strings) and needs `CFBundleAllowMixedLocalizations`.
+- The **expo-localization config plugin** `supportedLocales` enables the OS-level per-app "preferred language" picker on iOS and Android. It is *not* in the example above — add it under `plugins`:
+
+```json
+{
+  "expo": {
+    "plugins": [
+      ["expo-localization", { "supportedLocales": { "ios": ["en", "es", "ko"], "android": ["en", "es", "ko"] } }]
+    ]
+  }
+}
+```
+
+(Verify field names against the current expo-localization version — Expo SDK has advanced well past the SDK 53 / v17 era.)
 
 ---
 
@@ -296,4 +329,5 @@ AppState.addEventListener('change', (nextState) => {
 | Format logic in translations | Prefer `Intl` APIs in code |
 | Missing `escapeValue: false` | React Native already escapes — double-escaping breaks output |
 | Loading all namespaces at startup | Use `i18next-resources-to-backend` for lazy loading |
-| `Intl.PluralRules` unavailable | Required by modern i18next — polyfill if Hermes < 0.70 |
+| `Intl.PluralRules` unavailable | Hermes ships none (any version). Polyfill on every build: `@formatjs/intl-pluralrules/polyfill-force` + locale-data, imported before i18next init |
+| Bare `localStorage` undefined | Access via `globalThis.localStorage` (the `expo-sqlite/localStorage/install` polyfill assigns it on `globalThis`; no-op on web) |

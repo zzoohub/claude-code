@@ -9,9 +9,10 @@ bun add @dimforge/rapier3d
 ```
 
 ```typescript
-import RAPIER from '@dimforge/rapier3d'
-
-await RAPIER.init()
+// @dimforge/rapier3d is the wasm-bindgen "bundler" build: it initializes its WASM
+// on import, so there is NO init() to await. (await RAPIER.init() is the
+// @dimforge/rapier3d-compat pattern — calling it here throws "init is not a function".)
+const RAPIER = await import('@dimforge/rapier3d')
 
 const gravity = { x: 0, y: -9.81, z: 0 }
 const world = new RAPIER.World(gravity)
@@ -55,8 +56,9 @@ world.createCollider(RAPIER.ColliderDesc.ball(0.5), body)
 // Capsule
 world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.25), body)
 
-// Convex hull from mesh vertices
-world.createCollider(RAPIER.ColliderDesc.convexHull(verticesFloat32Array), body)
+// Convex hull from mesh vertices -- convexHull() returns ColliderDesc | null, so guard it
+const hullDesc = RAPIER.ColliderDesc.convexHull(verticesFloat32Array)
+if (hullDesc) world.createCollider(hullDesc, body)
 
 // Triangle mesh (static only!)
 world.createCollider(
@@ -68,12 +70,14 @@ world.createCollider(
 ### Simulation Step
 
 ```typescript
-const timestep = 1 / 60
+world.timestep = 1 / 60   // fixed integration step (this is also the default)
 
 function tick() {
   world.step()
 
-  // Read results
+  // Read results. NOTE: RigidBodySet.forEach passes ONLY the body (no index), and its
+  // iteration order is not guaranteed and shifts as bodies are added/removed — never
+  // derive a buffer offset from iteration position (see the Worker pattern below).
   world.bodies.forEach((body) => {
     const pos = body.translation()   // { x, y, z }
     const rot = body.rotation()      // { x, y, z, w } quaternion
@@ -84,8 +88,9 @@ function tick() {
 ### Forces and Impulses
 
 ```typescript
-body.applyImpulse({ x: 0, y: 10, z: 0 }, true)    // instant velocity change
-body.applyForce({ x: 0, y: 100, z: 0 }, true)      // continuous force
+body.applyImpulse({ x: 0, y: 10, z: 0 }, true)    // instant velocity change (one-off)
+body.addForce({ x: 0, y: 100, z: 0 }, true)        // persistent force — NOT auto-zeroed each step
+body.resetForces(true)                                // clear accumulated forces (also resetTorques)
 body.setLinvel({ x: 5, y: body.linvel().y, z: 0 }, true)  // set velocity directly
 body.lockRotations(true, true)                        // prevent rotation
 ```
@@ -177,8 +182,8 @@ Use when: many rigid bodies, 60fps target, main thread must stay free for render
 
 ```typescript
 // workers/physics.worker.ts
-import('@dimforge/rapier3d').then(async (RAPIER) => {
-  await RAPIER.init()
+import('@dimforge/rapier3d').then((RAPIER) => {
+  // bundler build: WASM is initialized by the import itself — no RAPIER.init() to await
 
   const gravity = { x: 0, y: -9.81, z: 0 }
   const world = new RAPIER.World(gravity)
@@ -189,7 +194,7 @@ import('@dimforge/rapier3d').then(async (RAPIER) => {
 
     if (type === 'init') {
       transforms = new Float32Array(payload.buffer)
-      // spawn bodies from payload.bodies...
+      // spawn bodies from payload.bodies... and push each into `bodies` (below) in order
       self.postMessage({ type: 'ready' })
       tick()
     }
@@ -202,21 +207,27 @@ import('@dimforge/rapier3d').then(async (RAPIER) => {
   // Fixed-step accumulator — keeps timing stable even if tick body is slow.
   const STEP_MS = 1000 / 60
   let last = performance.now()
+  let acc = 0
+  // Bodies in a STABLE spawn order — populate this in the 'init' handler above.
+  // RigidBodySet iteration order is NOT spawn order and shifts on removal, so never
+  // key a SharedArrayBuffer slot off iteration position.
+  const bodies = []   // RAPIER.RigidBody[]
 
   function tick() {
     const now = performance.now()
     const elapsed = now - last
     last = now
 
-    // Catch up if we drifted (cap to avoid spiral-of-death on tab resume).
-    let acc = Math.min(elapsed, STEP_MS * 5)
+    // Accumulate elapsed and carry the remainder across ticks (cap to avoid
+    // spiral-of-death on tab resume).
+    acc = Math.min(acc + elapsed, STEP_MS * 5)
     while (acc >= STEP_MS) {
       world.step()
       acc -= STEP_MS
     }
 
-    // Write results into SharedArrayBuffer
-    world.bodies.forEach((body, i) => {
+    // Write results into SharedArrayBuffer, keyed by stable index (NOT iteration order).
+    bodies.forEach((body, i) => {
       const t = body.translation()
       const r = body.rotation()
       const offset = i * 7
@@ -255,6 +266,8 @@ function syncPhysics(meshes: THREE.Mesh[]) {
 }
 ```
 
+`meshes[i]` must line up with the worker's stable `bodies[i]` order (above), not iteration order. Reads here are unsynchronized, so a frame can mix a new position with a stale quaternion (tearing). For transforms this is visually imperceptible; if you need consistency, double-buffer or use a seqlock with an `Int32Array` generation counter (see `references/threading.md`).
+
 ### postMessage Fallback (no COOP/COEP)
 
 If SharedArrayBuffer is unavailable (no COOP/COEP headers):
@@ -262,6 +275,6 @@ If SharedArrayBuffer is unavailable (no COOP/COEP headers):
 ```typescript
 // Worker: send results each frame
 self.postMessage({ type: 'tick', transforms: Float32Array })
-// ~14KB/s for 60 bodies @ 60fps -- acceptable cost
+// ~98 KB/s for 60 bodies @ 60fps (60 × 7 floats × 4 B × 60 fps) -- acceptable cost
 // Use Transferable if needed: self.postMessage(data, [data.transforms.buffer])
 ```

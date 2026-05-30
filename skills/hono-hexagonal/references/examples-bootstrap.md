@@ -17,7 +17,11 @@ import { z } from "zod";
 const configSchema = z.object({
   DATABASE_URL: z.string().min(1),
   PORT: z.coerce.number().default(3000),
-  CORS_ORIGIN: z.string().default("http://localhost:3000"),
+  // Comma-separated list → string[]. No hardcoded localhost in app code.
+  CORS_ORIGINS: z
+    .string()
+    .default("http://localhost:3000")
+    .transform((v) => v.split(",").map((o) => o.trim()).filter(Boolean)),
   JWT_SECRET: z.string().min(16),
 });
 
@@ -48,6 +52,7 @@ const repo = DrizzleAuthorRepository.fromClient(db);
 const service = new AuthorServiceImpl(repo, new NoOpMetrics(), new NoOpNotifier());
 const app = createApp({
   authorService: service,
+  config: { corsOrigins: config.CORS_ORIGINS },
   healthPing: makeHealthPing(db), // factory lives in the outbound layer
 });
 
@@ -78,6 +83,7 @@ const repo = DrizzleAuthorRepository.fromClient(db);
 const service = new AuthorServiceImpl(repo, new NoOpMetrics(), new NoOpNotifier());
 const app = createApp({
   authorService: service,
+  config: { corsOrigins: config.CORS_ORIGINS },
   healthPing: async () => { await db.execute(sql`SELECT 1`); },
 });
 
@@ -119,6 +125,7 @@ import { createApp } from "./app";
 export type Bindings = {
   DB: D1Database;
   JWT_SECRET: string;
+  CORS_ORIGINS: string; // comma-separated
 };
 
 export default {
@@ -128,6 +135,7 @@ export default {
     const service = new AuthorServiceImpl(repo, new NoOpMetrics(), new NoOpNotifier());
     const app = createApp({
       authorService: service,
+      config: { corsOrigins: env.CORS_ORIGINS.split(",").map((o) => o.trim()).filter(Boolean) },
       healthPing: async () => { await db.run(sql`SELECT 1`); },
     });
     return app.fetch(req, env, ctx);
@@ -245,22 +253,31 @@ bun drizzle-kit studio
     "db:studio": "bun drizzle-kit studio"
   },
   "dependencies": {
-    "hono": "^4.7",
-    "@hono/zod-openapi": "^0.18",
+    "hono": "^4.12",
+    "@hono/zod-openapi": "^1.4",
     "@hono/swagger-ui": "^0.5",
-    "@hono/zod-validator": "^0.5",
-    "zod": "^3.24",
-    "drizzle-orm": "^0.39",
+    "@hono/zod-validator": "^0.7",
+    "zod": "^4.0",
+    "drizzle-orm": "^0.45",
     "@node-rs/argon2": "^2.0",
     "jose": "^6.0"
   },
   "devDependencies": {
-    "drizzle-kit": "^0.30",
+    "drizzle-kit": "^0.31",
     "typescript": "^5.7",
     "@types/bun": "latest"
   }
 }
 ```
+
+> **Zod 3 → 4 is not a no-op.** `@hono/zod-openapi` 1.x requires `hono >=4.10`
+> and `zod ^4`, and re-exports a v4-compatible `z` that carries the `.openapi()`
+> metadata extension. Import `z` from `@hono/zod-openapi` everywhere (never from
+> `"zod"` directly) — mixing the two instantiates Zod twice and your schemas
+> won't structurally match the validator's expected types ("split-Zod" errors).
+> Moving from Zod 3 also changes the `.openapi()` registration story (error
+> shape via `z.treeifyError`, stricter coercion), so budget for a real migration
+> pass, not a version bump.
 
 For Node.js, also add:
 ```json
@@ -414,9 +431,15 @@ import { NoOpMetrics, NoOpNotifier } from "./mocks";
  * Uses app.request() — Hono's built-in test utility.
  * Stub healthPing always succeeds in tests.
  */
+const testConfig = { corsOrigins: ["http://localhost:3000"] };
+
 export function buildTestApp(repo: AuthorRepository) {
   const service = new AuthorServiceImpl(repo, new NoOpMetrics(), new NoOpNotifier());
-  return createTestApp({ authorService: service, healthPing: async () => {} });
+  return createTestApp({
+    authorService: service,
+    config: testConfig,
+    healthPing: async () => {},
+  });
 }
 
 /**
@@ -424,7 +447,11 @@ export function buildTestApp(repo: AuthorRepository) {
  * Use when testing handler behavior in isolation.
  */
 export function buildTestAppWithService(service: AuthorService) {
-  return createTestApp({ authorService: service, healthPing: async () => {} });
+  return createTestApp({
+    authorService: service,
+    config: testConfig,
+    healthPing: async () => {},
+  });
 }
 ```
 
@@ -444,13 +471,14 @@ describe("POST /authors", () => {
     const repo = new MockAuthorRepository(author);
     const app = buildTestApp(repo);
 
-    const res = await app.request("/authors", {
+    const res = await app.request("/v1/authors", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "Alice" }),
     });
 
     expect(res.status).toBe(201);
+    expect(res.headers.get("Location")).toBe("/v1/authors/123");
     const body = await res.json();
     expect(body.data.name).toBe("Alice");
     expect(repo.createCalls).toHaveLength(1);
@@ -462,29 +490,33 @@ describe("POST /authors", () => {
     );
     const app = buildTestApp(repo);
 
-    const res = await app.request("/authors", {
+    const res = await app.request("/v1/authors", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "Alice" }),
     });
 
     expect(res.status).toBe(409);
+    expect(res.headers.get("content-type")).toContain("application/problem+json");
     const body = await res.json();
     expect(body.type).toContain("duplicate-author");
   });
 
-  it("returns 400 for empty name (Zod validation)", async () => {
+  it("returns 422 for empty name (Zod validation)", async () => {
     const repo = new MockAuthorRepository();
     const app = buildTestApp(repo);
 
-    const res = await app.request("/authors", {
+    const res = await app.request("/v1/authors", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "" }),
     });
 
-    // zValidator returns 400 by default for Zod failures
-    expect(res.status).toBe(400);
+    // The OpenAPIHono defaultHook maps Zod failures to a 422 problem document.
+    expect(res.status).toBe(422);
+    expect(res.headers.get("content-type")).toContain("application/problem+json");
+    const body = await res.json();
+    expect(body.errors[0].field).toBe("name");
   });
 });
 
@@ -493,12 +525,12 @@ describe("GET /authors", () => {
     const repo = new MockAuthorRepository();
     const app = buildTestApp(repo);
 
-    const res = await app.request("/authors?limit=10");
+    const res = await app.request("/v1/authors?limit=10");
 
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.data).toEqual([]);
-    expect(body.has_more).toBe(false);
+    expect(body.meta.has_more).toBe(false);
   });
 });
 ```

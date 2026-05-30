@@ -35,6 +35,20 @@ They're the wrong tool when:
 
 A rule of thumb: if you can draw the flowchart of steps before running, you don't need an agent.
 
+## Workflows: the shapes before you reach for an agent
+
+If you *can* draw the flowchart, you want a **workflow** (also called an agentic pipeline): LLM calls wired through steps you fixed in advance. The control flow lives in your code, not in the model's runtime choices, so workflows are cheaper, lower-latency, more testable, and far easier to debug than agents. Most "AI features" are workflows, not agents. The core patterns:
+
+- **Prompt chaining.** Decompose a task into a fixed sequence of steps, each LLM call working on the previous output (e.g., outline → draft → polish). Add a programmatic gate between steps to catch failures early. Use when the task splits cleanly into predictable subtasks.
+- **Routing.** A first classification step sends the input to one of several specialized downstream prompts/models (e.g., refund vs technical vs sales → a handler tuned for each). Use when inputs fall into distinct categories that are better handled separately than by one do-everything prompt.
+- **Parallelization.** Run independent subtasks concurrently and aggregate — either *sectioning* (split work into independent pieces) or *voting* (run the same task N times and take a majority/consensus). Use for speed, or to raise confidence on a hard judgment.
+- **Orchestrator-workers.** A central LLM call breaks a task into subtasks, hands each to a worker call, and synthesizes the results. The subtasks aren't known up front, but the orchestration *structure* is. This is the boundary case between workflow and agent.
+- **Evaluator-optimizer.** One call produces, a second evaluates against criteria and returns feedback; loop until it passes (or hits a cap). Use when you have clear evaluation criteria and iteration measurably improves quality (translation, code that must pass tests, copy against a brief).
+
+**Workflow vs agent.** A workflow has a control flow you can draw before running; an agent decides its own next step at runtime. Always try to express the task as a workflow first — reach for an agent only when the path genuinely can't be predetermined (unknown number of steps, or tool choice that depends on intermediate results you can't anticipate). The patterns compose: an agent may *contain* workflow steps, and a workflow step may call an agent.
+
+For the system-level view of these patterns (durable execution, multi-agent orchestration infrastructure, protocols), see `software-architecture/references/ai-agents.md`.
+
 ## The basic agent loop
 
 ```
@@ -62,6 +76,17 @@ Agents accumulate context fast. A 10-turn agent with long tool outputs can easil
 - **Task-scoped context.** When delegating to a sub-agent, pass only what it needs — not the full history.
 
 Most agent frameworks do some of this automatically. Verify what yours does before assuming.
+
+## Memory across sessions
+
+Context management (above) handles a single run. Chatbots, copilots, and long-lived agents also need **memory that persists across runs**: user preferences, prior decisions, facts learned in earlier sessions. Design decisions:
+
+- **What to remember.** Don't persist whole transcripts. Extract durable facts (preferences, entities, commitments) and store those; raw history bloats context and ages badly.
+- **When to write.** End-of-session summarization, or explicit "remember this" signals. Writing on every turn is expensive and noisy.
+- **How to recall.** Retrieve relevant memories into context at the start of a run — often via the same embedding/retrieval machinery as RAG (see `references/rag.md`) — not by dumping everything.
+- **Scoping and privacy.** Memory is per-user (or per-org) state — never let one user's memory leak into another's context. Treat it as regulated data if it holds anything sensitive.
+
+This is the design-level view. For memory *architectures* (working/episodic/semantic stores, durable execution, state backends), see `software-architecture/references/ai-agents.md` § Memory Architectures.
 
 ## Planning vs reactive
 

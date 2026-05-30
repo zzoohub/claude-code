@@ -70,18 +70,25 @@ WHERE u.id = ANY(:user_ids)
 GROUP BY u.id;
 ```
 
-**Solution B**: LATERAL join (when you need per-row limits)
+**Solution B**: LATERAL join (when you need a per-parent row limit, e.g. latest 5)
 ```sql
 SELECT u.id, u.name, recent.orders
 FROM user_accounts u
 LEFT JOIN LATERAL (
+    -- Cap rows in an INNER subquery BEFORE aggregating. A LIMIT next to jsonb_agg
+    -- has no effect: jsonb_agg collapses every matched row into one, so the LIMIT
+    -- would apply to that single aggregate row, not to the input rows.
     SELECT jsonb_agg(
-        jsonb_build_object('id', o.id, 'total', o.total)
-        ORDER BY o.created_at DESC
+        jsonb_build_object('id', t.id, 'total', t.total)
+        ORDER BY t.created_at DESC
     ) AS orders
-    FROM orders o
-    WHERE o.user_id = u.id
-    LIMIT 5
+    FROM (
+        SELECT o.id, o.total, o.created_at
+        FROM orders o
+        WHERE o.user_id = u.id
+        ORDER BY o.created_at DESC
+        LIMIT 5
+    ) t
 ) recent ON true
 WHERE u.id = ANY(:user_ids);
 ```
@@ -180,13 +187,13 @@ SELECT * FROM products WHERE attributes ? 'color';
 SELECT * FROM products WHERE attributes #>> '{specs,weight}' = '1.5kg';
 ```
 
-**Pitfall**: `->>'key'` returns TEXT, `->'key'` returns JSONB. Use `->>`for comparison with string values.
+**Pitfall**: `->>'key'` returns TEXT, `->'key'` returns JSONB. Use `->>` for comparison with string values.
 
 ## 8. Bulk Import
 
 ```sql
 -- 1. Create staging table (inherits structure, no constraints)
-CREATE TEMP TABLE staging (LIKE product INCLUDING DEFAULTS);
+CREATE TEMP TABLE staging (LIKE products INCLUDING DEFAULTS);
 
 -- 2. COPY is fastest for bulk loading
 COPY staging FROM '/path/to/data.csv' WITH (FORMAT csv, HEADER true);
@@ -272,7 +279,7 @@ CREATE INDEX idx_events_brin ON events USING BRIN (created_at);
 DROP TABLE events_2025_01;
 ```
 
-**Rule**: Queries MUST include the partition key (`created_at`) in WHERE for partition pruning to work.
+**Rule**: Queries SHOULD include a predicate on the partition key (`created_at`) so the planner can prune partitions at plan time. Without it, PostgreSQL scans all partitions — runtime (execution-time) pruning only helps for parameterized values and join keys.
 
 ## 12. UPSERT (INSERT ON CONFLICT)
 
@@ -293,9 +300,13 @@ INSERT INTO user_accounts (email, name)
 VALUES ('user@example.com', 'New User')
 ON CONFLICT (email) DO NOTHING;
 
--- Return the row whether inserted or existing
+-- Return the row whether inserted or existing.
+-- DO NOTHING returns NO row on conflict, so DO UPDATE is required for RETURNING to
+-- fire. But this is NOT a free no-op: it writes a new row version on every conflict
+-- (WAL, dead tuple, row lock, fires UPDATE triggers) even when the value is identical.
+-- For hot, high-conflict rows, prefer DO NOTHING + a follow-up SELECT.
 INSERT INTO tags (name) VALUES ('postgresql')
-ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name  -- no-op update
+ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name  -- writes a row version
 RETURNING id, name;
 ```
 
@@ -341,7 +352,7 @@ FROM mv_daily_revenue;
 SELECT name, score,
     RANK() OVER (ORDER BY score DESC) AS rank,
     DENSE_RANK() OVER (ORDER BY score DESC) AS dense_rank
-FROM leaderboard;
+FROM leaderboard_entries;
 ```
 
 ## 14. DISTINCT ON (PostgreSQL-Specific)
@@ -361,7 +372,7 @@ ORDER BY user_id, created_at DESC;
 -- Most recent login per user, only active users
 SELECT DISTINCT ON (u.id) u.id, u.name, l.logged_in_at
 FROM user_accounts u
-JOIN login l ON l.user_id = u.id
+JOIN logins l ON l.user_id = u.id
 WHERE u.status = 'active'
 ORDER BY u.id, l.logged_in_at DESC;
 ```
@@ -400,7 +411,7 @@ Time-series queries often have missing intervals. `generate_series` fills them.
 SELECT
     d.day,
     COALESCE(SUM(o.total), 0) AS revenue,
-    COALESCE(COUNT(o.id), 0) AS order_count
+    COUNT(o.id) AS order_count   -- COUNT returns 0 (not NULL) for empty groups
 FROM generate_series(
     date_trunc('day', now() - interval '30 days'),
     date_trunc('day', now()),

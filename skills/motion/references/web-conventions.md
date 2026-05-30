@@ -71,7 +71,7 @@ Tailwind owns **layout and styling**. GSAP owns **motion**. They never overlap. 
 
 > **Important update (2026):** Webflow acquired GSAP in Fall 2024. As of April 2025, **all GSAP plugins — including SplitText, MorphSVG, DrawSVG, MotionPath, ScrollTrigger, ScrollSmoother, Inertia — are 100% free for commercial use.** No Club membership required.
 >
-> SplitText was also **completely rewritten** in 2025: ~50% smaller, built-in screen-reader accessibility (`aria-label` preserved automatically), easy masking for advanced reveals, and improved cross-browser stability.
+> SplitText was also **completely rewritten** in 2025: ~50% smaller, an opt-out aria handler (default `aria: "auto"` adds `aria-label` to the container and `aria-hidden` to the split chars/words/lines), easy masking for advanced reveals, and improved cross-browser stability. The aria handler reduces letter-by-letter readout but does **not** fully guarantee accessibility — GSAP itself notes it won't preserve nested links/semantics, and char-level splits can still degrade some screen readers. Test with a real screen reader.
 
 Use `SplitText` directly:
 
@@ -83,7 +83,8 @@ gsap.registerPlugin(SplitText);
 
 const split = SplitText.create(element, {
   type: "chars,words",
-  // a11y handled automatically via aria-label
+  // default aria:'auto' adds aria-label + aria-hidden — still verify char-level
+  // splits with a real screen reader (won't preserve nested links/semantics)
 });
 
 // split.chars / split.words / split.lines available
@@ -98,7 +99,7 @@ split.revert();
 
 ## Lenis + GSAP Integration
 
-The non-obvious part: syncing Lenis with GSAP's ticker and ScrollTrigger.
+The non-obvious part: syncing Lenis with GSAP's ticker and ScrollTrigger. (Package is `lenis`; the older `@studio-freight/lenis` is deprecated/renamed.)
 
 ```ts
 // lib/smooth-scroll.ts
@@ -186,24 +187,26 @@ CSS-native animation is now the **default** for simple reveals and route transit
 | `@starting-style` | Simple element enter/exit (modal, toast) | Need sequenced/staggered enter/exit |
 
 **Browser support (2026-05):**
-- Same-document View Transitions: Baseline (Chrome 111+, Safari 18+, Firefox 144+ since Sept 2025)
-- **Cross-document View Transitions** (`@view-transition` at-rule for MPAs): Chrome 126+ (June 2024), Safari 18.2+; **Firefox: not yet** — falls back to instant nav, no animation
-- Scroll-driven animations: Chrome 115+, Safari 18.4+; Firefox in progress
-- `@starting-style`: Chrome 117+, Safari 17.5+; Firefox 129+
+- Same-document View Transitions: Baseline (newly available) — Chrome 111+, Safari 18+, Firefox 144+ (Oct 2025). "Newly available," not "widely available," so older in-field versions still lack it.
+- **Cross-document View Transitions** (`@view-transition` at-rule for MPAs): Chrome 126+ (June 2024), Safari 18.2+; **Firefox: not yet** (the at-rule is ignored) — falls back to instant nav, no animation
+- Scroll-driven animations: Chrome 115+, **Safari 26+** (unsupported through 18.x); Firefox behind the `layout.css.scroll-driven-animations.enabled` flag, not shipped. **Not Baseline** — always provide a non-scroll-timeline fallback.
+- `@starting-style`: Chrome 117+, Safari 17.5+; Firefox 129+ (Baseline)
 
-Use `@supports (animation-timeline: view())` and `@supports at-rule(@view-transition)` for feature detection.
+Feature-detect with property/selector checks that work cross-browser: `@supports (animation-timeline: view())` for scroll-driven, and `@supports (view-transition-name: none)` (or `@supports selector(::view-transition-group(*))`) for View Transitions. **Avoid `@supports at-rule(@view-transition)`** — the `at-rule()` function is Chromium-only and evaluates false in Safari/Firefox, so it would wrongly disable VT on Safari (which supports it).
 
 ## View Transitions API
 
 The primary tool for page route transitions:
 
 ```ts
-function navigate(href: string, pushFn: (href: string) => void) {
+function navigate(href: string, pushFn: (href: string) => void | Promise<void>) {
   if (!document.startViewTransition) {
     pushFn(href);
     return;
   }
-  document.startViewTransition(() => pushFn(href));
+  // Return the (possibly async) DOM update so the API snapshots AFTER it commits.
+  // If pushFn is async and you don't await it, the transition captures stale DOM.
+  document.startViewTransition(async () => { await pushFn(href); });
 }
 ```
 
@@ -225,9 +228,9 @@ function navigate(href: string, pushFn: (href: string) => void) {
 | Library | Size (gzipped) | Strategy |
 |---------|------|----------|
 | CSS native | **0KB** | Use when GSAP not already loaded |
-| GSAP core | ~25KB | Pages with complex animation |
+| GSAP core | ~27KB | Pages with complex animation |
 | GSAP + ScrollTrigger | ~35KB | Scroll-heavy pages |
-| Lenis | ~8KB | Marketing/portfolio sites only |
+| Lenis | ~5KB | Marketing/portfolio sites only |
 | D3 (tree-shaken) | ~30KB | Pages with data visualization |
 
 Import only what you use -- never `import "gsap/all"`.
@@ -284,6 +287,8 @@ Or import a typed `tokens.ts` shared with the design system. Either way, swap fr
 
 **Mobile web**: Disable parallax, custom cursor, magnetic/tilt effects on touch devices. Use `ScrollTrigger.matchMedia` for responsive animation tiers.
 
+**Animation budget**: cap concurrent animated elements — beyond ~10-15 simultaneous tweens/ScrollTriggers per viewport, prioritize, stagger, or simplify. Profile with DevTools Performance: if a frame's scripting + rendering exceeds the budget (~16ms at 60fps, ~8ms at 120Hz), cut work before adding more motion.
+
 ## Common Gotchas
 
 1. **Scroll position on navigation**: browser may restore scroll on back. Reset with `window.scrollTo(0, 0)` in transition callback.
@@ -293,3 +298,4 @@ Or import a typed `tokens.ts` shared with the design system. Either way, swap fr
 5. **Multiple GSAP contexts on same element**: later context doesn't auto-clean earlier one. Each needs its own cleanup.
 6. **Custom cursor on touch devices**: always guard with `"ontouchstart" in window` or `@media (pointer: fine)`.
 7. **GSAP plugins (all free since April 2025)**: `SplitText`, `MorphSVG`, `DrawSVG`, `MotionPath`, `InertiaPlugin`, `ScrollTrigger`, `ScrollSmoother` are all 100% free for commercial use after the Webflow acquisition. Older docs referencing "GSAP Club" or "paid plugins" are outdated.
+8. **FOUC / JS-failure on scroll reveals**: elements that start at `opacity: 0` and are revealed by JS become permanently invisible if JS fails to load or errors. Gate the hidden state on a `js`-ready class (or `@supports`) added by script, so the no-JS default renders content visible. Always server-render content visible — animation enhances, never gates.

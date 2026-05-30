@@ -9,8 +9,11 @@ description: |
   "signup optimization", "landing page optimization", "why aren't people signing up",
   "improve my pricing page", "reduce bounce rate", "increase sign-ups", "cart abandonment",
   "checkout optimization", "not converting", "low conversion", "funnel optimization".
-  Do NOT use for: writing copy (use copywriting skill), psychological principles (use marketing-psychology skill),
-  or email optimization (use email-marketing skill).
+  Do NOT use for: writing final copy (use copywriting skill — cro identifies copy problems and directions, copywriting produces variants),
+  psychological principles (use marketing-psychology skill), email optimization (use email-marketing skill),
+  pricing strategy/tier design (use pricing skill — cro covers only paywall/pricing-page UI),
+  referral/viral-loop design (use growth-loops skill), or A/B test analysis and Aha-Moment/retention analytics
+  (use product-analytics skill — cro owns experiment design only).
 ---
 
 # Conversion Rate Optimization
@@ -29,7 +32,19 @@ What is the ONE primary action? Be specific: "signup", "upgrade to paid", "submi
 ### 2. Map the Current Funnel
 Document every step from entry to conversion. Identify where users enter, what they see, and where they drop off.
 
-### 3. Prioritize by Impact
+If funnel- or field-level data doesn't exist yet, instrument it first — see the `product-analytics` skill (`references/event-tracking-design.md` for the tracking plan, `references/ga4-gtm-setup.md` for GA4/event setup). You can't optimize what you can't measure; absent data, fall back to a heuristic audit and flag that lift estimates are unvalidated.
+
+Before treating funnel/drop-off numbers as exact, account for measurement gaps: consent-banner opt-outs (declined users aren't tracked), Safari/Firefox cookie restrictions and ad-blockers (lost sessions), and GA4 Consent Mode modeled (estimated, not observed) conversions. For high-stakes calls, reconcile against server-side or order-level data.
+
+### 3. Diagnose Before You Prescribe
+Don't jump from "where users drop off" to a fix. At the drop-off point, gather evidence about *why* before recommending changes:
+- **Behavioral** — funnel/path analytics, field- and step-level drop-off.
+- **Qualitative** — session replays and heatmaps/scroll maps (e.g., Microsoft Clarity, Hotjar, FullStory), on-page exit surveys, and 3–5 quick user tests.
+- **Technical** — page-load/LCP and console/payment errors at the failing step.
+
+Form an explicit hypothesis ("users drop here because X") before writing recommendations. Prescribing from a checklist without diagnosing the real failure mode produces generic, often-wrong fixes (e.g. "shorten the form" when the real blocker is a confusing payment error). Tie the ICE Confidence score (below) to whether a recommendation is backed by this evidence rather than best practice alone.
+
+### 4. Prioritize by Impact
 Analyze in this priority order (highest impact first):
 1. **Value Proposition Clarity** — Can users understand what they get in 5 seconds?
 2. **CTA Effectiveness** — Is the desired action visible, clear, and compelling?
@@ -44,7 +59,7 @@ Score each recommendation using **ICE**:
 
 ICE Score = (Impact + Confidence + Ease) / 3. Rank recommendations by score. Present the top items first.
 
-### 4. Generate Recommendations
+### 5. Generate Recommendations
 Structure output as:
 - **Quick Wins** — Changes implementable in < 1 day
 - **High-Impact Changes** — Larger changes with significant expected lift
@@ -59,14 +74,15 @@ Structure output as:
 | Landing/marketing page conversion | `references/page-cro.md` |
 | Signup/registration flow | `references/signup-flow-cro.md` |
 | Post-signup onboarding/activation | `references/onboarding-cro.md` |
-| Lead capture/contact/checkout forms | `references/form-cro.md` |
+| Lead capture / contact / demo / survey / application forms | `references/form-cro.md` |
 | Popups/modals/overlays/banners | `references/popup-cro.md` |
 | In-app upgrade/paywall/upsell | `references/paywall-upgrade-cro.md` |
-| Checkout/cart/purchase flow | `references/checkout-cro.md` |
+| Checkout/cart/purchase flow (incl. checkout/payment forms) | `references/checkout-cro.md` |
 | Referral programs, viral loops, K Factor | `growth-loops` skill (separate) |
-| A/B test design and analysis | `references/experiments.md` |
+| A/B test design (hypothesis, sample size, variants, ramp) | `references/experiments.md` |
+| A/B test analysis (significance, segments, revenue impact) | `product-analytics` skill |
 
-**Multi-area requests** (e.g., "optimize my SaaS funnel"): Read the most relevant reference first, then pull in additional references as needed. For full-funnel work, read in order: page → signup → onboarding → paywall. Synthesize into a single cohesive analysis — don't produce separate reports per area.
+**Multi-area requests** (e.g., "optimize my SaaS funnel"): Read the most relevant reference first, then pull in additional references as needed. For full-funnel work, read in the order the funnel demands: SaaS/subscription → page → signup → onboarding → paywall; e-commerce/transactional → page → form → checkout. Synthesize into a single cohesive analysis — don't produce separate reports per area.
 
 ---
 
@@ -88,11 +104,13 @@ Don't compete with yourself. One CTA, one goal, one message. Save secondary acti
 No dark patterns. Easy to dismiss, easy to cancel, easy to go back. Trust builds long-term conversion.
 
 ### Test, Don't Assume
-Every hypothesis needs validation. What works on one site may fail on another. See `references/experiments.md` for rigorous test design.
+Every hypothesis needs validation. What works on one site may fail on another. See `references/experiments.md` for rigorous test design — and, when traffic is too low to power an A/B test, for how to validate another way instead of defaulting to an unrunnable test.
 
 ---
 
 ## CRO Analysis Output Template
+
+This is the default shape. When a reference defines its own Output Format (e.g. `signup-flow-cro.md`, `onboarding-cro.md`), follow the reference's format and treat this template as the fallback.
 
 ```markdown
 ## CRO Analysis: [Page/Flow Name]
@@ -114,10 +132,10 @@ Every hypothesis needs validation. What works on one site may fail on another. S
 1. Hypothesis: [if we X, then Y, because Z]
 2. Hypothesis: [if we X, then Y, because Z]
 
-### Copy Alternatives
-- Current: "[text]"
-- Option A: "[text]" — [rationale]
-- Option B: "[text]" — [rationale]
+### Copy Direction (hand to copywriting for final variants)
+- Element: [headline / CTA / etc.]
+- Problem: [why the current copy underperforms]
+- Direction: [angle/message to pursue — final variants come from the copywriting skill]
 ```
 
 ---
@@ -132,5 +150,6 @@ Every hypothesis needs validation. What works on one site may fail on another. S
 | Form | Form view → submission rate | Field-level drop-off, error rate |
 | Popup | Impression → conversion rate | Close rate, time to close |
 | Paywall | View → upgrade rate | Click-through to pricing, plan selection |
+| Checkout | Cart → purchase completion rate | Checkout-start rate, step drop-off, payment failure rate, AOV |
 
 ---

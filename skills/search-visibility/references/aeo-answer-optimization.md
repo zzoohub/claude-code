@@ -12,11 +12,11 @@ AEO sits between traditional SEO and GEO. SEO gets you ranked. AEO gets you sele
 
 ### Why AEO Matters Now
 
-Zero-click searches are growing. As of 2025, roughly 60-70% of Google searches end without a click to a traditional result. Users get the answer directly from the SERP. If your content is not formatted to be that answer, you lose visibility even if you rank well.
+Zero-click searches are growing, driven largely by AI Overviews and other SERP features. Current estimates cluster around 58-69% of Google searches ending without a click to a traditional result (Similarweb ~69%, Semrush ~58-60%; figures vary by method and region). Users get the answer directly from the SERP. If your content is not formatted to be that answer, you lose visibility even if you rank well.
 
-Voice search continues to grow with smart speakers and mobile assistants. Voice queries use natural, question-like phrasing, and voice assistants typically read a single answer, often pulled from featured snippets or structured content.
+Voice search continues to exist via smart speakers and mobile assistants, though standalone voice-SEO has been deprioritized as AI assistants answer conversationally. Voice queries use natural, question-like phrasing, and voice assistants typically read a single answer, often pulled from featured snippets or structured content.
 
-Google shows a featured snippet for approximately 19% of all search queries. Pages that win featured snippets see significantly higher click-through rates. Content that answers a question directly is far more likely to be selected for these positions.
+**Important 2026 caveat:** AI Overviews have absorbed much of "position zero." Featured snippets historically appeared on roughly 10-20% of SERPs (Ahrefs ~12%, SEMrush ~19%; pre-2023 figures), but their prevalence fell sharply through 2025 — one tracker recorded a ~64% drop (≈15% → 5.5% of US desktop queries, Jan-June 2025) — as Google's AI Overviews replaced an estimated ~83% of the featured snippets that used to show. Winning a snippet still raises CTR, but by 2026 the bigger prize is being **cited inside the AI Overview / AI answer** for a query. Treat classic featured-snippet optimization and AI-answer citation (GEO) as one continuum, not separate goals.
 
 ---
 
@@ -24,7 +24,7 @@ Google shows a featured snippet for approximately 19% of all search queries. Pag
 
 ### Snippet Types and How to Target Each
 
-**Paragraph Snippets** (most common, approximately 70% of snippets)
+**Paragraph Snippets** (most common — roughly 70% of featured snippets per older Ahrefs/SEMrush analyses; format mix predates the AI-Overview era)
 
 What they look like: A 40-60 word text block displayed at position zero.
 
@@ -131,14 +131,14 @@ Voice assistants typically read one answer. If you are not that answer, you get 
 - Test by reading your answer paragraphs out loud. If they sound awkward, rewrite.
 
 **Keep answers concise and direct**
-- Voice assistants typically read 29-word answers on average
+- Voice answers tend to be very short (historically ~29 words, per a 2018 Backlinko study of ~10k Google Home results — dated, but the "keep it short" principle holds)
 - Front-load the most important information
 - Avoid hedging or unnecessary qualifiers before the actual answer
 
-**Use Speakable schema markup**
-- The Speakable schema (schema.org/SpeakableSpecification) identifies content sections most suitable for text-to-speech
-- Apply to your most concise, answer-ready content blocks
-- This signals to search engines which parts of your content are voice-friendly
+**Speakable schema markup (news publishers only)**
+- Speakable (schema.org/SpeakableSpecification) is a Google **beta limited to US-English news publishers**, used only by Google Assistant to read articles aloud on smart speakers
+- It is **not** a general-purpose voice-SEO signal for typical sites — do not rely on it unless you are a qualifying news publisher
+- Verify current status against Google Search Central before implementing
 
 **Optimize for local voice queries** (if applicable)
 - "Near me" queries are heavily voice-driven
@@ -151,7 +151,7 @@ Voice assistants typically read one answer. If you are not that answer, you get 
 
 ### How PAA Works
 
-People Also Ask boxes appear in approximately 60-80% of Google search results. They expand when clicked, showing a direct answer pulled from a webpage, with a link to the source.
+People Also Ask boxes are among the most common SERP features, appearing in roughly 40-55% of Google search results overall (estimates vary widely by dataset and region; materially more common on mobile — about 3x desktop — and on question-style queries; PAA co-occurs with ~90% of AI Overview SERPs). They expand when clicked, showing a direct answer pulled from a webpage, with a link to the source.
 
 Each time a user clicks a PAA question, Google dynamically loads more related questions. This creates a cascade effect where a single PAA placement can lead to extended visibility.
 
@@ -236,9 +236,7 @@ This is not necessarily bad for your brand. Zero-click visibility still builds b
 
 ### FAQ Schema Markup
 
-Implement FAQPage schema for question-answer content to improve eligibility for rich results.
-
-Essential implementation:
+⚠️ **FAQPage schema no longer produces FAQ rich results in Google Search.** Google restricted FAQ rich results to authoritative government/health sites in Aug 2023, then removed them entirely for all sites on May 7, 2026 (the FAQ report and Rich Results Test support drop June 2026; Search Console API support is removed Aug 2026). Do **not** add FAQPage schema expecting a SERP rich result. Its remaining value is helping search engines and AI/LLM answer engines parse and extract your Q&A content. If you keep it, follow these implementation rules so the markup stays clean for machine extraction:
 - Each question-answer pair must be visible on the page (not hidden behind tabs or accordions for initial load)
 - The schema content must exactly match the visible page content
 - Do not include promotional content in FAQ schema answers
@@ -246,27 +244,20 @@ Essential implementation:
 
 ### HowTo Schema Markup
 
-For step-by-step instructional content, HowTo schema enables rich results with expandable steps.
-
-Essential implementation:
+⚠️ **HowTo rich results were removed by Google in 2023** (mobile Aug 2023, desktop by Sept 13 2023) and no longer appear in Search; HowTo is no longer a supported rich-result type. Structured step markup (HowTo, or plain semantic ordered steps with names, descriptions, time, and tools) can still aid AI/LLM and assistant extraction of procedural content and is fine to keep — but do **not** implement it expecting a SERP rich result. If you keep it:
 - Each step must be clearly defined with a name and description
 - Steps must be in the correct sequential order
 - Include estimated time and materials/tools where applicable
 - Match schema content exactly to visible page content
 
-### Speakable Schema Markup
+### Speakable Schema Markup (news publishers only)
 
-Speakable schema identifies sections of content most suitable for audio playback using text-to-speech.
+⚠️ Speakable is a **Google beta scoped to US-English news publishers**; it lets Google Assistant read up to three news articles aloud on smart speakers. It has never been a general-purpose AEO/voice tactic and is not worth implementing unless you are a qualifying news publisher.
 
-When to use:
-- News articles and timely content
-- FAQ answers that are voice-search targets
-- Concise definition or answer blocks
-
-Implementation:
-- Apply to your most concise, naturally speakable content blocks
-- Each speakable section should be 2-3 sentences maximum
-- Content must sound natural when read aloud by a voice assistant
+If you are a news publisher:
+- Apply Speakable to your most concise, naturally speakable content blocks (2-3 sentences max)
+- Content must sound natural when read aloud
+- Confirm current eligibility against Google Search Central first
 
 ---
 
@@ -320,7 +311,7 @@ Use headings that mirror how users actually search:
 ### Voice Search Readiness
 - [ ] Content targets conversational, long-tail question queries
 - [ ] Answer paragraphs sound natural when read aloud
-- [ ] Speakable schema applied to key answer blocks
+- [ ] (News publishers only) Speakable schema on key answer blocks — skip for general sites
 - [ ] Local business information optimized for "near me" voice queries (if applicable)
 
 ### People Also Ask Coverage
@@ -329,9 +320,9 @@ Use headings that mirror how users actually search:
 - [ ] Each PAA-targeted answer is concise (2-4 sentences) and self-contained
 
 ### Schema Markup
-- [ ] FAQPage schema on pages with question-answer content
-- [ ] HowTo schema on step-by-step instructional content
-- [ ] Speakable schema on voice-search priority content
+- [ ] FAQPage / HowTo markup, if used, is treated as AI/LLM extraction aid only — NOT for SERP rich results (both rich-result types deprecated: FAQ removed May 2026, HowTo removed 2023)
+- [ ] Speakable schema only on qualifying news-publisher content (not a general tactic)
+- [ ] Article / Product / Organization schema present where applicable (still supported)
 - [ ] All schema content matches visible page content exactly
 
 ### Zero-Click Strategy

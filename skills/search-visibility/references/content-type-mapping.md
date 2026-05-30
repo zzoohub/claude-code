@@ -45,7 +45,7 @@ Each content type is mapped using a four-level scale for each optimization layer
 | Blog post (personal story / narrative) | Moderate | None | Light | Connect emotionally, build brand | Do not force answer formatting on narrative content. Light GEO if it contains quotable expertise. |
 | Ultimate guide / pillar page | Full | Full | Full | Comprehensive topic coverage | Top priority for all three layers. Hub of topic cluster. |
 | Glossary / definition page | Full | Full | Full | Define terms, capture informational queries | Perfect AEO target (paragraph snippets for definitions). |
-| FAQ page (standalone) | Full | Full | Moderate | Answer common questions | AEO primary purpose. FAQ schema essential. GEO moderate because FAQ pages are shallow per topic. |
+| FAQ page (standalone) | Full | Full | Moderate | Answer common questions | AEO primary purpose (answer extraction / AI citation). NOTE: FAQ rich results were removed by Google (gov/health-only 2023, all sites May 2026), so FAQPage markup no longer wins a SERP rich result — keep FAQ content for answer extraction, not a rich-result win. GEO moderate (shallow per topic). |
 | Knowledge base / help article | Full | Full | Light | Help users solve problems | AEO full for step-by-step and answer snippets. GEO light because help content is product-specific. |
 | Documentation (technical) | Moderate | Moderate | Light | Provide technical reference | SEO/AEO moderate for discoverability. Do not sacrifice technical accuracy for optimization. |
 | Research report / whitepaper | Full | Moderate | Full | Present original findings | GEO full because AI heavily cites original research. AEO moderate for key finding snippets. |
@@ -262,7 +262,7 @@ When unsure which optimization to apply, walk through these questions:
 
 **Ignoring SEO on high-traffic-potential pages**: A comprehensive guide with no keyword research, no heading structure, and no meta optimization is invisible to search.
 
-**Skipping AEO on obvious answer content**: An FAQ page without FAQ schema, a how-to guide without structured steps. Easy wins left on the table.
+**Skipping AEO on obvious answer content**: An FAQ page with no question-based structure, a how-to guide without clear sequential steps — content that answer engines and AI could extract but that isn't structured for it. (FAQ/HowTo schema no longer wins SERP rich results, but clean Q&A and step structure still aids AI extraction.)
 
 **Neglecting GEO on authoritative content**: Original research with specific data, published without self-contained paragraphs or entity signals, is invisible to AI systems.
 

@@ -64,7 +64,9 @@ Consistent timing and easing across all animations.
 
 Always respect `prefers-reduced-motion`. When reduced, skip animation entirely — don't just shorten duration.
 
-→ Motion tokens, platform implementation, reduced motion: `references/motion.md`
+→ Motion tokens and usage table: `references/motion.md`. Platform reduced-motion implementation lives in `references/platform-web.md` and `references/react-native/platform.md`.
+
+This skill owns motion **tokens** (durations/easings) and reduced-motion policy. For motion **choreography** that consumes these tokens — scroll reveals, parallax, gestures, page transitions, animated charts — use the `motion` skill.
 
 ## Shadow & Elevation
 
@@ -72,12 +74,12 @@ Shadows communicate depth and hierarchy. Like colors and spacing, shadow values 
 
 | Token | Use |
 |-------|-----|
-| `shadow.sm` | Subtle lift — cards, inputs |
-| `shadow.md` | Moderate elevation — dropdowns, popovers |
-| `shadow.lg` | High elevation — modals, dialogs |
-| `shadow.xl` | Max elevation — toasts, command palette |
+| `shadow.card` | Subtle lift — cards, inputs |
+| `shadow.dropdown` | Moderate elevation — dropdowns, popovers |
+| `shadow.modal` | High elevation — modals, dialogs |
+| `shadow.toast` | Max elevation — toasts, command palette |
 
-Dark mode shadows use lower opacity and sometimes darker colors since the base surface is already dark. The semantic shadow tokens remap automatically per theme.
+Dark mode shadows use higher opacity so they stay visible against an already-dark surface — subtle shadows disappear on dark backgrounds. The semantic shadow tokens remap automatically per theme.
 
 > Full shadow definitions, dark theme overrides, and platform implementation: `references/tokens.md`
 
@@ -182,7 +184,7 @@ Color is never the sole indicator of state. Error states use color + icon + text
 - **Picking a color?** → Find it in semantic tokens. If it doesn't exist, add to semantic first, then use.
 - **Spacing a component?** → `spacing.component.*`. Between sections → `spacing.layout.*`.
 - **Sizing text?** → Pick from type scale. If nothing fits, extend the scale.
-- **Adding depth/elevation?** → Use shadow tokens (`shadow.sm` through `shadow.xl`). Never inline box-shadow values.
+- **Adding depth/elevation?** → Use semantic shadow tokens (`shadow.card`, `shadow.dropdown`, `shadow.modal`, `shadow.toast`). Never inline box-shadow values.
 - **Layering elements?** → Use z-index tokens. Never use magic numbers.
 - **Animating?** → Use motion tokens. Respect reduced motion.
 - **Building a simple component?** → Flat API with constrained props (size, colorScheme). No boolean modes.
@@ -191,7 +193,7 @@ Color is never the sole indicator of state. Error states use color + icon + text
 - **Need custom behavior?** → Headless hook first, styled wrapper on top.
 - **Passing content to a component?** → Use `children`. Avoid render props unless parent must pass computed data.
 - **Framework-specific patterns?** → See `references/react/` or `references/react-native/` for implementation details.
-- **Using Tailwind?** → Map tokens to `tailwind.config`. See `references/platform-web.md`.
+- **Using Tailwind?** → For Tailwind v4, wire tokens via CSS `@theme` (the current default); for legacy v3, map them in `tailwind.config.js`. See `references/platform-web.md`.
 - **Cross-platform?** → Tokens defined once, transformed per platform. See `references/pipeline.md`.
 
 ## Platform References

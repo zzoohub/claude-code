@@ -20,7 +20,7 @@ bun add -d vite-plugin-wasm vite-plugin-top-level-await
 [package]
 name = "my-wasm-3d"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -95,7 +95,7 @@ pub fn add(a: f64, b: f64) -> f64 { a + b }
 pub fn greet(name: &str) -> String { format!("Hello, {}!", name) }
 ```
 
-Supported types: `i32`, `u32`, `f32`, `f64`, `bool`, `String`, `&str`, `Vec<f32>`, `Vec<u8>`, `JsValue`.
+Common supported types: `i32`, `u32`, `i64`/`u64` (marshalled as JS `BigInt`), `f32`, `f64`, `bool`, `String`, `&str`, `Vec<f32>`, `Vec<u8>`, `Option<T>`, `JsValue`.
 
 ### Structs
 
@@ -142,6 +142,8 @@ pub fn create_shape(val: JsValue) -> Result<JsValue, JsValue> {
     serde_wasm_bindgen::to_value(&shape).map_err(|e| e.into())
 }
 ```
+
+`serde_wasm_bindgen` serializes enums **externally-tagged** by default (`{ Sphere: { radius } }` on the JS side, which differs from `serde_json`). Add `#[serde(tag = "type")]` for a flatter discriminated-union shape (`{ type: "Sphere", radius }`).
 
 ### Error Handling
 
@@ -225,7 +227,9 @@ particles.update(delta)
 // Re-create view if WASM memory grew
 if (posArray.buffer !== memory.buffer) {
   posArray = new Float32Array(memory.buffer, particles.positions_ptr(), COUNT * 3)
-  geo.setAttribute('position', new THREE.BufferAttribute(posArray, 3))
+  const attr = new THREE.BufferAttribute(posArray, 3)
+  attr.setUsage(THREE.DynamicDrawUsage)   // a fresh attribute reverts to StaticDrawUsage — re-apply
+  geo.setAttribute('position', attr)
 }
 geo.attributes.position.needsUpdate = true
 ```
@@ -253,17 +257,20 @@ WASM linear memory can grow at any time. When it does, every existing `Float32Ar
 if (positionView.buffer !== memory.buffer) {
   // Memory grew -- old view is dead, create new one
   positionView = new Float32Array(memory.buffer, system.positions_ptr(), count * 3)
-  geometry.setAttribute('position', new THREE.BufferAttribute(positionView, 3))
+  const attr = new THREE.BufferAttribute(positionView, 3)
+  attr.setUsage(THREE.DynamicDrawUsage)   // re-apply — a fresh attribute reverts to StaticDrawUsage
+  geometry.setAttribute('position', attr)
 }
 geometry.attributes.position.needsUpdate = true
 ```
 
 Rules:
-1. `Float32Array::view()` / pointer-based views are **invalidated** when WASM memory grows (any Rust allocation can trigger this)
+1. Pointer-based JS views (`new Float32Array(memory.buffer, ptr, len)`) are **invalidated** when WASM memory grows (any Rust allocation can trigger this). (The Rust-side `js_sys::Float32Array::view` is an even more dangerous primitive — its own docs warn the view must not outlive any allocation — so this skill uses the JS-side reconstruction pattern shown here instead.)
 2. After calling any WASM function, check `view.buffer !== memory.buffer` and re-create the view if they differ
 3. Pre-allocate all buffers in the Rust constructor to minimize growth during the render loop
 4. For stable views: allocate everything upfront, never `push`/`resize` in `update()`
 5. If you skip the buffer check, the app will silently render stale/zero data with no error
+6. Long-lived wasm structs must be `.free()`d on teardown — `FinalizationRegistry` auto-free is non-deterministic and unsafe for large buffers (the R3F example frees in its cleanup effect)
 
 ## Web Workers + WASM
 
@@ -272,7 +279,9 @@ For heavy compute that would block rendering, move WASM to a Web Worker.
 ### Worker File
 
 ```typescript
-// workers/compute.worker.ts
+// workers/compute.worker.ts — built with `wasm-pack build --target web` (note the `init` default export).
+// The `--target bundler` build used on the main thread has NO init export; there you
+// `import { TerrainGenerator } from '...'` directly and skip `await init()`.
 import init, { TerrainGenerator } from '../crates/my-wasm-3d/pkg'
 
 self.onmessage = async (e: MessageEvent) => {
@@ -286,6 +295,9 @@ self.onmessage = async (e: MessageEvent) => {
   if (type === 'generateTerrain') {
     const { width, depth, scale, heightScale } = payload
     const terrain = new TerrainGenerator(width, depth, scale, heightScale)
+    // positions()/normals()/indices() MUST return OWNED copies (Rust Vec<f32> or a js_sys
+    // copy — see Approach 3), NOT zero-copy views over wasm memory: the wasm-memory
+    // ArrayBuffer (and SharedArrayBuffer under threads) is not transferable and will throw.
     const positions = terrain.positions()
     const normals = terrain.normals()
     const indices = terrain.indices()
@@ -337,6 +349,8 @@ rayon = "1.10"
 use rayon::prelude::*;
 pub use wasm_bindgen_rayon::init_thread_pool;
 
+fn compute_height(x: f32, z: f32) -> f32 { /* plug in your noise/height function */ 0.0 }
+
 #[wasm_bindgen]
 pub fn parallel_terrain(width: usize, depth: usize, scale: f32) -> Vec<f32> {
     let mut positions = vec![0.0f32; width * depth * 3];
@@ -351,9 +365,11 @@ pub fn parallel_terrain(width: usize, depth: usize, scale: f32) -> Vec<f32> {
 }
 ```
 
-Build with nightly + atomics:
+Build with nightly + atomics. This needs the `rust-src` component, and the exact flag set tracks the wasm-bindgen-rayon README (it drifts across nightly versions — verify before relying on it):
 
 ```bash
+rustup component add rust-src --toolchain nightly
+
 RUSTFLAGS='-C target-feature=+atomics,+bulk-memory,+mutable-globals' \
   rustup run nightly wasm-pack build --target web -- -Z build-std=panic_abort,std
 ```
@@ -362,6 +378,8 @@ Init in JS:
 
 ```typescript
 await init()
+// initThreadPool requires a cross-origin-isolated page (self.crossOriginIsolated === true):
+// set COOP: same-origin + COEP: require-corp. See references/threading.md for headers/dev config.
 await initThreadPool(navigator.hardwareConcurrency)
 const terrain = parallel_terrain(1024, 1024, 0.5) // runs across Web Workers
 ```
@@ -376,7 +394,7 @@ const terrain = parallel_terrain(1024, 1024, 0.5) // runs across Web Workers
 - Use pointer-based views for zero-copy main-thread access
 
 **DON'T:**
-- Don't cross WASM/JS boundary per-element (~50-100ns overhead per call)
+- Don't cross the WASM/JS boundary per-element — each call adds per-call overhead (especially for non-numeric args that need marshalling); batch into one `update(dt)` call per frame
 - Don't use `Vec<f32>` params for large arrays in hot paths (copies entire array)
 - Don't use `serde_wasm_bindgen` in per-frame hot paths (setup/config only)
 - Don't assume WASM is always faster than JS -- WASM wins on large datasets, SIMD-friendly work, and GC-free deterministic perf

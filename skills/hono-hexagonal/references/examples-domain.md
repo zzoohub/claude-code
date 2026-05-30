@@ -87,6 +87,14 @@ export class DuplicateAuthorError extends Error {
   }
 }
 
+export class AuthorNotFoundError extends Error {
+  readonly tag = "AuthorNotFoundError" as const;
+  constructor(readonly authorId: string) {
+    super(`author with id "${authorId}" not found`);
+    this.name = "AuthorNotFoundError";
+  }
+}
+
 export class UnknownAuthorError extends Error {
   readonly tag = "UnknownAuthorError" as const;
   constructor(readonly cause: unknown) {

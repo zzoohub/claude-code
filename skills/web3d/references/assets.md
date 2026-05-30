@@ -20,10 +20,10 @@ npx @gltf-transform/cli optimize input.glb output.glb \
 ### gltfjsx (React projects)
 
 ```bash
-npx gltfjsx model.glb --transform --types --shadow
+npx gltfjsx model.glb --transform --types --shadows
 ```
 
-`--transform` produces a meshoptimizer-compressed, texture-optimized, deduplicated `.glb` (near-instant decode, no WASM decoder overhead unlike Draco).
+`--transform` produces a **Draco-compressed**, texture-resized (webp), deduplicated, instanced `.glb` (often 70–90% smaller). Draco needs a WASM decoder at load time, but `useGLTF`/`GLTFLoader` wire it automatically (Draco binaries via CDN). If you want meshopt instead, use `gltf-transform optimize --compress meshopt` (above) and `loader.setMeshoptDecoder(...)`.
 
 ## Loading with Three.js
 
@@ -41,18 +41,25 @@ scene.add(gltf.scene)
 ## Texture Best Practices
 
 - Use KTX2/Basis Universal for GPU-compressed textures (significantly smaller, faster upload)
-- Keep power-of-2 dimensions where possible
+- WebP (`--texture-compress webp`) shrinks **download** size but decodes to a full uncompressed GPU texture; KTX2/Basis stays GPU-compressed in VRAM. Prefer KTX2 for VRAM-bound/large scenes, WebP for quick download wins.
+- For KTX2/GPU-compressed textures keep dimensions a multiple of 4 (block-compression requirement); power-of-2 mainly matters for full mip chains, not as an NPOT-sampling restriction on WebGPU/WebGL 2
 - Separate PBR maps: albedo, normal, roughness, metalness, AO
-- Use `sRGBColorSpace` for albedo/emissive, `LinearSRGBColorSpace` for normal/roughness/metalness
+- Use `SRGBColorSpace` for color data (albedo/emissive); use `NoColorSpace` (the default) for non-color data maps (normal/roughness/metalness/AO). `LinearSRGBColorSpace` is the renderer's working space, not a value you assign to a data texture.
 
 ```typescript
 import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js'
 
+// .detectSupport(renderer) must run AFTER the WebGPU renderer's async init()
 const ktx2Loader = new KTX2Loader()
   .setTranscoderPath('/basis/')
   .detectSupport(renderer)
 
 const texture = await ktx2Loader.loadAsync('/texture.ktx2')
+
+// To transcode KTX2 textures embedded in a .glb (KHR_texture_basisu), wire it INTO GLTFLoader
+// (otherwise the load fails with "no KTX2Loader"):
+//   gltfLoader.setKTX2Loader(ktx2Loader)
+//   gltfLoader.setMeshoptDecoder(MeshoptDecoder)
 ```
 
 ## Animation
@@ -65,9 +72,9 @@ action.play()
 // In render loop:
 mixer.update(delta)
 
-// Crossfade between animations
-const idleAction = mixer.clipAction(animations.find(a => a.name === 'Idle'))
-const runAction = mixer.clipAction(animations.find(a => a.name === 'Run'))
+// Crossfade between animations (clips live on gltf.animations)
+const idleAction = mixer.clipAction(THREE.AnimationClip.findByName(gltf.animations, 'Idle'))
+const runAction = mixer.clipAction(THREE.AnimationClip.findByName(gltf.animations, 'Run'))
 idleAction.play()
 
 // Transition
@@ -81,15 +88,29 @@ WebGL/WebGPU resources are NOT garbage-collected. Always dispose when removing f
 
 ```typescript
 function disposeModel(object: THREE.Object3D) {
+  // Textures are usually the biggest VRAM consumer and are NOT freed by material.dispose()
+  // (which only releases the shader program). Collect them — deduped, since textures are
+  // frequently shared across materials — and dispose once after traversal.
+  const textures = new Set<THREE.Texture>()
+
+  const disposeMaterial = (m: THREE.Material) => {
+    for (const value of Object.values(m)) {
+      if (value instanceof THREE.Texture) textures.add(value)
+    }
+    m.dispose()
+  }
+
   object.traverse((child) => {
     if (child instanceof THREE.Mesh) {
       child.geometry.dispose()
-      if (Array.isArray(child.material)) {
-        child.material.forEach(m => m.dispose())
-      } else {
-        child.material.dispose()
-      }
+      const mats = Array.isArray(child.material) ? child.material : [child.material]
+      mats.forEach(disposeMaterial)
     }
   })
+
+  textures.forEach((t) => t.dispose())
 }
+// Still the caller's responsibility: scene.environment/background, render targets,
+// PMREM env maps, post-processing buffers, and renderer.dispose() on teardown.
+// removeFromParent() only drops JS scene-graph refs — it frees no GPU memory.
 ```

@@ -17,13 +17,13 @@ description: |
 
 # Copywriting & Content Strategy Guide
 
-Guidelines for creating high-converting digital product copy, UX microcopy, brand messaging, and user-facing text. Apply these principles and processes whenever writing or reviewing marketing copy, onboarding text, CTAs, push notifications, email campaigns, or landing pages.
+Guidelines for creating high-converting digital product copy, UX microcopy, brand messaging, and user-facing text. Apply these principles and processes whenever writing or reviewing marketing copy, onboarding text, CTAs, push notifications, or landing pages.
 
 ## References
 
 | File | When to Use |
 |------|------------|
-| `references/persuasion-frameworks.md` | Choosing and applying PAS / AIDA / BAB / 4Ps / SSS + psychological triggers (SOT used by ad-creative, email-marketing, social-content, cro) |
+| `references/persuasion-frameworks.md` | Choosing and applying PAS / AIDA / BAB / 4Ps / SSS + psychological triggers (single source of truth used by ad-creative, social-content) |
 | `references/copy-frameworks.md` | Writing new pages, restructuring copy, CTA optimization |
 | `references/editing-sweeps.md` | Reviewing/editing existing copy, quality improvement |
 | `references/plain-english.md` | Simplifying language, removing jargon, tone checks |
@@ -35,12 +35,13 @@ Match the task to the right workflow:
 
 | Task | Approach | Reference |
 |------|----------|-----------|
-| **Write new page** (landing, homepage, pricing, feature) | Gather context → Structure with frameworks → Write sections → Apply 8 Principles | `references/copy-frameworks.md` |
+| **Choose/apply a persuasion framework** (diagnose audience awareness) | Match awareness state → pick PAS / AIDA / BAB / 4Ps / SSS → apply structure | `references/persuasion-frameworks.md` |
+| **Write new page** (landing, homepage, pricing, feature) | Gather context → Pick persuasion framework → Structure the page → Write sections → Apply 8 Principles | `references/copy-frameworks.md` |
 | **Write headlines & CTAs** | Generate 3+ variations → Apply Principles 1-4 → Pick strongest | `references/copy-frameworks.md` (CTA section) |
 | **Edit/improve existing copy** | Run Seven Sweeps in order → Fix issues per sweep → Re-check | `references/editing-sweeps.md` |
 | **Write UX microcopy** (tooltips, errors, empty states, buttons) | Clarity over cleverness → Anticipate questions → Progressive disclosure | UX Standards below |
 | **Develop brand voice** | Define traits → Set tone spectrum → Create do's/don'ts | Brand Voice section below |
-| **Write long-form content** (blog, email, narrative) | Build narrative arc → Use transitions → Maintain scannable flow | `references/transitions.md` |
+| **Write long-form content** (blog, narrative, long-form email body — flow only) | Build narrative arc → Use transitions → Maintain scannable flow | `references/transitions.md` |
 | **Simplify/clarify copy** | Cut jargon → Use plain alternatives → Read aloud test | `references/plain-english.md` |
 
 ## 8 Principles for High-Converting Copy
@@ -51,7 +52,7 @@ Apply these as a mandatory checklist for all marketing copy, banners, CTAs, and 
 
 Do not list every benefit in a single line. Give the user exactly one reason to click right now. Save the rest for after the click.
 
-- Bad: "Check your spending type, share with your partner, and win up to 5,000 won"
+- Bad: "Check your spending type, share with your partner, and win up to $5"
 - Good: "Take the 10-question test and see your result"
 
 Why: When benefits pile up, the sentence becomes complex and the message blurs. A single focused action reads as one concept, even if it contains multiple words.
@@ -60,14 +61,14 @@ Why: When benefits pile up, the sentence becomes complex and the message blurs. 
 
 Users respond more to small guaranteed rewards than large uncertain ones. "You'll definitely get X" outperforms "Up to Y" every time.
 
-- Bad: "Get up to 100,000 won in random points"
-- Good: "Get 100 won to 100,000 won — guaranteed"
+- Bad: "Get up to $100 in random points"
+- Good: "Get $1 to $100 — guaranteed"
 
 Why: "Up to" feels like a gamble. Certainty removes hesitation. Even a tiny confirmed reward triggers action.
 
 ### Principle 3: Novelty Is Enough
 
-Simply telling users something is new can outperform detailed benefit explanations. In A/B tests, "new" messaging beat benefit-focused copy by 6x in click-through rate.
+Simply telling users something is new can outperform detailed benefit explanations. In one fintech's A/B tests (Toss), leading with "new" beat benefit-focused copy by 6x in click-through rate — treat it as a strong signal, not a universal constant.
 
 - Bad: "Save up to 10% at convenience stores with this membership"
 - Good: "There's a new convenience store benefit for you"
@@ -103,14 +104,9 @@ Why: The human brain processes one concept at a time. If the reader has to parse
 
 ### Principle 7: Write for the Skimmer (Eyeball Monkey Bars)
 
-Most internet readers scan rather than read top-to-bottom (Nielsen Norman Group's web-reading research is the classic source). Copy must feel effortless to navigate — like swinging from one monkey bar to the next.
+Most internet readers scan rather than read top-to-bottom (Nielsen Norman Group, *How Users Read on the Web*, 1997). Make copy effortless to navigate — like swinging from one monkey bar to the next: short paragraphs, bullet brigades, snappy sentences, and disproportionate time spent on the hook. See `references/transitions.md` → Scannable Flow for the full guidance and rules of thumb.
 
-- Break up text frequently. Short paragraphs reign supreme.
-- Use bullet brigades: emojis, numbered lists, or bolded text to highlight key points.
-- Keep sentences snappy: aim for 13 words or less about 80% of the time.
-- Spend disproportionate time on hooks: 10-15 minutes on the headline or opening sentence is not overkill.
-
-Why: Long copy still works — but only when every paragraph earns its place. Long-form sales pages that convert well (the kind that get cited in case studies) succeed because they're scannable *and* engaging at each step, not because of length itself. People visit your site to find info, not to read prose. Make the finding effortless.
+Why: Long copy still works — but only when every paragraph earns its place. People visit your site to find info, not to read prose. Make the finding effortless.
 
 ### Principle 8: Specificity Over Kitchen-Sink Promises
 
@@ -198,4 +194,4 @@ Before delivering any copy, verify:
 - [ ] Would this sound natural if spoken aloud?
 - [ ] Is it accessible and inclusive (no jargon, slang, or in-group terms)?
 - [ ] Is it scannable? Can a skimmer get the point in 3 seconds?
-- [ ] Is there proof or social validation supporting the claim?
+- [ ] Is every claim either backed by real proof/social validation, or softened to what's truthfully supportable? (Never fabricate proof.)

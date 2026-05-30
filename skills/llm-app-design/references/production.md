@@ -1,6 +1,8 @@
 # Production Concerns
 
-Shipping an LLM feature is easy. Operating it is the hard part. This covers the layer between "the prompt works" and "it survives real traffic."
+**Layer:** design-level (planning the operational posture — latency/cost budgets, caching strategy, rollout plan, incident readiness — *before* you ship). Concrete wiring lives in the SDK and observability skills (`claude-api`, `vercel:ai-sdk`, `posthog:instrument-llm-analytics`, `sentry:sentry-setup-ai-monitoring`); system-level deployment topology lives in `software-architecture/references/ai-architecture.md`.
+
+Shipping an LLM feature is easy. Operating it is the hard part. This covers the layer between "the prompt works" and "it survives real traffic" — the concerns you decide at design time so the feature is operable, not the runtime mechanics of operating it.
 
 ## Latency
 
@@ -27,7 +29,7 @@ Cost = (input tokens × input rate) + (output tokens × output rate). Output is 
 
 **Cost traps:**
 
-- **Long system prompts × every call.** 4000-token system prompt × 1M calls/month × $3/MTok input = $12k/month. Same prompt with caching: ~$1.2k.
+- **Long system prompts × every call.** 4000-token system prompt × 1M calls/month × $3/MTok input = $12k/month. Same prompt with aggressive caching (Anthropic-style ~90% read discount): ~$1.2k; the win is smaller on providers with shallower cache discounts.
 - **Verbose output.** Asking the model to "explain your reasoning" multiplies output tokens. Use it when it helps quality; skip when it doesn't.
 - **Retries without caching.** A retry re-sends the full context. With caching, it's cheap. Without, the cost doubles.
 - **Agent loops.** Each turn sends the full history. A 10-turn agent easily 10xs single-prompt cost.
@@ -43,7 +45,7 @@ Cost = (input tokens × input rate) + (output tokens × output rate). Output is 
 
 Different layers cache different things:
 
-**Prompt caching (provider-level).** Cache stable parts of the prompt (system, few-shot examples, long context documents) so subsequent requests reuse them at ~90% discount and ~85% lower latency. Requires the prefix to match exactly — design prompts with stable-prefix, variable-suffix order.
+**Prompt caching (provider-level).** Cache stable parts of the prompt (system, few-shot examples, long context documents) so subsequent requests reuse them at a steep discount and lower latency. The exact savings are provider-specific — Anthropic cache reads run ~90% off input (and require an explicit cache breakpoint), OpenAI applies automatic caching at roughly ~50% off, others vary — so check current pricing rather than hard-coding a number. All require the prefix to match exactly: design prompts with a stable prefix and a variable suffix.
 
 **Response caching (your infrastructure).** For deterministic or slow-changing queries, cache the final response by hash of input. Works for tasks like "summarize this URL" but useless for personalized or time-sensitive responses.
 

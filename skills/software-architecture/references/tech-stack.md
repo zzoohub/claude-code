@@ -62,12 +62,12 @@ Deviation is fine when justified. Unjustified deviation is tech debt.
 | Cache (eventual) | KV |
 | Cache (strong) | Upstash Redis |
 | Queue | CF Queues, Cloud Tasks |
-| Streaming | Upstash Kafka, Cloud Pub/Sub |
+| Streaming | Cloudflare Pipelines (-> R2 / Iceberg), Cloud Pub/Sub |
 | Objects | R2 |
 | Analytics / DW | BigQuery, Pipelines + R2 SQL |
 | Vector | Vectorize, pgvector on Supabase/Neon |
 | Images | CF Images |
-| Video | CF Stream + Media Transforms |
+| Video | CF Stream + Media Transformations |
 
 ---
 
@@ -75,12 +75,12 @@ Deviation is fine when justified. Unjustified deviation is tech debt.
 
 | Role | Options |
 |---|---|
-| LLM inference | Workers AI, Vertex AI |
+| LLM inference | Workers AI, Gemini Enterprise Agent Platform (formerly Vertex AI) |
 | Gateway | AI Gateway |
-| RAG | Vectorize, AutoRAG |
-| Security | Firewall for AI, AI Gateway DLP |
+| RAG | Vectorize, AI Search (formerly AutoRAG) |
+| Security | AI Security for Apps (formerly Firewall for AI), AI Gateway DLP |
 | Crawlers | AI Crawl Control, Firecrawl |
-| Browser | Browser Rendering, Playwright (CF Containers) |
+| Browser | Browser Run (formerly Browser Rendering), Playwright (CF Containers) |
 | Agent (Workers) | CF Agents SDK |
 | Agent (TypeScript) | **Claude Agent SDK**, **Mastra** (1.0 since 2026-01), Vercel AI SDK Agent |
 | Agent (Python)  | Claude Agent SDK (Python), PydanticAI, LangGraph |

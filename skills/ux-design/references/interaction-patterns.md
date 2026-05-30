@@ -21,17 +21,18 @@ Every interactive element and every screen exists in one of a finite set of stat
 ```
 ┌─────────┐     ┌─────────┐     ┌─────────┐
 │  Empty  │────▶│ Loading │────▶│ Loaded  │
-└─────────┘     └─────────┘     └────┬────┘
-                     │               │
-                     ▼               ▼
-                ┌─────────┐     ┌─────────┐
-                │  Error  │     │ Partial │
-                └─────────┘     └─────────┘
+└─────────┘     └────┬────┘     └────┬────┘
+                     │ fail          │
+                     ▼               │
+                ┌─────────┐          │
+                │  Error  │          │
+                └─────────┘          │
                                      │
-                                     ▼
-                                ┌─────────┐
-                                │Refreshing│
-                                └─────────┘
+  Loaded is the hub — from it the screen can independently enter, and
+  return from, each of these (this is not a linear chain):
+   • Refreshing — re-fetching; keep existing content visible, don't blank it
+   • Partial    — some content loaded, some failed; show what succeeded
+   • Offline    — no network; show cached content + queue actions for sync
 ```
 
 | State | What User Sees | Design Requirements |
@@ -107,7 +108,7 @@ Rules:
 
 Rules:
 - Show below the input field, not in a separate area
-- Validate on blur (not on every keystroke — reduces anxiety)
+- Validate on blur for the first pass (not on every keystroke — reduces anxiety). Once a field is already in an error state, re-validate on input so the error clears live as the user fixes it.
 - Error: red text + icon. Success: green checkmark (optional)
 - Error message format: what's wrong + how to fix it
 - Never clear user's input on error
@@ -224,13 +225,16 @@ Update the UI immediately as if the action succeeded, then reconcile with the se
 
 ### Pattern Selection by Wait Time
 
+This is the canonical response-time ladder, shared with `ergonomics.md`
+(§Response Time) — keep the two in sync.
+
 | Expected Wait | Pattern | Example |
 |--------------|---------|---------|
 | <300ms | No indicator | Button state change |
-| 300ms-2s | Skeleton screen | Content placeholders matching layout |
-| 2s-5s | Skeleton + shimmer animation | Feed loading |
-| 5s-15s | Progress bar + context | "Uploading photo..." with % |
-| 15s+ | Background process + notification | "We'll notify you when ready" |
+| 300ms-1s | Skeleton optional | Quick fetch |
+| 1-3s | Skeleton screen + shimmer | Content placeholders matching layout |
+| 3-10s | Progress bar + context | "Uploading photo..." with % |
+| >10s | Background process + notification | "We'll notify you when ready" |
 
 ### Skeleton Screen
 

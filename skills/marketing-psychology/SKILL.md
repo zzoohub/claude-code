@@ -1,31 +1,40 @@
 ---
 name: marketing-psychology
 description: |
-  70+ mental models and psychological principles for marketing, pricing, and growth decisions.
+  70 mental models and psychological principles for marketing, pricing, and growth decisions.
   Use when: applying persuasion principles, understanding buyer psychology, choosing pricing tactics,
-  designing nudges, optimizing conversion with psychology, or when user mentions "psychology",
-  "mental model", "persuasion", "cognitive bias", "behavioral economics", "nudge", "anchoring",
-  "scarcity", "social proof", "loss aversion", "framing effect".
-  Do NOT use for: writing copy (use copywriting skill), page-level CRO (use cro skill),
-  or pricing tier design and strategy (use pricing skill — this skill covers the psychology
-  behind why pricing works; pricing covers what to charge and how to structure tiers).
+  designing nudges, checking whether a tactic is ethical persuasion vs a dark pattern, optimizing
+  conversion with psychology, or when user mentions "psychology", "mental model", "persuasion",
+  "cognitive bias", "behavioral economics", "nudge", "anchoring", "scarcity", "urgency", "FOMO",
+  "social proof", "loss aversion", "framing effect", "decoy effect", "reciprocity",
+  "endowment effect", "default effect", "IKEA effect", "choice architecture", "dark pattern",
+  "manipulation", "ethical persuasion".
+  Do NOT use for: writing copy (use copywriting — this skill picks which principle to apply,
+  copywriting produces the words); page-level CRO (use cro — this skill explains the principle,
+  cro designs and tests the flow change); pricing tier design and strategy (use pricing — this
+  skill covers the psychology behind why pricing works; pricing covers what to charge and how to
+  structure tiers); loop/referral mechanics and K-factor modeling (use growth-loops — this skill
+  only explains the psychology behind why loops and switching costs work); or churn intervention
+  and retention analytics (use churn-prevention for cancel flows/save offers/health scoring,
+  product-analytics for retention cohorts — this skill explains only the behavioral "why").
 ---
 
 # Marketing Psychology & Mental Models
 
-70+ mental models organized for marketing application. Use these to understand why people buy, influence behavior ethically, and make better marketing decisions.
+70 mental models organized for marketing application. Use these to understand why people buy, influence behavior ethically, and make better marketing decisions.
 
 **Product context**: If `.claude/product-marketing-context.md` exists, read it first to tailor recommendations to the specific product and audience.
 
 ---
 
-## How to Use This Skill
+## How to Apply
 
-1. **Identify the challenge** — What behavior are you trying to influence?
-2. **Find relevant models** — Use the Quick Reference table below
-3. **Select 2-3 models** — Don't overload; pick the most applicable
-4. **Apply with guardrails** — See Ethical Guardrails below
-5. **Test the application** — Use cro experiments to validate
+1. **Diagnose the barrier** — What behavior are you trying to influence, and what's preventing it?
+2. **Match models** — Which mental models explain the barrier? Use the Quick Reference table below.
+3. **Select 2-3 models** — Don't overload; pick the most applicable.
+4. **Design within guardrails** — Apply the models within the Ethical Guardrails below.
+5. **Implement** — Use copywriting for messaging, cro for flow changes.
+6. **Measure** — Validate with cro experiments; track impact with data-analyst.
 
 ---
 
@@ -81,7 +90,7 @@ Ethical influence techniques:
 - **Authority Bias** — People defer to experts and credentials
 - **Social Proof** — People follow what others do
 - **Scarcity/Urgency** — Limited availability increases perceived value
-- **Loss Aversion** — Losses feel 2x more painful than equivalent gains
+- **Loss Aversion** — Losses tend to feel more painful than equivalent gains (~2x in lab tasks; varies by context)
 - **Anchoring** — First number seen influences all subsequent judgments
 - **Decoy Effect** — Third option makes preferred choice look better
 - **Framing Effect** — Same facts, different presentation, different perception
@@ -148,15 +157,5 @@ Full descriptions with marketing applications: `references/mental-models-referen
 3. **IKEA Effect**: Let users customize their project (choose a color, add a description, invite one teammate). The effort they invest makes the project feel like *theirs*, increasing reluctance to abandon it.
 
 **Result framing**: Instead of "Set up your workspace" (high activation energy, vague), the flow becomes a series of small, visible, personally invested steps that compound into commitment.
-
----
-
-## Application Process
-
-1. **Diagnose the barrier** — What's preventing the desired behavior?
-2. **Match models** — Which mental models explain the barrier?
-3. **Design intervention** — How can you apply the model within ethical guardrails?
-4. **Implement** — Use copywriting for messaging, cro for flow changes
-5. **Measure** — Use data-analyst to track impact
 
 ---

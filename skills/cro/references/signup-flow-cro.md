@@ -164,6 +164,7 @@ Every field reduces conversion. For each field, ask:
 - Reduce typing (social auth, pre-fill)
 - Single column layout
 - Sticky CTA button
+- Watch page speed — slow LCP/INP on mobile inflates drop-off (see page-cro.md "Performance / Core Web Vitals")
 - Test with actual devices
 
 ---
@@ -300,4 +301,4 @@ Why it works: Social auth handles 60%+ of signups with zero typing. Only 2 field
 
 ## Experiment Ideas
 
-High-impact areas to test: field count, social auth prominence, single vs. multi-step, CTA copy, trust signals placement, credit card requirement, and post-submit experience. For rigorous experiment design methodology, see `references/experiments.md`.
+High-impact areas to test: field count, social auth prominence, single vs. multi-step, CTA copy, trust signals placement, credit card requirement, and post-submit experience. For rigorous experiment design methodology, see `experiments.md`.

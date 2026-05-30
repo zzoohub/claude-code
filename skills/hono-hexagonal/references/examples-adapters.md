@@ -95,7 +95,7 @@ export function decodeCursor(raw: string): { createdAt: Date; id: string } {
 ```typescript
 // src/outbound/drizzle/repository.ts
 import { and, asc, eq, gt, or } from "drizzle-orm";
-import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import type { BaseSQLiteDatabase } from "drizzle-orm/sqlite-core";
 import { authors } from "./schema";
 import { AuthorMapper } from "./mapper";
 import { decodeCursor, encodeCursor } from "../cursor";
@@ -111,12 +111,25 @@ import type {
 import type { AuthorRepository } from "../../domain/authors/ports";
 
 /**
+ * Type against the SQLite base, not a concrete driver — `BunSQLiteDatabase`
+ * (sync, Bun) and `DrizzleD1Database` (async, Cloudflare D1) are both
+ * `BaseSQLiteDatabase`, so one adapter spans both runtimes. The query builder
+ * is identical; only the driver differs. `'async'` covers D1's promise-based
+ * results (Bun-SQLite's sync results satisfy it too).
+ *
+ * Postgres uses a SEPARATE adapter (`PostgresAuthorRepository`) — its query
+ * builder and base type (`PgDatabase`) differ, so one class does NOT span every
+ * runtime. If you only ever target Postgres, type this against `PgDatabase`.
+ */
+type SQLiteClient = BaseSQLiteDatabase<"async" | "sync", unknown>;
+
+/**
  * Transactions encapsulated here — invisible to callers.
  */
 export class DrizzleAuthorRepository implements AuthorRepository {
-  constructor(private readonly db: BunSQLiteDatabase) {}
+  constructor(private readonly db: SQLiteClient) {}
 
-  static fromClient(db: BunSQLiteDatabase): DrizzleAuthorRepository {
+  static fromClient(db: SQLiteClient): DrizzleAuthorRepository {
     return new DrizzleAuthorRepository(db);
   }
 
@@ -408,54 +421,100 @@ import { swaggerUI } from "@hono/swagger-ui";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import { logger } from "hono/logger";
+import { requestId } from "hono/request-id";
 
 import type { AuthorService } from "../../domain/authors/ports";
 import { authorRoutes } from "./authors/routes";
-import { registerErrorHandler } from "./errors";
+import { problem, problemHeaders, registerErrorHandler } from "./errors";
+import { withFieldErrorsFrom } from "./problem";
 import { healthRoutes, type HealthPing } from "./health";
 import { injectServices } from "./middleware";
 
 /**
  * App-wide type for context variables.
  * Handlers access services via c.var.authorService — fully typed.
+ * requestId() populates c.var.requestId (typed via hono/request-id's RequestIdVariables).
  */
 export type AppEnv = {
   Variables: {
     authorService: AuthorService;
+    requestId: string;
   };
 };
 
 export type AppContext = OpenAPIHono<AppEnv>;
 
+/** Subset of config the inbound layer needs. Keeps server.ts free of Hono types. */
+export type AppHttpConfig = {
+  corsOrigins: string[];
+};
+
 export type AppDeps = {
   authorService: AuthorService;
+  /** HTTP-relevant config (CORS origins, etc.) — driven from loadConfig(). */
+  config: AppHttpConfig;
   /** Readiness ping — typically `() => db.execute(sql`SELECT 1`)`. */
   healthPing: HealthPing;
 };
 
 /**
  * Creates the Hono app. Bootstrap (server.ts) never imports Hono/OpenAPIHono.
+ *
+ * NOTE: for OpenAPIHono the validation hook is the constructor `defaultHook`,
+ * NOT a 3rd arg to a validator — `app.openapi(route, handler)` has no inline
+ * hook slot. The hook converts every failed Zod validation into an RFC 9457
+ * problem document so validation errors share the same content type/shape as
+ * domain errors.
  */
 export function createApp(deps: AppDeps): OpenAPIHono<AppEnv> {
-  const app = new OpenAPIHono<AppEnv>();
+  const app = new OpenAPIHono<AppEnv>({
+    defaultHook: (result, c) => {
+      if (!result.success) {
+        return c.json(
+          problem(
+            "validation-error",
+            "Unprocessable Entity",
+            422,
+            "Request validation failed",
+            { instance: c.req.path, ...withFieldErrorsFrom(result.error) },
+          ),
+          422,
+          problemHeaders(),
+        );
+      }
+    },
+  });
 
-  // Global middleware — order matters: CORS must come first
-  app.use("*", cors({ origin: ["http://localhost:3000"] }));
+  // Request id first — every downstream log line + the response echo the same id.
+  app.use("*", requestId());
+
+  // Health endpoints BEFORE auth/DI middleware: a global requireAuth must not
+  // 401 the liveness/readiness probes, and they need no services.
+  app.route("/", healthRoutes(deps.healthPing));
+
+  // Global middleware — order matters: CORS must come first.
+  // Origins are config-driven (no hardcoded localhost).
+  app.use("*", cors({ origin: deps.config.corsOrigins }));
   app.use("*", secureHeaders());
   app.use("*", logger());
 
   // DI middleware — sets services on context for all downstream handlers
   app.use("*", injectServices(deps.authorService));
 
-  // Health endpoints (infrastructure — no domain)
-  app.route("/", healthRoutes(deps.healthPing));
+  // Bearer security scheme — registered once, attached to protected routes.
+  app.openAPIRegistry.registerComponent("securitySchemes", "bearerAuth", {
+    type: "http",
+    scheme: "bearer",
+    bearerFormat: "JWT",
+  });
 
   // Domain routes — generates OpenAPI from createRoute() definitions
-  app.route("/authors", authorRoutes());
+  app.route("/v1/authors", authorRoutes());
 
-  // OpenAPI document + Swagger UI
-  app.doc("/openapi.json", {
-    openapi: "3.0.0",
+  // OpenAPI document + Swagger UI. doc31 emits OAS 3.1 — nullable schemas are
+  // lossless (`type: ["string","null"]`) instead of the 3.0 `nullable: true` hack.
+  app.doc31("/openapi.json", {
+    openapi: "3.1.0",
     info: { title: "Authors API", version: "1.0.0" },
   });
   app.get("/docs", swaggerUI({ url: "/openapi.json" }));
@@ -471,6 +530,27 @@ export function createApp(deps: AppDeps): OpenAPIHono<AppEnv> {
  */
 export function createTestApp(deps: AppDeps): OpenAPIHono<AppEnv> {
   return createApp(deps);
+}
+```
+
+The `withFieldErrorsFrom` helper turns a `ZodError` into the RFC 9457
+`errors[]` extension member. Keep it next to `problem()`:
+
+```typescript
+// src/inbound/http/problem.ts
+import type { ZodError } from "@hono/zod-openapi";
+
+/** RFC 9457 `errors[]` extension member, populated from a Zod failure. */
+export function withFieldErrorsFrom(error: ZodError): {
+  errors: { field: string; code: string; message: string }[];
+} {
+  return {
+    errors: error.issues.map((issue) => ({
+      field: issue.path.join(".") || "(root)",
+      code: issue.code,
+      message: issue.message,
+    })),
+  };
 }
 ```
 
@@ -521,12 +601,18 @@ export function requireAuth(secret: string) {
     }
 
     const token = authHeader.slice(7);
+    let payload: Awaited<ReturnType<typeof verify>>;
     try {
-      const payload = await verify(token, secret);
-      c.set("userId", payload.sub as string);
+      payload = await verify(token, secret);
     } catch {
       throw new HTTPException(401, { message: "Invalid token" });
     }
+
+    // `sub` is `string | undefined` on the JWT payload — guard, don't cast.
+    if (typeof payload.sub !== "string") {
+      throw new HTTPException(401, { message: "Invalid token" });
+    }
+    c.set("userId", payload.sub);
 
     await next();
   });
@@ -599,6 +685,9 @@ separate API spec to drift from the implementation.
 import { createRoute, OpenAPIHono, z } from "@hono/zod-openapi";
 
 import type { AppEnv } from "../app";
+import { problem, problemHeaders } from "../errors";
+import { withFieldErrorsFrom } from "../problem";
+import { AuthorNotFoundError } from "../../../domain/authors/errors";
 import {
   createAuthorBodySchema,
   paginationSchema,
@@ -613,29 +702,58 @@ const AuthorSchema = z.object({
 
 const AuthorResultSchema = z.object({ data: AuthorSchema }).openapi("AuthorResult");
 
+// Collection: pagination nested under `meta`, with `limit` echoed back.
 const AuthorPageSchema = z.object({
   data: z.array(AuthorSchema),
-  next_cursor: z.string().nullable(),
-  has_more: z.boolean(),
+  meta: z.object({
+    limit: z.number().int(),
+    next_cursor: z.string().nullable(),
+    has_more: z.boolean(),
+  }),
 }).openapi("AuthorPage");
 
+// RFC 9457 problem document. `instance` stays in the body; the correlation id
+// lives in the X-Request-Id response header (not the body). `errors[]` is the
+// field-level validation extension member.
 const ProblemSchema = z.object({
   type: z.string(),
   title: z.string(),
   status: z.number(),
   detail: z.string(),
+  instance: z.string().optional(),
+  errors: z.array(z.object({
+    field: z.string(),
+    code: z.string(),
+    message: z.string(),
+  })).optional(),
 }).openapi("ProblemDetails");
+
+// Ids are opaque server-generated UUIDs — constrain so a malformed id 400s at
+// the boundary instead of reaching the service and returning a misleading 404.
+const authorParams = z.object({
+  id: z.string().uuid().openapi({ param: { name: "id", in: "path" } }),
+});
 
 const createAuthorRoute = createRoute({
   method: "post",
   path: "/",
   tags: ["authors"],
+  security: [{ bearerAuth: [] }],
   request: {
     body: { content: { "application/json": { schema: createAuthorBodySchema } } },
   },
   responses: {
-    201: { content: { "application/json": { schema: AuthorResultSchema } }, description: "Created" },
-    409: { content: { "application/json": { schema: ProblemSchema } }, description: "Duplicate" },
+    201: {
+      content: { "application/json": { schema: AuthorResultSchema } },
+      description: "Created",
+      headers: z.object({
+        Location: z.string().openapi({ example: "/v1/authors/<id>" }),
+      }),
+    },
+    400: { content: { "application/problem+json": { schema: ProblemSchema } }, description: "Malformed request" },
+    409: { content: { "application/problem+json": { schema: ProblemSchema } }, description: "Duplicate" },
+    422: { content: { "application/problem+json": { schema: ProblemSchema } }, description: "Validation failed" },
+    500: { content: { "application/problem+json": { schema: ProblemSchema } }, description: "Internal error" },
   },
 });
 
@@ -643,6 +761,7 @@ const listAuthorsRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["authors"],
+  security: [{ bearerAuth: [] }],
   request: { query: paginationSchema },
   responses: {
     200: { content: { "application/json": { schema: AuthorPageSchema } }, description: "Page of authors" },
@@ -653,19 +772,40 @@ const getAuthorRoute = createRoute({
   method: "get",
   path: "/{id}",
   tags: ["authors"],
-  request: { params: z.object({ id: z.string() }) },
+  security: [{ bearerAuth: [] }],
+  request: { params: authorParams },
   responses: {
     200: { content: { "application/json": { schema: AuthorResultSchema } }, description: "Author" },
-    404: { content: { "application/json": { schema: ProblemSchema } }, description: "Not found" },
+    404: { content: { "application/problem+json": { schema: ProblemSchema } }, description: "Not found" },
   },
 });
 
 export function authorRoutes() {
-  const app = new OpenAPIHono<AppEnv>();
+  // Per-feature instance also needs the defaultHook so its zValidator
+  // failures become problem documents (the hook is per-instance, not inherited
+  // from the parent app it is mounted on).
+  const app = new OpenAPIHono<AppEnv>({
+    defaultHook: (result, c) => {
+      if (!result.success) {
+        return c.json(
+          problem(
+            "validation-error",
+            "Unprocessable Entity",
+            422,
+            "Request validation failed",
+            { instance: c.req.path, ...withFieldErrorsFrom(result.error) },
+          ),
+          422,
+          problemHeaders(),
+        );
+      }
+    },
+  });
 
   app.openapi(createAuthorRoute, async (c) => {
     const body = c.req.valid("json");
     const author = await c.var.authorService.createAuthor(toDomain(body));
+    c.header("Location", `/v1/authors/${author.id}`);
     return c.json({ data: fromDomain(author) }, 201);
   });
 
@@ -675,8 +815,11 @@ export function authorRoutes() {
     return c.json(
       {
         data: page.items.map(fromDomain),
-        next_cursor: page.nextCursor,
-        has_more: page.hasMore,
+        meta: {
+          limit,
+          next_cursor: page.nextCursor,
+          has_more: page.hasMore,
+        },
       },
       200,
     );
@@ -686,15 +829,9 @@ export function authorRoutes() {
     const { id } = c.req.valid("param");
     const author = await c.var.authorService.findAuthor(id);
     if (!author) {
-      return c.json(
-        {
-          type: "https://api.example.com/errors/not-found",
-          title: "Not Found",
-          status: 404,
-          detail: `author with id "${id}" not found`,
-        },
-        404,
-      );
+      // Throw a domain error; the central handler maps it to a 404 problem
+      // document via the same problem() builder (no hand-built inline body).
+      throw new AuthorNotFoundError(id);
     }
     return c.json({ data: fromDomain(author) }, 200);
   });
@@ -709,91 +846,104 @@ export function authorRoutes() {
 // src/inbound/http/errors.ts
 import type { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import {
   AuthorNameEmptyError,
+  AuthorNotFoundError,
   DuplicateAuthorError,
   UnknownAuthorError,
 } from "../../domain/authors/errors";
 import type { AppEnv } from "./app";
 
-// At top of file: `import type { ContentfulStatusCode } from "hono/utils/http-status";`
-
-interface ProblemDetails {
+export interface ProblemDetails {
   type: string;
   title: string;
   status: number;
   detail: string;
+  /** Request-specific URI (RFC 9457). The correlation id is the X-Request-Id header, not here. */
+  instance?: string;
+  /** RFC 9457 extension member: field-level validation detail. */
+  errors?: { field: string; code: string; message: string }[];
 }
 
-function problem(
+export function problem(
   typeSlug: string,
   title: string,
   status: number,
   detail: string,
+  extra?: Partial<Pick<ProblemDetails, "instance" | "errors">>,
 ): ProblemDetails {
   return {
     type: `https://api.example.com/errors/${typeSlug}`,
     title,
     status,
     detail,
+    ...extra,
   };
+}
+
+/** Every error body is application/problem+json (RFC 9457). */
+export function problemHeaders(): { "content-type": string } {
+  return { "content-type": "application/problem+json" };
 }
 
 export function registerErrorHandler(app: Hono<AppEnv>): void {
   app.onError((err, c) => {
-    // Zod validation errors (thrown by zValidator)
+    // Genuinely-thrown transport exceptions (e.g. auth middleware). Validation
+    // failures never reach here — the OpenAPIHono defaultHook converts them to
+    // problem documents before onError runs.
     if (err instanceof HTTPException) {
-      const status = err.status as ContentfulStatusCode; // 4xx/5xx range
+      // err.status is already ContentfulStatusCode; the import keeps the
+      // annotation honest under strict mode.
+      const status: ContentfulStatusCode = err.status;
       return c.json(
-        problem(
-          "validation-error",
-          err.message || "Request Error",
-          status,
-          err.message,
-        ),
+        problem("request-error", err.message || "Request Error", status, err.message, {
+          instance: c.req.path,
+        }),
         status,
+        problemHeaders(),
       );
     }
 
     // Domain errors — match on tag for exhaustive handling
+    if (err instanceof AuthorNotFoundError) {
+      return c.json(
+        problem("not-found", "Not Found", 404, err.message, { instance: c.req.path }),
+        404,
+        problemHeaders(),
+      );
+    }
+
     if (err instanceof DuplicateAuthorError) {
       return c.json(
-        problem(
-          "duplicate-author",
-          "Conflict",
-          409,
-          err.message,
-        ),
+        problem("duplicate-author", "Conflict", 409, err.message, { instance: c.req.path }),
         409,
+        problemHeaders(),
       );
     }
 
     if (err instanceof AuthorNameEmptyError) {
       return c.json(
-        problem(
-          "validation-error",
-          "Unprocessable Entity",
-          422,
-          err.message,
-        ),
+        problem("validation-error", "Unprocessable Entity", 422, err.message, {
+          instance: c.req.path,
+        }),
         422,
+        problemHeaders(),
       );
     }
 
     if (err instanceof UnknownAuthorError) {
-      console.error("Unexpected error:", err.cause);
+      console.error(`[${c.var.requestId}] Unexpected error:`, err.cause);
     } else {
-      console.error("Unhandled error:", err);
+      console.error(`[${c.var.requestId}] Unhandled error:`, err);
     }
 
     return c.json(
-      problem(
-        "internal-error",
-        "Internal Server Error",
-        500,
-        "An unexpected error occurred",
-      ),
+      problem("internal-error", "Internal Server Error", 500, "An unexpected error occurred", {
+        instance: c.req.path,
+      }),
       500,
+      problemHeaders(),
     );
   });
 }
@@ -815,8 +965,11 @@ export interface ApiSuccess<T> {
 
 export interface CursorPageResponse<T> {
   data: T[];
-  next_cursor: string | null;
-  has_more: boolean;
+  meta: {
+    limit: number;
+    next_cursor: string | null;
+    has_more: boolean;
+  };
 }
 ```
 
@@ -833,6 +986,16 @@ import { Hono } from "hono";
 
 export type HealthPing = () => Promise<void>;
 
+/** Reject after `ms` so a hung DB connection can't stall the readiness probe. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`timed out after ${ms}ms`)), ms),
+    ),
+  ]);
+}
+
 export function healthRoutes(ping: HealthPing) {
   const app = new Hono();
 
@@ -841,9 +1004,10 @@ export function healthRoutes(ping: HealthPing) {
 
   // Readiness — can it serve traffic? Returns 503 if the DB is unreachable
   // so k8s/load balancers can drain a node before it accepts more traffic.
+  // Wrap the ping in a timeout for a fast 503 instead of hanging the probe.
   app.get("/readyz", async (c) => {
     try {
-      await ping();
+      await withTimeout(ping(), 1000);
       return c.json({ status: "ready" });
     } catch (err) {
       console.error("readiness check failed:", err);
@@ -868,9 +1032,14 @@ export function healthRoutes(ping: HealthPing) {
  */
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { z } from "zod";
+// Import `z` from @hono/zod-openapi everywhere — importing from "zod" directly
+// risks two Zod instances (a "split-Zod" type mismatch) when zod-openapi
+// re-exports its own v4-compatible `z`.
+import { z } from "@hono/zod-openapi";
 import { AuthorName } from "../../domain/authors/models";
 import type { AppEnv } from "../http/app";
+import { problem, problemHeaders } from "../http/errors";
+import { withFieldErrorsFrom } from "../http/problem";
 
 const syncAuthorPayloadSchema = z.object({
   author_name: z.string().min(1),
@@ -882,7 +1051,20 @@ export function taskRoutes() {
 
   app.post(
     "/tasks/sync-author",
-    zValidator("json", syncAuthorPayloadSchema),
+    // Plain Hono + zValidator DOES take a 3rd-arg hook (unlike OpenAPIHono's
+    // app.openapi(), where the hook is the constructor defaultHook).
+    zValidator("json", syncAuthorPayloadSchema, (result, c) => {
+      if (!result.success) {
+        return c.json(
+          problem("validation-error", "Unprocessable Entity", 422, "Request validation failed", {
+            instance: c.req.path,
+            ...withFieldErrorsFrom(result.error),
+          }),
+          422,
+          problemHeaders(),
+        );
+      }
+    }),
     async (c) => {
       const payload = c.req.valid("json");
       const domainReq = { name: AuthorName.create(payload.author_name) };
@@ -915,11 +1097,18 @@ export interface DomainEvent {
 }
 ```
 
+This is an **alternate** outbound adapter implementing an **alternate
+(events-carrying) port shape** — NOT the canonical `AuthorRepository` above.
+Keep exactly one canonical contract per port; if you adopt the events-carrying
+variant, swap the whole stack (port + service + adapter) to it, don't run two
+conflicting `AuthorRepository` definitions side by side.
+
 ```typescript
-// src/domain/authors/ports.ts — port carries events to persist atomically
-export interface AuthorRepository {
+// src/domain/authors/ports.ts — ALTERNATE port that carries events to persist atomically.
+// Distinct name so it never collides with the canonical AuthorRepository.
+export interface OutboxAuthorRepository {
   createAuthor(
-    req: CreateAuthorRequest,
+    author: Author,
     events: readonly DomainEvent[],
   ): Promise<Author>;
   // ...
@@ -927,21 +1116,31 @@ export interface AuthorRepository {
 ```
 
 ```typescript
-// src/outbound/postgres-author-repository.ts
+// src/outbound/outbox-postgres-author-repository.ts
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import { authors, outbox } from "./schema";
+import { AuthorMapper } from "./drizzle/mapper";
 import { currentTraceparent } from "./tracing";
+import type { Author, CreateAuthorRequest } from "../domain/authors/models";
+import type { DomainEvent } from "../domain/shared/events";
+import type { OutboxAuthorRepository } from "../domain/authors/ports";
 
-export class PostgresAuthorRepository implements AuthorRepository {
+/**
+ * ALTERNATE implementation of the events-carrying OutboxAuthorRepository port.
+ * Named distinctly so it never collides with the canonical
+ * DrizzleAuthorRepository / PostgresAuthorRepository above.
+ */
+export class OutboxPostgresAuthorRepository implements OutboxAuthorRepository {
   constructor(private readonly db: NodePgDatabase) {}
 
   async createAuthor(
-    req: CreateAuthorRequest,
+    author: Author,
     events: readonly DomainEvent[],
   ): Promise<Author> {
     return this.db.transaction(async (tx) => {
       const [row] = await tx
         .insert(authors)
-        .values({ id: crypto.randomUUID(), name: req.name.value })
+        .values({ id: author.id, name: author.name.value })
         .returning();
 
       if (events.length > 0) {
@@ -959,24 +1158,33 @@ export class PostgresAuthorRepository implements AuthorRepository {
         );
       }
 
-      return Author.from(row);
+      // Author is an interface — use the mapper, not a (non-existent) static.
+      // `returning()` yields { id, name, createdAt }, the shape AuthorMapper expects.
+      return AuthorMapper.toDomain(row);
     });
   }
 }
 ```
 
 ```typescript
-// Application service composes the events
+// Application service composes the events. It generates the id so the outbox
+// aggregateId is the real entity id (not the name) and the persisted row id matches.
 async createAuthor(req: CreateAuthorRequest): Promise<Author> {
+  const author: Author = { id: crypto.randomUUID(), name: req.name };
   const events: DomainEvent[] = [{
     aggregateType: "author",
-    aggregateId: req.name.value,
+    aggregateId: author.id,
     eventType: "AuthorCreated",
-    payload: { name: req.name.value },
+    payload: { name: author.name.value },
   }];
-  const author = await this.repo.createAuthor(req, events);
-  await this.metrics.recordCreation();
-  return author;
+  try {
+    const created = await this.repo.createAuthor(author, events);
+    await this.metrics.recordCreationSuccess();
+    return created;
+  } catch (error) {
+    await this.metrics.recordCreationFailure();
+    throw error;
+  }
 }
 ```
 
@@ -1011,7 +1219,33 @@ export interface IdempotencyStore {
 ```
 
 ```typescript
-// src/outbound/postgres-idempotency.ts
+// src/outbound/drizzle/schema.ts — idempotency table (Postgres dialect shown)
+import { pgTable, text, timestamp, primaryKey, customType } from "drizzle-orm/pg-core";
+
+// Raw response bytes; `bytea` in Postgres.
+const bytea = customType<{ data: Uint8Array }>({ dataType: () => "bytea" });
+
+export const idempotency = pgTable(
+  "idempotency",
+  {
+    scope: text("scope").notNull(),
+    key: text("key").notNull(),
+    requestHash: text("request_hash").notNull(),
+    response: bytea("response"), // null until the response is stored
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  // Composite PK gives the unique (scope, key) constraint races collapse on.
+  (t) => [primaryKey({ columns: [t.scope, t.key] })],
+);
+```
+
+```typescript
+// src/outbound/drizzle/idempotency.ts
+import { and, eq } from "drizzle-orm";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { idempotency } from "./schema";
+import type { Acquire, IdempotencyStore } from "../../domain/shared/idempotency";
+
 export class PostgresIdempotencyStore implements IdempotencyStore {
   constructor(private readonly db: NodePgDatabase) {}
 
@@ -1029,6 +1263,10 @@ export class PostgresIdempotencyStore implements IdempotencyStore {
       .select()
       .from(idempotency)
       .where(and(eq(idempotency.scope, scope), eq(idempotency.key, key)));
+
+    // The losing racer may read before the winner's row is visible — treat a
+    // missing row as a fresh insert rather than dereferencing undefined.
+    if (!row) return { tag: "new" };
 
     if (row.requestHash !== hash) return { tag: "conflict" };
     if (row.response) return { tag: "replay", response: row.response };

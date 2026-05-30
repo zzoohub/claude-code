@@ -174,7 +174,7 @@ Far (background):
 2. **Limit choices**: 4–8 options per category. Excessive choice causes decision paralysis (Hick's Law).
 3. **Guided flow**: Step-by-step progression (shape → color → material → accessories). Allow free exploration but provide a recommended order.
 4. **Live price updates**: Price changes instantly when options change. Never surprise the user at checkout.
-5. **Mobile-first**: 55–80% of configurator users are on mobile.
+5. **Mobile-first**: most configurator traffic is mobile (share varies by vertical) — design for mobile first.
 
 ### Layout Patterns
 
@@ -322,20 +322,24 @@ Level 2: Immersive (Optional) — see xr-design.md
 
 ## 3D Accessibility
 
-### Keyboard Navigation
+### Alternative Representations (primary)
 
-3D viewers must be keyboard-accessible:
+The 3D viewer is an enhancement — the information it conveys MUST also be
+available in text. This is the primary accessibility commitment; keyboard-orbit
+(below) is not a substitute, because orbiting a scene conveys nothing to a
+non-sighted user.
+
+- Provide a text description or specs table alongside the 3D viewer
+- Announce major state changes to screen readers ("Color changed to red", "Viewing from front")
+
+### Keyboard Navigation (secondary)
+
+For sighted keyboard / switch users, 3D viewers must also be keyboard-accessible:
 - Tab to focus the viewer
 - Arrow keys to orbit
 - +/- or PgUp/PgDn to zoom
 - Enter to select an object
 - Escape to release focus
-
-### Alternative Representations
-
-- Provide a text description or specs table alongside the 3D viewer
-- Announce major state changes to screen readers ("Color changed to red", "Viewing from front")
-- The 3D viewer is an enhancement — the information it conveys must also be available in text
 
 ### Motion Sensitivity
 
@@ -369,7 +373,7 @@ Stay in 2D if:
 
 | Anti-Pattern | Why It Fails | Alternative |
 |-------------|-------------|-------------|
-| Blank screen until 3D fully loads | 3+ seconds blank → 50%+ bounce rate | Poster image + progress indicator |
+| Blank screen until 3D fully loads | Multi-second blank screens drive steep bounce/abandonment | Poster image + progress indicator |
 | Same quality model for mobile and desktop | Frame drops, battery drain, overheating | Adaptive quality, separate LOD for mobile |
 | 3D canvas fills entire viewport (mobile) | Can't scroll, other content inaccessible | Limit canvas to 50–60% of screen height |
 | Error message when AR unsupported | Blames the user's device | Hide the AR button entirely |

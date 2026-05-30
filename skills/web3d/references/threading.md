@@ -34,7 +34,7 @@ shared.port.onmessage = (e) => { /* ... */ }
 shared.port.postMessage({ type: 'sync' })
 ```
 
-- **Limited support**: no Safari, partial Firefox
+- **Broad support**: Chrome/Edge, Firefox, and Safari 16+ (2022). The real gap is Chrome / Samsung Internet on **Android** and Android WebView, which don't implement SharedWorker.
 - Communicates via `MessagePort`
 - Niche use case -- only reach for this when you genuinely need cross-tab state sharing
 
@@ -45,25 +45,35 @@ Spawn N Dedicated Workers and distribute tasks across them. Essential for chunke
 ```typescript
 class WorkerPool {
   private workers: Worker[]
-  private next = 0
+  private seq = 0
+  private pending = new Map<number, (v: any) => void>()
 
   constructor(url: URL, size: number) {
-    this.workers = Array.from({ length: size },
-      () => new Worker(url, { type: 'module' })
-    )
+    this.workers = Array.from({ length: size }, () => {
+      const w = new Worker(url, { type: 'module' })
+      // ONE persistent handler per worker, routed by message id. Reassigning
+      // worker.onmessage on every post() clobbers in-flight resolvers when more
+      // tasks than workers are queued (round-robin reuse) — never do that.
+      w.onmessage = (e) => {
+        const resolve = this.pending.get(e.data.id)
+        if (resolve) { this.pending.delete(e.data.id); resolve(e.data) }
+      }
+      return w
+    })
   }
 
   post(message: any, transfer?: Transferable[]) {
-    const worker = this.workers[this.next % this.workers.length]
-    this.next++
+    const id = this.seq++
+    const worker = this.workers[id % this.workers.length]
     return new Promise((resolve) => {
-      worker.onmessage = (e) => resolve(e.data)
-      worker.postMessage(message, transfer ?? [])
+      this.pending.set(id, resolve)
+      worker.postMessage({ ...message, id }, transfer ?? [])
     })
   }
 
   terminate() { this.workers.forEach(w => w.terminate()) }
 }
+// The worker must echo `id` back in its reply: self.postMessage({ id: e.data.id, ...result })
 
 // Usage
 const pool = new WorkerPool(
@@ -147,7 +157,7 @@ worker.onmessage = (e) => {
 }
 ```
 
-**Cost**: ~1ms per MB of data.
+**Cost**: order of ~1 ms per MB, but highly hardware- and shape-dependent — typed arrays clone far faster than deep object graphs. Measure rather than assume.
 
 **Use for**: Small messages, one-shot results, configuration, events.
 
@@ -190,13 +200,18 @@ worker.postMessage({ type: 'init', buffer: sab, count: ENTITY_COUNT })
 // Worker: write simulation results directly
 self.onmessage = (e) => {
   if (e.data.type === 'init') {
-    const positions = new Float32Array(e.data.buffer)
+    const { buffer, count } = e.data
+    const positions = new Float32Array(buffer)
+    const velocities = new Float32Array(count * 3)  // populate from the init payload
+    const dt = 1 / 60
     function tick() {
       for (let i = 0; i < count * 3; i += 3) {
-        positions[i] += velocities[i] * dt
+        positions[i]     += velocities[i] * dt
         positions[i + 1] += velocities[i + 1] * dt
         positions[i + 2] += velocities[i + 2] * dt
       }
+      // Simple fixed cadence. setTimeout drifts under load — for a stable sim use an
+      // elapsed-time accumulator with a carried remainder (see references/physics.md).
       setTimeout(tick, 1000 / 60)
     }
     tick()
@@ -264,10 +279,12 @@ Cross-Origin-Embedder-Policy: require-corp
 ### Feature Detection
 
 ```typescript
-const canUseSharedArrayBuffer = typeof SharedArrayBuffer !== 'undefined'
-const isCrossOriginIsolated = self.crossOriginIsolated === true
+// SharedArrayBuffer is only usable when the page is cross-origin isolated — the
+// constructor can exist but allocation/ sharing fails without isolation, so check both.
+const canUseSharedArrayBuffer =
+  typeof SharedArrayBuffer !== 'undefined' && self.crossOriginIsolated === true
 
-if (!isCrossOriginIsolated) {
+if (!canUseSharedArrayBuffer) {
   console.warn('SharedArrayBuffer unavailable -- falling back to postMessage')
 }
 ```
@@ -293,6 +310,9 @@ export const VEL_X = 7
 export const VEL_Y = 8
 export const VEL_Z = 9
 export const FLAGS = 10  // bitfield: alive, active, dirty, etc.
+// Indices 11-15 are reserved padding (ENTITY_STRIDE = 16). NB: this 16-float layout holds
+// full transform + state; the positions-only examples elsewhere use a tighter stride-3
+// buffer — keep one layout per buffer and don't mix them.
 
 export function entityOffset(entityIndex: number): number {
   return entityIndex * ENTITY_STRIDE
@@ -313,12 +333,16 @@ For transform data (positions, rotations), tearing is visually imperceptible -- 
 
 For data where consistency matters (entity alive/dead flags, state transitions), use `Atomics`:
 
+`Atomics` require an **integer** view (`Int32Array`) — they throw `TypeError` on a `Float32Array`. Create a parallel `Int32Array` over the same `SharedArrayBuffer` and index by the stride layout, not a bare entity index:
+
 ```typescript
-// Worker: set entity as dead
-Atomics.store(flagsView, entityIndex, DEAD_FLAG)
+const flagsI32 = new Int32Array(sab)   // same buffer as the Float32Array transform view
+
+// Worker: set entity as dead (index via the layout: entityOffset(i) + FLAGS)
+Atomics.store(flagsI32, entityOffset(entityIndex) + FLAGS, DEAD_FLAG)
 
 // Main thread: check
-const flags = Atomics.load(flagsView, entityIndex)
+const flags = Atomics.load(flagsI32, entityOffset(entityIndex) + FLAGS)
 if (flags & DEAD_FLAG) { /* remove from scene */ }
 ```
 
@@ -337,4 +361,4 @@ if (flags & DEAD_FLAG) { /* remove from scene */ }
 - Don't `postMessage` large Float32Arrays every frame
 - Don't create/destroy Workers per task (use a pool or long-lived Workers)
 - Don't share `WebGLRenderingContext` or `GPUDevice` across threads (not possible)
-- Don't use `Atomics.wait()` on the main thread (it blocks rendering)
+- Don't use `Atomics.wait()` on the main thread — it *throws* there (it is allowed only inside workers); use `Atomics.waitAsync()` for a non-blocking wait

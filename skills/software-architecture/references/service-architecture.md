@@ -49,7 +49,7 @@ src/
 +-- config/           # Wiring: dependency injection, app bootstrap
 ```
 
-**Who uses it**: Stripe (per-service hexagonal with clean domain boundaries), Netflix DGS framework (GraphQL services with hexagonal internals), most mature backend systems with complex domain logic.
+**Who uses it**: Netflix's Studio Workflows team documented adopting hexagonal architecture (2020 engineering blog); common in mature backends with complex domain logic that need to swap data sources and infrastructure without touching business logic.
 
 ---
 
@@ -83,7 +83,7 @@ Uncle Bob's concentric circles model. Shares hexagonal's core principle (depende
 
 **Choose when**: Team already thinks in Clean Architecture terms. Java/Kotlin/C# ecosystem where Clean Architecture conventions dominate. You want explicit Use Case objects as the primary API surface.
 
-**Who uses it**: Toss (Korean fintech — Clean Architecture per module within their modular monolith), many Android/iOS teams (Google's recommended architecture follows Clean principles).
+**Who uses it**: Many Android/iOS teams (Google's recommended app architecture — UI/Domain/Data layers with an optional Use Case layer — follows Clean principles); Java/Kotlin/C# backend teams commonly adopt it.
 
 ---
 
@@ -148,7 +148,7 @@ Separate **pure business logic** (functional core) from **side effects** (impera
 
 **Choose when**: Rust (ownership model naturally separates data from I/O — this pattern is idiomatic). Complex business rules that benefit from pure-function testing. The domain can be modeled as "gather data -> compute -> persist results" without mid-computation I/O.
 
-**Who uses it**: Elm (the language enforces this pattern), many Rust and Haskell projects. Gary Bernhardt's "Boundaries" talk (2012) codified the pattern. Discord's Rust services use this style for hot paths.
+**Who uses it**: Elm (the Elm Architecture forces pure update functions with effects at the boundary), many Rust and Haskell projects. Gary Bernhardt's "Boundaries" talk (2012) codified the pattern. (Rust's ownership model makes the data-vs-I/O split natural for hot-path services — e.g., Discord moved its Read States hot path to Rust.)
 
 ---
 

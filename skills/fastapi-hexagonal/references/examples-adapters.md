@@ -49,6 +49,8 @@ class AuthorMapper:
 
 ## Outbound: Postgres Adapter (ORM + mapper)
 
+The repository is **session-based**: it never creates its own session in `__init__`. The session is supplied — that is what lets a `UnitOfWork` share one transaction across repos. For standalone wiring (no UoW), use the `from_engine` factory, which wraps each call in its own short-lived session + transaction.
+
 ```python
 # src/outbound/postgres/repository.py
 import uuid
@@ -56,8 +58,11 @@ import logging
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
-from sqlalchemy.orm import selectinload
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+)
 
 from domain.authors.errors import DuplicateAuthorError, UnknownAuthorError
 from domain.authors.models import Author, CreateAuthorRequest
@@ -68,50 +73,67 @@ logger = logging.getLogger(__name__)
 
 
 class PostgresAuthorRepository:
-    """Transactions encapsulated here — invisible to callers."""
+    """Operates on a supplied AsyncSession. Commit/rollback is owned by the
+    caller (a UnitOfWork or the engine-backed factory below) — never here.
+    """
 
-    def __init__(self, database_url: str) -> None:
-        self._engine = create_async_engine(
-            database_url,
-            pool_size=10,
-            pool_timeout=3,
-            pool_pre_ping=True,
-        )
-        self._session_factory = async_sessionmaker(
-            self._engine, expire_on_commit=False,
-        )
+    def __init__(self, session: AsyncSession) -> None:
+        self._session = session
 
     @classmethod
-    def from_engine(cls, engine) -> "PostgresAuthorRepository":
-        """Construct from existing engine (for testing)."""
-        instance = object.__new__(cls)
-        instance._engine = engine
-        instance._session_factory = async_sessionmaker(engine, expire_on_commit=False)
-        return instance
+    def from_engine(cls, engine: AsyncEngine) -> "EngineBackedAuthorRepository":
+        """Standalone wiring (no UoW): each call runs in its own session + tx.
+
+        Used by bootstrap (main.py / Application) and integration tests where
+        there is no surrounding UnitOfWork to provide a session.
+        """
+        return EngineBackedAuthorRepository(engine)
 
     async def create_author(self, req: CreateAuthorRequest) -> Author:
         author_id = uuid.uuid4()
-        async with self._session_factory() as session:
-            async with session.begin():
-                try:
-                    model = AuthorModel(id=author_id, name=req.name.value)
-                    session.add(model)
-                    await session.flush()
-                except IntegrityError:
-                    raise DuplicateAuthorError(name=req.name)
-                except Exception as exc:
-                    raise UnknownAuthorError(exc) from exc
+        try:
+            model = AuthorModel(id=author_id, name=req.name.value)
+            self._session.add(model)
+            await self._session.flush()
+        except IntegrityError:
+            # UNIQUE(name) is the race-safe backstop; an app-side
+            # check-then-insert would be TOCTOU. Let the constraint decide.
+            raise DuplicateAuthorError(name=req.name)
+        except Exception as exc:
+            raise UnknownAuthorError(exc) from exc
         return Author(id=author_id, name=req.name)
 
     async def find_author(self, author_id: uuid.UUID) -> Author | None:
+        result = await self._session.execute(
+            select(AuthorModel).where(AuthorModel.id == author_id)
+        )
+        row = result.scalar_one_or_none()
+        if row is None:
+            return None
+        return AuthorMapper.to_domain(row)
+
+
+class EngineBackedAuthorRepository:
+    """Wraps PostgresAuthorRepository with a per-call session + transaction.
+
+    For standalone use outside a UnitOfWork. Same port (AuthorRepository),
+    so the service/handlers don't know which one they got.
+    """
+
+    def __init__(self, engine: AsyncEngine) -> None:
+        self._session_factory = async_sessionmaker(engine, expire_on_commit=False)
+
+    async def create_author(self, req: CreateAuthorRequest) -> Author:
+        async with self._session_factory() as session, session.begin():
+            return await PostgresAuthorRepository(session).create_author(req)
+
+    async def find_author(self, author_id: uuid.UUID) -> Author | None:
         async with self._session_factory() as session:
-            result = await session.execute(
-                select(AuthorModel).where(AuthorModel.id == author_id)
-            )
-            row = result.scalar_one_or_none()
-            if row is None:
-                return None
-            return AuthorMapper.to_domain(row)
+            return await PostgresAuthorRepository(session).find_author(author_id)
+
+    async def list_authors(self, cursor: str | None, limit: int):
+        async with self._session_factory() as session:
+            return await PostgresAuthorRepository(session).list_authors(cursor, limit)
 ```
 
 ## Outbound: SQLite Adapter (raw SQL, no ORM)
@@ -121,28 +143,26 @@ class PostgresAuthorRepository:
 import uuid
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
 
 from domain.authors.errors import DuplicateAuthorError, UnknownAuthorError
 from domain.authors.models import Author, AuthorName, CreateAuthorRequest
 
 
 class SqliteAuthorRepository:
-    """Raw SQL — demonstrates adapters choose their own strategy."""
+    """Raw SQL — demonstrates adapters choose their own strategy.
 
-    def __init__(self, database_url: str) -> None:
-        self._engine = create_async_engine(database_url, pool_timeout=3)
-        self._session_factory = async_sessionmaker(
-            self._engine, expire_on_commit=False,
-        )
+    Engine-backed (this adapter is used standalone, not inside a UoW): each
+    call opens its own short-lived session + transaction.
+    """
+
+    def __init__(self, engine: AsyncEngine) -> None:
+        self._session_factory = async_sessionmaker(engine, expire_on_commit=False)
 
     @classmethod
-    def from_engine(cls, engine) -> "SqliteAuthorRepository":
-        """Construct from existing engine (for testing)."""
-        instance = object.__new__(cls)
-        instance._engine = engine
-        instance._session_factory = async_sessionmaker(engine, expire_on_commit=False)
-        return instance
+    def from_engine(cls, engine: AsyncEngine) -> "SqliteAuthorRepository":
+        """Mirror the Postgres adapter's wiring API."""
+        return cls(engine)
 
     async def create_author(self, req: CreateAuthorRequest) -> Author:
         author_id = uuid.uuid4()
@@ -173,19 +193,29 @@ class SqliteAuthorRepository:
 
 ## Outbound: Eager Loading (N+1 Prevention)
 
+> **Illustrative.** This snippet assumes a `Post` ORM model, a `posts`
+> relationship on `AuthorModel`, and an `AuthorMapper.to_domain_with_posts()`
+> method — none of which exist in the running example above. Treat `posts` /
+> `to_domain_with_posts` as placeholders for your own related entity. The point
+> is the pattern: in async SQLAlchemy, lazy loading raises, so eager-load
+> relationships with `selectinload()`. The method is session-based like the rest
+> of the repository (it runs against `self._session`).
+
 ```python
-# Additional method on PostgresAuthorRepository
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+
+# Additional method on PostgresAuthorRepository (session-based).
 async def find_author_with_posts(self, author_id: uuid.UUID) -> Author | None:
-    async with self._session_factory() as session:
-        result = await session.execute(
-            select(AuthorModel)
-            .options(selectinload(AuthorModel.posts))  # ✅ eager load
-            .where(AuthorModel.id == author_id)
-        )
-        row = result.scalar_one_or_none()
-        if row is None:
-            return None
-        return AuthorMapper.to_domain_with_posts(row)
+    result = await self._session.execute(
+        select(AuthorModel)
+        .options(selectinload(AuthorModel.posts))  # ✅ eager load (placeholder relation)
+        .where(AuthorModel.id == author_id)
+    )
+    row = result.scalar_one_or_none()
+    if row is None:
+        return None
+    return AuthorMapper.to_domain_with_posts(row)  # placeholder mapper method
 ```
 
 ---
@@ -202,7 +232,9 @@ from fastapi import APIRouter, Depends
 
 from domain.authors.models import CreateAuthorRequest, AuthorName
 from domain.authors.ports import AuthorService
-from inbound.http.dependencies import with_author_service
+# Shared DI provider lives in a neutral module so one inbound adapter (tasks)
+# doesn't reach into another's internals (inbound.http).
+from inbound.shared.dependencies import with_author_service
 
 
 class SyncAuthorTaskPayload(BaseModel):
@@ -230,9 +262,9 @@ def task_routes() -> APIRouter:
 
 
 # In Shell._build_app() — wire alongside REST routes:
-# app.include_router(author_routes(), prefix="/authors")   # user-facing
-# app.include_router(task_routes())                        # task queue
-# app.include_router(webhook_routes())                     # webhooks
+# app.include_router(author_routes(), prefix="/v1/authors")  # user-facing
+# app.include_router(task_routes())                          # task queue
+# app.include_router(webhook_routes())                       # webhooks
 ```
 
 ---
@@ -241,22 +273,32 @@ def task_routes() -> APIRouter:
 
 ```python
 # src/inbound/http/shell.py
+import uuid
 from contextlib import asynccontextmanager
+
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.ext.asyncio import AsyncEngine
 
 from domain.authors.ports import AuthorService
 from inbound.http.authors.router import author_routes
 from inbound.http.errors import register_exception_handlers
+from inbound.http.health import health_routes
+
+REQUEST_ID_HEADER = "X-Request-Id"
 
 
 class Shell:
     """HTTP interface. Wraps FastAPI so main.py never imports it."""
 
-    def __init__(self, config, author_service: AuthorService) -> None:
+    def __init__(
+        self, config, author_service: AuthorService, engine: AsyncEngine
+    ) -> None:
         self.config = config
-        self.app = self._build_app(author_service, config)
+        # Engine is threaded in (not built here) so /readyz can probe the DB
+        # using the same engine the repositories use.
+        self.app = self._build_app(author_service, config, engine)
 
     async def run(self) -> None:
         server_config = uvicorn.Config(
@@ -266,7 +308,9 @@ class Shell:
         await server.serve()
 
     @staticmethod
-    def _build_app(author_service: AuthorService, config) -> FastAPI:
+    def _build_app(
+        author_service: AuthorService, config, engine: AsyncEngine
+    ) -> FastAPI:
         @asynccontextmanager
         async def lifespan(app: FastAPI):
             # Config goes into ASGI state so inbound deps (e.g. auth) read it
@@ -274,36 +318,81 @@ class Shell:
             yield {"author_service": author_service, "config": config}
 
         app = FastAPI(lifespan=lifespan)
+
+        # Correlation id: echo an inbound X-Request-Id or generate one, expose
+        # it on request.state for handlers/logs, and echo it on the response.
+        # Registered before routers so it wraps every request. Per the shared
+        # spec the id lives in the header, not the body.
+        @app.middleware("http")
+        async def request_id_middleware(request: Request, call_next):
+            request_id = request.headers.get(REQUEST_ID_HEADER) or str(uuid.uuid4())
+            request.state.request_id = request_id
+            response = await call_next(request)
+            response.headers[REQUEST_ID_HEADER] = request_id
+            return response
+
+        # CORS before routers (order matters). Methods/headers/credentials are
+        # driven from config — no wildcards (a wildcard origin can't be combined
+        # with credentials anyway).
         app.add_middleware(
             CORSMiddleware,
             allow_origins=config.cors_origins,
-            allow_methods=["*"],
-            allow_headers=["*"],
+            allow_methods=config.cors_allow_methods,
+            allow_headers=config.cors_allow_headers,
+            allow_credentials=config.cors_allow_credentials,
         )
-        app.include_router(author_routes(), prefix="/authors")
+        app.include_router(author_routes(), prefix="/v1/authors")
+        app.include_router(health_routes(engine))
         register_exception_handlers(app)
         return app
 
     @staticmethod
-    def build_test_app(author_service: AuthorService, config) -> FastAPI:
+    def build_test_app(
+        author_service: AuthorService, config, engine: AsyncEngine
+    ) -> FastAPI:
         """For tests: returns ASGI app without uvicorn."""
-        return Shell._build_app(author_service, config)
+        return Shell._build_app(author_service, config, engine)
 ```
 
 ## Inbound: Dependency Injection
 
+The provider reads `request.state` (set in the Shell lifespan), so it works for
+ANY inbound adapter — HTTP, tasks, webhooks. It therefore lives in a neutral
+`inbound/shared/` module rather than under `inbound/http/`, so the tasks adapter
+doesn't have to import from the HTTP adapter's internals.
+
 ```python
-# src/inbound/http/dependencies.py
+# src/inbound/shared/dependencies.py
 from fastapi import Request
 from domain.authors.ports import AuthorService
 
 
 def with_author_service(request: Request) -> AuthorService:
-    """ASGI lifespan state — framework-agnostic."""
+    """ASGI lifespan state — framework-agnostic. Shared by all inbound adapters."""
     return request.state.author_service
 ```
 
+```python
+# src/inbound/http/dependencies.py
+# HTTP-specific deps live here; re-export the shared provider for convenience
+# so existing `from inbound.http.dependencies import with_author_service`
+# call sites keep working.
+from inbound.shared.dependencies import with_author_service  # noqa: F401
+```
+
 ## Inbound: Auth Dependency
+
+> **JWT algorithm.** Per the shared API spec, user-facing auth verified by
+> *multiple* services should use an **asymmetric** algorithm (ES256/EdDSA): the
+> issuer holds the private key, verifiers hold only the public key/JWKS. The
+> `HS256` (symmetric) example below is the *single-service / dev* fallback —
+> fine when one service both issues and verifies. To go asymmetric, sign with
+> the private key (`algorithm="ES256"`) and decode with the public key. Either
+> way, the algorithm is pinned on decode (never trust the token's `alg` header).
+>
+> The signing secret must be real. The example raises if it detects the
+> dev-only placeholder so an HS256 service can never sign with `change-me`
+> silently.
 
 ```python
 # src/inbound/http/auth.py
@@ -319,6 +408,8 @@ from pwdlib.hashers.argon2 import Argon2Hasher
 
 from app.config import AppConfig
 
+# Single-service / dev fallback. For multi-service auth switch to ES256/EdDSA.
+_ALGORITHM = "HS256"
 _oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 _oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 _hasher = PasswordHash((Argon2Hasher(),))
@@ -336,16 +427,19 @@ def verify_password(plain: str, hashed: str) -> bool:
     return _hasher.verify(password=plain, hash=hashed)
 
 def create_access_token(user_id: int, secret_key: str, expires_minutes: int = 30) -> str:
+    if not secret_key or secret_key == "dev-only-change-me":
+        # Never sign real tokens with the placeholder secret.
+        raise RuntimeError("SECRET_KEY is unset/placeholder; refusing to sign a JWT")
     expire = datetime.now(timezone.utc) + timedelta(minutes=expires_minutes)
     return jwt.encode(
         {"sub": str(user_id), "exp": expire},
         secret_key,
-        algorithm="HS256",
+        algorithm=_ALGORITHM,
     )
 
 def _decode_token(token: str, secret_key: str) -> int | None:
     try:
-        payload = jwt.decode(token, secret_key, algorithms=["HS256"])
+        payload = jwt.decode(token, secret_key, algorithms=[_ALGORITHM])
         return int(payload.get("sub"))
     except (jwt.InvalidTokenError, ValueError, TypeError):
         return None
@@ -405,13 +499,17 @@ class AuthorResponseData(BaseModel):
 
 ## Inbound: Handler (Router)
 
+The router is mounted under `/v1/authors` in the Shell, so route paths here are
+relative (`""`, `/{author_id}`). 201 responses set a `Location` header pointing
+at the new resource (per the shared spec).
+
 ```python
 # src/inbound/http/authors/router.py
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from domain.authors.ports import AuthorService
 from inbound.http.authors.request import CreateAuthorHttpRequestBody
 from inbound.http.authors.response import AuthorResponseData
-from inbound.http.dependencies import with_author_service
+from inbound.shared.dependencies import with_author_service
 from inbound.http.response import Created
 
 
@@ -421,10 +519,13 @@ def author_routes() -> APIRouter:
     @router.post("", status_code=201)
     async def create_author(
         body: CreateAuthorHttpRequestBody,
+        response: Response,
         service: AuthorService = Depends(with_author_service),
     ) -> Created[AuthorResponseData]:
         domain_req = body.try_into_domain()
         author = await service.create_author(domain_req)
+        # Mounted at /v1/authors, so the resource URI is /v1/authors/{id}.
+        response.headers["Location"] = f"/v1/authors/{author.id}"
         return Created(data=AuthorResponseData.from_domain(author))
 
     return router
@@ -432,9 +533,15 @@ def author_routes() -> APIRouter:
 
 ## Inbound: API Error (RFC 9457)
 
+Every error is `application/problem+json` (RFC 9457). The `instance` member
+carries the request path; the correlation id lives in the `X-Request-Id`
+response header (set by middleware), not the body. 422 responses map each
+validation failure into the `errors` extension array.
+
 ```python
 # src/inbound/http/errors.py
 import logging
+from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -443,42 +550,66 @@ from domain.authors.errors import AuthorNameEmptyError, DuplicateAuthorError, Un
 logger = logging.getLogger(__name__)
 
 
-def _problem(type_slug: str, title: str, status: int, detail: str) -> JSONResponse:
+def _problem(
+    request: Request,
+    type_slug: str,
+    title: str,
+    status: int,
+    detail: str,
+    errors: list[dict[str, Any]] | None = None,
+) -> JSONResponse:
+    body: dict[str, Any] = {
+        "type": f"https://api.example.com/errors/{type_slug}",
+        "title": title,
+        "status": status,
+        "detail": detail,
+        "instance": request.url.path,
+    }
+    if errors is not None:
+        body["errors"] = errors
     return JSONResponse(
         status_code=status,
-        content={
-            "type": f"https://api.example.com/errors/{type_slug}",
-            "title": title, "status": status, "detail": detail,
-        },
+        content=body,
+        media_type="application/problem+json",
     )
 
 
 def register_exception_handlers(app: FastAPI) -> None:
     @app.exception_handler(DuplicateAuthorError)
     async def handle_duplicate(request: Request, exc: DuplicateAuthorError):
-        return _problem("duplicate-author", "Conflict", 409,
+        return _problem(request, "duplicate-author", "Conflict", 409,
                         f"author with name {exc.name.value} already exists")
 
     @app.exception_handler(AuthorNameEmptyError)
     async def handle_empty_name(request: Request, exc: AuthorNameEmptyError):
-        return _problem("validation-error", "Unprocessable Entity", 422,
+        return _problem(request, "validation-error", "Unprocessable Entity", 422,
                         "author name cannot be empty")
 
     @app.exception_handler(UnknownAuthorError)
     async def handle_unknown(request: Request, exc: UnknownAuthorError):
         logger.error("Unexpected error: %s", exc.cause, exc_info=exc.cause)
-        return _problem("internal-error", "Internal Server Error", 500,
+        return _problem(request, "internal-error", "Internal Server Error", 500,
                         "An unexpected error occurred")
 
     @app.exception_handler(RequestValidationError)
     async def handle_validation(request: Request, exc: RequestValidationError):
-        return _problem("validation-error", "Validation Failed", 422,
-                        "One or more fields failed validation")
+        # Map FastAPI/Pydantic errors to the RFC 9457 `errors` extension array.
+        errors = [
+            {
+                # loc is like ("body", "name"); the last element is the field.
+                "field": ".".join(str(p) for p in err["loc"][1:]) or str(err["loc"][-1]),
+                "code": err["type"],
+                "message": err["msg"],
+            }
+            for err in exc.errors()
+        ]
+        return _problem(request, "validation-error", "Validation Failed", 422,
+                        "One or more fields failed validation", errors=errors)
 
     @app.exception_handler(Exception)
     async def handle_generic(request: Request, exc: Exception):
         logger.error("Unhandled exception: %s", exc, exc_info=exc)
-        return _problem("internal-error", "Internal Server Error", 500,
+        return _problem(request, "internal-error", "Internal Server Error", 500,
                         "An unexpected error occurred")
 ```
 
@@ -503,10 +634,16 @@ class Ok(ApiSuccess[T]):
 class NoContent(BaseModel):
     pass
 
-class CursorPageResponse(BaseModel, Generic[T]):
-    data: list[T]
+class CursorMeta(BaseModel):
+    """Pagination metadata. Nested under `meta` per the shared API spec."""
+    limit: int
     next_cursor: str | None
     has_more: bool
+
+class CursorPageResponse(BaseModel, Generic[T]):
+    # Collection shape: { "data": [...], "meta": { limit, next_cursor, has_more } }
+    data: list[T]
+    meta: CursorMeta
 ```
 
 ## Inbound: Pagination (cursor-based)
@@ -533,36 +670,40 @@ def decode_cursor(raw: str) -> tuple[datetime, uuid.UUID]:
     return datetime.fromisoformat(ts), uuid.UUID(id_str)
 
 
-# src/outbound/postgres/repository.py — cursor pagination
-from sqlalchemy import tuple_
+# src/outbound/postgres/repository.py — cursor pagination (method on the
+# session-based PostgresAuthorRepository; runs against self._session).
+from sqlalchemy import select, tuple_
 
 async def list_authors(self, cursor: str | None, limit: int) -> CursorPage[Author]:
-    async with self._session_factory() as session:
-        # Order by (created_at, id) — single-column `id > X` skips/duplicates rows
-        # when timestamps tie or rows are inserted between requests.
-        query = select(AuthorModel).order_by(
-            AuthorModel.created_at.asc(), AuthorModel.id.asc(),
+    # Order by (created_at, id) — single-column `id > X` skips/duplicates rows
+    # when timestamps tie or rows are inserted between requests.
+    query = select(AuthorModel).order_by(
+        AuthorModel.created_at.asc(), AuthorModel.id.asc(),
+    )
+    if cursor:
+        cursor_at, cursor_id = decode_cursor(cursor)
+        query = query.where(
+            tuple_(AuthorModel.created_at, AuthorModel.id) > (cursor_at, cursor_id)
         )
-        if cursor:
-            cursor_at, cursor_id = decode_cursor(cursor)
-            query = query.where(
-                tuple_(AuthorModel.created_at, AuthorModel.id) > (cursor_at, cursor_id)
-            )
-        # Fetch limit+1 to detect whether more rows exist.
-        result = await session.execute(query.limit(limit + 1))
-        rows = list(result.scalars().all())
-        has_more = len(rows) > limit
-        # Drop overflow row; cursor points at the LAST RETURNED row so the
-        # next page resumes AFTER it (no duplicates, no skips).
-        page_rows = rows[:limit]
-        items = [AuthorMapper.to_domain(r) for r in page_rows]
-        next_cursor = (
-            encode_cursor(page_rows[-1].created_at, page_rows[-1].id)
-            if has_more and page_rows else None
-        )
-        return CursorPage(items=items, next_cursor=next_cursor, has_more=has_more)
+    # Fetch limit+1 to detect whether more rows exist.
+    result = await self._session.execute(query.limit(limit + 1))
+    rows = list(result.scalars().all())
+    has_more = len(rows) > limit
+    # Drop overflow row; cursor points at the LAST RETURNED row so the
+    # next page resumes AFTER it (no duplicates, no skips).
+    page_rows = rows[:limit]
+    items = [AuthorMapper.to_domain(r) for r in page_rows]
+    next_cursor = (
+        encode_cursor(page_rows[-1].created_at, page_rows[-1].id)
+        if has_more and page_rows else None
+    )
+    return CursorPage(items=items, next_cursor=next_cursor, has_more=has_more)
 
 # src/inbound/http/authors/router.py — handler (FastAPI 0.95+ Annotated style)
+# Add to the imports at the top of the router module:
+#   from typing import Annotated
+#   from fastapi import APIRouter, Depends, Query, Response
+#   from inbound.http.response import Created, CursorMeta, CursorPageResponse
 @router.get("")
 async def list_authors(
     cursor: Annotated[str | None, Query()] = None,
@@ -570,10 +711,14 @@ async def list_authors(
     service: AuthorService = Depends(with_author_service),
 ) -> CursorPageResponse[AuthorResponseData]:
     page = await service.list_authors(cursor, limit)
+    # Pagination metadata nested under `meta` per the shared API spec.
     return CursorPageResponse(
         data=[AuthorResponseData.from_domain(a) for a in page.items],
-        next_cursor=page.next_cursor,
-        has_more=page.has_more,
+        meta=CursorMeta(
+            limit=limit,
+            next_cursor=page.next_cursor,
+            has_more=page.has_more,
+        ),
     )
 ```
 
@@ -582,10 +727,15 @@ async def list_authors(
 ```python
 # src/inbound/http/health.py
 """Healthcheck is infrastructure — not a domain concern.
-Wire directly in Shell, no service needed."""
+Wire directly in Shell, no service needed. The engine is supplied by Shell."""
+import logging
+
 from fastapi import APIRouter
-from sqlalchemy.ext.asyncio import AsyncEngine
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine
+
+logger = logging.getLogger(__name__)
 
 
 def health_routes(engine: AsyncEngine) -> APIRouter:
@@ -597,8 +747,23 @@ def health_routes(engine: AsyncEngine) -> APIRouter:
 
     @router.get("/readyz")
     async def readyz():
-        async with engine.connect() as conn:
-            await conn.execute(text("SELECT 1"))
+        # DB unreachable → 503 (not ready), not a 500. A 503 tells the load
+        # balancer to stop routing traffic until the dependency recovers.
+        try:
+            async with engine.connect() as conn:
+                await conn.execute(text("SELECT 1"))
+        except Exception as exc:
+            logger.warning("readiness probe failed: %s", exc)
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "type": "https://api.example.com/errors/not-ready",
+                    "title": "Service Unavailable",
+                    "status": 503,
+                    "detail": "database not reachable",
+                },
+                media_type="application/problem+json",
+            )
         return {"status": "ready"}
 
     return router
@@ -630,8 +795,8 @@ class DomainEvent:
 ```python
 # src/domain/shared/uow.py — port
 from typing import Protocol, Self
-from .events import DomainEvent
-from ..authors.ports import AuthorRepository
+from domain.shared.events import DomainEvent
+from domain.authors.ports import AuthorRepository
 
 class OutboxRepository(Protocol):
     async def enqueue(self, events: list[DomainEvent]) -> None: ...
@@ -645,9 +810,11 @@ class UnitOfWork(Protocol):
 ```
 
 ```python
-# src/outbound/postgres.py — one AsyncSession shared across repos
+# src/outbound/postgres/uow.py — one AsyncSession shared across repos
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
-from src.domain.shared.uow import UnitOfWork
+
+from outbound.postgres.repository import PostgresAuthorRepository
+from outbound.postgres.outbox import PostgresOutboxRepository
 
 class PostgresUnitOfWork:
     """Application service uses this to scope a tx across multiple repos."""
@@ -660,7 +827,9 @@ class PostgresUnitOfWork:
         self._session = self._session_factory()
         await self._session.__aenter__()
         await self._session.begin()
-        # Both repos share the SAME session = same transaction.
+        # Both repos take the SAME session = same transaction. This is exactly
+        # why PostgresAuthorRepository.__init__ accepts a session rather than
+        # building its own engine/session.
         self.authors = PostgresAuthorRepository(self._session)
         self.outbox = PostgresOutboxRepository(self._session)
         return self
@@ -675,11 +844,36 @@ class PostgresUnitOfWork:
 ```
 
 ```python
-# src/outbound/postgres_outbox.py
+# src/outbound/postgres/outbox.py
 import json, uuid
 from sqlalchemy import insert
-from src.domain.shared.events import DomainEvent
-from .schema import outbox_table  # SQLAlchemy core Table
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from domain.shared.events import DomainEvent
+from outbound.postgres.schema import outbox_table  # SQLAlchemy core Table
+
+
+def current_traceparent() -> str | None:
+    """Best-effort W3C traceparent for the active OTel span; None if untraced.
+
+    Kept here so the outbox row captures trace context at write time. If you
+    don't run OpenTelemetry, return None (or drop the column).
+    """
+    try:
+        from opentelemetry import trace
+        from opentelemetry.trace import format_span_id, format_trace_id
+
+        span = trace.get_current_span()
+        ctx = span.get_span_context()
+        if not ctx.is_valid:
+            return None
+        return (
+            f"00-{format_trace_id(ctx.trace_id)}-"
+            f"{format_span_id(ctx.span_id)}-{ctx.trace_flags:02x}"
+        )
+    except Exception:
+        return None
+
 
 class PostgresOutboxRepository:
     def __init__(self, session: AsyncSession) -> None:
@@ -705,7 +899,7 @@ class PostgresOutboxRepository:
 # Application service uses the UoW — tx boundary visible at the call site
 async def create_author(self, req: CreateAuthorRequest) -> Author:
     async with self._uow as uow:
-        author = await uow.authors.create(req)
+        author = await uow.authors.create_author(req)
         await uow.outbox.enqueue([DomainEvent(
             aggregate_type="author",
             aggregate_id=str(author.id),
@@ -713,7 +907,7 @@ async def create_author(self, req: CreateAuthorRequest) -> Author:
             payload={"name": str(author.name)},
         )])
         # commit happens in __aexit__ on success
-    await self._metrics.record_creation()
+    await self._metrics.record_creation_success()
     return author
 ```
 
@@ -752,7 +946,13 @@ class IdempotencyStore(Protocol):
 ```
 
 ```python
-# src/outbound/postgres_idempotency.py
+# src/outbound/postgres/idempotency.py
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+
+from domain.shared.idempotency import Acquire, Conflict, NewExecution, Replay
+
+
 class PostgresIdempotencyStore:
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._session_factory = session_factory

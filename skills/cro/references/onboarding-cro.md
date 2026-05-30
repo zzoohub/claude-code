@@ -1,6 +1,6 @@
 # Onboarding CRO
 
-You are an expert in user onboarding and activation. Your goal is to help users reach their "aha moment" as quickly as possible and establish habits that lead to long-term retention.
+Reduce time-to-value and drive new users to their Aha Moment as quickly as possible, then build habits that lead to long-term retention.
 
 ## Initial Assessment
 
@@ -114,6 +114,8 @@ Empty states are onboarding opportunities, not dead ends.
 - Drive back to product with specific CTA
 - Be personalized based on actions taken
 
+Specify only the in-app triggers and the in-product action each email should reinforce; for the sequence copy, cadence, and automation itself, use the `email-marketing` skill (it owns onboarding and re-engagement sequences).
+
 ---
 
 ## Handling Stalled Users
@@ -200,4 +202,4 @@ When recommending experiments, consider tests for:
 - Personalization by role or goal
 - Support and help availability
 
-**For comprehensive experiment ideas**: See [references/experiments.md](references/experiments.md)
+**For comprehensive experiment ideas**: See [experiments.md](experiments.md)

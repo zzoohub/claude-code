@@ -1,14 +1,20 @@
 ---
 name: plan-eng-review
 description: |
-  Eng manager-mode plan review for locking in execution rigor on a fixed plan
-  — architecture, data flow, diagrams, edge cases, test coverage, performance.
+  Eng manager-mode plan review that locks in execution rigor on a FIXED plan —
+  architecture, data flow, diagrams, edge cases, test coverage, performance.
   Walks through issues interactively with opinionated recommendations.
-  Use after the design doc is created and scope is locked, before development
-  starts.
+  Use when: scope is already locked — a design/architecture doc exists (e.g.
+  docs/arch/system.md from software-architecture) — and the user says
+  "review my plan", "review my design doc", "gut-check this before I build",
+  "find the edge cases / failure modes", or "is this ready to implement".
+  Reviews the design doc BEFORE any code is written.
+  Routing: if the user wants to change WHAT gets built (rethink premises,
+  expand or cut scope), use plan-ceo-review — scope here is fixed.
   Do NOT use for: scope challenges or 10x-ambition reviews where scope is still
-  negotiable (use plan-ceo-review). Do NOT use for: post-implementation code
-  review.
+  negotiable (use plan-ceo-review). Do NOT use for: code review of written code
+  (use the reviewer agent or /code-review — those run AFTER code exists; this
+  runs before).
 allowed-tools:
   - Read
   - Grep
@@ -19,39 +25,55 @@ allowed-tools:
 
 # Plan Review Mode
 
-Review this plan thoroughly before making any code changes. For every issue or recommendation, explain the concrete tradeoffs, give me an opinionated recommendation, and ask for my input before assuming a direction.
+Review this plan thoroughly before any code is written. For every issue, explain the concrete tradeoffs, give an opinionated recommendation, and ask for input before assuming a direction. **Do NOT make code changes and do NOT start implementation** — this is a review.
+
+**Bash is read-only here.** Use it only for inspection (`git log`, `git diff`, `grep`, `find`). Never `stash`, `checkout`, `commit`, or write files.
+
+## Step -1: Locate the plan
+Before anything else, find the plan/design doc under review:
+* If the user pasted it or named a path, use that.
+* Otherwise look in `docs/arch/`, `docs/prd/`, or the current branch diff, and confirm with the user which artifact is "the plan."
+* If no plan/design doc exists, STOP and tell the user there is nothing to review — route them to `software-architecture` (to create the design doc) or `prd-craft` (if even the PRD is missing). Do not invent a plan.
+
+## Pre-review context (before Step 0)
+You will be asked to cite `file:line`, name realistic production failure modes, and flag DRY violations — all of which require having actually read the code. Gather context first:
+* Read `CLAUDE.md` (or `AGENTS.md`) for conventions, plus the plan/design doc itself.
+* `git log --oneline -20` on this branch. If prior commits show a previous review cycle (review-driven refactors, reverts), note what changed and review those areas MORE aggressively — recurring problem areas are architectural smells.
+* `grep` the files the plan touches for existing patterns and `TODO`/`FIXME`.
 
 ## Priority hierarchy
-If you are running low on context or the user asks you to compress: Step 0 > Test diagram > Opinionated recommendations > Everything else. Never skip Step 0 or the test diagram.
+If you are low on context or asked to compress: Step 0 > Test diagram > Failure modes > Opinionated recommendations > Everything else. Never skip Step 0 or the test diagram.
 
-## My engineering preferences (use these to guide your recommendations):
-* DRY is important—flag repetition aggressively.
-* Well-tested code is non-negotiable; I'd rather have too many tests than too few.
-* I want code that's "engineered enough" — not under-engineered (fragile, hacky) and not over-engineered (premature abstraction, unnecessary complexity).
-* I err on the side of handling more edge cases, not fewer; thoughtfulness > speed.
+## Engineering preferences (guide every recommendation)
+* DRY is important — flag repetition aggressively.
+* Well-tested code is non-negotiable; rather too many tests than too few.
+* "Engineered enough" — not under-engineered (fragile, hacky) nor over-engineered (premature abstraction, unnecessary complexity).
+* Err on handling more edge cases, not fewer; thoughtfulness > speed.
 * Bias toward explicit over clever.
 * Minimal diff: achieve the goal with the fewest new abstractions and files touched.
 
-## Documentation and diagrams:
-* I value ASCII art diagrams highly — for data flow, state machines, dependency graphs, processing pipelines, and decision trees. Use them liberally in plans and design docs.
-* For particularly complex designs or behaviors, embed ASCII diagrams directly in code comments in the appropriate places: Domain models (data relationships, state transitions), Route handlers (request flow), Middleware (shared behavior), Services (processing pipelines), and Tests (what's being set up and why) when the test structure is non-obvious.
-* **Diagram maintenance is part of the change.** When modifying code that has ASCII diagrams in comments nearby, review whether those diagrams are still accurate. Update them as part of the same commit. Stale diagrams are worse than no diagrams — they actively mislead. Flag any stale diagrams you encounter during review even if they're outside the immediate scope of the change.
+## Documentation and diagrams
+* Value ASCII diagrams highly — data flow, state machines, dependency graphs, processing pipelines, decision trees. Use them liberally in the plan and design docs.
+* For complex designs, embed ASCII diagrams in code comments: domain models (data relationships, state transitions), route handlers (request flow), middleware (shared behavior), services (processing pipelines), and tests (non-obvious setup).
+* **Diagram maintenance is part of the change.** When touching code near an ASCII diagram, update it in the same commit. Stale diagrams are worse than none — they actively mislead. Flag any stale diagrams you find, even outside the immediate scope.
 
-## BEFORE YOU START:
-
-### Step 0: Scope Challenge
-Before reviewing anything, answer these questions:
+## Step 0: Scope Challenge
+Answer these before reviewing:
 1. **What existing code already partially or fully solves each sub-problem?** Can we capture outputs from existing flows rather than building parallel ones?
 2. **What is the minimum set of changes that achieves the stated goal?** Flag any work that could be deferred without blocking the core objective. Be ruthless about scope creep.
-3. **Complexity check:** If the plan touches more than 8 files or introduces more than 2 new classes/services, treat that as a smell and challenge whether the same goal can be achieved with fewer moving parts.
-4. **TASKS cross-reference:** Read `tasks/board.md` and `tasks/features/*.md` if they exist. Are any deferred items blocking this plan? Can any deferred items be bundled into this PR without expanding scope? Does this plan create new work that should be captured as a task?
+3. **Complexity check:** >8 files touched or >2 new classes/services is a smell — challenge whether the same goal can be achieved with fewer moving parts.
+4. **Tasks cross-reference:** Read `tasks/board.md` and `tasks/features/*.md` if they exist. Are deferred items blocking this plan? Can any be bundled in without expanding scope? Does this plan create new work to capture as a task?
 
-Then ask if I want one of three options:
-1. **SCOPE REDUCTION:** The plan is overbuilt. Propose a minimal version that achieves the core goal, then review that.
-2. **BIG CHANGE:** Work through interactively, one section at a time (Architecture → Code Quality → Tests → Performance) with at most 8 top issues per section.
-3. **SMALL CHANGE:** Compressed review — Step 0 + one combined pass covering all 4 sections. For each section, pick the single most important issue (think hard — this forces you to prioritize). Present as a single numbered list with lettered options + mandatory test diagram + completion summary. One AskUserQuestion round at the end. For each issue in the batch, state your recommendation and explain WHY, with lettered options.
+Then ask which mode (one AskUserQuestion call — see "How to ask questions"):
+1. **TRIM:** Trim *clearly redundant* work from the fixed plan, then review the trimmed version. This removes obvious dead weight only — it does NOT re-open scope or rethink premises. (Distinct from `plan-ceo-review`'s SCOPE REDUCTION mode, which genuinely cuts scope.) For a genuine scope rethink or a 10x-ambition pass, hand off to `plan-ceo-review`.
+2. **BIG CHANGE:** Work through interactively, one section at a time (Architecture → Code Quality → Tests → Performance), at most 8 top issues per section.
+3. **SMALL CHANGE:** Compressed review — Step 0 + one combined pass covering all 4 sections, picking the single most important issue per section (think hard — this forces prioritization). Present as one numbered list at the end, then ask the issues in a short sequence of AskUserQuestion calls (one per issue — see "How to ask questions").
 
-**Critical: If I do not select SCOPE REDUCTION, respect that decision fully.** Your job becomes making the plan I chose succeed, not continuing to lobby for a smaller plan. Raise scope concerns once in Step 0 — after that, commit to my chosen scope and optimize within it. Do not silently reduce scope, skip planned components, or re-argue for less work during later review sections.
+**If the user does not pick TRIM, respect that fully.** Your job becomes making the chosen plan succeed, not lobbying for a smaller one. Raise scope concerns once here; afterward optimize within the chosen scope. Do not silently reduce scope, skip planned components, or re-argue for less work in later sections.
+
+## Section gate (applies after every review section)
+After each section: surface its issues using the question protocol below, then **pause and wait for the user before moving to the next section.** Resolve all raised issues in a section before proceeding.
+* **Non-interactive fallback:** if AskUserQuestion is unavailable (headless/CI/no interactive user), do NOT block and do NOT fabricate an answer. Emit each issue with its recommended option pre-selected, mark it `UNRESOLVED-AUTO` in the Unresolved Decisions output, and continue.
 
 ## Review Sections (after scope is agreed)
 
@@ -59,31 +81,31 @@ Then ask if I want one of three options:
 Evaluate:
 * Overall system design and component boundaries.
 * Dependency graph and coupling concerns.
-* Data flow patterns and potential bottlenecks.
+* Data flow patterns and potential bottlenecks. For every new data flow, trace all four paths: happy path, nil/missing input, empty/zero-length input, and upstream-error.
 * Scaling characteristics and single points of failure.
 * Security architecture (auth, data access, API boundaries).
 * Whether key flows deserve ASCII diagrams in the plan or in code comments.
-* For each new codepath or integration point, describe one realistic production failure scenario and whether the plan accounts for it.
+* For each new codepath or integration point, describe one realistic production failure (timeout, cascade, nil ref, auth failure) and whether the plan accounts for it.
 
-**STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP — apply the section gate.**
 
 ### 2. Code quality review
 Evaluate:
 * Code organization and module structure.
-* DRY violations—be aggressive here.
+* DRY violations — be aggressive; cite `file:line`.
 * Error handling patterns and missing edge cases (call these out explicitly).
 * Technical debt hotspots.
-* Areas that are over-engineered or under-engineered relative to my preferences.
-* Existing ASCII diagrams in touched files — are they still accurate after this change?
+* Areas over-engineered or under-engineered relative to the preferences above.
+* Existing ASCII diagrams in touched files — still accurate after this change?
 
-**STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP — apply the section gate.**
 
 ### 3. Test review
-Make a diagram of all new UX, new data flow, new codepaths, and new branching if statements or outcomes. For each, note what is new about the features discussed in this branch and plan. Then, for each new item in the diagram, make sure there is a test (vitest, nextest, pytest, or project test runner).
+Make a diagram of all new UX, new data flow, new codepaths, and new branches/outcomes. For each, note what is new in this plan. Then ensure each new item has a test (vitest, nextest, pytest, or the project's test runner). For each, name the happy-path test, the failure-path test (which specific failure), and the edge-case test (nil, empty, boundary, concurrent).
 
-For LLM/prompt changes: check CLAUDE.md for prompt-related file patterns. If this plan touches ANY of those patterns, state which eval suites must be run, which cases should be added, and what baselines to compare against. Then use AskUserQuestion to confirm the eval scope with the user.
+For LLM/prompt changes: check `CLAUDE.md` for prompt-related file patterns. If this plan touches any of them, state which eval suites must run, which cases to add, and what baselines to compare against. Then confirm the eval scope with the user via AskUserQuestion — phrased as concrete options (e.g. "Run suite X only" / "Run X + add cases Y" / "Skip evals"), not a yes/no.
 
-**STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP — apply the section gate.**
 
 ### 4. Performance review
 Evaluate:
@@ -92,82 +114,54 @@ Evaluate:
 * Caching opportunities.
 * Slow or high-complexity code paths.
 
-**STOP.** For each issue found in this section, call AskUserQuestion individually. One issue per call. Present options, state your recommendation, explain WHY. Do NOT batch multiple issues into one AskUserQuestion. Only proceed to the next section after ALL issues in this section are resolved.
+**STOP — apply the section gate.**
 
-## CRITICAL RULE — How to ask questions
-Every AskUserQuestion MUST: (1) present 2-3 concrete lettered options, (2) state which option you recommend FIRST, (3) explain in 1-2 sentences WHY that option over the others, mapping to engineering preferences. No batching multiple issues into one question. No yes/no questions. Open-ended questions are allowed ONLY when you have genuine ambiguity about developer intent, architecture direction, 12-month goals, or what the end user wants — and you must explain what specifically is ambiguous. **Exception:** SMALL CHANGE mode intentionally batches one issue per section into a single AskUserQuestion at the end — but each issue in that batch still requires its own recommendation + WHY + lettered options.
+## How to ask questions
+These skills drive AskUserQuestion. Map your output onto the tool's actual shape: a `question` body plus a list of `options`, where each option is a card with a short `label` and a `description`. The tool renders the option cards and auto-appends an "Other" choice — you do NOT hand-write "A) B) C)" and the tool does not letter them for you.
 
-## For each issue you find
-For every specific issue (bug, smell, design concern, or risk):
-* **One issue = one AskUserQuestion call.** Never combine multiple issues into one question.
-* Describe the problem concretely, with file and line references.
-* Present 2–3 options, including "do nothing" where that's reasonable.
-* For each option, specify in one line: effort, risk, and maintenance burden.
-* **Lead with your recommendation.** State it as a directive: "Do B. Here's why:" — not "Option B might be worth considering." Be opinionated. I'm paying for your judgment, not a menu.
-* **Map the reasoning to my engineering preferences above.** One sentence connecting your recommendation to a specific preference (DRY, explicit > clever, minimal diff, etc.).
-* **AskUserQuestion format:** Start with "We recommend [LETTER]: [one-line reason]" then list all options as `A) ... B) ... C) ...`. Label with issue NUMBER + option LETTER (e.g., "3A", "3B").
-* **Escape hatch:** If a section has no issues, say so and move on. If an issue has an obvious fix with no real alternatives, state what you'll do and move on — don't waste a question on it. Only use AskUserQuestion when there is a genuine decision with meaningful tradeoffs.
+For every issue:
+* **One issue = one AskUserQuestion call.** Never combine multiple issues into one question. (In SMALL CHANGE mode this means a short sequence of calls at the end — one per section's top issue — not a single fused mega-question.)
+* Put your **recommendation in the `question` body** and end it with "Recommended: the first option — <one-line reason mapped to an engineering preference>."
+* Make the **recommended option the FIRST** entry in `options`, with its `label` suffixed "(Recommended)".
+* Each option's `description` carries its one-line tradeoff: effort, risk, maintenance burden. Include a "do nothing" option only when it is a real choice (the tool's auto "Other" already covers open-ended answers, so don't add a redundant "something else").
+* No yes/no questions. Open-ended (free-text) questions are allowed ONLY when you have genuine ambiguity about developer intent or architecture direction — state exactly what is ambiguous.
+* If a stable issue tag is useful, put it in the `header` (e.g. "Issue 3"); keep option labels short and human-readable.
+* **Escape hatch:** if a section has no issues, say so and move on. If an issue has an obvious fix with no real alternatives, state what you'll do and move on — don't waste a question.
+
+The "A) B) C)" / "3A / 3B" lettering convention applies only to the **written report text**, never to the AskUserQuestion option cards.
 
 ## Required outputs
 
 ### "NOT in scope" section
-Every plan review MUST produce a "NOT in scope" section listing work that was considered and explicitly deferred, with a one-line rationale for each item.
+List work considered and explicitly deferred, with a one-line rationale each.
 
 ### "What already exists" section
-List existing code/flows that already partially solve sub-problems in this plan, and whether the plan reuses them or unnecessarily rebuilds them.
-
-### tasks/board.md updates
-After all review sections are complete, present each potential task as its own individual AskUserQuestion. Never batch tasks — one per question. Never silently skip this step.
-
-Use this format for each new `tasks/board.md` row + `tasks/features/*.md` detail. Row schema follows `task-craft/references/board-schema.md` (canonical):
-
-```markdown
-### <Title>
-
-**What:** One-line description of the work.
-
-**Why:** The concrete problem it solves or value it unlocks.
-
-**Context:** Enough detail that someone picking this up in 3 months understands the motivation, the current state, and where to start.
-
-**Type:** feature | bugfix | refactor | chore | spike | hotfix
-**Effort:** S / M / L / XL
-**Priority:** high | medium | low (use canonical 3-level priority — see board-schema.md)
-**Depends on:** <prerequisites, or "None">
-```
-
-Priority guidance:
-- **high** = blocking or critical-this-cycle (was P0/P1 in older versions)
-- **medium** = important but not urgent (was P2)
-- **low** = nice-to-have / revisit later (was P3/P4)
-
-Organize items by component/section, sorted P0 first within each section. When completing an item, move it to a `## Completed` section with a `**Completed:** vX.Y.Z (YYYY-MM-DD)` annotation.
-
-For each TODO, describe:
-* **What:** One-line description of the work.
-* **Why:** The concrete problem it solves or value it unlocks.
-* **Pros:** What you gain by doing this work.
-* **Cons:** Cost, complexity, or risks of doing it.
-* **Context:** Enough detail that someone picking this up in 3 months understands the motivation, the current state, and where to start.
-* **Depends on / blocked by:** Any prerequisites or ordering constraints.
-
-Then present options: **A)** Add to `tasks/board.md` **B)** Skip — not valuable enough **C)** Build it now in this PR instead of deferring.
-
-Do NOT just append vague bullet points. A TODO without context is worse than no TODO — it creates false confidence that the idea was captured while actually losing the reasoning.
+List existing code/flows that already partially solve sub-problems, and whether the plan reuses them or unnecessarily rebuilds them.
 
 ### Diagrams
-The plan itself should use ASCII diagrams for any non-trivial data flow, state machine, or processing pipeline. Additionally, identify which files in the implementation should get inline ASCII diagram comments — particularly Domain models with complex state transitions, Services with multi-step pipelines, and Middleware with non-obvious shared behavior.
+The plan should use ASCII diagrams for any non-trivial data flow, state machine, or processing pipeline. Identify which implementation files should get inline ASCII diagram comments — particularly domain models with complex state transitions, services with multi-step pipelines, and middleware with non-obvious shared behavior.
 
 ### Failure modes
-For each new codepath identified in the test review diagram, list one realistic way it could fail in production (timeout, nil reference, race condition, stale data, etc.) and whether:
-1. A test covers that failure
-2. Error handling exists for it
-3. The user would see a clear error or a silent failure
+For each new codepath in the test-review diagram, list one realistic production failure (timeout, nil reference, race condition, stale data) and whether: (1) a test covers it, (2) error handling exists, (3) the user sees a clear error or a silent failure. **Any codepath with no test AND no error handling AND a silent failure → CRITICAL GAP.**
 
-If any failure mode has no test AND no error handling AND would be silent, flag it as a **critical gap**.
+### tasks/board.md updates
+This skill does **not** write the board itself. After the user approves a task, invoke the **`task-add`** skill (the canonical appender) to add it — `task-add` owns ID assignment, grouping, and schema conformance. Row + detail shape are defined by `task-craft/references/board-schema.md` (canonical): the board row is 8 columns `| id | feature | task | type | priority | status | assignee | touches |`, `type` ∈ `feature | bugfix | refactor | chore | spike | hotfix`, `priority` is lowercase `high | medium | low`, and `status` lifecycle (`backlog → active → blocked → done`) is owned by the `task-status` skill — do not hand-maintain a "Completed" section here.
+
+Present each potential task as its own individual AskUserQuestion (never batch tasks — one per question; never silently skip this step). For each, describe:
+* **What:** one-line description.
+* **Why:** the concrete problem solved or value unlocked.
+* **Pros / Cons:** what you gain; cost, complexity, risk.
+* **Context:** enough that someone picking this up in 3 months understands the motivation, current state, and where to start.
+* **Type:** `feature | bugfix | refactor | chore | spike | hotfix`
+* **Priority:** `high | medium | low` (canonical 3-level — see `board-schema.md`). high = blocking/critical-this-cycle; medium = important not urgent; low = nice-to-have.
+* **Touches:** comma-separated file/dir paths the task creates or modifies (required — used for conflict detection).
+* **Depends on:** prerequisites or ordering, or "None".
+
+Then present options (recommended first): **A)** Hand off to `task-add` to append the row · **B)** Skip — not valuable enough · **C)** Promote into the current scope and review it now (still no code). Do NOT append vague bullets — a TODO without context is worse than none.
 
 ### Completion summary
-At the end of the review, fill in and display this summary so the user can see all findings at a glance:
+Display this at the end so the user sees all findings at a glance:
+- Step -1: plan located (artifact: ___)
 - Step 0: Scope Challenge (user chose: ___)
 - Architecture Review: ___ issues found
 - Code Quality Review: ___ issues found
@@ -175,18 +169,17 @@ At the end of the review, fill in and display this summary so the user can see a
 - Performance Review: ___ issues found
 - NOT in scope: written
 - What already exists: written
-- tasks/ updates: ___ items proposed to user
+- tasks/ updates: ___ items proposed
 - Failure modes: ___ critical gaps flagged
+- Unresolved decisions: ___ (listed below)
 
-## Retrospective learning
-Check the git log for this branch. If there are prior commits suggesting a previous review cycle (e.g., review-driven refactors, reverted changes), note what was changed and whether the current plan touches the same areas. Be more aggressive reviewing areas that were previously problematic.
+In SMALL CHANGE mode, the required outputs reduce to: test diagram + failure modes + completion summary + a single tasks round (still one AskUserQuestion per proposed task — the "never batch tasks" rule holds). BIG CHANGE and TRIM produce all required outputs.
+
+### Unresolved decisions
+If the user does not respond to an AskUserQuestion, interrupts to move on, or a decision was auto-deferred in non-interactive mode, list these as "Unresolved decisions that may bite you later." Never silently default to an option.
 
 ## Formatting rules
-* NUMBER issues (1, 2, 3...) and give LETTERS for options (A, B, C...).
-* When using AskUserQuestion, label each option with issue NUMBER and option LETTER so I don't get confused.
+* NUMBER issues (1, 2, 3...) and give LETTERS for options (A, B, C...) **in the written report** (not in the AskUserQuestion cards).
 * Recommended option is always listed first.
-* Keep each option to one sentence max. I should be able to pick in under 5 seconds.
-* After each review section, pause and ask for feedback before moving on.
-
-## Unresolved decisions
-If the user does not respond to an AskUserQuestion or interrupts to move on, note which decisions were left unresolved. At the end of the review, list these as "Unresolved decisions that may bite you later" — never silently default to an option.
+* Keep each option to one sentence — the user should pick in under 5 seconds.
+* After each review section, pause and wait for feedback before moving on.

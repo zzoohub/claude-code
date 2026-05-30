@@ -11,6 +11,8 @@ description: |
 
 **For latest Axum/SQLx APIs, use context7.**
 
+> **SQLx version (0.8/0.9):** `sqlx 0.9.0` is now current; this skill's patterns target **0.8/0.9** and work unchanged on both. The `query!`/`query_as!` macros and `&mut **tx` still apply — string-literal queries satisfy 0.9's new `SqlSafeStr` bound automatically. What 0.9 adds: `SqlSafeStr` (dynamic / non-`'static` query strings must now be wrapped in `AssertSqlSafe(...)`), an optional `sqlx.toml` config file, `sqlx::raw_sql()` for running a string directly against an `Executor`, and removal of the `TransactionManager` re-export. The `.sqlx/` offline-prepare workflow is unchanged.
+
 ## Core Philosophy
 
 Separate **business domain** from **infrastructure**. Domain defines *what*; adapters decide *how*.
@@ -40,7 +42,7 @@ src/
 ├── inbound/http/
 │   ├── server.rs                # HttpServer wrapper around axum
 │   ├── error.rs                 # ApiError → RFC 9457
-│   ├── response.rs              # ApiSuccess, Created, Ok, NoContent
+│   ├── response.rs              # ApiSuccess (data envelope + Location), NoContent
 │   └── authors/
 │       ├── handlers.rs          # Parse → call service → map response
 │       ├── request.rs           # CreateAuthorHttpRequestBody
@@ -50,7 +52,7 @@ src/
     ├── postgres.rs              # impl AuthorRepository for Postgres
     ├── prometheus.rs            # impl AuthorMetrics
     └── email_client.rs          # impl AuthorNotifier
-.sqlx/                 # Commit this (one file per query in SQLx 0.8+)
+.sqlx/                 # Commit this (one file per query in SQLx 0.8/0.9)
 ```
 
 **Rule:** `domain/` never imports from `inbound/` or `outbound/`.
@@ -107,10 +109,12 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
           .routes(routes!(get_author, update_author, delete_author))
   }
 
-  // Top-level composes modules and splits for axum
+  // Top-level composes modules and splits for axum.
+  // Mount under exactly `/v1` (the API spec standardizes on `/v1/...` —
+  // no extra `/api` segment) so wire paths are `/v1/authors`, `/v1/posts`.
   let (router, api) = OpenApiRouter::with_openapi(ApiDoc::openapi())
-      .nest("/api/v1/authors", authors::router())
-      .nest("/api/v1/posts", posts::router())
+      .nest("/v1/authors", authors::router())
+      .nest("/v1/posts", posts::router())
       .split_for_parts();
   ```
 - **Path params use `{id}` syntax** (not `:id`). Axum 0.8 changed this.
@@ -124,7 +128,7 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 - **Response types** built via `From<&Author>` — never expose domain structs. Derive `ToSchema` + `Serialize`.
 - **`ToSchema` / `IntoParams`** are inbound-layer concerns only. Domain models never derive utoipa traits.
 - **API errors** mapped manually from domain errors. Never leak domain strings to users.
-  `Unknown` → log server-side, return generic message. Use RFC 9457 ProblemDetails.
+  `Unknown` → log server-side, return generic message. Use RFC 9457 `ProblemDetail`.
 - **API docs** — `utoipa-axum` generates OpenAPI from code via `OpenApiRouter` + `routes!` + `split_for_parts()`. Serve with `utoipa-swagger-ui` or `utoipa-scalar`. Consult `references/api-design.md` for conventions and `references/api-patterns.md` for HTTP patterns.
 - **Middleware (Tower layers)** — lives in inbound layer, invisible to domain.
   Layers wrap services: `TraceLayer → TimeoutLayer → CompressionLayer → CorsLayer`.
@@ -168,8 +172,10 @@ All three are wired into the same HttpServer. Domain doesn't know which triggere
 - Expose `from_pool()` constructor for tests.
 - **Transactions encapsulated in adapter**, invisible to callers.
 - Keep transactions short. **No external calls (HTTP, queues) inside tx.**
-- **SQLx 0.8+**: `Transaction` and `PoolConnection` no longer implement `Executor` directly.
-  Use `&mut **tx` when executing queries inside a transaction.
+- **SQLx 0.8/0.9**: `Transaction` and `PoolConnection` no longer implement `Executor` directly.
+  Use `&mut **tx` when executing queries inside a transaction. The `query!`/`query_as!`
+  macros and `&mut **tx` work identically on both versions — string-literal queries
+  satisfy 0.9's new `SqlSafeStr` requirement automatically.
 - Map DB-specific errors (e.g. unique constraint codes) to domain error variants.
 - Unknown DB errors wrapped with `anyhow` context.
 - For complex row types or ORM (diesel, sea-orm), use explicit `to_domain()` mapper in outbound.
@@ -182,7 +188,7 @@ All three are wired into the same HttpServer. Domain doesn't know which triggere
 **Default to cursor-based pagination.** The pattern flows through all three layers:
 - **Domain port**: `list_authors(&self, cursor: Option<&str>, limit: usize) -> Result<CursorPage<Author>, anyhow::Error>`
 - **Outbound adapter**: `WHERE (created_at, id) > ($1, $2) ORDER BY created_at, id LIMIT $3`
-- **Inbound handler**: return `CursorPageResponse<T>` with data, limit, next_cursor, has_more
+- **Inbound handler**: return `CursorPageResponse<T>` = `{ data: [...], meta: { limit, next_cursor, has_more } }` (nested `meta`, per the API spec)
 
 Cap `limit` at the handler level (e.g. clamp to 1..100, default 20). The domain doesn't care about max page size — that's a transport concern.
 
@@ -226,6 +232,10 @@ PgPoolOptions::new()
 
 Auth middleware lives in the inbound layer. Domain never handles raw tokens.
 
+- **Document the bearer scheme in OpenAPI.** Register a `SecurityScheme::Http(Bearer, "JWT")` via an `OpenApi` modifier (`#[openapi(modifiers(&SecurityAddon))]`) and apply it to protected operations with `security(("bearer_auth" = []))` in `#[utoipa::path]`. See the `SecurityAddon` example in `references/examples-adapters.md`.
+- **Authorization ≠ authentication.** A valid JWT proves *who* is calling, not *whether they may touch this resource*. Add a resource-ownership / policy check (a **policy port**, e.g. `Policy::can_access(user, resource)`) before returning or mutating, or `GET /v1/{resource}/{id}` is an IDOR.
+- **Rate limiting** is cross-cutting: terminate it at the API gateway / load balancer, or — if you must enforce it in-process — add a `tower_governor::GovernorLayer` to the `ServiceBuilder`. Its 429 is emitted as `application/problem+json`, like every other error.
+
 ---
 
 ## Bootstrap (main.rs)
@@ -240,7 +250,7 @@ let sqlite = Sqlite::from_pool(pool.clone());
 // Type inferred as Arc<AppAuthorService> — the composition-root alias.
 let service = Arc::new(AuthorServiceImpl::new(sqlite, metrics, notifier));
 let server = HttpServer::new(service, pool, HttpServerConfig {
-    port: &config.port,
+    port: &config.server_port,
     cors_origin: &config.cors_origin,
 }).await?;
 server.run().await
@@ -313,9 +323,9 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 | **IdempotencyStore** | Replay safe responses for `Idempotency-Key`-bearing requests | Outbound; called by inbound middleware or application service |
 | **Tracer** / **Meter** | OTel span / metric emission. Domain depends on the trait, not on `opentelemetry` crates | Outbound (OTel adapter); no-op adapter for tests |
 
-**Architectural rule**: domain emits **`DomainEvent`** values (plain data); the outbound adapter persists the aggregate AND the outbox rows in a single `sqlx::Transaction` (`&mut **tx`). A separate **outbox relay** binary polls `outbox` and publishes asynchronously — this is the only safe way to pair a DB write with a broker publish.
+**Architectural rule**: domain emits **typed domain events** (e.g. an `AuthorEvent` enum — plain data, no `serde_json`); the outbound adapter persists the aggregate AND the outbox rows in a single `sqlx::Transaction` (`&mut **tx`), serializing each event to the JSON payload column in the adapter. A separate **outbox relay** binary polls `outbox` and publishes asynchronously — this is the only safe way to pair a DB write with a broker publish.
 
-**Why not split outbox into its own port?** sqlx's `Transaction` is not `Send` across multiple owners cleanly, and exposing it across two ports either leaks the type or forces a heavyweight `UnitOfWork` abstraction. The pragmatic Rust answer is: the repository adapter is responsible for both writes within its own tx, and the *event payload* (a domain-defined `DomainEvent`) is what crosses the port boundary.
+**Why not split outbox into its own port?** sqlx's `Transaction` is not `Send` across multiple owners cleanly, and exposing it across two ports either leaks the type or forces a heavyweight `UnitOfWork` abstraction. The pragmatic Rust answer is: the repository adapter is responsible for both writes within its own tx, and a *typed domain event* (e.g. `AuthorEvent`) is what crosses the port boundary — JSON serialization stays in the adapter, keeping `domain/` free of serde-shaped payloads.
 
 → Adapter examples: `references/examples-adapters.md`
 
@@ -333,7 +343,7 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 | Middleware not running | Layer order wrong | `route_layer` for per-route, `layer` for global |
 | Mutex poisoned | Panic while holding lock | Never panic — return errors |
 | DB pool exhausted | No acquire timeout | Set `acquire_timeout(Duration::from_secs(3))` |
-| `execute(tx)` won't compile | SQLx 0.8 removed `Executor` on `Transaction` | Use `execute(&mut **tx)` |
+| `execute(tx)` won't compile | SQLx 0.8/0.9 removed `Executor` on `Transaction` | Use `execute(&mut **tx)` |
 | Path `/:id` panics | Axum 0.8 changed syntax | Use `/{id}` (and `{*path}` for wildcards) |
 | Handlers not `Sync` | Axum 0.8 requires `Sync` on all handlers | Ensure all captured state is `Sync` |
 | `Option<T>` extracts always `None` | Axum 0.8 stricter `Option` extraction | Inner type must impl `OptionalFromRequestParts` |
@@ -367,7 +377,7 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 - [ ] Domain never imports from inbound/ or outbound/
 - [ ] Port traits: `Clone + Send + Sync + 'static`, futures `+ Send`
 - [ ] All handlers (HTTP, tasks, webhooks): parse → service → respond
-- [ ] Transactions in adapters only, `&mut **tx` for SQLx 0.8+
+- [ ] Transactions in adapters only, `&mut **tx` for SQLx 0.8/0.9
 - [ ] Errors: domain enum → `From<DomainError> for ApiError` → RFC 9457
 
 ### Framework
@@ -385,5 +395,5 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 
 ### Setup
 - [ ] `main.rs` has no axum/sqlx imports
-- [ ] `.sqlx/` committed (one file per query in SQLx 0.8+)
+- [ ] `.sqlx/` committed (one file per query in SQLx 0.8/0.9)
 - [ ] `Config` struct with `from_env()` in `config.rs`

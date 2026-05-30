@@ -5,7 +5,9 @@ description: |
   "find bugs", "dogfood", or review quality. Four modes: diff-aware (automatic on feature
   branches — analyzes git diff, identifies affected pages, tests them), full (systematic
   exploration), quick (30-second smoke test), regression (compare against baseline). Produces
-  structured report with health score, screenshots, and repro steps.
+  structured report with health score, screenshots, and repro steps. This is the full QA
+  methodology — it orchestrates the browse tool (the low-level browser driver). For ad-hoc,
+  one-off browser commands without a report, use the browse skill directly.
 allowed-tools:
   - Bash
   - Read
@@ -31,14 +33,19 @@ You are a QA engineer. Test web applications like a real user — click everythi
 
 **If no URL is given and you're on a feature branch:** Automatically enter **diff-aware mode** (see Modes below). This is the most common case — the user just shipped code on a branch and wants to verify it works.
 
-**Find the browse binary:**
+**Find the browse binary.** This skill only *drives* the browse tool; `browse` owns its own
+build and binary resolution. The check below mirrors the canonical resolver in
+`skills/browse/SKILL.md` — if you change one, change both (or replace both with a shared
+`find-browse` call).
 
 ## SETUP (run this check BEFORE any browse command)
 
 ```bash
+# Mirror of browse/SKILL.md SETUP. Single source of truth: the browse skill.
 _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 B=""
 [ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/browse/dist/browse" ] && B="$_ROOT/.claude/skills/browse/dist/browse"
+[ -z "$B" ] && [ -n "$_ROOT" ] && [ -x "$_ROOT/skills/browse/dist/browse" ] && B="$_ROOT/skills/browse/dist/browse"
 [ -z "$B" ] && B=~/.claude/skills/browse/dist/browse
 if [ -x "$B" ]; then
   echo "READY: $B"
@@ -47,10 +54,22 @@ else
 fi
 ```
 
-If `NEEDS_SETUP`:
-1. Tell the user: "The browse tool needs a one-time build (~10 seconds). OK to proceed?" Then STOP and wait.
-2. Run: `cd <SKILL_DIR> && ./setup`
-3. If `bun` is not installed: `curl -fsSL https://bun.sh/install | bash`
+If `NEEDS_SETUP`, build browse first (one-time, ~10s) per the **browse skill's SETUP section** —
+ask the user before building, then:
+
+```bash
+cd "$_ROOT/.claude/skills/browse" 2>/dev/null \
+  || cd "$_ROOT/skills/browse" 2>/dev/null \
+  || cd ~/.claude/skills/browse
+./setup          # installs `bun` via `curl -fsSL https://bun.sh/install | bash` if missing
+```
+
+Re-run the check above after building.
+
+**If browse cannot run** (no `bun`, sandboxed, or the build fails): this skill has **no built-in
+browser fallback** — it is a browse driver by design. Stop and report `browse unavailable` to the
+caller. When `/qa` runs under the `verifier` agent, that agent owns the Playwright-MCP /
+claude-in-chrome fallback (see `agents/dev/verifier.md`).
 
 **Create output directories:**
 
@@ -81,13 +100,18 @@ This is the **primary mode** for developers verifying their work. When the user 
    - API endpoints → test them directly with `$B js "await fetch('/api/...')"`
    - Static pages (markdown, HTML) → navigate to them directly
 
-3. **Detect the running app** — check common local dev ports:
+3. **Detect the running app** — probe common dev ports with an HTTP status check. Any non-`000`
+   response means a server is listening. Do **not** use `$B goto` to probe: `goto` "succeeds" on
+   404, blank, and error pages, so it can pick a port the app isn't actually on.
    ```bash
-   $B goto http://localhost:3000 2>/dev/null && echo "Found app on :3000" || \
-   $B goto http://localhost:4000 2>/dev/null && echo "Found app on :4000" || \
-   $B goto http://localhost:8080 2>/dev/null && echo "Found app on :8080"
+   APP_URL=""
+   for port in 3000 3001 4000 5000 5173 8000 8080 9000; do
+     code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$port" 2>/dev/null)
+     [ -n "$code" ] && [ "$code" != "000" ] && APP_URL="http://localhost:$port" \
+       && echo "Found app on :$port (HTTP $code)" && break
+   done
    ```
-   If no local app is found, check for a staging/preview URL in the PR or environment. If nothing works, ask the user for the URL.
+   If no local app is found (`APP_URL` empty), check for a staging/preview URL in the PR or environment. If nothing works, ask the user for the URL.
 
 4. **Test each affected page/route:**
    - Navigate to the page

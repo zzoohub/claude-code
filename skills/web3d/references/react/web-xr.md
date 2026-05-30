@@ -76,14 +76,17 @@ if (rightController) {
 }
 ```
 
-**`useHitTest(callback)`** -- AR hit testing:
+**`useXRHitTest(callback, relativeTo)`** -- continuous AR hit testing (v6; the v5 name `useHitTest` is gone):
 
 ```tsx
 function HitTestReticle() {
   const ref = useRef<THREE.Mesh>(null)
-  useHitTest((hitMatrix, hit) => {
-    hitMatrix.decompose(ref.current!.position, ref.current!.quaternion, ref.current!.scale)
-  })
+  const matrix = new THREE.Matrix4()
+  useXRHitTest((results, getWorldMatrix) => {
+    if (!results.length) return
+    getWorldMatrix(matrix, results[0])
+    matrix.decompose(ref.current!.position, ref.current!.quaternion, ref.current!.scale)
+  }, 'viewer')   // hit-test source relative to the viewer space
   return (
     <mesh ref={ref}>
       <ringGeometry args={[0.08, 0.1, 32]} />
@@ -92,6 +95,8 @@ function HitTestReticle() {
   )
 }
 ```
+
+Related: `useXRHitTestSource`, `useXRRequestHitTest` (single-shot), and the `<XRHitTest>` component.
 
 **`useXRAnchor()`:**
 
@@ -113,7 +118,7 @@ if (anchor) {
 ```tsx
 const floors = useXRPlanes('floor')
 const walls = useXRPlanes('wall')
-// Labels: 'floor', 'wall', 'ceiling', 'table', 'door', 'window', 'other'
+// Labels (non-exhaustive; WebXR semantic-labels registry): 'floor', 'wall', 'ceiling', 'table', 'door', 'window'
 ```
 
 **`useXRControllerLocomotion(originRef)`:**
@@ -163,13 +168,16 @@ useXRInputSourceEvent('select', (event) => {
 ```tsx
 const [pos, setPos] = useState<[number, number, number]>([0, 0, 0])
 
-<XROrigin position={pos} />
-<TeleportTarget onTeleport={setPos}>
-  <mesh rotation={[-Math.PI / 2, 0, 0]}>
-    <planeGeometry args={[10, 10]} />
-    <meshStandardMaterial color="green" />
-  </mesh>
-</TeleportTarget>
+// both render inside your scene tree
+<>
+  <XROrigin position={pos} />
+  <TeleportTarget onTeleport={setPos}>
+    <mesh rotation={[-Math.PI / 2, 0, 0]}>
+      <planeGeometry args={[10, 10]} />
+      <meshStandardMaterial color="green" />
+    </mesh>
+  </TeleportTarget>
+</>
 ```
 
 **`<XRDomOverlay>`** -- HTML overlay for handheld AR:
@@ -181,6 +189,8 @@ const [pos, setPos] = useState<[number, number, number]>([0, 0, 0])
   </XRDomOverlay>
 </XR>
 ```
+
+AR features (`dom-overlay`, hit-test, anchors, plane detection) are session features that must be requested (configure via `createXRStore` / the session request) and are supported on Android Chrome and the Quest browser — **not** on visionOS. See `../web-xr.md` for the raw feature opt-in.
 
 ## Interaction System
 

@@ -31,6 +31,12 @@ Choose based on what you need to learn:
 | What are they trying to do? | **Jobs-to-be-Done** framing | 1 hour |
 | Where do they struggle today? | **Journey map** of current flow | 2-4 hours |
 
+Methods needing real participants (interviews, card sort, tree test, 5-user
+test) can't be executed from inside this skill — write them into the doc as a
+recommended validation plan with hypotheses to test. Never invent participant
+data or fabricate findings you didn't gather. Proto-persona, JTBD framing, and
+journey-mapping the current flow are doable in-doc.
+
 #### Proto-Persona (Quick)
 When you can't do full research, create a lightweight persona:
 ```
@@ -103,14 +109,11 @@ For each decision point:
 For each screen, define ALL possible states:
 ```
 [Empty] → [Loading] → [Loaded] → [Error]
-                         ↕
-                     [Refreshing]
-                         ↕
-                     [Partial]
-                         ↕
-                     [Offline]
+                          │
+   [Loaded] is the hub — from it the screen can independently enter,
+   and return from, each of: [Refreshing] · [Partial] · [Offline]
 ```
-See `references/interaction-patterns.md` for the 7 Universal Screen States.
+See `references/interaction-patterns.md` for the 7 Universal Screen States (the canonical definitions).
 
 ### 2e. Information Architecture
 For features with multiple screens:
@@ -235,7 +238,10 @@ Run every screen against:
 
 ### 5c. Five-User Usability Test Protocol
 
-5 users find ~85% of usability issues (Nielsen, 2000). Here's the protocol:
+5 users surface most of the severe issues in a homogeneous group, but real-world
+detection varies widely (~55–85%, per Faulkner 2003, vs. the often-cited
+Nielsen/Landauer ~85% figure). Treat it as directional, and run a second round of
+5 after fixing — iteration matters more than a single large round. Protocol:
 
 #### Setup
 - **Participants**: 5 users matching the proto-persona

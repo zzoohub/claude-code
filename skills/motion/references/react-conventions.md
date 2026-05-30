@@ -92,14 +92,18 @@ Ensure content is fully visible in server-rendered HTML before JS hydrates -- an
 D3 operates on refs, same as GSAP. Keep D3 code in effects:
 
 ```tsx
+import { createBarChart } from "@/lib/charts"; // factory: (container, data) => { update, destroy }
+
 function BarChart({ data }: { data: BarDatum[] }) {
   const ref = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<ReturnType<typeof createBarChart>>();
+  const chartRef = useRef<ReturnType<typeof createBarChart> | null>(null);
 
+  // Create once; the [data] effect below owns data sync (it also runs on mount).
   useEffect(() => {
     if (!ref.current) return;
     chartRef.current = createBarChart(ref.current, data);
     return () => chartRef.current?.destroy();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- create once, not on every data change
   }, []);
 
   useEffect(() => {
@@ -141,6 +145,6 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
 
 1. **Refs are null with conditional rendering**: if a component returns `null` early, refs on hidden elements won't be populated when `useEffect`/`useGSAP` runs. Always render animation target elements (use `opacity: 0` instead of conditional `null`).
 2. **`useGSAP` dependencies**: pass props that affect animation values. Without dependencies, animation runs once on mount only.
-3. **GSAP-first, Motion selectively**: default to GSAP. Use Motion (formerly Framer Motion) for component enter/exit, layout/FLIP animations, and gesture work — especially in shadcn-heavy projects where it's already a dep. Never animate the same property on the same element with both engines.
+3. **Motion-first for component UI, GSAP for scroll/timeline**: in React, default to Motion (formerly Framer Motion — package `motion`, import `motion/react`) for component enter/exit, layout/FLIP animations, and gesture work — especially in shadcn-heavy projects where it's already a dep. Reach for GSAP for scroll-pin/scrub, timeline sequences, and SVG morph. Never animate the same property on the same element with both engines.
 4. **ScrollTrigger + layout shifts**: if React updates DOM after GSAP measures positions, call `ScrollTrigger.refresh()` after state updates that affect layout.
 5. **Strict mode double-mount**: `useGSAP` handles this. Manual `useEffect` + `gsap.context` also works if you return `ctx.revert()` from cleanup.

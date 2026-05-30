@@ -15,48 +15,55 @@ WHERE c.contype = 'f'
 AND NOT EXISTS (
     SELECT 1 FROM pg_index i
     WHERE i.indrelid = c.conrelid
-    AND a.attnum = ANY(i.indkey)
+    -- leading-column coverage per FK column; composite FKs may need ordered-prefix checks
+    AND i.indkey[0] = a.attnum
 )
 ORDER BY table_name, fk_column;
 
 -- 2. Tables without a primary key
-SELECT
-    schemaname, tablename
-FROM pg_tables
-WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
-AND tablename NOT IN (
-    SELECT tc.table_name
-    FROM information_schema.table_constraints tc
-    WHERE tc.constraint_type = 'PRIMARY KEY'
+SELECT n.nspname AS schemaname, c.relname AS tablename
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE c.relkind IN ('r', 'p')
+AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+AND NOT EXISTS (
+    SELECT 1 FROM pg_constraint k
+    WHERE k.conrelid = c.oid AND k.contype = 'p'
 )
-ORDER BY schemaname, tablename;
+ORDER BY n.nspname, c.relname;
 
 -- 3. Unused indexes (idx_scan = 0 since last stats reset)
 SELECT
-    schemaname, tablename, indexname,
-    idx_scan AS times_used,
-    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
-FROM pg_stat_user_indexes
-WHERE idx_scan = 0
-AND indexrelid NOT IN (
+    s.schemaname, s.relname AS tablename, s.indexrelname AS indexname,
+    s.idx_scan AS times_used,
+    pg_size_pretty(pg_relation_size(s.indexrelid)) AS index_size
+FROM pg_stat_user_indexes s
+JOIN pg_index ix ON ix.indexrelid = s.indexrelid
+-- idx_scan is cumulative since the last stats reset (pg_upgrade/pg_stat_reset zero it); check SELECT stats_reset FROM pg_stat_database and trust 0 only over a representative window. PG16+ has last_idx_scan for recency.
+WHERE s.idx_scan = 0
+-- verify uniqueness/replica-identity before dropping any flagged index (standalone UNIQUE indexes have no pg_constraint row)
+AND NOT ix.indisunique
+AND NOT ix.indisprimary
+AND NOT ix.indisreplident
+AND s.indexrelid NOT IN (
     SELECT conindid FROM pg_constraint WHERE contype IN ('p', 'u')
 )
-ORDER BY pg_relation_size(indexrelid) DESC
+ORDER BY pg_relation_size(s.indexrelid) DESC
 LIMIT 20;
 
 -- 4. Table and index sizes
 SELECT
     t.schemaname,
     t.tablename,
-    pg_size_pretty(pg_total_relation_size(t.schemaname || '.' || t.tablename)) AS total_size,
-    pg_size_pretty(pg_relation_size(t.schemaname || '.' || t.tablename)) AS table_size,
+    pg_size_pretty(pg_total_relation_size(format('%I.%I', t.schemaname, t.tablename))) AS total_size,
+    pg_size_pretty(pg_relation_size(format('%I.%I', t.schemaname, t.tablename))) AS table_size,
     pg_size_pretty(
-        pg_total_relation_size(t.schemaname || '.' || t.tablename) -
-        pg_relation_size(t.schemaname || '.' || t.tablename)
+        pg_total_relation_size(format('%I.%I', t.schemaname, t.tablename)) -
+        pg_relation_size(format('%I.%I', t.schemaname, t.tablename))
     ) AS index_size
 FROM pg_tables t
 WHERE t.schemaname NOT IN ('pg_catalog', 'information_schema')
-ORDER BY pg_total_relation_size(t.schemaname || '.' || t.tablename) DESC
+ORDER BY pg_total_relation_size(format('%I.%I', t.schemaname, t.tablename)) DESC
 LIMIT 20;
 
 -- 5. Dead tuples (tables needing VACUUM)
@@ -74,6 +81,7 @@ LIMIT 20;
 
 -- 6. Slow queries (requires pg_stat_statements extension)
 -- Enable: CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+-- counts are cumulative since the last pg_stat_statements_reset()/stats reset; interpret over a known window.
 SELECT
     queryid,
     calls,
@@ -88,24 +96,14 @@ ORDER BY mean_exec_time DESC
 LIMIT 20;
 
 -- 7. Current locks and blocking
-SELECT
-    blocked.pid AS blocked_pid,
-    blocked.query AS blocked_query,
-    blocking.pid AS blocking_pid,
-    blocking.query AS blocking_query,
-    now() - blocked.query_start AS blocked_duration
-FROM pg_stat_activity blocked
-JOIN pg_locks bl ON bl.pid = blocked.pid
-JOIN pg_locks kl ON kl.locktype = bl.locktype
-    AND kl.database IS NOT DISTINCT FROM bl.database
-    AND kl.relation IS NOT DISTINCT FROM bl.relation
-    AND kl.page IS NOT DISTINCT FROM bl.page
-    AND kl.tuple IS NOT DISTINCT FROM bl.tuple
-    AND kl.virtualxid IS NOT DISTINCT FROM bl.virtualxid
-    AND kl.transactionid IS NOT DISTINCT FROM bl.transactionid
-    AND kl.pid != bl.pid
-JOIN pg_stat_activity blocking ON blocking.pid = kl.pid
-WHERE NOT bl.granted
+SELECT a.pid AS blocked_pid,
+       a.query AS blocked_query,
+       b.pid AS blocking_pid,
+       b.query AS blocking_query,
+       now() - a.query_start AS blocked_duration
+FROM pg_stat_activity a
+JOIN LATERAL unnest(pg_blocking_pids(a.pid)) AS bp(pid) ON true
+JOIN pg_stat_activity b ON b.pid = bp.pid
 ORDER BY blocked_duration DESC;
 
 -- 8. Columns with high null ratio (potential design issues)
@@ -127,10 +125,12 @@ SELECT
     CASE
         WHEN c.data_type IN ('bigint', 'double precision', 'timestamp with time zone', 'timestamp without time zone') THEN 8
         WHEN c.data_type IN ('integer', 'real', 'date') THEN 4
+        WHEN c.data_type = 'uuid' THEN 16
         WHEN c.data_type = 'smallint' THEN 2
         WHEN c.data_type = 'boolean' THEN 1
         ELSE -1  -- variable length
-    END AS type_alignment_bytes
+    END AS type_storage_bytes
+-- storage size, not alignment (uuid is 1-byte/char aligned despite 16-byte storage); ordinal_position omits dropped columns, so this is a heuristic — inspect pg_attribute for true on-disk layout.
 FROM information_schema.columns c
 WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
 ORDER BY c.table_schema, c.table_name, c.ordinal_position;

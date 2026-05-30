@@ -178,7 +178,7 @@ export function useToggle(props: UseToggleProps) {
       'aria-checked': isOn,
       'aria-disabled': disabled || undefined,
       onClick: toggle,
-      onKeyDown: (e: KeyboardEvent) => {
+      onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
       },
       tabIndex: disabled ? -1 : 0,

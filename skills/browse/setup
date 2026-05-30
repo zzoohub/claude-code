@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#
+# One-time build for the browse skill.
+# Installs deps, downloads the Playwright Chromium browser, compiles the
+# standalone binaries into dist/, and stamps the build with the current git SHA
+# (so a rebuilt binary auto-restarts any running daemon — see src/config.ts).
+#
+# Re-runnable and idempotent. Requires `bun` (https://bun.sh) and `git`.
+
+set -euo pipefail
+cd "$(dirname "$0")"
+
+if ! command -v bun >/dev/null 2>&1; then
+  echo "ERROR: 'bun' is not installed. Install it with:" >&2
+  echo "  curl -fsSL https://bun.sh/install | bash" >&2
+  exit 1
+fi
+
+echo "[browse] Installing dependencies..."
+bun install
+
+echo "[browse] Installing Chromium for Playwright..."
+bun x playwright install chromium
+
+echo "[browse] Building binaries (dist/browse, dist/find-browse)..."
+bun run build
+
+# Stamp the build so the CLI can detect a rebuilt binary and restart the daemon.
+git rev-parse HEAD > dist/.version 2>/dev/null || true
+
+echo "[browse] Done. Binary: $(pwd)/dist/browse"

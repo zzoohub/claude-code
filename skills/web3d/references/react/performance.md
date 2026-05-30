@@ -8,7 +8,7 @@
 2. **Use Drei instancing** for repeated geometry
 3. **Reuse geometry/materials** via `useMemo`
 4. **Use `<Suspense>`** for async loading with fallbacks
-5. **Set `frameloop="demand"`** for non-animated scenes (renders only on invalidate)
+5. **Set `frameloop="demand"`** for non-animated scenes — renders only when you call `invalidate()` (from `useThree`); mutations without it freeze the scene
 6. **Dispose resources** -- WebGL/WebGPU resources aren't garbage-collected
 
 ## Instancing with Drei
@@ -16,7 +16,7 @@
 ```tsx
 import { Instances, Instance } from '@react-three/drei'
 
-<Instances limit={1000}>
+<Instances limit={1000}>  {/* limit must be >= the max number of <Instance> children rendered */}
   <boxGeometry />
   <meshStandardNodeMaterial />
   {items.map((item, i) => (
@@ -82,7 +82,8 @@ function WorkerSyncSystem({ buffer, meshRefs, count }: Props) {
   const transforms = useMemo(() => new Float32Array(buffer), [buffer])
 
   useFrame(() => {
-    for (let i = 0; i < count; i++) {
+    const n = Math.min(count, Math.floor(transforms.length / 7))  // never read past the buffer
+    for (let i = 0; i < n; i++) {
       const mesh = meshRefs.current[i]
       if (!mesh) continue
       const o = i * 7

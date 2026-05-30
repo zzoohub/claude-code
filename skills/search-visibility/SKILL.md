@@ -13,7 +13,9 @@ description: |
   engine, zero-click search, People Also Ask, FAQ optimization, direct answers,
   or mentions "SEO", "AEO", "GEO", "AI search", "search optimization", "ranking",
   "organic traffic", "AI visibility", "generative engine", "answer engine",
-  "featured snippet", "voice search".
+  "featured snippet", "voice search", "schema markup", "structured data",
+  "llms.txt", "AI Overviews", "AI Mode", "ChatGPT citations", "Perplexity",
+  "Core Web Vitals", "hreflang".
   Do NOT use for: social media content strategy (use social-content), email
   content (use email-marketing), ad copy (use ad-creative), UX copy or microcopy
   (use copywriting for voice and structure — this skill only supplies the
@@ -68,7 +70,7 @@ These are not separate disciplines. They form a continuum: SEO builds the founda
 2. **Featured Snippet Optimization**: Target paragraph, list, table, and video snippet formats with content structured to match each type.
 3. **Voice Search Readiness**: Optimize for conversational, question-based queries that voice assistants pull from. Content must be speakable and natural.
 4. **Zero-Click Strategy**: Build brand visibility even when users never click through, by owning answer positions in SERPs.
-5. **FAQ and Structured Answer Content**: Use question-based headings, concise answers (40-60 words), and FAQ/HowTo schema markup to capture People Also Ask and rich results.
+5. **FAQ and Structured Answer Content**: Use question-based headings and concise answers (40-60 words) to capture People Also Ask and feed AI answer extraction. Note FAQ/HowTo schema no longer produces SERP rich results (deprecated 2023/2026) — keep such markup for AI/LLM extraction, not rich results.
 
 ### GEO Principles (Detail: `references/geo-content-extractability.md`, `references/geo-entity-clarity.md`, `references/geo-multi-platform.md`)
 
@@ -76,6 +78,16 @@ These are not separate disciplines. They form a continuum: SEO builds the founda
 2. **Entity Clarity**: AI systems must unambiguously identify what your brand is, what category it belongs to, and what it is authoritative for.
 3. **Multi-Platform Presence**: AI systems pull from YouTube, Reddit, review sites, LinkedIn, industry publications, not just your website.
 4. **Owned and Earned Signals**: Owned content demonstrates expertise; earned mentions (reviews, press, community) validate credibility.
+
+### AI Platform Optimization (Detail: `references/ai-platform-optimization.md`)
+
+Beyond GEO principles, specific tactics for maximizing visibility in AI-powered search and answer platforms. Covers platform-specific optimization for ChatGPT, Perplexity, Google AI Mode/AI Overviews, and Claude, plus practical audit methodology and monitoring for AI citations.
+
+Key focus areas:
+1. **Platform-Specific Signals**: Each AI platform weighs different content signals — optimize for the platforms your audience uses
+2. **Citation Triggers**: Patterns that increase the probability of being cited in AI-generated answers (citing sources and adding statistics are the highest-leverage — see the GEO study in the reference)
+3. **Monitoring & Measurement**: Tracking brand mentions and citations across AI platforms (Profound, Otterly, Peec AI, ZipTie)
+4. **Content Structure for AI**: Beyond extractability — how to format content that AI systems prefer to reference
 
 ### Content Type Mapping (Detail: `references/content-type-mapping.md`)
 
@@ -98,7 +110,7 @@ Traditional SEO metrics (rankings, clicks, traffic) + AEO metrics (featured snip
 | Credibility signals | Backlinks, domain authority | Structured data, answer accuracy, content freshness | Positive mentions across trusted platforms |
 | Key platforms | Google, Bing organic results | Featured snippets, PAA, voice assistants | Google AI Mode, ChatGPT, Perplexity |
 | Content format | Comprehensive, keyword-optimized | Concise Q&A, lists, tables (40-60 word answers) | In-depth, authoritative, self-contained passages |
-| Volatility | Relatively stable | Moderate (snippets can flip) | High (40-60% citation sources change monthly) |
+| Volatility | Relatively stable | Moderate (snippets can flip) | High (citation sources shift substantially month to month) |
 
 **These build on each other.** Strong SEO is the foundation AEO builds on. Strong SEO+AEO content is what GEO extends into AI visibility. You cannot skip layers.
 
@@ -163,12 +175,12 @@ Traditional SEO metrics (rankings, clicks, traffic) + AEO metrics (featured snip
    - AI query patterns ("best X for Y", "how does X compare to Y", "what is X")
    - Map content to traditional SERP, answer features, and AI answer opportunities
 
-2. **Content Architecture**
+3. **Content Architecture**
    - Topic cluster placement (hub or spoke?)
    - Heading structure matching user queries, answer engine patterns, and AI retrieval
    - Internal linking plan
 
-3. **Writing for Triple Optimization**
+4. **Writing for Triple Optimization**
    - Strong on-page SEO (title, meta, headings, keyword placement)
    - AEO answer blocks: concise 40-60 word direct answers under question headings, followed by supporting detail
    - GEO self-contained paragraphs for AI extractability
@@ -176,14 +188,12 @@ Traditional SEO metrics (rankings, clicks, traffic) + AEO metrics (featured snip
    - Front-loaded answers under each heading
    - E-E-A-T signals (author credentials, citations, experience)
 
-4. **Structured Data**
-   - Organization/Product schema for entity signals
-   - FAQPage schema for question-answer sections
-   - HowTo schema for process/tutorial content
-   - Speakable schema for voice search priority content
-   - Article schema for content type signaling
+5. **Structured Data**
+   - Organization/Product/Article schema for entity and content-type signals (still supported rich results)
+   - FAQPage / HowTo markup only as AI/LLM extraction aids — their Google SERP rich results are deprecated (HowTo 2023; FAQ removed for all sites May 2026)
+   - Speakable schema only for qualifying news publishers (limited Google beta)
 
-5. **Distribution Plan**
+6. **Distribution Plan**
    - On-site publishing and internal linking
    - Multi-platform content (YouTube, LinkedIn, Reddit, etc.)
    - Outreach for earned mentions and backlinks
@@ -210,23 +220,11 @@ Traditional SEO metrics (rankings, clicks, traffic) + AEO metrics (featured snip
 
 ---
 
-### AI Platform Optimization (Detail: `references/ai-platform-optimization.md`)
-
-Beyond GEO principles, specific tactics for maximizing visibility in AI-powered search and answer platforms. Covers platform-specific optimization for ChatGPT, Perplexity, Google AI Mode, and Claude. Includes practical audit methodology and monitoring strategies for AI citations.
-
-Key focus areas:
-1. **Platform-Specific Signals**: Each AI platform weighs different content signals — optimize for the platforms your audience uses
-2. **Citation Triggers**: Patterns that increase the probability of being cited in AI-generated answers (statistics +37%, source citations +40%)
-3. **Monitoring & Measurement**: Tracking brand mentions and citations across AI platforms with tools like Otterly, Peec AI, ZipTie
-4. **Content Structure for AI**: Beyond extractability — how to format content that AI systems prefer to reference
-
----
-
 ## Important Caveats
 
 Always communicate to users:
 - AEO and GEO increase probability of appearing in answer features and AI answers, but there are no guarantees
-- Featured snippets can flip between sites; AI citation sources change 40-60% month over month
+- Featured snippets can flip between sites; AI citation sources shift substantially month to month
 - Different AI platforms weigh signals differently
 - No "rank number one" equivalent in GEO; it is brand building across many visibility moments
 - All three (SEO, AEO, GEO) are ongoing disciplines, not one-time projects

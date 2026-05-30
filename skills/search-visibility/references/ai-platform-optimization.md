@@ -19,12 +19,12 @@ For foundational GEO concepts, see: `geo-content-extractability.md`, `geo-entity
 
 **Key difference from traditional SEO:** Traditional SEO gets you ranked. AI SEO gets you **cited**. A well-structured page can get cited even if it ranks on page 2 or 3.
 
-**Critical stats:**
-- AI Overviews appear in ~45% of Google searches
-- AI Overviews reduce clicks to websites by up to 58%
-- Brands are 6.5x more likely to be cited via third-party sources than their own domains
-- Optimized content gets cited 3x more often than non-optimized
-- Statistics and citations boost visibility by 40%+ across queries
+**Critical stats** (as of early 2026 — these move fast; keep the date and re-verify):
+- AI Overviews appear in roughly **15-25% of Google queries in broad global keyword studies** (Semrush: peaked ~25% mid-2025, ~16% by Nov 2025), but **45-60% in US-focused / curated-keyword trackers** and per Google's own framing (Advanced Web Ranking ~60% of US queries; BrightEdge/Google ~50%). Varies widely by country, intent, device, and measurement method — treat as directional, not a single fact
+- AI Overviews can cut click-through to the **top organic result by up to ~58%** when present (Ahrefs, Dec 2025)
+- Brands are reportedly cited via third-party sources (Reddit, Wikipedia, review sites) far more than via their own domains
+- Well-structured, sourced content is cited materially more often than thin/undated content
+- Adding statistics and citing sources are among the highest-leverage on-page tactics (see the GEO study below)
 
 ---
 
@@ -52,20 +52,17 @@ AI systems extract passages, not pages. Every key claim should work as a standal
 
 ### Pillar 2: Authority — Make Content Citable
 
-**Princeton GEO research** (KDD 2024, Perplexity.ai study) ranked optimization methods:
+The **GEO study** (Aggarwal et al., *GEO: Generative Engine Optimization*, KDD 2024 — [arXiv:2311.09735](https://arxiv.org/abs/2311.09735); a Princeton / Georgia Tech / Allen AI / IIT Delhi paper, tested across multiple generative engines, **not** a "Perplexity.ai study") found GEO methods can boost visibility by **up to ~40%**. Its three strongest methods are citing sources, adding quotations, and adding statistics (collectively a 30-40% relative improvement on the paper's Position-Adjusted Word Count metric):
 
-| Method | Visibility Boost | How to Apply |
-|--------|:---------------:|--------------|
-| **Cite sources** | +40% | Add authoritative references with links |
-| **Add statistics** | +37% | Include specific numbers with sources |
-| **Add quotations** | +30% | Expert quotes with name and title |
-| **Authoritative tone** | +25% | Write with demonstrated expertise |
-| **Improve clarity** | +20% | Simplify complex concepts |
-| **Technical terms** | +18% | Use domain-specific terminology |
-| **Fluency optimization** | +15-30% | Improve readability and flow |
-| ~~Keyword stuffing~~ | **-10%** | **Actively hurts AI visibility** |
+| Method | Effect | How to apply |
+|--------|--------|--------------|
+| **Cite sources** | Top tier | Add authoritative references with links |
+| **Add quotations** | Top tier (strongest single method on one metric) | Expert quotes with name and title |
+| **Add statistics** | Top tier | Include specific numbers with sources |
+| **Authoritative tone / clarity / fluency** | Positive, smaller | Write with demonstrated expertise; simplify; improve flow |
+| ~~Keyword stuffing~~ | **Counterproductive** | Do not do it — does not help and can hurt AI visibility |
 
-**Best combination:** Fluency + Statistics = maximum boost. Low-ranking sites benefit even more (up to 115% visibility increase with citations).
+**Biggest lever for underdogs:** citing credible external sources gave a **~115% visibility increase specifically for pages ranked ~5th** in the SERP (while top-ranked pages actually *lost* ~30%) — i.e., citations help lower-ranked pages most. The paper's exact per-method percentages depend on which metric you read (Position-Adjusted Word Count vs Subjective Impression), so pull them from its tables if you need precise figures rather than treating any single number as canonical.
 
 **Freshness signals:**
 - "Last updated: [date]" prominently displayed
@@ -78,12 +75,14 @@ AI systems extract passages, not pages. Every key claim should work as a standal
 AI systems don't just cite your website — they cite where you appear.
 
 **Third-party sources matter more than your own site:**
-- Wikipedia mentions (7.8% of all ChatGPT citations)
-- Reddit discussions (1.8% of ChatGPT citations)
+- **Reddit** — typically the single most-cited domain across AI platforms (leads Google AI Overviews and Perplexity; ~12% of ChatGPT citations in Q1 2026, up sharply from ~2% in 2024-25). Highly volatile — Reddit's ChatGPT share swung from ~60% to ~10% of responses within two weeks in Sept 2025
+- **Wikipedia** — consistently a top source (~8% of ChatGPT citations in 2024-25 per Profound; ~13% in Q1 2026 per 5W/Similarweb)
 - Industry publications and guest posts
 - Review sites (G2, Capterra, TrustRadius for B2B SaaS)
 - YouTube (frequently cited by Google AI Overviews)
 - Quora answers
+
+(Citation shares vary by platform, study, and month — treat all figures as directional and re-check quarterly.)
 
 **Actions:**
 - Ensure your Wikipedia page is accurate and current
@@ -139,27 +138,30 @@ For each priority page, verify:
 
 ### Step 4: AI Bot Access Check
 
-Verify robots.txt allows AI crawlers:
-- **GPTBot** and **ChatGPT-User** — OpenAI
-- **PerplexityBot** — Perplexity
-- **ClaudeBot** and **anthropic-ai** — Anthropic
-- **Google-Extended** — Google Gemini and AI Overviews
+Verify robots.txt allows the AI crawlers you want (see the canonical table in `technical-seo.md`):
+- **OAI-SearchBot** (ChatGPT Search citation — this is the one that controls ChatGPT Search visibility), **ChatGPT-User** (live fetch), **GPTBot** (training) — OpenAI
+- **PerplexityBot**, **Perplexity-User** — Perplexity
+- **Claude-SearchBot** (search), **Claude-User** (live fetch), **ClaudeBot** (training) — Anthropic
+- **Googlebot** — powers Google AI Overviews and AI Mode
+- **Google-Extended** / **Applebot-Extended** — opt-out *tokens* for Gemini / Apple Intelligence training (not fetchers)
 - **Bingbot** — Microsoft Copilot
 
-Blocking prevents AI training AND citation. Consider blocking training-only crawlers (CCBot) while allowing search bots.
+Blocking the **search/citation** bots (OAI-SearchBot, PerplexityBot, Claude-SearchBot) prevents those platforms from citing you. You can allow search bots while blocking training-only crawlers (GPTBot, ClaudeBot, CCBot). Caveat: robots.txt does not reliably control every vendor — Cloudflare documented (Aug 2025) PerplexityBot using **undeclared stealth crawlers** that rotate IPs and impersonate browsers to evade no-crawl directives, and de-listed it as a verified bot.
 
 ---
 
 ## Content Types That Get Cited Most
 
-| Content Type | Citation Share | Why AI Cites It |
-|-------------|:------------:|----------------|
-| **Comparison articles** | ~33% | Structured, balanced, high-intent |
-| **Definitive guides** | ~15% | Comprehensive, authoritative |
-| **Original research/data** | ~12% | Unique, citable statistics |
-| **Best-of/listicles** | ~10% | Clear structure, entity-rich |
-| **Product pages** | ~10% | Specific details AI can extract |
-| **How-to guides** | ~8% | Step-by-step structure |
+Ranked roughly by how often each format gets cited (published citation-share percentages vary widely by study and shift month to month — e.g., listicle citation rates moved sharply over a single month in late 2025 — so rank the formats rather than trusting fixed percentages):
+
+| Content Type | Why AI cites it |
+|-------------|----------------|
+| **Best-of / listicles** | Clear structure, entity-rich — often the single most-cited format |
+| **Comparison / "X vs Y" articles** | Structured, balanced, high-intent |
+| **Definitive guides** | Comprehensive, authoritative |
+| **Original research / data** | Unique, citable statistics |
+| **Product pages** | Specific details AI can extract |
+| **How-to guides** | Step-by-step structure |
 
 **Underperformers:** Generic blog posts, thin product pages, gated content, content without dates/author attribution, PDF-only content.
 
@@ -176,7 +178,7 @@ Blocking prevents AI training AND citation. Consider blocking training-only craw
 | Comparisons | `ItemList` | Structured comparison data |
 | Organization | `Organization` | Entity recognition |
 
-Content with proper schema shows 30-40% higher AI visibility.
+Structured data helps AI systems reliably parse entities, pricing, and Q&A, which can improve extractability. The exact visibility impact is not well-quantified and the evidence is mixed, so treat schema as a parsing aid, not a guaranteed visibility multiplier.
 
 ---
 
@@ -194,8 +196,11 @@ Content with proper schema shows 30-40% higher AI visibility.
 
 ### AI Visibility Monitoring Tools
 
+This market moves fast — verify current coverage and pricing before committing.
+
 | Tool | Coverage | Best For |
 |------|----------|----------|
+| **Profound** | ChatGPT, Perplexity, Google AI Overviews/AI Mode, Gemini, Copilot | Enterprise-scale AI-visibility tracking (current category leader) |
 | **Otterly AI** | ChatGPT, Perplexity, Google AI Overviews | Share of AI voice tracking |
 | **Peec AI** | ChatGPT, Gemini, Perplexity, Claude, Copilot+ | Multi-platform monitoring at scale |
 | **ZipTie** | Google AI Overviews, ChatGPT, Perplexity | Brand mention + sentiment tracking |
@@ -213,7 +218,7 @@ Monthly manual check:
 
 ## Common Mistakes
 
-- **Ignoring AI search** — ~45% of Google searches now show AI Overviews
+- **Ignoring AI search** — AI Overviews now appear on a large and growing share of Google searches (see Critical stats above)
 - **Treating AI SEO as separate from SEO** — Good traditional SEO is the foundation
 - **Writing for AI, not humans** — Content must read naturally
 - **No freshness signals** — Undated content loses to dated content
@@ -227,17 +232,32 @@ Monthly manual check:
 
 ## 2025-2026 AI Search Landscape Updates
 
-The AI search surface is fragmenting. Optimize per platform — not just for "AI" in general.
+The AI search surface is fragmenting. Optimize per platform — not just for "AI" in general. (Landscape as of early 2026 — these facts move quickly; re-verify and re-date this table.)
 
-| Surface | What changed (2025-2026) | What to do |
+| Surface | What changed | What to do |
 |---|---|---|
-| **Google AI Mode** (separate from AI Overviews) | New AI-driven SERP launched early 2025; distinct ranking signals from classic SERP / Overviews | Check both surfaces; AI Mode favors structured, source-able content |
-| **Google AI Overviews** | ~45% of Google searches; appearance volatile | Optimize for citation, not click — measure mentions, not just CTR |
-| **ChatGPT Search** (search.chatgpt.com) | Launched late 2024; distinct from ChatGPT-with-browsing | Source-citation behavior differs from Perplexity; track separately |
+| **Google AI Mode** (separate from AI Overviews) | Agentic "query fan-out" SERP launched 2025; distinct ranking signals from classic SERP / Overviews | Check both surfaces; optimize for the implied sub-questions (see "Optimizing for AI Mode" below); favors structured, source-able content |
+| **Google AI Overviews** | On a large share of searches (~15-25% in broad global studies, 45-60% in US/curated trackers); appearance volatile | Optimize for citation, not click — measure mentions, not just CTR |
+| **ChatGPT Search** (search.chatgpt.com) | Launched late 2024; distinct from ChatGPT-with-browsing. Controlled by OAI-SearchBot in robots.txt | Source-citation behavior differs from Perplexity; track separately |
 | **Perplexity Spaces / Shopping** | Product-recommendation surfaces with structured product data | Product schema (Offer, Review, AggregateRating) is now key for product visibility |
-| **Apple Intelligence / Siri 2.0** (iOS 18.x +) | Uses ChatGPT for complex queries by default | Apple device queries route through ChatGPT — your ChatGPT visibility = your iOS visibility |
+| **Apple Intelligence / Gemini-powered Siri** (iOS 26.x, rolling out 2026) | Jan 2026: Apple signed a multi-year deal (reported ~$1B/yr) for a custom Google **Gemini** model to power the rebuilt Siri and Apple Foundation Models; first features in iOS 26.4, fuller conversational Siri expected at iOS 27 (Sept 2026). ChatGPT (GPT-5) remains an optional handoff, not the default | Gemini/Google signals increasingly drive Apple-device AI answers — prioritize the same structured, source-able content that helps in Gemini / AI Overviews. ChatGPT still matters as a secondary handoff |
 | **Reddit Answers** | Reddit's own AI answer feature launched 2024 | Reddit presence (genuine, not spam) matters even more |
-| **llms.txt** | Proposed standard for declaring LLM-relevant content (akin to robots.txt) | Adopt opportunistically; adoption is uneven but cheap to publish |
-| **Cloudflare AI bot blocking** | Cloudflare ships default AI-bot blocking in 2024-2025 | Audit your CDN settings — you may be blocking the bots you want to be cited by |
+| **llms.txt** | A community convention (~10% site adoption); **no major AI vendor documents consuming it** — Google's John Mueller likened it to the deprecated keywords meta tag, and crawlers fetch HTML, not llms.txt | Low cost, speculative benefit — publish if trivial (see "llms.txt" below), but do not prioritize it or expect citation impact |
+| **Cloudflare "Content Independence Day"** (July 1 2025) | New domains **block all known AI crawlers by default**, plus a "Pay Per Crawl" marketplace for paid access. Cloudflare fronts ~22% of the web, so this is a structural shift in AI crawl access | Audit your CDN/bot settings so you are not blocking the search/citation crawlers you want (OAI-SearchBot, PerplexityBot, Claude-SearchBot) |
 
 **Practical implication:** measure citation share across at least Google AI Mode, AI Overviews, ChatGPT (Search + browsing), Perplexity, and Gemini. A tool like Profound, Peec AI, or Otterly will cover the spread; rolling your own monthly check works for smaller sites.
+
+### Optimizing for Google AI Mode (query fan-out)
+
+AI Mode does not answer your exact query directly — it decomposes it into multiple related sub-questions ("query fan-out"), retrieves passages for each, and synthesizes one answer. Practical implications:
+
+- Optimize for the **sub-questions implied by a topic**, not just the head query. A page that only answers "best CRM" may be skipped in favor of pages that cleanly answer "best CRM for small teams," "CRM with the easiest setup," "CRM pricing compared," etc.
+- Cover a topic comprehensively with **self-contained, individually-extractable passages** (one clear answer per heading) so different fan-out sub-questions can each retrieve a relevant chunk.
+- Entity clarity and topical authority (see `geo-entity-clarity.md`) matter more here than exact-match keywords, because retrieval is semantic.
+- There is no "rank 1" in AI Mode — success is being one of the sourced passages across several sub-questions for a topic.
+
+### llms.txt (how-to, with caveat)
+
+`llms.txt` is a proposed plain-Markdown file at `/llms.txt` that lists your most important URLs (and optionally `/llms-full.txt` with full content) so LLMs can find canonical content. To publish one: place a Markdown file at the site root with an H1 title, a short summary blockquote, and sectioned lists of links with brief descriptions.
+
+**Caveat (important):** as of early 2026 **no major AI vendor has confirmed reading llms.txt**; crawlers fetch your HTML, and Google's John Mueller compared it to the deprecated keywords meta tag. Adoption is ~10%. It is cheap to publish but should be treated as a speculative, low-priority gesture — do not invest heavily or expect a citation lift.

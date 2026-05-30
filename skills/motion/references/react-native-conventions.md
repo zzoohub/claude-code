@@ -1,8 +1,8 @@
 # React Native Conventions
 
-Patterns, rules, and gotchas for the React Native animation stack (Reanimated 3+ + Gesture Handler + Skia).
+Patterns, rules, and gotchas for the React Native animation stack (Reanimated 4 + Gesture Handler + Skia).
 
-> **Reanimated version**: this file targets Reanimated 3. Reanimated 4 renames some APIs (e.g., `useScrollViewOffset` → `useScrollOffset`). Check the project's installed version and adapt accordingly.
+> **Reanimated version**: this file targets **Reanimated 4** (stable since mid-2025), which runs on the **New Architecture only** and splits the worklets runtime into the separate `react-native-worklets` package. If your app is still on the Old Architecture, stay on Reanimated 3.x — most APIs here are identical, but v3 uses `useScrollViewOffset` (renamed `useScrollOffset` in v4) and `Layout` (renamed `LinearTransition`).
 > **Skia package**: import from `@shopify/react-native-skia`.
 
 ## Table of Contents
@@ -38,7 +38,7 @@ GPU Thread    -- Rendering pixels, Skia
 
 | Library | Runs On | Why It's Fast |
 |---------|---------|--------------|
-| Reanimated 3 | UI thread (worklets via JSI) | Never touches JS thread |
+| Reanimated 4 | UI thread (worklets via JSI) | Never touches JS thread |
 | Gesture Handler | UI thread (native modules) | Gesture recognition is native |
 | Skia | GPU thread | Direct GPU rendering |
 
@@ -140,13 +140,20 @@ Pair gestures with haptics at discrete thresholds (not continuously):
 
 ```tsx
 import * as Haptics from 'expo-haptics';
-import { runOnJS } from 'react-native-reanimated';
+import { useSharedValue, runOnJS } from 'react-native-reanimated';
 
-// Inside gesture handler, at threshold only:
-if (Math.abs(e.translationX) > THRESHOLD && !fired.value) {
-  fired.value = true;
-  runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
-}
+const fired = useSharedValue(false);
+const THRESHOLD = 80;
+
+const gesture = Gesture.Pan()
+  .onUpdate((e) => {
+    // fire once when crossing the threshold
+    if (Math.abs(e.translationX) > THRESHOLD && !fired.value) {
+      fired.value = true;
+      runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
+    }
+  })
+  .onFinalize(() => { fired.value = false; }); // re-arm for the next gesture
 ```
 
 Types: Light (subtle tap), Medium (button press), Heavy (significant action), notification (success/warning/error).
@@ -160,12 +167,12 @@ Built-in entering/exiting presets:
 ```
 
 - Stagger with delay: `FadeIn.delay(index * 100).duration(400)`
-- Layout repositioning: `<Animated.View layout={Layout.springify()}>` -- smoothly animates when siblings add/remove
+- Layout repositioning: `<Animated.View layout={LinearTransition.springify()}>` -- smoothly animates when siblings add/remove (`Layout` is the deprecated alias of `LinearTransition`)
 - Custom entering: return `{ initialValues, animations }` from a worklet function
 
 ## Shared Element Transitions
 
-**Experimental** -- test thoroughly on your target RN/Expo version. May have bugs on Android or with complex navigation stacks.
+**Experimental and not production-recommended.** In Reanimated 4 / New Architecture, `sharedTransitionTag` is gated behind a feature flag (`ENABLE_SHARED_ELEMENT_TRANSITIONS`), is Android/iOS-only (no web), and can't yet take a fully custom animation function. For production shared-element transitions, prefer **React Navigation's native-stack shared element transitions** (or Expo Router on top of it). Use the standalone Reanimated API below only for prototypes, and test thoroughly on your target RN/Expo version.
 
 ```tsx
 // List screen
@@ -176,6 +183,21 @@ Built-in entering/exiting presets:
 ```
 
 Tags must be unique per screen. The framework handles morphing.
+
+## Splash / Launch Animation
+
+Animate the launch → first-screen handoff with `expo-splash-screen`:
+
+```tsx
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync(); // at module load, before first render
+
+// After fonts / assets / initial data are ready:
+await SplashScreen.hideAsync();
+```
+
+Hand off to the first screen's `entering` animation (e.g. `FadeIn`, or a shared element) so the reveal feels continuous, not a hard cut. Respect reduced motion: gate the animated reveal behind `useReducedMotion()` / `ReduceMotion.System` and fall back to an instant show.
 
 ## Performance Rules
 
@@ -237,4 +259,4 @@ Every gesture interaction must have a non-gesture fallback:
 6. **`withDecay` overshoots bounds**: use `clamp` option or wrap with `withClamp`
 7. **Multiple springs on same value**: overlapping springs cause erratic movement -- `cancelAnimation(value)` before starting new one
 8. **`useAnimatedKeyboard` on Android**: requires `android:windowSoftInputMode="adjustNothing"` in AndroidManifest.xml
-9. **`useScrollViewOffset` renamed**: called `useScrollOffset` in Reanimated 4. Prefer `useScrollOffset` for new code.
+9. **`useScrollOffset` (v4)**: in Reanimated 3 this hook was `useScrollViewOffset`. Use `useScrollOffset` on v4 (now compatible with all scrollable components); the old name is deprecated.

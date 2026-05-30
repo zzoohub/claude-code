@@ -5,11 +5,12 @@ description: |
   Use this skill whenever the user works on: 3D scenes, WebGL/WebGPU rendering, Three.js shaders (TSL/node materials), VR/AR/XR/mixed reality, spatial computing, immersive experiences, 3D physics simulation, ECS game architecture, particle systems, procedural geometry, glTF models, spatial audio, hand tracking, controller input, head-mounted displays, or any task involving three/webgpu, three/tsl, koota, @dimforge/rapier3d, or WebXR.
   Also trigger when the user mentions "three.js", "webxr", "webgpu", "TSL", "node material", "shader", "ECS", "rapier", or "wasm" in a 3D/game context.
   Framework-specific implementations live in `references/<framework>/` — currently only React/R3F is covered. Solid (solid-three) and Svelte (threlte) are out of scope.
+  Do NOT use for UX/IA, spatial-interaction comfort, or experience design of XR apps (use ux-design); this skill owns the rendering/engine implementation, not the UX.
 ---
 
 # Web 3D & XR Development
 
-**TDD**: Write all tests first as a spec, then implement, then verify all pass. (Tests → Impl → Green)
+**Testing**: Test the *simulation* layer, not the draw call. Koota systems are pure functions (Vitest), Rapier stepping is deterministic (`takeSnapshot`), and WASM exports test directly — write these first. GPU-bound paths (shaders, render output) need a real context (Playwright with `--enable-unsafe-webgpu`) or pixel-snapshot regression, not unit tests. See `references/testing.md`.
 
 ## Tech Stack
 
@@ -23,7 +24,7 @@ description: |
 | XR | WebXR Device API |
 | Assets | glTF 2.0 |
 
-Framework bindings (React Three Fiber, Threlte, etc.) are layered on top. The core stack is framework-agnostic.
+Framework bindings (React Three Fiber) are layered on top; the core stack itself is framework-agnostic.
 
 ## Reference Files
 
@@ -39,6 +40,8 @@ Read the relevant reference file when working on a specific domain:
 | `references/threading.md` | Multi-thread architecture, Worker separation, SharedArrayBuffer |
 | `references/assets.md` | glTF optimization pipeline, texture best practices |
 | `references/performance.md` | General 3D performance: instancing, LOD, draw calls, GPU budget |
+| `references/audio.md` | Spatial/positional audio, `AudioListener`, XR listener sync |
+| `references/testing.md` | Testing strategy: simulation layer (unit) vs GPU-bound code (visual) |
 
 ### Framework-Specific References
 
@@ -48,13 +51,13 @@ Read the relevant reference file when working on a specific domain:
 
 ## Staying Current
 
-This is a fast-moving domain. The architectural patterns and principles in this skill are stable, but specific API signatures may change. When writing code that touches a specific library's API, verify against the latest documentation using Context7 (`resolve-library-id` then `query-docs`). Prioritize Context7 lookup for: Three.js node material APIs, WebXR hook signatures, Koota trait/query API, and Rapier component props.
+This is a fast-moving domain. The architectural patterns and principles in this skill are stable, but specific API signatures may change. When writing code that touches a specific library's API, verify against the latest documentation using Context7 (`resolve-library-id` then `get-library-docs`). Prioritize Context7 lookup for: Three.js node material APIs, WebXR hook signatures, Koota trait/query API, and Rapier component props.
 
 ---
 
 ## WebGPU-First Setup
 
-Import from `three/webgpu` instead of `three`. This gives WebGPU rendering with automatic WebGL 2 fallback (~95% WebGPU browser coverage as of early 2026, remaining ~5% falls back seamlessly).
+Import from `three/webgpu` instead of `three`. This gives WebGPU rendering with automatic WebGL 2 fallback. WebGPU has shipped in every major engine (Chromium, Safari, and — as of early 2026 — Firefox on Windows/macOS), but real-world coverage is still partial: Firefox on Linux/Android and older mobile devices have not caught up. Treat the **WebGL 2 fallback path as the actual guarantee**, not a coverage percentage — design and test for both backends, and feature-detect before assuming WebGPU (see below).
 
 ```typescript
 import * as THREE from 'three/webgpu'
@@ -75,9 +78,37 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera)
 })
 document.body.appendChild(renderer.domElement)
+
+// Keep camera aspect + drawing buffer in sync with the viewport (required for every app)
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight
+  camera.updateProjectionMatrix()
+  renderer.setSize(window.innerWidth, window.innerHeight)
+})
 ```
 
 WebGPURenderer init is **async** -- await it before starting the render loop.
+
+### Init Failure & Fallback
+
+`renderer.init()` can reject (no `navigator.gpu`, adapter request denied, headless CI). Always feature-detect and degrade gracefully — `WebGPURenderer` falls back to WebGL 2 automatically, but you still want to handle the case where neither is available and surface a user-facing message instead of throwing inside your mount:
+
+```typescript
+async function createRenderer(): Promise<THREE.WebGPURenderer | null> {
+  if (!('gpu' in navigator) && !window.WebGL2RenderingContext) {
+    return null // neither backend — show a "3D not supported" state
+  }
+  const renderer = new THREE.WebGPURenderer({ antialias: true })
+  // forceWebGL: true lets you force the WebGL 2 path for testing or known-bad GPUs
+  try {
+    await renderer.init()
+  } catch (err) {
+    console.error('WebGPU init failed; renderer fell back to WebGL or is unusable', err)
+    return null
+  }
+  return renderer
+}
+```
 
 Use **Node materials** (`MeshStandardNodeMaterial`, `MeshPhysicalNodeMaterial`, etc.) instead of classic materials when targeting TSL/WebGPU.
 
@@ -102,7 +133,7 @@ export default defineConfig({
 })
 ```
 
-Add framework plugin (e.g., `@vitejs/plugin-react`, `vite-plugin-solid`, `@sveltejs/vite-plugin-svelte`) as needed.
+Add the React plugin (`@vitejs/plugin-react`). The COOP/COEP headers above apply only to the Vite dev/preview server — in production you must set the same two headers at your host/CDN, or `SharedArrayBuffer` silently becomes unavailable.
 
 ---
 
@@ -125,6 +156,7 @@ scene.add(mesh)
 Mutate objects directly in the render loop. Never trigger framework re-renders at 60fps.
 
 ```typescript
+const clock = new THREE.Clock()
 renderer.setAnimationLoop((time) => {
   const delta = clock.getDelta()
   mesh.rotation.y += delta
@@ -140,9 +172,14 @@ renderer.setAnimationLoop((time) => {
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js'
 
-const loader = new GLTFLoader()
+const manager = new THREE.LoadingManager()
+manager.onError = (url) => console.error(`Asset failed to load: ${url}`) // otherwise silent
+
+const loader = new GLTFLoader(manager)
 loader.setMeshoptDecoder(MeshoptDecoder)
 
+// loadAsync rejects on 404/decode failure — wrap in try/catch in production so a
+// missing model renders a fallback instead of leaving a blank scene.
 const gltf = await loader.loadAsync('/model.glb')
 const model = gltf.scene
 scene.add(model)
@@ -238,7 +275,7 @@ import * as THREE from 'three/webgpu'
 
 // TSL
 import { Fn, uniform, float, vec2, vec3, vec4, color,
-  positionLocal, normalLocal, uv, time,
+  positionLocal, normalLocal, positionView, normalView, uv, time,
   sin, cos, mix, smoothstep, mx_noise_float,
   texture, storage, instanceIndex } from 'three/tsl'
 

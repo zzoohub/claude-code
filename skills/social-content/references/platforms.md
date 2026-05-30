@@ -92,16 +92,19 @@ LinkedIn is fundamentally different from other platforms -- it's designed to **p
 ### Algorithm Mechanics
 Three-stage pipeline via "Home Mixer": candidate retrieval (~1,500 tweets), ranking, filtering.
 
-**Engagement scoring weights:**
-- Retweets: **20x** multiplier
-- Replies: **13.5x**
-- Profile clicks: **12x**
-- Link clicks: **11x**
-- Bookmarks: **10x**
+**Engagement scoring weights** (open-sourced "heavy ranker", relative to a like = 0.5):
+- Reply: **13.5** (a reply the author responds to: **~75**)
+- Profile click + engagement: **12**
+- Click + dwell >2 min: **11**
+- Retweet: **1.0** (~2x a like)
+- Like: **0.5**
+- Block / mute / report: heavily negative (−74 to −369)
+
+**Takeaway:** replies and dwell dominate; retweets are only ~2x a like -- the widely-quoted "20x retweet" is a myth. Optimize for replies and save-worthy depth, not just retweets.
 
 **Critical window:** First 2 hours determine reach. Speed of engagement matters more than total engagement.
 
-**Twitter Blue/Premium:** ~4x visibility boost for followers, ~2x for non-followers. Pay-to-play is real for serious growth.
+**Twitter Blue/Premium:** gives a real visibility boost (reported roughly 2-4x, unconfirmed by the open-sourced code). Pay-to-play matters for serious growth.
 
 ### Content Formats
 
@@ -300,7 +303,7 @@ Last 30s: CTA (subscribe, next video, link in description)
 ## Reddit
 
 ### Algorithm Mechanics
-Community-driven; each subreddit has unique norms. 116M daily active users, 443M+ weekly.
+Community-driven; each subreddit has unique norms. ~121M daily active uniques, ~472M weekly (Q4 2025).
 
 **Key signals:**
 - Upvote velocity -- fresh posts with fast early upvotes surface quickly

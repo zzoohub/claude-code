@@ -7,12 +7,18 @@ description: |
   or when user mentions "churn", "cancel", "retention", "dunning", "payment failed",
   "failed payment", "payment recovery", "save offer", "cancel flow", "downgrade",
   "customer health", "at-risk customers", "subscription cancellation", "reduce churn rate",
-  "churn analysis", "why are users leaving", "customer at risk".
-  Do NOT use for: onboarding optimization (use cro skill), general marketing
-  email sequences including win-back campaigns (use email-marketing skill), or
-  pricing changes (use pricing skill). Carve-out: dunning emails (payment-failure
-  recovery) ARE owned here in `references/dunning-playbook.md` because they're
-  tightly coupled to retry logic and billing state, not general marketing.
+  "why are users leaving", "customer at risk".
+  Do NOT use for: onboarding optimization (use cro skill); general marketing
+  email sequences including win-back campaigns (use email-marketing skill);
+  pricing/tier design — including what a downgrade tier costs — (use pricing skill;
+  "downgrade" here means offering a lower tier as a save offer to retain a cancelling
+  customer); or deep retention analytics — retention-cohort analysis, retention curves,
+  cohort tables, user segmentation, Carrying Capacity, PMF assessment, or Aha-Moment
+  work (use product-analytics skill; this skill owns operational churn diagnosis tied
+  to intervention: voluntary-vs-involuntary split, cancel-reason themes, at-risk health
+  scoring). Carve-out: dunning emails (payment-failure recovery) ARE owned here in
+  `references/dunning-playbook.md` because they're tightly coupled to retry logic and
+  billing state, not general marketing.
 ---
 
 # Churn Prevention
@@ -32,7 +38,7 @@ Strategies for reducing both voluntary and involuntary churn through proactive i
 **Involuntary churn** — Payment fails, customer didn't intend to leave
 - Causes: expired card, insufficient funds, bank decline, billing errors
 - Prevention: dunning sequences, card update prompts, retry logic
-- **This is the easiest win** — often 20-40% of total churn
+- **This is the easiest win** — often a large share (roughly 20-40%) of total churn
 
 ### Prevention Priority Order
 1. Fix involuntary churn (dunning) — highest ROI, lowest effort
@@ -76,12 +82,12 @@ Payment failures are mechanical problems with mechanical solutions. Fix these fi
 ### US — FTC
 - The FTC's federal "Click to Cancel" Rule was **vacated by the 8th Circuit on 2025-07-08** on procedural grounds (no preliminary regulatory analysis).
 - The FTC submitted a draft Advance Notice of Proposed Rulemaking (ANPRM) on 2026-01-30 to restart the rulemaking with proper procedure.
-- **Enforcement under existing unfair/deceptive-practices doctrine continues.** State AGs have also stepped up enforcement.
+- **Enforcement under existing unfair/deceptive-practices doctrine continues** (FTC Act §5, ROSCA, state UDAP laws). State AGs have also stepped up enforcement. There is no nationwide click-to-cancel mandate today — obligations come from the state patchwork below plus general UDAP enforcement.
 
 ### California — AB 2863 (Automatic Renewal Law amendments)
 - **Effective 2025-07-01.** Applies to contracts entered into, amended, or extended on or after that date.
 - **Same-medium cancellation** required: if a consumer signs up online, they must be able to cancel online with equal ease. No phone-only or in-person-only cancellation paths.
-- "Click-to-cancel" button required for online cancellations; cannot obstruct or delay.
+- "Click-to-cancel" button required for online cancellations; cannot obstruct or delay. (Presenting a skippable discount/save offer during cancellation is *not* an obstruction, provided a clear, conspicuous cancel option remains.)
 - Expanded definitions of "automatic renewal" and "continuous service" cover **free trials and free-to-pay conversions**.
 - **Express affirmative consent** to renewal terms required; records retained ≥3 years (or 1 year post-termination, whichever is longer).
 - Enforcement by California AG, district attorneys, and private plaintiffs.
@@ -92,10 +98,15 @@ Payment failures are mechanical problems with mechanical solutions. Fix these fi
 - Companies cannot impose unreasonable or unlawful conditions, refuse, obstruct, or unreasonably delay cancellation.
 
 ### Other US states with auto-renewal rules
-Colorado, Vermont, Illinois, and others have analogous 2025 laws — confirm requirements in every state you serve.
+- **Colorado** (SB25-145): one-step online-cancellation duties effective 2025-08-06; coverage broadened to B2B from 2026-02-16.
+- **Vermont** (9 V.S.A. § 2454a): a long-standing auto-renewal law (enacted 2017, effective 2019) that already requires online/same-medium cancellation — *not* a 2025 law.
+- **Illinois**: the current auto-renewal statute (815 ILCS 601, from 2000) does **not** mandate one-step online cancellation; a one-step online-cancel amendment (SB3562) was still pending in committee as of mid-2026 — confirm enactment status before relying on it.
 
-### EU/UK
-GDPR + the Digital Services Act / Digital Markets Act framework already restrict "dark patterns" around cancellation. Consumer protection authorities (e.g., France's DGCCRF) have started enforcement on subscription-trap patterns from 2024-2025.
+Other states impose analogous requirements. Confirm the current rule and effective date in every state you serve.
+
+### EU / UK
+- **EU:** The Unfair Commercial Practices Directive (2005/29/EC) and the Consumer Rights Directive (2011/83/EU), as implemented in national law, are the operative rules restricting deceptive cancellation "dark patterns" for ordinary subscription businesses today. The Digital Services Act additionally bans dark patterns but only for designated **online platforms** (Art. 25, which itself defers to the UCPD and GDPR where they already apply); the Digital Markets Act bans dark-pattern circumvention (Arts. 5(2), 13) only for designated **gatekeepers** (a handful of Big Tech firms) — neither reaches a typical SaaS seller. GDPR governs consent-specific dark patterns. A dedicated EU rule on subscription/cancellation dark patterns — the **Digital Fairness Act** — is planned (Commission proposal expected ~Q4 2026) but is NOT yet in force. Separately, Directive (EU) 2023/2673 adds a "withdrawal button" requirement to the Consumer Rights Directive for distance contracts concluded online, applying from 2026-06-19 (this concerns the statutory right of withdrawal, distinct from ongoing subscription cancellation). France's DGCCRF and other consumer-protection authorities (acting under national UCPD law) have stepped up enforcement on subscription-trap patterns since 2024-2025.
+- **UK:** The DSA and DMA do **not** apply in the UK post-Brexit (they reach UK firms only when serving EU users). UK subscription-trap and dark-pattern rules sit under the **Digital Markets, Competition and Consumers Act 2024 (DMCC Act)** — its consumer-protection / unfair-commercial-practices provisions are in force from 2025-04-06 (CMA direct enforcement), and a dedicated subscription-contracts regime (cancel as easily as you signed up, auto-renewal reminders, cooling-off) is expected around spring 2027 (may slip — secondary legislation pending). UK GDPR also applies. Confirm separately.
 
 ### Practical cancel-flow checklist (compliance-safe)
 - [ ] **Same-medium cancellation** — if signup was online, cancellation is online (no phone-only)
@@ -106,6 +117,7 @@ GDPR + the Digital Services Act / Digital Markets Act framework already restrict
 - [ ] **No re-enrollment without fresh affirmative consent**
 - [ ] **Records of consent and cancellation retained** per applicable law (CA: 3 years minimum)
 - [ ] **Clear cost disclosure** before any save offer
+- [ ] **Refund/proration policy** at cancellation and downgrade defined and disclosed (verify jurisdictional obligations)
 
 See `references/cancel-flow-patterns.md` for compliant UI patterns.
 
@@ -135,19 +147,18 @@ Track these signals to identify at-risk users before they churn:
 
 ### Implementation
 
-Use a weighted composite score. A good starting point:
+Use a weighted composite score whose components map 1:1 to the signal categories above, so you score exactly what you track. A good starting point (weights sum to 1.0):
 
 ```
-Health Score = (
-  Login frequency score × 0.30 +
-  Feature usage score   × 0.25 +
-  Support sentiment     × 0.15 +
-  Billing health        × 0.15 +
-  Engagement score      × 0.15
-)
+Health Score =
+  Usage score      × 0.40 +   (login frequency + feature-adoption breadth + time-in-product + key-action completion)
+  Engagement score × 0.25 +   (email open/click + support-ticket pattern + community + feature-request activity)
+  Business score    × 0.35     (payment/billing health + downgrade/seat trend + renewal proximity)
 ```
 
-Each component is scored 0-100. Normalize raw data (e.g., logins per week) into scores using percentile ranks or simple thresholds based on your user base.
+Each category score is the 0-100 average of its sub-signals; normalize raw data (e.g., logins per week) into scores using percentile ranks or simple thresholds based on your user base. These weights are starting points — calibrate them against your own retained-vs-churned cohorts.
+
+**B2C/PLG vs B2B:** the default weights are tuned for B2C/PLG, where the user is the buyer and individual login/usage predicts churn. For B2B (especially sales-led, multi-seat, annual contracts) the economic buyer rarely logs in and churn surfaces at renewal or via seat contraction — down-weight login/usage and up-weight Business signals: seat trend, champion/power-user engagement, renewal proximity, and support/QBR cadence.
 
 | Score | Status | Action |
 |-------|--------|--------|
@@ -156,34 +167,31 @@ Each component is scored 0-100. Normalize raw data (e.g., logins per week) into 
 | 40-59 | Declining | Intervention: success call, personalized help |
 | 0-39 | Critical | Urgent: executive outreach, retention offer |
 
-For risk signals with specific timeframes and proactive intervention triggers, see the "Churn Prediction & Proactive Retention" section in `references/cancel-flow-patterns.md`.
+For risk signals with directional lead-time heuristics and proactive intervention triggers, see the "Churn Prediction & Proactive Retention" section in `references/cancel-flow-patterns.md`.
 
 ---
 
 ## Churn Diagnosis
 
-When analyzing why users are leaving, segment churn data to find patterns:
+This skill owns **operational churn diagnosis tied to intervention** — the split and the cancel-reason themes that drive save-offer and dunning design. For deep retention-cohort analysis, retention curves, segmentation, and Aha-Moment work, use the **product-analytics** skill.
 
-### Cohort Dimensions
-- **Time cohort** — When did they sign up? (monthly cohorts reveal onboarding issues)
-- **Plan tier** — Which plans churn most? (pricing or value mismatch)
-- **Acquisition channel** — Organic vs paid vs referral (lead quality differences)
-- **Usage pattern** — Power users vs casual (feature adoption gaps)
-- **Cancel reason** — Exit survey data grouped by theme
+### Diagnose for intervention (owned here)
+- **Voluntary vs involuntary?** Check the split first — the solutions are completely different (dunning/retry for involuntary; save offers + health monitoring for voluntary).
+- **Cancel-reason themes** — group exit-survey data by reason to drive the dynamic save-offer mapping (see `references/cancel-flow-patterns.md`).
 
-### Key Questions
-- What's the churn rate by cohort over time? (improving or worsening?)
-- When do users churn? (first 30 days = onboarding problem, months 3-6 = value realization gap)
-- What's the last action before churn? (reveals friction points)
-- Which features do retained users use that churned users don't? (the "aha moment" gap)
-- Is churn voluntary or involuntary? (very different solutions — check the split first)
+### Hand off to product-analytics (deep analysis)
+Retention-cohort dimensions (time cohort, plan tier, acquisition channel, usage pattern), churn-rate-by-cohort trends, last-action-before-churn, and the "features retained users use that churned users don't" (Aha-Moment) gap are retention-analytics work — use the product-analytics skill for those.
 
 ### Churn Rate Benchmarks
+
+Track **logo churn** (accounts/customers lost) separately from **revenue / net-dollar churn** (seat reductions, downgrades, contraction). Seat/usage contraction is silent revenue churn that logo-churn metrics miss; for usage- or seat-based billing, monitor contraction as its own motion alongside cancellations.
 
 | Segment | Poor | Average | Good |
 |---------|------|---------|------|
 | B2C monthly | >8% | 5-8% | <5% |
 | B2B monthly | >5% | 2-5% | <2% |
-| B2B annual (logo churn) | >15% | 8-15% | <8% |
+| B2B annual (logo churn) | >15% | 5-15% | <5% |
+
+Annual logo churn varies sharply by segment (SMB-focused ~15-25%+, enterprise ~3-7%); a single flat row obscures this. Strict sources treat <5% as genuinely good and 5-7% as the enterprise "acceptable" floor.
 
 ---

@@ -105,6 +105,8 @@ Key checks:
 | Missing time intervals | generate_series + LEFT JOIN | `references/query-patterns.md` |
 | Stale planner stats | ANALYZE after bulk operations | `references/production-ops.md` |
 | pg_stat_statements setup | Extension + config | `references/production-ops.md` |
+| Too many connections / pool sizing | PgBouncer transaction pooling | `references/production-ops.md` |
+| Table bloat / dead tuples | Autovacuum tuning + VACUUM | `references/production-ops.md` |
 
 ## Critical Rules
 
@@ -116,7 +118,7 @@ Key checks:
 - **Index FK columns** — PostgreSQL does not auto-index foreign keys. Missing FK indexes cause slow CASCADE deletes and slow joins
 - **TIMESTAMPTZ over TIMESTAMP** — bare TIMESTAMP loses timezone context and breaks across timezones (inherited from database-design)
 - **NUMERIC for money, not FLOAT** — floating-point arithmetic introduces rounding errors in financial calculations (inherited from database-design)
-- **Keyset pagination over OFFSET** — OFFSET scans and discards rows with O(n) cost that worsens with page depth; keyset is O(1)
+- **Keyset pagination over OFFSET** — OFFSET scans and discards skipped rows (cost grows with page depth); keyset seeks directly via the index. See `references/query-patterns.md`
 - **CONCURRENTLY for production indexes** — `CREATE INDEX` without CONCURRENTLY takes a write lock on the entire table, blocking inserts/updates until done
 - **Use PROCEDURE for batched backfills** — DO blocks run in a single transaction and cannot COMMIT between batches; use `CREATE PROCEDURE` + `CALL` for incremental commits (see `references/production-ops.md`)
 
@@ -126,7 +128,7 @@ Key checks:
 |---|---|---|
 | **PG 18** | 2025-09-25 | Built-in `uuidv7()`; async I/O improvements; explicit `uuidv4()` alias |
 | **PG 17** | 2024-09 | `MERGE ... RETURNING`; `JSON_TABLE`; incremental sort improvements; faster `vacuum` |
-| **PG 16** | 2023-09 | `pg_stat_io` (per-IO-type stats — supersedes raw `BUFFERS` for diagnosis); logical replication for partitioned tables; parallel `VACUUM` |
+| **PG 16** | 2023-09 | `pg_stat_io` (per-IO-type stats — complements per-query `BUFFERS`); logical decoding on standby; parallel apply of large transactions |
 | **PG 15** | 2022-10 | `MERGE` statement |
 
 Practical implications:
@@ -137,7 +139,7 @@ Practical implications:
 
 ### DDL portability (PG18 vs ≤PG17)
 
-The DDL skeletons in this skill default to PG 18 (`DEFAULT uuidv7()`). For PG 17 and below, generate UUIDs at the application layer or use `gen_random_uuid()` (UUIDv4 via `pgcrypto`):
+The DDL skeletons in this skill default to PG 18 (`DEFAULT uuidv7()`). For PG 17 and below, generate UUIDs at the application layer or use `gen_random_uuid()` (UUIDv4, built into core since PG 13 — no `pgcrypto` needed):
 
 ```sql
 -- PG 18+ (preferred)

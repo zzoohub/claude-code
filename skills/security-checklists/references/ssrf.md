@@ -1,8 +1,8 @@
 # Server-Side Request Forgery (SSRF)
 
-> OWASP: A01 (Broken Access Control — SSRF consolidated here), A05 (Injection)
+> OWASP: A01 (Broken Access Control — SSRF consolidated here)
 > 
-> SSRF attacks surged 452% in 2024. This checklist addresses one of the fastest-growing attack vectors.
+> SSRF attacks surged ~452% from 2023 to 2024 (2025 SonicWall Cyber Threat Report). This checklist addresses one of the fastest-growing attack vectors.
 
 ---
 

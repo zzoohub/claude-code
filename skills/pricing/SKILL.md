@@ -10,7 +10,9 @@ description: |
   "price localization", "PPP", "willingness to pay".
   This skill should trigger broadly — pricing touches everything from product design to growth.
   Do NOT use for: paywall UI optimization (use cro), copy on pricing page (use copywriting),
-  psychological principles only (use marketing-psychology), revenue analytics (use product-analytics).
+  psychological principles only (use marketing-psychology), revenue analytics (use product-analytics),
+  or referral incentive structure and viral loop design (use growth-loops — this skill only sets
+  the dollar value of a referral reward, growth-loops picks the incentive structure).
   Output scope: public-facing tier strategy goes to `biz/marketing/pricing.md` (marketer agent).
   In-app paywall/upgrade pricing tactics go to `biz/growth/paywall-pricing.md` (growth-optimizer agent).
 ---

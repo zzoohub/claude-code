@@ -6,12 +6,7 @@ Techniques for smooth transitions between copy sections, maintaining narrative c
 
 ## Core Principle: One Cohesive Thought
 
-Even if copy contains multiple elements, it must feel like a single cohesive thought — not fragmented bullet points crammed into a sentence.
-
-- Bad: "Test your spending, share with partner, check compatibility, win prizes"
-- Good: "Take the spending compatibility test with your partner"
-
-The human brain processes one concept at a time. If the reader has to parse multiple ideas, they skip it.
+Even with multiple elements, copy must read as a single cohesive thought — not fragmented ideas crammed together. See SKILL.md → Principle 6 for the full rule and example. Everything below serves this principle: each transition should carry the reader forward as one continuous line of thinking.
 
 ---
 
@@ -107,12 +102,12 @@ Use connecting words sparingly but effectively:
 
 ## Scannable Flow (Eyeball Monkey Bars)
 
-Most internet readers scan rather than read (Nielsen Norman Group). Copy must feel effortless — like swinging from one monkey bar to the next.
+Most internet readers scan rather than read (Nielsen Norman Group, *How Users Read on the Web*, 1997). Copy must feel effortless — like swinging from one monkey bar to the next.
 
 - Break up text frequently. Short paragraphs reign supreme.
 - Use bullet brigades: bold text, numbered lists to highlight key points.
-- Keep sentences snappy: aim for 13 words or less about 80% of the time.
-- Spend disproportionate time on hooks: 10-15 minutes on the headline is not overkill.
+- Keep sentences snappy as a rule of thumb — most should run short (well under ~13 words), with the occasional longer one for rhythm.
+- Spend disproportionate time on hooks: many copywriters say 10-15 minutes on the headline isn't overkill.
 
 Long copy still works — but only when every paragraph earns its place by being scannable and engaging. Length isn't what converts; "people can find what they need without effort" is. Make the finding effortless.
 

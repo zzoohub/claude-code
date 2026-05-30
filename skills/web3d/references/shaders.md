@@ -22,7 +22,7 @@ import {
   uniform, attribute, texture,
 
   // Built-in accessors
-  positionLocal, positionWorld, normalLocal, normalWorld, normalView,
+  positionLocal, positionWorld, positionView, normalLocal, normalWorld, normalView,
   uv, time, deltaTime, cameraPosition, modelWorldMatrix,
   screenUV, instanceIndex,
 
@@ -315,6 +315,8 @@ const geo = new THREE.BufferGeometry()
 geo.setAttribute('position', posBuffer)
 const mat = new THREE.PointsNodeMaterial({ size: 0.02 })
 mat.positionNode = posStor.toAttribute()
+// Note: gl_PointSize is backend-clamped (small max on some WebGPU/WebGL drivers).
+// For reliably-sized particles, use SpriteNodeMaterial on an InstancedMesh instead.
 
 // Execute
 await renderer.computeAsync(computeInit)
@@ -348,9 +350,11 @@ import { pass, bloom, fxaa } from 'three/tsl'
 
 const postProcessing = new THREE.PostProcessing(renderer)
 const scenePass = pass(scene, camera)
-postProcessing.outputNode = scenePass
-  .pipe(bloom({ threshold: 0.8, intensity: 1.5 }))
-  .pipe(fxaa())
+
+// Effects are nodes you compose with node math — there is no `.pipe()`.
+// bloom(inputNode, strength = 1, radius = 0, threshold = 0): the input node is required.
+const bloomPass = bloom(scenePass, 1.5 /* strength */, 0 /* radius */, 0.8 /* threshold */)
+postProcessing.outputNode = fxaa(scenePass.add(bloomPass))
 
 renderer.setAnimationLoop(() => {
   postProcessing.render()
@@ -384,6 +388,6 @@ All inputs must be passed as parameters -- you cannot access Three.js uniforms f
 | `gl_Position = ...` | `material.positionNode = ...` |
 | `gl_FragColor = ...` | `material.colorNode = ...` or `material.outputNode = ...` |
 | `varying vec2 vUv` | `vertexStage()` / `varyingProperty()` |
-| `EffectComposer` | `PostProcessing` class with `.pipe()` |
+| `EffectComposer` | `PostProcessing` class with node composition (function nesting / `.add()`, no `.pipe()`) |
 
 `ShaderMaterial`, `RawShaderMaterial`, and `onBeforeCompile()` are **not supported** in WebGPURenderer.

@@ -36,7 +36,8 @@ question.
 | "Write a PRD for [new product]" — and a brief already exists | `prd-craft` | Brief done, ready for PRD |
 | "Spec out feature X" — `docs/prd/prd.md` exists | `feature-spec` | Single feature on existing product |
 | "Add feature X to the PRD" | `feature-spec` | Single feature add |
-| "Review my PRD / brief" | `prd-craft` (review mode) or `product-brief` (review mode) | Critique against quality bar |
+| "Review my PRD" — `docs/prd/prd.md` exists | `prd-craft` (Review / Audit Mode) | Critique against the 5 Qualities + anti-patterns |
+| "Review my brief" — `docs/prd/product-brief.md` exists | `product-brief` (review mode) | Critique against quality bar |
 
 ### Detection by file state
 

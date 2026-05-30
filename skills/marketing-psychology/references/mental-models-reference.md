@@ -1,6 +1,6 @@
 # Mental Models Reference
 
-Detailed descriptions of 70+ mental models for marketing application. Each model includes the core principle and a specific marketing application.
+Detailed descriptions of 70 mental models for marketing application. Each model includes the core principle and a specific marketing application.
 
 ---
 
@@ -90,9 +90,9 @@ People attribute others' behavior to character, not circumstances. "They didn't 
 **Marketing application**: When customers don't convert, examine your process before blaming them. The problem is usually situational, not personal.
 
 ### Mere Exposure Effect
-People prefer things they've seen before. Familiarity breeds liking.
+People prefer things they've seen before. Familiarity breeds liking — but the effect follows an inverted-U: it works best for neutral or novel stimuli at moderate frequency, and excessive repetition causes wear-out that can reduce liking. It won't rescue a brand people already dislike.
 
-**Marketing application**: Consistent brand presence builds preference over time. Repetition across channels creates comfort and trust.
+**Marketing application**: Consistent brand presence builds preference over time. Repetition across channels creates comfort and trust — but cap frequency to avoid ad wear-out.
 
 ### Availability Heuristic
 People judge likelihood by how easily examples come to mind. Recent or vivid events seem more common.
@@ -132,7 +132,7 @@ People value things more when they've put effort into creating them.
 ### Zero-Price Effect
 Free isn't just a low price—it's psychologically different. "Free" triggers irrational preference.
 
-**Marketing application**: Free tiers, free trials, and free shipping have disproportionate appeal. The jump from $1 to $0 is bigger than $2 to $1.
+**Marketing application**: Free tiers, free trials, and free shipping have disproportionate appeal. Demand jumps disproportionately when price hits exactly $0 — the psychological gap between $1 and free is far larger than between $2 and $1, even though the dollar difference is identical.
 
 ### Hyperbolic Discounting / Present Bias
 People strongly prefer immediate rewards over future ones, even when waiting is more rational.
@@ -184,7 +184,7 @@ Once you know something, you can't imagine not knowing it. Experts struggle to e
 ### Mental Accounting
 People treat money differently based on its source or intended use, even though money is fungible.
 
-**Marketing application**: Frame costs in favorable mental accounts. "$3/day" feels different than "$90/month" even though it's the same.
+**Marketing application**: Frame costs in favorable mental accounts. "$1/day" feels different than "$30/month" even though it's the same.
 
 ### Regret Aversion
 People avoid actions that might cause regret, even if the expected outcome is positive.
@@ -217,6 +217,11 @@ People defer to experts and authority figures. Credentials and expertise create 
 
 **Marketing application**: Feature expert endorsements, certifications, "featured in" logos, and thought leadership content.
 
+### Social Proof
+The persuasion lever built on the bandwagon bias — people follow what others do, so popularity signals quality and safety. Full description under **Bandwagon Effect / Social Proof** in *Understanding Buyers & Human Psychology* above.
+
+**Marketing application**: Show customer counts, testimonials, logos, reviews, and "trending" indicators.
+
 ### Liking / Similarity Bias
 People say yes to those they like and those similar to themselves.
 
@@ -233,19 +238,19 @@ Limited availability increases perceived value. Scarcity signals desirability.
 **Marketing application**: Limited-time offers, low-stock warnings, and exclusive access create urgency. Only use when genuine.
 
 ### Foot-in-the-Door Technique
-Start with a small request, then escalate. Compliance with small requests leads to compliance with larger ones.
+Start with a small request, then escalate. Agreeing to a small request can modestly raise the odds of agreeing to a larger related one. The effect is real but small (Burger 1999) and sensitive to conditions — it's not a guaranteed multi-step ladder.
 
-**Marketing application**: Free trial → paid plan → annual plan → enterprise. Each step builds on the last.
+**Marketing application**: Free trial → paid plan → annual plan → enterprise. Each step can ease the next, but treat the funnel as a hypothesis to test, not a mechanical chain.
 
 ### Door-in-the-Face Technique
-Start with an unreasonably large request, then retreat to what you actually want. The contrast makes the second request seem reasonable.
+Start with an unreasonably large request; when it's refused, retreat to the smaller request you actually wanted. The refusal-then-concession triggers reciprocal concession (perceptual contrast helps too).
 
-**Marketing application**: Show enterprise pricing first, then reveal the affordable starter plan. The contrast makes it feel like a deal.
+**Marketing application**: In sales, ask for an annual commitment; when the prospect balks, offer a monthly plan — the visible concession lifts acceptance. (Note: showing enterprise pricing next to a starter plan with no rejected request is *Anchoring / Contrast*, not Door-in-the-Face — see Anchoring Effect below.)
 
 ### Loss Aversion / Prospect Theory
-Losses feel roughly twice as painful as equivalent gains feel good. People will work harder to avoid losing than to gain.
+Losses tend to feel more painful than equivalent gains feel good — often estimated near 2x in lab tasks (Tversky & Kahneman 1992), though the magnitude, and even whether loss aversion applies, varies by context (Gal & Rucker 2018). People often work harder to avoid losing than to gain.
 
-**Marketing application**: Frame in terms of what they'll lose by not acting. "Don't miss out" beats "You could gain."
+**Marketing application**: Try framing in terms of what they'll lose by not acting — "Don't miss out" can outperform "You could gain," but loss-framing isn't reliably superior, so test it.
 
 ### Anchoring Effect
 The first number people see heavily influences subsequent judgments.
@@ -253,7 +258,7 @@ The first number people see heavily influences subsequent judgments.
 **Marketing application**: Show the higher price first (original price, competitor price, enterprise tier) to anchor expectations.
 
 ### Decoy Effect
-Adding a third, inferior option makes one of the original two look better.
+Adding a third, inferior option (asymmetric dominance) makes one of the original two look better. Robust for clean numeric trade-offs but often fails to replicate with real or complex products — treat it as a hypothesis to A/B test, not a guaranteed lever.
 
 **Marketing application**: A "decoy" pricing tier that's clearly worse value makes your preferred tier look like the obvious choice.
 
@@ -274,9 +279,9 @@ Things seem different depending on what they're compared to.
 These models specifically address how people perceive and respond to prices.
 
 ### Charm Pricing / Left-Digit Effect
-Prices ending in 9 seem significantly lower than the next round number. $99 feels much cheaper than $100.
+Prices ending in 9 can be perceived as lower than the next round number ($99 vs $100), but the effect is modest and context-dependent — a 9-ending can also signal *low quality*, and it weakens at higher price points.
 
-**Marketing application**: Use .99 or .95 endings for value-focused products. The left digit dominates perception.
+**Marketing application**: Use .99 or .95 endings for value-focused products; favor round prices for premium ones. Test rather than assume the left digit dominates.
 
 ### Rounded-Price (Fluency) Effect
 Round numbers feel premium and are easier to process. $100 signals quality; $99 signals value.
@@ -294,7 +299,7 @@ People judge prices relative to options presented. A middle tier seems reasonabl
 **Marketing application**: Three tiers where the middle is your target. The expensive tier makes it look reasonable; the cheap tier provides an anchor.
 
 ### Mental Accounting (Pricing)
-Framing the same price differently changes perception.
+The same **Mental Accounting** model (above) applied to price framing: presenting the same price differently changes perception.
 
 **Marketing application**: "$1/day" feels cheaper than "$30/month." "Less than your morning coffee" reframes the expense.
 
@@ -313,7 +318,7 @@ Decision time increases with the number and complexity of choices. More options 
 These are channel-application frameworks, not standalone mental models. Canonical definitions in `copywriting/references/persuasion-frameworks.md`. Reference here for completeness; apply via the channel skills (`copywriting`, `ad-creative`, `social-content`, `email-marketing`).
 
 ### Rule of 7
-Prospects need roughly 7 touchpoints before converting. One ad rarely converts; sustained presence does.
+A marketing rule of thumb, not an empirical constant: buyers usually need multiple touchpoints, not one. The actual number varies widely by product, price, and channel — "7" is folklore, not a measured value.
 
 **Marketing application**: Build multi-touch campaigns across channels. Retargeting, email sequences, and consistent presence compound.
 
@@ -366,7 +371,7 @@ Output becomes input, creating cycles. Positive loops accelerate growth; negativ
 ### Compounding
 Small, consistent gains accumulate into large results over time. Early gains matter most.
 
-**Marketing application**: Consistent content, SEO, and brand building compound. Start early; benefits accumulate exponentially.
+**Marketing application**: Consistent content, SEO, and brand building compound over time. Start early; benefits accumulate and build on each other.
 
 ### Network Effects
 A product becomes more valuable as more people use it.
@@ -421,7 +426,7 @@ This catalog distinguishes **persuasion** (psychology applied transparently to h
 | **Confirmshaming** | "No thanks, I don't want to save money" as the decline button | EU DSA dark-pattern provisions | Neutral language: "Skip" / "Not now" |
 | **Fake countdown / scarcity** | Timer that resets, "only 2 left" when stock is unlimited | FTC deceptive-practice; consumer protection laws | Honest scarcity if real; remove if not |
 | **Hidden subscription** | "Free trial" auto-converts to paid without clear disclosure | FTC; CA AB 2863 free-trial provisions; UK CMA enforcement | Disclose trial → paid transition, charge amount, and date prominently before consent |
-| **Friend spam** | Service uploads/contacts user's address book to email "invitations" without separate consent | GDPR; CAN-SPAM | Separate explicit consent per contact; user-initiated only |
+| **Friend spam** | Service uploads/contacts user's address book to email "invitations" without separate consent | GDPR (primary); CAN-SPAM may apply if the platform procures the sends or rewards the forwarder | Separate explicit consent per contact; user-initiated only |
 | **Disguised ads** | Ads styled as native content / search results without "Sponsored" label | FTC endorsement guides; ASA (UK); EU DSA | Clear "Ad" / "Sponsored" label |
 | **Forced continuity** | Trial signup that requires credit card and silently bills after | CA AB 2863; FTC | Trial without card OR clear pre-charge reminder email + easy cancel |
 | **Sneak into basket** | Auto-add items (insurance, donation, warranty) at checkout | EU DSA; consumer protection | Opt-in only, default off |

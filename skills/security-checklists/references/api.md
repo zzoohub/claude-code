@@ -14,6 +14,7 @@
 | Reject unexpected fields (strict schema, no extra properties) | Mass assignment via extra fields | CWE-915 |
 | Validate content-type matches actual body | Content-type mismatch attacks | CWE-436 |
 | Canonicalize input before validation (Unicode, encoding) | Validation bypass via encoding | CWE-180 |
+| Redirect/return URLs validated (relative-path-only or host allowlist) | Open redirect → phishing, SSO token theft | CWE-601 |
 
 **Patterns to catch:**
 - Request body used directly without validation: `db.create(req.body)`
@@ -23,6 +24,7 @@
 - Nested object depth unbounded (deeply nested JSON for DoS)
 - Regex validation without anchors: `/[a-z]+/` instead of `/^[a-z]+$/`
 - Missing validation on query parameters and path parameters (not just body)
+- Redirect target from `returnUrl`/`next`/`redirect`/`continue` used without allowlist; substring/prefix match (`evil.com?x=good.com`), protocol-relative (`//evil.com`), backslash (`\evil.com`), or `user@`-host bypasses accepted (CWE-601)
 
 ---
 
@@ -64,6 +66,49 @@
 - MongoDB query with `$where`, `$regex` from user input
 - XML parser without `disableEntityExpansion` or `noent: false`
 - Path traversal in file operations: `fs.readFile(basePath + userInput)`
+
+---
+
+## Cross-Site Scripting (XSS)
+
+> OWASP: A05 (Injection)
+
+| Check | Why | CWE |
+|-------|-----|-----|
+| Output encoded for the specific context (HTML body, attribute, JS, URL, CSS) — a single escaper does not cover all contexts | Reflected/stored XSS | CWE-79 |
+| Server-side template auto-escaping on — note it does NOT stop DOM-based XSS | Stored/reflected XSS | CWE-79 |
+| DOM sinks avoided/sanitized: `innerHTML`/`outerHTML`, `document.write`, `insertAdjacentHTML`, `location`/`href` assignment, `eval`, `setTimeout`/`Function` with string args, jQuery `.html()` | DOM-based XSS | CWE-79 |
+| User/LLM-supplied HTML sanitized with a vetted library (DOMPurify) before render | Stored/DOM XSS | CWE-79 |
+| Trusted Types enforced where supported | DOM-XSS hardening | CWE-79 |
+| CSP as a mitigation layer (no `unsafe-inline`/`unsafe-eval`) | Defense-in-depth | CWE-693 |
+
+**Patterns to catch:**
+- Reflected: unescaped request value echoed into the HTML response
+- Stored: user content rendered to other users without sanitization
+- DOM-based: `el.innerHTML = userInput`, `document.write(location.hash)`, `location = userInput`
+- Framework escape hatches: React `dangerouslySetInnerHTML`, Vue `v-html`, Angular `[innerHTML]`, and `href={userUrl}` allowing `javascript:` URIs
+- Relying on server-side template escaping to stop DOM-XSS (it cannot — the sink is client-side)
+- `eval`/`new Function`/`setTimeout` called with attacker-influenced strings
+
+---
+
+## Path Traversal & Arbitrary File Access
+
+> OWASP: A01 (Broken Access Control), A05 (Injection)
+
+| Check | Why | CWE |
+|-------|-----|-----|
+| File download/serve paths canonicalized (`realpath`/`path.resolve`) then asserted to stay within the base dir | Path traversal / LFI | CWE-22 |
+| Prefer mapping user input to an ID or allowlist over accepting a raw path | Arbitrary file read | CWE-22 |
+| Absolute paths, `..`, and encoded/Unicode/double-encoded traversal rejected | Traversal bypass | CWE-23 |
+| Archive extraction validates each entry's resolved destination is inside the target dir before writing | Zip Slip | CWE-22 |
+
+**Patterns to catch:**
+- Download/serve endpoint takes a user path/filename: `GET /files?path=../../etc/passwd`
+- `fs.readFile(basePath + userInput)` / `open(base + name)` without canonicalize-and-contain
+- Archive (zip/tar/jar) extracted with entry names like `../../` written outside the target (Zip Slip)
+- Absolute path or null-byte/encoded traversal accepted by a "filename" parameter
+- Template/include path built from user input (PHP/templating LFI, CWE-98)
 
 ---
 
@@ -180,7 +225,7 @@
 |-------|-----|-----|
 | Specific origins, no wildcard with credentials | Cross-origin attacks | CWE-942 |
 | Content-Security-Policy header present and restrictive | XSS mitigation | CWE-693 |
-| Strict-Transport-Security (HSTS) with long max-age | Downgrade attacks | CWE-319 |
+| Strict-Transport-Security (HSTS) with `max-age≥31536000` | Downgrade attacks | CWE-319 |
 | X-Frame-Options or CSP frame-ancestors | Clickjacking | CWE-1021 |
 | X-Content-Type-Options: nosniff | MIME sniffing attacks | CWE-693 |
 | Referrer-Policy set appropriately | URL leakage via referrer | CWE-200 |
@@ -189,6 +234,8 @@
 **Patterns to catch:**
 - `Access-Control-Allow-Origin: *` combined with `Access-Control-Allow-Credentials: true`
 - Origin reflected from request without validation: `res.setHeader('ACAO', req.headers.origin)`
+- Regex-based origin validation with bypasses: `/\.example\.com$/` matches `evil-example.com`
+- `Access-Control-Allow-Origin: null` accepted (exploitable via sandboxed iframes)
 - Missing Content-Security-Policy entirely
 - CSP with `unsafe-inline` or `unsafe-eval` (defeats purpose)
 - Missing X-Frame-Options on pages with sensitive actions

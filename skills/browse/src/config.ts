@@ -3,7 +3,7 @@
  *
  * Resolution:
  *   1. BROWSE_STATE_FILE env → derive stateDir from parent
- *   2. git rev-parse --show-toplevel → projectDir/.gstack/
+ *   2. git rev-parse --show-toplevel → projectDir/.browse/
  *   3. process.cwd() fallback (non-git environments)
  *
  * The CLI computes the config and passes BROWSE_STATE_FILE to the
@@ -12,6 +12,9 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+
+// NOTE: browse is a frozen vendored fork of garrytan/gstack's `browse/` (see UPSTREAM.md).
+// The state directory is `.browse/` (de-branded from the upstream `.gstack/`).
 
 export interface BrowseConfig {
   projectDir: string;
@@ -56,10 +59,10 @@ export function resolveConfig(
   if (env.BROWSE_STATE_FILE) {
     stateFile = env.BROWSE_STATE_FILE;
     stateDir = path.dirname(stateFile);
-    projectDir = path.dirname(stateDir); // parent of .gstack/
+    projectDir = path.dirname(stateDir); // parent of .browse/
   } else {
     projectDir = getGitRoot() || process.cwd();
-    stateDir = path.join(projectDir, '.gstack');
+    stateDir = path.join(projectDir, '.browse');
     stateFile = path.join(stateDir, 'browse.json');
   }
 
@@ -74,7 +77,7 @@ export function resolveConfig(
 }
 
 /**
- * Create the .gstack/ state directory if it doesn't exist.
+ * Create the .browse/ state directory if it doesn't exist.
  * Throws with a clear message on permission errors.
  */
 export function ensureStateDir(config: BrowseConfig): void {
@@ -90,13 +93,13 @@ export function ensureStateDir(config: BrowseConfig): void {
     throw err;
   }
 
-  // Ensure .gstack/ is in the project's .gitignore
+  // Ensure .browse/ is in the project's .gitignore
   const gitignorePath = path.join(config.projectDir, '.gitignore');
   try {
     const content = fs.readFileSync(gitignorePath, 'utf-8');
-    if (!content.match(/^\.gstack\/?$/m)) {
+    if (!content.match(/^\.browse\/?$/m)) {
       const separator = content.endsWith('\n') ? '' : '\n';
-      fs.appendFileSync(gitignorePath, `${separator}.gstack/\n`);
+      fs.appendFileSync(gitignorePath, `${separator}.browse/\n`);
     }
   } catch (err: any) {
     if (err.code !== 'ENOENT') {
@@ -113,32 +116,9 @@ export function ensureStateDir(config: BrowseConfig): void {
 }
 
 /**
- * Derive a slug from the git remote origin URL (owner-repo format).
- * Falls back to the directory basename if no remote is configured.
- */
-export function getRemoteSlug(): string {
-  try {
-    const proc = Bun.spawnSync(['git', 'remote', 'get-url', 'origin'], {
-      stdout: 'pipe',
-      stderr: 'pipe',
-      timeout: 2_000,
-    });
-    if (proc.exitCode !== 0) throw new Error('no remote');
-    const url = proc.stdout.toString().trim();
-    // SSH:   git@github.com:owner/repo.git → owner-repo
-    // HTTPS: https://github.com/owner/repo.git → owner-repo
-    const match = url.match(/[:/]([^/]+)\/([^/]+?)(?:\.git)?$/);
-    if (match) return `${match[1]}-${match[2]}`;
-    throw new Error('unparseable');
-  } catch {
-    const root = getGitRoot();
-    return path.basename(root || process.cwd());
-  }
-}
-
-/**
  * Read the binary version (git SHA) from browse/dist/.version.
- * Returns null if the file doesn't exist or can't be read.
+ * Written by `./setup` (`git rev-parse HEAD > dist/.version`) so a rebuilt
+ * binary auto-restarts the running daemon. Returns null if the file is absent.
  */
 export function readVersionHash(execPath: string = process.execPath): string | null {
   try {

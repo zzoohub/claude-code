@@ -35,7 +35,7 @@
 
 Non-negotiable. `prefers-reduced-motion: reduce` → skip animation entirely, don't just shorten duration.
 
-Platform-specific implementation (CSS `@media`, reanimated `useReducedMotion`, etc.) belongs in each platform skill.
+Platform-specific implementation lives in this skill's platform references: the CSS `@media (prefers-reduced-motion: reduce)` reset in `references/platform-web.md`, and `AccessibilityInfo.isReduceMotionEnabled()` (plus the `reduceMotionChanged` listener) in `references/react-native/platform.md`.
 
 ## Principle
 

@@ -226,8 +226,10 @@ Return rate limit state in headers so clients can self-regulate:
 ```
 RateLimit-Limit: 100
 RateLimit-Remaining: 42
-RateLimit-Reset: 1678886400
+RateLimit-Reset: 30
 Retry-After: 30          (only on 429 responses)
 ```
+
+`RateLimit-Reset` is seconds-until-reset (delta-seconds), consistent with `Retry-After` — not a Unix timestamp. These are the widely-deployed de-facto headers from earlier IETF drafts; the current IETF direction consolidates them into structured `RateLimit` + `RateLimit-Policy` fields.
 
 Return `429 Too Many Requests` with a clear error message and `Retry-After` header.

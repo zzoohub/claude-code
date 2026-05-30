@@ -51,7 +51,7 @@ If your project keeps architecture docs elsewhere, see `AGENTS.md`.
 - Does not produce diagrams unless the decision adds a new container
 - Does not produce database schema changes
 
-## ADR Template (Y-statement, aligned with `software-architecture`)
+## ADR Template (MADR/Nygard-style — extends the `software-architecture` ADR format)
 
 ```markdown
 ## ADR-{NNN}: {Title} — YYYY-MM-DD
@@ -69,6 +69,13 @@ If your project keeps architecture docs elsewhere, see `AGENTS.md`.
 - **Tradeoff:** Positive and negative consequences. Affected components from `system.md` §2 (or "none").
 - **Revisit when:** Trigger conditions that should prompt reconsideration (scale threshold, library deprecation, new ASR, etc.).
 ```
+
+This extends `software-architecture`'s `templates/decisions.md` ADR format: it shares
+Door / Context / Decision / Why / Rejected / Tradeoff / Revisit-when, **adds** `Status`
+and an explicit `Options` list, and **omits** `Stage` (a standalone decision has no
+design-flow stage). `Rejected` states why each *other* option lost the comparison —
+not a restatement of its cons. Appended ADRs may sit alongside ones authored by
+`software-architecture` in the same file; that mixed field shape is expected.
 
 **One-way doors** (analyze carefully): database choice, primary language, auth architecture, core domain model.
 **Two-way doors** (decide fast): library choice, caching strategy, log format, CI tool.
@@ -105,5 +112,7 @@ If your project keeps architecture docs elsewhere, see `AGENTS.md`.
 - `docs/arch/decisions.md` — appended (newest first)
 - `docs/arch/system.md` — patched if architecture surface changed
 
-**Line limit:** `decisions.md` — 400 lines. When exceeded, summarize superseded
-ADRs to one line and mark them `[superseded by ADR-NNN]` rather than deleting.
+**Line limit:** `decisions.md` — 400 lines (same policy as `software-architecture`;
+the budget covers the whole file, including any Risk Register / Tech Debt sections it
+owns). When exceeded, summarize superseded ADRs to one line and mark them
+`[superseded by ADR-NNN]` rather than deleting.

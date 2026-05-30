@@ -34,7 +34,7 @@ src/
 ├── domain/
 │   └── authors/
 │       ├── models.ts            # Author, AuthorName, CreateAuthorRequest
-│       ├── errors.ts            # DuplicateAuthorError, UnknownAuthorError
+│       ├── errors.ts            # DuplicateAuthorError, AuthorNotFoundError, UnknownAuthorError
 │       ├── ports.ts             # AuthorRepository, AuthorService (interfaces)
 │       └── service.ts           # AuthorServiceImpl
 ├── inbound/
@@ -191,7 +191,7 @@ Two-layer validation is intentional: Zod catches malformed input (missing fields
 List endpoints need pagination. **Default to cursor-based pagination.** The pattern flows through all three layers:
 - **Domain port**: `listAuthors(cursor: string | null, limit: number) => Promise<CursorPage<Author>>`
 - **Outbound adapter**: `WHERE (created_at, id) > (:cursor) ORDER BY created_at, id LIMIT :limit`
-- **Inbound handler**: return `CursorPageResponse<T>` with `data`, `limit`, `next_cursor`, `has_more`
+- **Inbound handler**: return `CursorPageResponse<T>` — `{ data, meta: { limit, next_cursor, has_more } }`
 
 Cap `limit` at the handler level via Zod (e.g. `z.number().min(1).max(100).default(20)`). The domain doesn't care about max page size — that's a transport concern.
 
@@ -213,6 +213,8 @@ Healthcheck endpoints are infrastructure — they bypass the domain entirely. Wi
 
 - `/healthz` — always returns 200 (liveness, "is the process alive?")
 - `/readyz` — checks DB connectivity (readiness, "can it serve traffic?")
+
+**Register health routes BEFORE auth/DI middleware** so a global `requireAuth` doesn't 401 the probes, and wrap the readiness `ping()` in a timeout (`Promise.race`) so a hung DB returns a fast 503 instead of stalling the probe.
 
 > Healthcheck example: `references/examples-adapters.md`
 
@@ -327,7 +329,7 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 
 | Problem | Cause | Fix |
 |---------|-------|-----|
-| Validation returns raw Zod errors | No custom error hook | Add 3rd arg to `zValidator` for formatting |
+| Validation returns raw Zod errors | No validation hook wired | For `OpenAPIHono` + `app.openapi()`, the hook is the constructor `defaultHook` (there is no 3rd-arg slot). For plain Hono + `zValidator`, pass the 3rd-arg hook. Both convert failures to RFC 9457. |
 | CORS not working | Middleware order | Register `cors()` before routes |
 | `c.var.service` is undefined | Middleware not applied to route | Ensure DI middleware is `app.use()`'d before routes |
 | Domain imports Hono | Leaky boundary | Move to inbound layer |

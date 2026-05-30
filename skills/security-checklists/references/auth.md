@@ -30,13 +30,13 @@
 
 | Check | Why | CWE |
 |-------|-----|-----|
-| TOTP implementation uses proper time window (30s, ±1 step) | Replay and timing attacks | CWE-308 |
-| Recovery codes are single-use and securely stored | Recovery code reuse | CWE-308 |
+| TOTP implementation uses proper time window (30s, ±1 step) | Replay and timing attacks | CWE-294 |
+| Recovery codes are single-use and securely stored | Recovery code reuse | CWE-294 |
 | MFA cannot be silently disabled without re-authentication | MFA bypass via settings | CWE-306 |
 | MFA challenge cannot be skipped by modifying client flow | Step-skipping attack | CWE-304 |
-| Backup authentication method doesn't weaken MFA | Weakest link bypass | CWE-308 |
-| SMS-based MFA = **restricted authenticator** (NIST SP 800-63B-4, finalized mid-2025) | SIM swap; phishing | CWE-308 |
-| Passkeys (FIDO2/WebAuthn) preferred over TOTP where supported | Phishing-resistant by design | CWE-308 |
+| Backup authentication method doesn't weaken MFA | Weakest link bypass | CWE-1390 |
+| SMS-based MFA = **restricted authenticator** (NIST SP 800-63B-4, finalized mid-2025) | SIM swap; phishing | CWE-1390 |
+| Passkeys (FIDO2/WebAuthn) preferred over TOTP where supported | Phishing-resistant by design | CWE-1390 |
 
 > **NIST SP 800-63B-4 status (finalized mid-2025):** SMS/PSTN OTP is now formally a "restricted authenticator" — use requires offering alternatives, informing users of risks, and maintaining a migration plan. Passkeys (syncable) are explicitly approved at AAL2; device-bound passkeys at AAL3.
 
@@ -62,8 +62,8 @@ Default to passkeys for new auth systems where supported (Chrome, Safari, Edge, 
 |-------|-----|-----|
 | Use COSE algorithm allowlist (ES256, EdDSA); reject weak algs | Algorithm confusion | CWE-327 |
 | Verify origin and RP ID on attestation/assertion | Phishing | CWE-290 |
-| User verification (UV) required for sensitive operations | Stolen-device replay | CWE-308 |
-| Recovery flow does NOT downgrade to SMS / email-only | Recovery downgrade defeats phishing resistance | CWE-308 |
+| User verification (UV) required for sensitive operations | Stolen-device replay | CWE-294 |
+| Recovery flow does NOT downgrade to SMS / email-only | Recovery downgrade defeats phishing resistance | CWE-1390 |
 | For syncable passkeys: surface "this credential is synced across your devices" to users | Informed consent | — |
 | Attestation verified for AAL3 / device-bound deployments | Counterfeit authenticator | CWE-290 |
 
@@ -86,7 +86,7 @@ Default to passkeys for new auth systems where supported (Chrome, Safari, Edge, 
 | Separate long-lived token for remember-me | Reduced exposure window | CWE-613 |
 | Session bound to user-agent (and IP only for high-security contexts) | Session theft detection | CWE-384 |
 
-> **IP binding caveat:** Pinning sessions to IP breaks mobile users on cellular networks and any user behind CGNAT. Recommend only for high-security contexts (banking, admin panels, gov) where false-positive logouts are acceptable. Consumer apps should rely on UA + behavioral signals instead.
+> **IP binding caveat:** Pinning sessions to IP breaks mobile users on cellular networks and any user behind CGNAT. Recommend only for high-security contexts (banking, admin panels, gov) where false-positive logouts are acceptable. Consumer apps should rely on UA + behavioral signals instead — but note UA is itself client-controlled and is usually captured alongside the stolen cookie, so UA binding is low-cost anomaly detection an attacker can replay, not a real control; it complements (never replaces) server-side invalidation and refresh-token rotation.
 
 **Patterns to catch:**
 - Logout only clears client state, server still accepts token
@@ -105,7 +105,7 @@ Default to passkeys for new auth systems where supported (Chrome, Safari, Edge, 
 | `Secure` flag on all sensitive cookies | Prevents transmission over HTTP | CWE-614 |
 | `SameSite=Lax` or `Strict` on session cookies | CSRF mitigation | CWE-1275 |
 | Cookie `Path` restricted to application scope | Reduces exposure surface | CWE-1004 |
-| `__Host-` prefix for sensitive cookies | Prevents subdomain attacks | CWE-1004 |
+| `__Host-` prefix for sensitive cookies | Prevents subdomain attacks — requires `Secure`, NO `Domain` attribute, and `Path=/`; browser silently rejects the cookie otherwise | CWE-1004 |
 | No sensitive data stored in cookies beyond session ID | Cookie theft exposure | CWE-315 |
 
 **Patterns to catch:**
@@ -114,6 +114,31 @@ Default to passkeys for new auth systems where supported (Chrome, Safari, Edge, 
 - `SameSite=None` without `Secure` (browser rejects, or enables cross-site)
 - Token/user data stored in cookie instead of just session reference
 - Cookie expiration set excessively long (months/years)
+- `__Host-` cookie set with a `Domain` attribute or a non-root `Path` (silently dropped by the browser)
+
+---
+
+## Cross-Site Request Forgery (CSRF)
+
+> OWASP: A01 (Broken Access Control)
+
+| Check | Why | CWE |
+|-------|-----|-----|
+| Synchronizer (anti-CSRF) token on all state-changing requests — per-session/per-request, generated and validated server-side, never reflected to the attacker | Forged cross-site state change | CWE-352 |
+| Double-submit cookie only when stateless — token signed/HMAC-bound to the session (raw double-submit is weak to subdomain/cookie injection) | Double-submit bypass | CWE-352 |
+| Origin/Referer validated on state-changing requests (complementary to tokens) | Cross-origin forgery | CWE-352 |
+| `SameSite=Lax`/`Strict` treated as defense-in-depth, NOT a substitute for tokens | Over-reliance on SameSite | CWE-352 |
+| Bearer/`Authorization`-header APIs not also accepting the credential from a cookie | Cookie-auth reintroduces CSRF | CWE-352 |
+
+**SameSite is not sufficient alone:** `Lax` still permits top-level GET-initiated state changes; Chrome's "Lax+POST" ~2-minute grace window sends freshly-set cookies on cross-site POST; SameSite does not isolate same-site subdomains and JS-initiated same-site requests bypass it. Require an anti-CSRF token on every sensitive POST/PUT/PATCH/DELETE.
+
+**Patterns to catch:**
+- State-changing endpoint (POST/PUT/PATCH/DELETE) with no anti-CSRF token, relying only on the session cookie
+- `SameSite=Lax` treated as full CSRF protection for cookie-authenticated POSTs
+- Anti-CSRF token reflected back to the client/attacker, or not bound to the session
+- Raw double-submit cookie (token not signed/HMAC-bound) — forgeable via subdomain cookie injection
+- API that authenticates via both `Authorization` header AND cookie (cookie path is CSRF-able)
+- XSS present alongside CSRF defenses (XSS defeats both token and header checks — fix XSS too)
 
 ---
 
@@ -124,8 +149,9 @@ Default to passkeys for new auth systems where supported (Chrome, Safari, Edge, 
 | Algorithm explicitly verified (whitelist, not blacklist) | Algorithm confusion attack ("none", HS256/RS256 swap) | CWE-327 |
 | Short-lived access tokens (5-15 minutes) | Token theft window | CWE-613 |
 | Refresh token rotation (new refresh token on each use) | Refresh token theft detection | CWE-613 |
+| Stateless JWTs have a revocation strategy — jti deny-list, server-side token-version/sessions table checked per request, or short access TTL + revocable refresh token; logout, password change, and role change must invalidate already-issued access tokens | Stolen/stale token usable until `exp` | CWE-613 |
 | Sensitive claims verified server-side on every request | JWT tampering | CWE-345 |
-| Token stored in httpOnly cookie, NOT localStorage | XSS token theft | CWE-922 |
+| Token in httpOnly cookie (NOT localStorage); pair with `SameSite=Lax`/`Strict` + CSRF defense, OR keep it out of cookies and send via the `Authorization` header | XSS token theft vs CSRF re-exposure (cookies auto-send cross-site) — see Cookie Security & CSRF | CWE-922, CWE-352 |
 | `iss`, `aud`, `exp` claims validated | Token misuse across services | CWE-345 |
 | JWK/JWKS endpoint properly secured | Key confusion attacks | CWE-327 |
 
@@ -138,6 +164,7 @@ Default to passkeys for new auth systems where supported (Chrome, Safari, Edge, 
 - JWT secret is a simple string (not cryptographically random, >=256 bits)
 - Token in URL parameters or query strings
 - Missing `exp` claim or very distant expiration
+- Logout / password reset / role change does not invalidate already-issued access tokens (stateless JWT stays valid until `exp`)
 
 ---
 
@@ -159,6 +186,31 @@ Default to passkeys for new auth systems where supported (Chrome, Safari, Edge, 
 - Access token handled in frontend JavaScript (implicit flow)
 - Missing PKCE on mobile/SPA clients
 - OAuth tokens stored without encryption at rest
+- Generic post-login/logout redirect (`returnUrl`/`next`/`redirect`/`continue`) not validated against a relative-path-only rule or host allowlist (open redirect → phishing, chainable into token theft)
+
+---
+
+## SAML 2.0 SSO
+
+> OWASP: A07 (Authentication Failures), A01 (Broken Access Control)
+
+| Check | Why | CWE |
+|-------|-----|-----|
+| Consumed assertion is the SAME element the signature covers (verify signature reference binding) | XML Signature Wrapping (XSW) | CWE-347 |
+| Reject responses with missing/unsigned assertions (no signature-exclusion bypass) | Unsigned assertion accepted | CWE-347 |
+| Canonicalization / XML-comment-truncation handled in the parser | 2018 comment-truncation auth bypass (CVE-2017-11427 class) | CWE-347 |
+| `Audience` (SP entityID), `Recipient`, `Destination`, `InResponseTo` validated | Assertion replay / misdirection | CWE-290 |
+| Assertion validity window enforced (`NotBefore` / `NotOnOrAfter`) | Replay of expired assertion | CWE-294 |
+| External entity resolution disabled in the SAML response parser | XXE via SAML response | CWE-611 |
+| Vetted SAML library used, not hand-rolled XML/DSig | Implementation flaws | CWE-290 |
+
+**Patterns to catch:**
+- Signature verified but the assertion is located by tag-name/XPath rather than bound to the signed element (XSW)
+- Assertion accepted without checking it is actually signed/enveloped (signature exclusion)
+- No `Audience`/`Recipient`/`InResponseTo` validation (assertion reuse across SPs)
+- `NotOnOrAfter` not enforced (expired-assertion replay)
+- External entities enabled in the SAML XML parser (XXE — see api.md "Injection Prevention")
+- Hand-rolled XML signature verification instead of a maintained SAML library
 
 ---
 

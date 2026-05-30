@@ -32,17 +32,28 @@ Common mistakes:
 
 AI platforms use their own crawlers. If these are blocked, your content will not appear in AI-generated answers.
 
-| Crawler | Platform | User-Agent |
-|---------|----------|------------|
-| GPTBot | OpenAI (ChatGPT) | GPTBot |
-| Googlebot | Google (including AI Overviews) | Googlebot |
-| Google-Extended | Google (Gemini training) | Google-Extended |
-| ClaudeBot | Anthropic (Claude) | ClaudeBot |
-| PerplexityBot | Perplexity | PerplexityBot |
-| Bytespider | ByteDance | Bytespider |
-| CCBot | Common Crawl | CCBot |
+This is the canonical AI user-agent table for the skill (measurement.md and ai-platform-optimization.md reference it). The function column matters more than the name: the bots that get you **cited** in AI answers are the search/retrieval agents, not the training crawlers.
 
-Important: Blocking Google-Extended blocks Gemini training data but does NOT block AI Overviews (those use Googlebot). Review your robots.txt to confirm you are not unintentionally blocking AI crawlers you want access from.
+| User-agent | Platform | Function |
+|---|---|---|
+| Googlebot | Google | Search index — also powers AI Overviews and AI Mode |
+| OAI-SearchBot | OpenAI | ChatGPT Search citation/inclusion (this controls ChatGPT Search visibility) |
+| ChatGPT-User | OpenAI | User-initiated live fetches from ChatGPT |
+| GPTBot | OpenAI | Model training |
+| PerplexityBot | Perplexity | Search index / citation |
+| Perplexity-User | Perplexity | User-initiated live fetches |
+| Claude-SearchBot | Anthropic | Search indexing for Claude |
+| Claude-User | Anthropic | User-initiated live fetches |
+| ClaudeBot | Anthropic | Model training |
+| Google-Extended | Google | Opt-out *token* for Gemini training (not a fetcher; does NOT affect AI Overviews) |
+| Applebot-Extended | Apple | Opt-out *token* for Apple Intelligence training |
+| Bytespider | ByteDance | Training |
+| CCBot | Common Crawl | Bulk crawl, commonly used as training data |
+
+Important:
+- For AI-search **citation** (usually the goal), the agents that matter are the search/retrieval bots — OAI-SearchBot, PerplexityBot, Claude-SearchBot, and Googlebot — not the training crawlers (GPTBot, ClaudeBot, CCBot, Bytespider). You can allow OAI-SearchBot for ChatGPT Search visibility while disallowing GPTBot for training.
+- Blocking Google-Extended blocks Gemini training data but does NOT block AI Overviews (those use Googlebot). Google-Extended and Applebot-Extended are opt-out tokens, not crawlers.
+- Check your CDN/bot settings as well as robots.txt: some CDNs (e.g., Cloudflare) block AI crawlers by default, so you may be blocking the search bots you want to be cited by (see `ai-platform-optimization.md`). Note also that robots.txt directives do not reliably control every vendor — PerplexityBot has been documented using undeclared stealth crawlers.
 
 ### XML Sitemaps
 
@@ -126,7 +137,7 @@ Handle with:
 ### Pagination
 
 For paginated content (category pages, blog archives):
-- Use `rel="next"` and `rel="prev"` (Google says they ignore it, but other engines may not)
+- `rel="next"`/`rel="prev"` is no longer used by Google for indexing (dropped ~2019); it may still be a minor signal for other engines. Prioritize crawlable, internally-linked paginated pages with self-referencing canonicals instead
 - Ensure all paginated pages are crawlable and linked
 - Consider a "view all" page if the total content is manageable
 - Include self-referencing canonical on each paginated page
@@ -152,7 +163,7 @@ Generate HTML at build time rather than per request. Best of both worlds for con
 
 ### Dynamic Rendering
 
-Serve pre-rendered HTML to crawlers while serving the SPA to users. Google considers this acceptable but not preferred long-term. Useful as a transitional solution.
+Serve pre-rendered HTML to crawlers while serving the SPA to users. Google **no longer recommends** dynamic rendering — it relies on unreliable user-agent detection, risks serving different content to bots than to users, and Google has removed most of its guidance for it. Prefer SSR, SSG, or hydration; treat dynamic rendering only as a last-resort legacy stopgap. (Note: many AI crawlers execute no JS at all, so dynamic rendering that only targets Googlebot still leaves you invisible to them.)
 
 ### Testing Rendering
 
@@ -206,7 +217,7 @@ Google page experience metrics. They are ranking signals (though relatively mode
 
 ### What It Does
 
-Structured data (typically JSON-LD) helps search engines understand the content type and relationships on your pages. It can enable rich results (star ratings, FAQ dropdowns, product info, etc.) in SERPs.
+Structured data (typically JSON-LD) helps search engines understand the content type and relationships on your pages. It can enable rich results (star ratings, breadcrumbs, product info, etc.) in SERPs for *currently supported* types — note that Google has retired several rich-result types (FAQ, HowTo), so always confirm a type is still supported before implementing for SERP appearance.
 
 ### Implementation Principles
 
@@ -221,18 +232,18 @@ Structured data (typically JSON-LD) helps search engines understand the content 
 |-------------|---------|-------------|
 | Article | Blog posts, news articles | Article appearance |
 | Product | Product pages | Price, availability, reviews |
-| FAQ | FAQ sections | Expandable Q&A in SERPs |
-| HowTo | Tutorial/guide content | Step-by-step display |
+| FAQPage | FAQ sections | ⚠️ No Google rich result. Restricted to gov/health sites Aug 2023, then fully removed for all sites May 7 2026. Still valid schema; aids AI/LLM answer extraction |
+| HowTo | Tutorial/guide content | ⚠️ No Google rich result (deprecated/removed 2023). Optional semantic markup for AI extraction only |
 | Organization | Homepage/about page | Knowledge panel, brand info |
 | LocalBusiness | Physical business locations | Local pack, business details |
 | BreadcrumbList | Site navigation | Breadcrumb trail in SERPs |
 | Review | Review content | Star ratings |
 | VideoObject | Video content | Video thumbnails in SERPs |
-| Speakable | Voice search priority content | Voice assistant eligibility |
+| Speakable | Voice search priority content | Limited beta: US-English news publishers only, read aloud via Google Assistant |
 
 ### Schema and AEO/GEO Connection
 
-For AEO purposes, FAQPage and HowTo schema directly enable rich results that serve as answer engine features. Speakable schema signals voice-search-ready content.
+For AEO purposes, note that FAQPage and HowTo schema **no longer produce Google SERP rich results**. HowTo rich results were removed in 2023; FAQ rich results were restricted to government/health sites in Aug 2023 and fully deprecated for all sites on May 7, 2026 (the FAQ report and Rich Results Test support drop in June 2026, the Search Console API in Aug 2026). The structured Q&A and step markup can still help AI answer engines and LLMs parse, extract, and cite content — so treat it as AEO/GEO *extraction* value, not a Google SERP feature. Speakable schema is a limited beta (US-English news publishers, Google Assistant), not a general voice-search signal.
 
 For GEO purposes, structured data provides machine-readable entity signals that AI systems can cross-reference when determining brand identity and category.
 
@@ -240,7 +251,27 @@ Ensure your schema markup, visible page content, and any external data feeds (e.
 
 ---
 
-## 7. Site Migration Checklist
+## 7. International SEO (hreflang)
+
+For sites serving multiple languages or regions, hreflang tells Google which language/region version to show.
+
+- **Reciprocity is mandatory**: every hreflang annotation must be returned by all the pages it references. If page A points to B, B must point back to A (and to itself). Missing return tags are the most common hreflang error and cause Google to ignore the cluster.
+- **Always include a self-referencing tag** plus an **`x-default`** entry for the fallback/locale-selector page.
+- **Use correct codes**: ISO 639-1 language (`en`), optional ISO 3166-1 Alpha-2 region (`en-gb`). Region without language is invalid.
+- **Pick one placement** and be consistent: HTML `<head>` link tags, an XML sitemap `xhtml:link` annotation (best for large sites), or HTTP headers (for non-HTML files like PDFs). Do not mix methods for the same URLs.
+- hreflang is a targeting signal, **not** a duplicate-content fix — pair it with self-referencing canonicals (canonical to self, not to another language).
+
+## 8. Image and Video SEO
+
+AI Overviews, Google Images, and YouTube are all cited surfaces, so media is part of visibility, not an afterthought.
+
+**Images**: descriptive filenames and `alt` text (real description, not keyword stuffing), responsive `srcset`, modern formats (WebP/AVIF), explicit width/height (CLS), lazy-load below-fold, and an image sitemap for large libraries. `ImageObject` schema and on-page captions help AI systems associate the image with its subject.
+
+**Video**: host with a transcript and chapters; add `VideoObject` schema (`name`, `description`, `thumbnailUrl`, `uploadDate`, `duration`, and `clip`/`SeekToAction` for key moments). Transcripts are what AI systems actually read — a video without a transcript is largely invisible to text-based retrieval. YouTube descriptions and chapters are independently crawled (see `geo-multi-platform.md`).
+
+---
+
+## 9. Site Migration Checklist
 
 When moving to a new domain, redesigning, or restructuring:
 
@@ -255,7 +286,7 @@ When moving to a new domain, redesigning, or restructuring:
 
 ---
 
-## 8. Common Technical SEO Issues Checklist
+## 10. Common Technical SEO Issues Checklist
 
 - [ ] No accidental noindex on important pages
 - [ ] robots.txt not blocking critical resources or AI crawlers

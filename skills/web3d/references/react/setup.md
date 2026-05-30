@@ -45,6 +45,8 @@ function App() {
 
 WebGPURenderer init is **async** -- set `frameloop="never"` until ready, then flip to `"always"`.
 
+The async `gl` callback can reject (no `navigator.gpu`, adapter denied, headless CI). Catch it and surface a fallback UI rather than letting the rejection throw inside `<Canvas>`, and wrap the `<Canvas>` in an error boundary. WebGPURenderer falls back to WebGL 2 automatically, but a hard init failure should still degrade gracefully (show a "3D not supported" state).
+
 ### Vite Configuration
 
 ```typescript
@@ -59,12 +61,15 @@ export default defineConfig({
   build: { target: 'esnext' },
   server: {
     headers: {
+      // Only needed for SharedArrayBuffer (WASM threads). See SKILL.md.
       'Cross-Origin-Opener-Policy': 'same-origin',
       'Cross-Origin-Embedder-Policy': 'require-corp',
     },
   },
 })
 ```
+
+> **COEP gotcha**: `require-corp` blocks any cross-origin resource that lacks a CORP/CORS header — including the CDN-hosted Draco/Basis decoders `useGLTF` uses by default. If you enable COEP for `SharedArrayBuffer`, **self-host the decoders** (serve `/draco/` and `/basis/` locally and point the loaders at them) or model loading will silently fail.
 
 ## JSX Maps to Three.js
 
@@ -81,7 +86,7 @@ Use **Node materials** (`meshStandardNodeMaterial`, `meshPhysicalNodeMaterial`, 
 
 ## useFrame -- The Render Loop
 
-Mutate refs directly inside `useFrame`. Never call `setState` here -- it triggers 60 re-renders/sec.
+Mutate refs directly inside `useFrame`. Never call `setState` here -- it triggers a re-render every frame (60/90/120+ Hz depending on display/headset refresh).
 
 ```tsx
 import { useFrame } from '@react-three/fiber'
@@ -106,6 +111,7 @@ function Spinner() {
 ## Loading Assets
 
 ```tsx
+import { useRef, useEffect } from 'react'
 import { useGLTF, useTexture, useAnimations } from '@react-three/drei'
 
 function Model() {
@@ -126,10 +132,10 @@ function Model() {
 useGLTF.preload('/model.glb')
 ```
 
-Drei's `useGLTF` enables meshoptimizer decompression by default. Use `gltfjsx` CLI to generate typed R3F components from glTF files:
+Drei's `useGLTF` auto-configures decompression — **both** Draco (decoder fetched from a CDN) and Meshopt — so a `--transform`'d (Draco) or meshopt'd `.glb` loads without manual decoder wiring. `useGLTF` also suspends while loading: wrap the consuming subtree in `<Suspense fallback={...}>` and add an error boundary (e.g. `react-error-boundary`) so a 404/decode failure shows a fallback instead of crashing the tree. Use `gltfjsx` CLI to generate typed R3F components from glTF files:
 
 ```bash
-npx gltfjsx model.glb --transform --types --shadow
+npx gltfjsx model.glb --transform --types --shadows
 ```
 
 ## Event System
@@ -166,7 +172,7 @@ import { Environment, OrbitControls, useGLTF, useAnimations,
 
 // XR
 import { createXRStore, XR, XROrigin, XRSpace,
-  useXR, useHitTest, useXRInputSourceState,
+  useXR, useXRHitTest, useXRInputSourceState,
   IfInSessionMode, TeleportTarget } from '@react-three/xr'
 
 // Physics

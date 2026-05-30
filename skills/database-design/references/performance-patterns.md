@@ -10,11 +10,11 @@ at an 8-byte boundary. If a 2-byte SMALLINT precedes it, 6 bytes are wasted as p
 ```sql
 -- BAD: wastes ~8 bytes per row from alignment padding
 CREATE TABLE bad_column_order (
-    id BIGINT NOT NULL,          -- 8 bytes, starts at 0
-    val_a SMALLINT NOT NULL,     -- 2 bytes, starts at 8 → padding at 10-15
-    val_b INTEGER NOT NULL,      -- 4 bytes, starts at 16 → padding at 12-15
-    val_c SMALLINT NOT NULL,     -- 2 bytes
-    created_at TIMESTAMPTZ NOT NULL  -- 8 bytes, needs 8-byte alignment → more padding
+    id BIGINT NOT NULL,          -- 8 bytes, offset 0-7
+    val_a SMALLINT NOT NULL,     -- 2 bytes, offset 8-9
+    val_b INTEGER NOT NULL,      -- 4 bytes, 2-byte pad at 10-11, data at 12-15
+    val_c SMALLINT NOT NULL,     -- 2 bytes, offset 16-17
+    created_at TIMESTAMPTZ NOT NULL  -- 8 bytes, 6-byte pad at 18-23, data at 24-31
 );
 -- Per-row size: 56 bytes
 
@@ -36,7 +36,7 @@ faster sequential scans (less data to read from disk).
 | Alignment | Storage | Types |
 |------|------|-------|
 | 8 bytes | 8 bytes | BIGINT, TIMESTAMPTZ, TIMESTAMP, DOUBLE PRECISION, BIGSERIAL |
-| 4 bytes | 16 bytes | UUID |
+| 1 byte | 16 bytes | UUID |
 | 4 bytes | 4 bytes | INTEGER, REAL, DATE, SERIAL |
 | 2 bytes | 2 bytes | SMALLINT |
 | 1 byte | 1 byte | BOOLEAN, CHAR(1) |
@@ -44,13 +44,15 @@ faster sequential scans (less data to read from disk).
 
 **Recommended column order in CREATE TABLE:**
 1. Fixed 8-byte-aligned columns (BIGINT, TIMESTAMPTZ)
-2. UUID columns (16 bytes, 4-byte aligned — pack before smaller 4-byte types)
+2. UUID columns (16 bytes, 1-byte/char aligned — introduce no padding; placed here only by convention since the PK leads the table)
 3. Fixed 4-byte columns (INTEGER, DATE)
 4. Fixed 2-byte columns (SMALLINT)
 5. Fixed 1-byte columns (BOOLEAN)
 6. Variable-length columns (TEXT, JSONB, NUMERIC)
 
-Note: with the skill's UUID v7 PK default, the conventional `id` column sits at offset 0 with 4-byte alignment. Following it directly with `created_at`/`updated_at` (both 8-byte aligned) wastes no padding because the 16-byte UUID consumes a multiple-of-8 footprint. Place INTEGER/SMALLINT/BOOLEAN columns *after* the timestamps.
+Note: with the skill's UUID v7 PK default, the conventional `id` column has 1-byte (char) alignment, so it introduces no padding wherever it sits. Following it directly with `created_at`/`updated_at` (both 8-byte aligned) wastes no padding because the UUID's 16-byte footprint is already a multiple of 8 — not because UUID requires any wide alignment. Place INTEGER/SMALLINT/BOOLEAN columns *after* the timestamps.
+
+**TOAST**: when a row exceeds roughly 2KB, large variable-length values (TEXT/JSONB/arrays/BYTEA) are compressed and stored out-of-line automatically; on wide tables this dominates the alignment-padding optimization above. SELECT only the columns you need to avoid de-TOAST I/O, beware TOAST churn on frequently-updated large JSONB, and tune with `SET STORAGE` (PLAIN/EXTENDED/EXTERNAL/MAIN) when needed.
 
 ## 2. postgresql.conf Tuning
 
@@ -58,10 +60,12 @@ Note: with the skill's UUID v7 PK default, the conventional `id` column sits at 
 
 | Parameter | OLTP (transaction-heavy) | OLAP (analytics-heavy) | Description |
 |-----------|--------------------------|------------------------|-------------|
-| shared_buffers | 25-40% of RAM | 50-70% of RAM | Shared memory cache |
+| shared_buffers | 25-40% of RAM | 25-40% of RAM | Shared memory cache |
 | work_mem | 4-64MB | 64MB-1GB | Per-operation sort/hash memory |
 | maintenance_work_mem | 512MB-2GB | 1-4GB | VACUUM, CREATE INDEX memory |
 | effective_cache_size | 75% of RAM | 75% of RAM | Planner's estimate of OS cache |
+
+shared_buffers above ~25-40% of RAM tends to hurt (PostgreSQL also relies on the OS page cache, so large shared_buffers causes double-buffering). `work_mem` is allocated **per sort/hash node, per connection, and per parallel worker** — budget roughly max_connections × concurrent sorts × work_mem against RAM; keep the global default modest (4-64MB) and raise to hundreds of MB only per-session via `SET` for a few dedicated OLAP sessions. `effective_cache_size` models shared_buffers + OS cache, so it should normally exceed shared_buffers.
 
 ```sql
 -- Check current settings
@@ -82,7 +86,7 @@ FROM pg_stat_database;
 wal_buffers = '64MB'          -- buffer WAL data in memory (default 16MB)
 checkpoint_completion_target = 0.9  -- spread checkpoint writes
 max_wal_size = '4GB'          -- allow larger WAL before forced checkpoint
-commit_delay = 100            -- microseconds; group more transactions per WAL flush
+commit_delay = 100            -- microseconds; general default is 0. Only takes effect when ≥ commit_siblings (default 5) other transactions are active at commit; mainly helps on slow-fsync storage during heavy concurrent ingestion, and is often a no-op or counterproductive on fast SSD/NVMe
 ```
 
 ⚠️ These WAL settings can be temporarily increased during bulk data loads
@@ -177,6 +181,7 @@ CREATE TABLE sessions_p3 PARTITION OF sessions FOR VALUES WITH (MODULUS 4, REMAI
 SELECT * FROM products ORDER BY created_at DESC, id DESC LIMIT 20 OFFSET 10000;
 
 -- GOOD: Keyset pagination (constant performance regardless of page depth)
+-- This example assumes a BIGINT id (e.g. a high-volume internal table). For a UUID v7 PK, use a uuid literal as the cursor value; keep the (created_at, id) compound cursor either way — do NOT keyset on the UUID alone (v7 is not strictly monotonic across generators, and the sort is by the separate created_at column).
 SELECT * FROM products
 WHERE (created_at, id) < ('2025-01-15 10:30:00+00', 99500)
 ORDER BY created_at DESC, id DESC
@@ -205,8 +210,8 @@ CREATE INDEX idx_products_pagination ON products (created_at DESC, id DESC);
 
    -- Required indexes for the planner to filter efficiently:
    CREATE INDEX idx_orders_created_at ON orders (created_at);
-   CREATE INDEX idx_orders_items_order_id ON order_items (order_id);
-   CREATE INDEX idx_orders_items_product_id ON order_items (product_id);
+   CREATE INDEX idx_order_items_order_id ON order_items (order_id);
+   CREATE INDEX idx_order_items_product_id ON order_items (product_id);
    CREATE INDEX idx_products_category ON products (category);
    ```
 

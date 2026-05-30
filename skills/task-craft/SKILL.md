@@ -5,7 +5,8 @@ description: |
   the full `tasks/board.md` (phase-grouped) plus per-feature task files for every
   feature in the PRD. Used once per project to bootstrap the task system.
   Use when: a new project's design docs are ready and you need the initial task
-  breakdown. Single source of truth for `tasks/board.md` format and task quality bar.
+  breakdown. Owns the task generation process and the task quality bar; the
+  canonical row format lives in `references/board-schema.md`.
   Do NOT use for: adding a task to an existing board (use task-add instead). Do
   NOT use for: moving task status (use task-status). Do NOT use for: product
   planning (use prd-craft), architecture (use software-architecture), UX design
@@ -72,10 +73,11 @@ The board is the single source of truth for task state.
 - **Between phases**: Phase N+1 starts only after all Phase N tasks are done.
 - Tasks with no cross-feature dependencies go in the earliest possible phase.
 - Infrastructure / setup tasks go in Phase 1.
+- `task-craft` always groups by **phases**. The iterations grouping (see `references/board-schema.md`) is a brownfield alternative that `task-add` maintains — don't produce it here.
 
 ### Format
 
-Canonical row schema: `references/board-schema.md`. All writers (`task-craft`, `task-add`, `task-status`, `plan-ceo-review`, `plan-eng-review`) follow it.
+Canonical row schema: `references/board-schema.md`. All writers follow it: `task-craft`, `task-add`, and `task-status` write directly; `plan-ceo-review` / `plan-eng-review` route through `task-add`.
 
 ```markdown
 # Task Board
@@ -98,26 +100,18 @@ Canonical row schema: `references/board-schema.md`. All writers (`task-craft`, `
 
 ### Task fields
 
-- `id` — globally unique, monotonically increasing (`T-001`, `T-002`, ...). Survives across batches.
-- `feature` — feature name; maps to `features/{feature}.md`.
-- `task` — one-line description.
-- `type` — `feature` | `bugfix` | `hotfix` | `refactor` | `spike` | `chore`. Drives the acceptance shape (see below).
-- `priority` — `low` | `medium` | `high`.
-- `status` — `backlog` | `active` | `done` | `blocked`.
-- `assignee` — agent or person; set by orchestrator, not on creation. `—` initially.
-- `touches` — primary files the task creates or modifies. Avoids agent conflicts.
+Column set, allowed values, and field semantics are canonical in
+`references/board-schema.md`. Generation-specific notes:
 
-### Status Values
-
-- `backlog` — not started
-- `active` — assigned, in progress
-- `done` — completed and verified
-- `blocked` — waiting on external input or unresolved dependency
+- `id` — globally unique, monotonically increasing (`T-001`, `T-002`, ...). Survives across batches; never reused.
+- `assignee` — `—` initially; the orchestrator sets it, not creation.
+- `touches` — primary files the task creates or modifies. Used to keep two tasks in the same phase off the same file.
+- All tasks start at `status: backlog`.
 
 ### Board Rules
 
+- **Phase is not a column.** A task's phase is the `## Phase N` heading it sits under — that heading is the single source of truth, mirrored by the `phase:` field in the feature file. The two must always match.
 - IDs are globally unique and monotonic.
-- `touches` helps avoid agent conflicts.
 - `assignee` is set by the orchestrator, not on creation.
 
 ---
@@ -146,9 +140,9 @@ immediately without reading the entire project.
 - **priority:** high
 - **depends_on:** —
 - **touches:** src/types/input.ts
-- **context:** Define TypeScript types for all supported input formats. See arch §1 for type conventions.
+- **context:** Define TypeScript types for all supported input formats. Satisfies REQ-001/REQ-002 in `docs/prd/features/file-parser.md`. See arch §1 for type conventions.
 - **acceptance:**
-  - Types cover CSV, JSON, XML input formats
+  - Types cover CSV, JSON, XML input formats (REQ-001)
   - Exported from src/types/index.ts
   - No runtime validation here (that's T-003)
 ```
@@ -156,8 +150,9 @@ immediately without reading the entire project.
 ### Feature File Rules
 
 - `context` must include enough information for an agent to start without reading the entire PRD. Reference specific sections (e.g., "arch §2") rather than vague pointers.
-- `acceptance` defines done. Tasks without clear acceptance criteria should be sent back for revision.
+- `acceptance` defines done. Tasks without clear acceptance criteria should be sent back for revision. Cite the requirement(s) the task satisfies by their `REQ-NNN` IDs from `docs/prd/features/{feature}.md`, so work traces back to a requirement.
 - `depends_on` lists task IDs within or across features. This is the precise dependency — phases are the coarse grouping.
+- `phase:` mirrors the board's `## Phase N` heading (the board is authoritative). If a task ever moves between phases, update both.
 - `Changes` section is append-only. When the plan changes, record what changed and why. Worker agents check this to see if their task was recently modified.
 
 ---
@@ -206,7 +201,8 @@ Every task must satisfy:
 ## Quality Gates (apply before saving)
 
 - [ ] Every task has a unique ID in format `T-NNN`
-- [ ] Every task has `type`, `phase`, `priority`, `touches`, `context`, `acceptance`
+- [ ] Every task has `type`, `phase`, `priority`, `depends_on` (or `—`), `touches`, `context`, `acceptance`
+- [ ] Each task's feature-file `phase:` matches the `## Phase N` board section it sits under
 - [ ] No two tasks in the same phase touch the same file (or the conflict is flagged and sequenced)
 - [ ] Every feature in `docs/prd/features/` has a corresponding `tasks/features/` file
 - [ ] `board.md` phases correctly reflect dependency ordering (Phase N depends_on items must be in Phase < N)

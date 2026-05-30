@@ -103,7 +103,7 @@ Behavioral science applied to interface design. Use this reference when diagnosi
 
 ### Solutions
 - Show progress indicators (step X of Y, progress bar)
-- Start progress bar at >0% (artificial advancement — e.g., "Profile 20% complete" before user does anything)
+- Pre-credit progress only when it reflects real value already delivered (e.g., "Profile 20% complete" because the account exists and email is verified) — never fabricate progress for steps the user hasn't done. Fake advancement is a dark pattern (FTC / EU dark-pattern guidance) and erodes trust when discovered.
 - Break large tasks into visible milestones
 - Celebrate micro-completions
 - Show what's left, not just what's done
@@ -217,7 +217,7 @@ Behavioral science applied to interface design. Use this reference when diagnosi
 
 ## Doherty Threshold
 
-**Productivity soars when response time is <400ms. Above this, users perceive delay and lose flow.**
+**Doherty (IBM, 1982): productivity rises sharply when system response is under 400ms.** Note the separate perceptual threshold: under ~100ms feels instantaneous, ~100–300ms feels responsive, and 400ms+ is where flow starts to break (400ms is the productivity cliff, not the point where delay first becomes noticeable).
 
 ### When to Apply
 - System feels "sluggish" despite functioning correctly

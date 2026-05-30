@@ -46,7 +46,7 @@ SELECT * FROM accounts WHERE id = 1 FOR UPDATE;
 UPDATE accounts SET balance = balance - 100 WHERE id = 1;
 COMMIT;
 
--- FOR SHARE: shared lock (allows concurrent reads, blocks writes)
+-- FOR SHARE: shared row lock — multiple txns can hold it concurrently; it blocks UPDATE/DELETE and FOR UPDATE/FOR NO KEY UPDATE on those rows (plain MVCC SELECTs are never blocked). FOR KEY SHARE (weakest, used by FK checks) and FOR NO KEY UPDATE also exist.
 SELECT * FROM products WHERE id = 5 FOR SHARE;
 
 -- NOWAIT: fail immediately if row is locked (don't wait)
@@ -131,6 +131,8 @@ COMMIT;
    SET lock_timeout = '5s';  -- fail after 5 seconds of waiting for a lock
    ```
 
+The aborted (victim) transaction should be retried by the same exponential-backoff logic used for serialization failures (it aborts with SQLSTATE 40P01). Treat retry as a safety net — consistent lock ordering above is the primary fix; frequent deadlocks indicate an ordering bug, not a tuning problem.
+
 ## SAVEPOINT (Partial Rollback)
 
 ```sql
@@ -178,7 +180,7 @@ for attempt in range(MAX_RETRIES):
         with db.transaction():
             # ... your operations ...
             break  # success
-    except SerializationFailure:
+    except (SerializationFailure, DeadlockDetected):  # 40001 and 40P01 are both transient & retryable
         if attempt == MAX_RETRIES - 1:
             raise
         time.sleep(0.1 * (2 ** attempt))  # exponential backoff
@@ -198,8 +200,8 @@ for attempt in range(MAX_RETRIES):
 
 ## Common Anti-Patterns
 
-1. **SELECT ... FOR UPDATE on too many rows** — locks escalation, blocks other transactions
+1. **SELECT ... FOR UPDATE on too many rows** — holds many row locks for the whole transaction, blocking every concurrent writer/locker of those rows, lengthening the transaction and delaying VACUUM. (PostgreSQL has no lock escalation — row locks live in tuple headers, so the harm is contention and long-held locks, not row-lock-table escalation.)
 2. **Long transactions with external API calls** — holds locks, prevents VACUUM
 3. **Missing retry logic with Repeatable Read / Serializable** — serialization errors are expected
-4. **Implicit transactions** — every statement in PostgreSQL auto-commits if not in BEGIN/COMMIT
+4. **Assuming multi-statement atomicity without BEGIN** — outside an explicit BEGIN/COMMIT each statement auto-commits independently, so a partial failure can leave related rows inconsistent. Wrap all-or-nothing operations in an explicit transaction.
 5. **Forgetting SKIP LOCKED in queue patterns** — causes lock contention instead of parallel processing

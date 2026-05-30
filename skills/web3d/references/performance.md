@@ -44,11 +44,11 @@ scene.add(mesh)
 Per-instance colors:
 
 ```typescript
-mesh.instanceColor = new THREE.InstancedBufferAttribute(
-  new Float32Array(COUNT * 3), 3
-)
-mesh.setColorAt(i, new THREE.Color('red'))
-mesh.instanceColor.needsUpdate = true
+// setColorAt lazily allocates mesh.instanceColor on first call — no manual attribute needed
+for (let i = 0; i < COUNT; i++) {
+  mesh.setColorAt(i, new THREE.Color('red'))
+}
+mesh.instanceColor!.needsUpdate = true
 ```
 
 ## Level of Detail (LOD)
@@ -84,12 +84,16 @@ const mergedMesh = new THREE.Mesh(merged, sharedMaterial)
 ## Adaptive Resolution
 
 ```typescript
+// Track current DPR in a mutable var, step with hysteresis, and only call
+// setPixelRatio (which reallocates the drawing buffer) when it actually changes —
+// recomputing from the constant window.devicePixelRatio every frame oscillates.
+let currentDPR = Math.min(window.devicePixelRatio, 2)
+
 function updateDPR(fps: number) {
-  if (fps < 50) {
-    renderer.setPixelRatio(Math.max(1, window.devicePixelRatio - 0.5))
-  } else if (fps > 58) {
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-  }
+  const prev = currentDPR
+  if (fps < 50) currentDPR = Math.max(1, currentDPR - 0.25)                        // step down
+  else if (fps > 58) currentDPR = Math.min(window.devicePixelRatio, currentDPR + 0.25) // step up
+  if (currentDPR !== prev) renderer.setPixelRatio(currentDPR)
 }
 ```
 

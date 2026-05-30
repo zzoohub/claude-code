@@ -223,7 +223,7 @@ WHERE id = :id AND version = :expected_version
 
 If `rows_affected = 0`, somebody else wrote first. The application returns `409 Conflict` (or retries internally if the operation is associative).
 
-**HTTP equivalent**: `ETag` + `If-Match` header. Client `GET`s and gets `ETag: "v7"`. Client `PUT`s with `If-Match: "v7"`. Server compares and rejects if version moved.
+**HTTP equivalent**: `ETag` + `If-Match` header. Client `GET`s and gets `ETag: "v7"`. Client `PUT`s with `If-Match: "v7"`. Server compares and rejects if version moved. A failed `If-Match` returns `412 Precondition Failed` (per RFC 9110), as opposed to the `409 Conflict` returned by the application-level version-column check above.
 
 | Decision | Recommended |
 |---|---|

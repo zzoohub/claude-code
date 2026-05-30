@@ -1,5 +1,5 @@
 /**
- * find-browse — locate the gstack browse binary.
+ * find-browse — locate the browse binary.
  *
  * Compiled to browse/dist/find-browse (standalone binary, no bun runtime needed).
  * Outputs the absolute path to the browse binary on stdout, or exits 1 if not found.
@@ -30,12 +30,12 @@ export function locateBinary(): string | null {
 
   // Workspace-local takes priority (for development)
   if (root) {
-    const local = join(root, '.claude', 'skills', 'gstack', 'browse', 'dist', 'browse');
+    const local = join(root, '.claude', 'skills', 'browse', 'dist', 'browse');
     if (existsSync(local)) return local;
   }
 
   // Global fallback
-  const global = join(home, '.claude', 'skills', 'gstack', 'browse', 'dist', 'browse');
+  const global = join(home, '.claude', 'skills', 'browse', 'dist', 'browse');
   if (existsSync(global)) return global;
 
   return null;
@@ -53,4 +53,8 @@ function main() {
   console.log(bin);
 }
 
-main();
+// Only run when executed directly (compiled binary / `bun run`), not when
+// imported (e.g. by tests) — importing must not call process.exit.
+if (import.meta.main) {
+  main();
+}

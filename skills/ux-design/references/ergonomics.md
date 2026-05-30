@@ -9,8 +9,12 @@ Layout guidelines, sizing specifications, platform-specific patterns, and access
 | Element | Minimum | Recommended | Apple HIG | Material |
 |---------|---------|-------------|-----------|----------|
 | Touch target | 44×44pt | 48×48pt | 44×44pt | 48×48dp |
-| Click target (web) | 24×24px | 32×32px | — | 24×24px |
+| Click target (web) | 24×24px | 32×32px | — | — |
 | Target spacing | 8px | 12px | 8pt | 8dp |
+
+The web 24×24px minimum is **WCAG 2.2 SC 2.5.8 (Target Size, Minimum)** — not a
+Material spec. On touch, follow the 44pt/48dp target above; 24px is a pointer-input
+floor, not an acceptable mobile touch target.
 
 ### Small Visual, Large Target
 ```
@@ -97,7 +101,7 @@ Rule: tap area size is measured in logical points, not visual pixels. A 24px ico
 
 - Gesture navigation: 16dp bottom inset (swipe bar)
 - 3-button navigation: 48dp bottom inset
-- Edge-to-edge: use `WindowInsets` to handle all safe areas
+- Edge-to-edge: on Android 15+ (API 35+) this is the enforced default, not an opt-in — handling `WindowInsets` for all safe areas is required, not optional
 
 ### Platform Navigation Expectations
 
@@ -130,9 +134,9 @@ Rule: tap area size is measured in logical points, not visual pixels. A 24px ico
 
 | Breakpoint | Width | Device Category | Layout |
 |-----------|-------|----------------|--------|
-| Mobile S | 320px | Older iPhones, small Android | Single column, stacked |
-| Mobile M | 375px | iPhone 13/14/15, standard Android | Single column |
-| Mobile L | 428px | iPhone Pro Max, large Android | Single column, wider margins |
+| Mobile S | 320px | Small phones (iPhone SE/mini class) | Single column, stacked |
+| Mobile M | 375px | Compact phones (older/SE-class) | Single column |
+| Mobile L | 390–430px | Standard & Pro Max phones (current iPhone 16/17 base ≈ 390–393px) | Single column, wider margins |
 | Tablet | 768px | iPad Mini, small tablets | Two-column possible |
 | Tablet L | 1024px | iPad Air/Pro | Two-column, sidebar |
 | Desktop | 1280px | Laptops, small monitors | Multi-column, sidebar |
@@ -148,6 +152,10 @@ Rule: tap area size is measured in logical points, not visual pixels. A 24px ico
 ---
 
 ## Response Time
+
+This is the canonical response-time ladder (aligned with the classic
+0.1s / 1s / 10s perception thresholds). `interaction-patterns.md`
+(§Loading Patterns) mirrors it — keep the two in sync.
 
 | Threshold | User Perception | Design Requirement |
 |-----------|-----------------|-------------------|

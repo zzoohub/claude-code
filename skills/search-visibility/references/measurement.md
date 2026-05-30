@@ -34,7 +34,7 @@ You need traditional SEO metrics, AEO metrics, and GEO metrics to see the full p
 - **What**: Percentage of impressions that result in clicks
 - **Tools**: Google Search Console
 - **Track**: CTR by query, CTR by page, CTR by position
-- **Benchmark**: Average CTR varies by position (position 1 approximately 25-30%, position 5 approximately 5-8%), SERP features affect this significantly
+- **Benchmark**: CTR-by-position is now effectively bimodal. On AI-Overview-*absent* queries it roughly follows the legacy curve (position 1 ~25-30%, position 5 ~5-8%). On AI-Overview-*present* queries it is sharply depressed — position-1 CTR drops ~30-58% when an AI Overview sits above the result (Ahrefs, 2025), and clicks are near-zero for sites not cited inside the AIO. Being cited *inside* the AI Overview is the new CTR lever; do not treat any single position curve as universal
 - **Improve by**: Optimizing title tags, meta descriptions, and structured data for rich results
 
 ### Impressions
@@ -80,7 +80,7 @@ You need traditional SEO metrics, AEO metrics, and GEO metrics to see the full p
 
 ### People Also Ask Presence
 - **What**: How often your content appears in PAA boxes for target queries
-- **Why it matters**: PAA boxes appear in 60-80% of searches. Each PAA click generates additional questions, creating cascade visibility.
+- **Why it matters**: PAA boxes appear on a large share of searches (estimates range ~40-67% depending on dataset/region and are higher on mobile). Each PAA click generates additional questions, creating cascade visibility.
 - **Tools**: Semrush, Ahrefs, AlsoAsked, manual tracking
 - **Track**: Number of PAA appearances for target topics, which specific questions reference your content, competitor PAA presence comparison
 
@@ -99,7 +99,7 @@ You need traditional SEO metrics, AEO metrics, and GEO metrics to see the full p
 - **Interpret carefully**: Low CTR on a query where you hold the snippet is normal AEO behavior, not a problem to fix
 
 ### Rich Result Performance
-- **What**: Performance of pages with FAQ, HowTo, and other structured data rich results
+- **What**: Performance of pages with *currently supported* structured-data rich results (review stars, product, breadcrumbs, video, etc.). Note: FAQ and HowTo rich results are deprecated (HowTo 2023; FAQ removed for all sites May 2026), and their Search Console reports / Rich Results Test support are being retired in 2026 — do not track them as live rich results
 - **Tools**: Google Search Console (Enhancements reports), Rich Results Test
 - **Track**: Valid vs. invalid structured data items, CTR comparison for pages with vs. without rich results, rich result types active
 
@@ -134,7 +134,7 @@ You need traditional SEO metrics, AEO metrics, and GEO metrics to see the full p
 
 ### AI Referral Traffic
 - **What**: Visits to your site that originated from AI platforms
-- **How to track (free)**: In GA4, set up a custom channel group called "AI Referral" that includes sources: `chatgpt.com`, `perplexity.ai`, `gemini.google.com`, `claude.ai`. Also check server access logs for AI crawler user agents: GPTBot, ChatGPT-User, PerplexityBot, ClaudeBot, Google-Extended.
+- **How to track (free)**: GA4 now classifies AI-assistant traffic automatically under a built-in **"AI Assistant" default channel group** (added ~May 2026; medium `ai-assistant`), with no configuration — check Reports → Acquisition → Traffic acquisition for the "AI Assistant" channel. Google recognizes ChatGPT, Gemini, and Claude (among others) but has not published the full referrer list, and rollout is gradual, so the channel may not appear in every property yet. As a supplement (for platforms GA4 hasn't recognized), add a custom channel group covering `chatgpt.com`, `perplexity.ai`, `gemini.google.com`, `claude.ai`, `copilot.microsoft.com`, and `bing.com`. To detect AI *visits* in server logs, look for the search/user-initiated agents (OAI-SearchBot, ChatGPT-User, PerplexityBot, Perplexity-User, Claude-SearchBot, Claude-User) — not Google-Extended, which is a training opt-out token, not a visit signal. See the canonical crawler table in `technical-seo.md`.
 - **Reality check**: Many AI-driven visits appear as direct traffic or branded organic search. Supplement with "how did you hear about us?" surveys that include an AI option.
 - **Track what you can**: Referral traffic from perplexity.ai, chatgpt.com, and other AI platforms that include referral information.
 
@@ -156,7 +156,7 @@ You need traditional SEO metrics, AEO metrics, and GEO metrics to see the full p
 **Dashboard 2: Answer Engine Performance (AEO)**
 - Featured snippet ownership and changes
 - People Also Ask presence
-- Rich result performance (FAQ, HowTo schema)
+- Rich result performance (currently-supported types — note FAQ/HowTo rich results are deprecated)
 - Voice search visibility (manual audit results)
 - Zero-click indicators (high impression / low CTR question queries)
 
@@ -212,10 +212,13 @@ While direct attribution across all three layers is limited, look for correlatin
 
 ### GEO / AI Visibility (Zero-Cost)
 - **Manual prompt testing**: Spreadsheet of 20-50 queries, test monthly across ChatGPT/Perplexity/Google AI Mode/Claude. See GEO Metrics section above for tracking details.
-- **GA4 AI referral channel**: Custom channel group for `chatgpt.com`, `perplexity.ai`, `gemini.google.com`.
+- **GA4 AI Assistant channel**: Built-in default channel group (added ~May 2026, automatic; medium `ai-assistant`) covering ChatGPT/Gemini/Claude and others. Supplement with a custom channel group for any platforms GA4 hasn't recognized (`chatgpt.com`, `perplexity.ai`, `gemini.google.com`, `claude.ai`, `copilot.microsoft.com`, `bing.com`).
 - **GSC brand query trends**: Rising branded searches = indirect GEO attribution.
-- **Server logs**: Check AI crawler user agents (GPTBot, ChatGPT-User, PerplexityBot, ClaudeBot, Google-Extended).
+- **Server logs**: Check AI search/user-initiated agents (OAI-SearchBot, ChatGPT-User, PerplexityBot, Perplexity-User, Claude-SearchBot, Claude-User) — see the canonical table in `technical-seo.md`.
 - **Signup survey**: Add "AI tool recommended it" option.
+
+### Dedicated AI-visibility tools (paid)
+Purpose-built platforms for tracking AI citations / share of voice at scale (the scalable alternative to the manual prompt spreadsheet above): **Profound** (enterprise category leader), **Peec AI**, **Otterly**, **ZipTie**, **LLMrefs**. See `ai-platform-optimization.md` for coverage details — this market moves fast, so verify current coverage and pricing before committing.
 
 ### Integrated
 - **Semrush**: Offers traditional SEO tools, SERP feature tracking (AEO), and AI visibility tracking in Enterprise tier.
@@ -226,7 +229,7 @@ While direct attribution across all three layers is limited, look for correlatin
 
 - **Do not treat low CTR as always bad**: For question queries where you hold a snippet, low CTR with high impressions is AEO success, not failure.
 - **Do not ignore AEO/GEO because they are hard to measure**: The attribution gap does not mean visibility is not valuable.
-- **Do not over-index on volatile AI metrics**: AI citation sources change 40-60% month over month. Look at trends over quarters, not days.
+- **Do not over-index on volatile AI metrics**: AI citation sources are highly volatile — a single platform or algorithm change has shifted a domain's citation share by ~50% within weeks (e.g., Reddit's ChatGPT share collapsing from ~60% to ~10% in 2025). Look at trends over quarters, not days.
 - **Do not abandon traditional SEO metrics**: Rankings and organic traffic still drive the majority of measurable conversions.
 - **Do not conflate correlation with causation**: Branded search increases could come from many sources, not just answer features or AI visibility.
 - **Do not measure everything, measure what matters**: Focus on metrics that connect to business outcomes.

@@ -108,7 +108,7 @@ Abstract classes in the domain layer have zero NestJS imports — they're plain 
 - **DI** — Controllers inject the abstract service class directly. NestJS resolves it to the concrete implementation registered in the feature module.
 - **Request DTOs** decoupled from domain — `createZodDto(schema)` classes (from `nestjs-zod`) + `toDomain()` function. The controller takes the DTO class directly (`@Body() body: CreateAuthorDto`); the global pipe validates it and `@nestjs/swagger` reads its schema for OpenAPI.
 - **Response DTOs** built via `fromDomain()` static method — never expose domain models directly. Add `@ApiProperty()` decorators for Swagger.
-- **Exception Filters** map domain errors to RFC 9457 ProblemDetails. Register globally in `main.ts`. Match on `error.tag` for exhaustive handling.
+- **Exception Filters** map domain errors to RFC 9457 ProblemDetails. Register globally via `APP_FILTER` in `AppModule` (the filter injects `ClsService` for the `X-Request-Id` correlation header, so it must be DI-resolved, not `new`-ed in `main.ts`). Match on `error.tag` for exhaustive handling.
 - **API docs** — `@nestjs/swagger` with `@ApiOperation()`, `@ApiResponse()`. Consult `references/api-design.md` for conventions and `references/api-patterns.md` for HTTP patterns.
 - **Guards** — Auth via `@UseGuards(JwtAuthGuard)`. Domain never handles tokens.
 - **Pipes** — `nestjs-zod`'s `ZodValidationPipe`, registered once via `APP_PIPE`. It validates every `@Body()`/`@Query()`/`@Param()` typed with a `createZodDto` class. Built with `createZodValidationPipe({ createValidationException })` so failures emit the RFC 9457 ProblemDetails body — see `pipes/zod-validation.pipe.ts`.
@@ -296,6 +296,7 @@ For **request-scoped correlation** (request_id, tenant_id, userId) without threa
 |------|-------|
 | Password hashing | `@node-rs/argon2` (default), `bcrypt` (fallback) |
 | JWT library | **`jose`** (default — modern, EdDSA/ES256 first-class, ESM/CJS, JWK support, no CVE backlog). Use `@nestjs/passport` + `passport-jwt` only when you also need session / OAuth strategies in the same app. **Do not use `jsonwebtoken`** — CJS-only, slow-to-patch security history (e.g. CVE-2022-23529), no native ES module support. |
+| JWT algorithm | **Asymmetric ES256/EdDSA** (canonical — verifiers hold only the public key via JWKS; validate `aud`/`iss`). HS256 symmetric secret only for a single-service / dev setup that both issues and verifies. See the guard in `references/examples-adapters.md`. |
 | JWT access token | 15 min |
 | JWT refresh (web) | 90 days |
 | JWT refresh (mobile) | 1 year |
@@ -313,7 +314,7 @@ Auth guard lives in the inbound layer. Domain never handles raw tokens.
 
 NestJS bootstrap creates the application from the root module and configures global middleware. Keep it focused — no business logic.
 
-Key setup: CORS -> helmet -> global filter -> Swagger -> shutdown hooks -> listen.
+Key setup: CORS -> helmet -> Swagger -> shutdown hooks -> listen. The global exception filter is registered via `APP_FILTER` in `AppModule` (it injects `ClsService`), not `app.useGlobalFilters(new ...)` in `main.ts`.
 
 > Full bootstrap and config examples: `references/examples-bootstrap.md`
 
@@ -443,7 +444,7 @@ For **single-repo transactions** (no cross-repo orchestration), inline `repo.man
 - [ ] Controllers in inbound/ with `@Controller()` decorators
 - [ ] Services wired via `useClass` with `@Injectable()` on the impl (or `useFactory` for stricter framework-free domain)
 - [ ] Validation via `createZodDto` classes + `ZodValidationPipe` registered through `APP_PIPE` (returns **422** on failure, matching api-design.md); Swagger doc wrapped with `cleanupOpenApiDoc()`
-- [ ] Global `DomainExceptionFilter` registered in main.ts; filter matches on `instanceof DomainError` (base class), not on a loose `"tag" in error` check
+- [ ] Global `DomainExceptionFilter` registered via `APP_FILTER` in AppModule (DI-resolved — it injects `ClsService` for the `X-Request-Id` header); filter matches on `instanceof DomainError` (base class), not on a loose `"tag" in error` check; re-maps `ThrottlerException` 429 to `application/problem+json`
 - [ ] `enableShutdownHooks()` called in main.ts
 - [ ] `helmet()` middleware enabled
 - [ ] `@nestjs/throttler` wired as `APP_GUARD` (global rate limit)

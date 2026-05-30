@@ -18,17 +18,17 @@ Platform engagement benchmarks, what to track, engagement behavior shifts, and a
 
 ## Platform Engagement Benchmarks
 
-Median engagement rates from Socialinsider's analysis of 70M+ posts (2025-2026):
+Engagement rates from Socialinsider's 2025-2026 benchmark analysis (measured **by impressions/reach**, which runs higher than follower-based rates):
 
-| Platform | Median Engagement Rate | Trend | Notes |
+| Platform | Engagement Rate (by impressions) | Trend | Notes |
 |----------|----------------------|-------|-------|
-| **LinkedIn** | 6.5% | Stable | Highest organic reach of major platforms |
+| **LinkedIn** | 5.0% | Stable | Highest organic reach of major platforms |
 | **TikTok** | 3.70% | Up 49% YoY | Rising due to community shift |
 | **Instagram** | 0.48% | Mixed | Reels: 2.46%, Carousels: highest engagement |
 | **Facebook** | 0.15% | Declining | Groups > Pages for organic reach |
-| **Twitter/X** | 0.12% | Down from 0.15% | Premium subscribers get 4x boost |
+| **Twitter/X** | 0.12% | Down from 0.15% | Premium gives a visibility boost |
 
-**Context matters**: Engagement rate definitions vary by source. These are median across industries. Your niche may differ significantly.
+**Context matters**: Engagement-rate denominators vary (by impressions, by reach, or by followers) -- the table above is **by impressions**, while the per-platform target and calculation tables below are **follower/reach-based**, so the numbers aren't directly comparable. Always check the denominator before comparing. Your niche may differ significantly.
 
 ---
 
@@ -40,7 +40,7 @@ The way people engage is changing rapidly. Key shifts:
 - TikTok: Shares per post up **+45%**
 - Instagram: Shares per post up **+12%**
 - DM sharing is now Instagram's strongest algorithmic signal
-- Twitter: Retweets have **20x** algorithmic weight vs likes
+- Twitter: Retweets count ~**2x** a like in the open-sourced ranker; **replies (~13.5x) and dwell carry far more weight**
 
 **Implication**: Optimize for content people want to SEND to someone. The "DM test" -- would someone screenshot this and send it to a friend?
 
@@ -54,7 +54,7 @@ The way people engage is changing rapidly. Key shifts:
 ### Saves / Bookmarks Rising
 - Saves are rising across all platforms as "save for later" behavior grows
 - Instagram saves are a top algorithmic signal
-- Twitter bookmarks weight 10x in algorithm
+- Twitter bookmarks are a rising save signal (roughly like-weighted in the open-sourced ranker)
 
 **Implication**: Create "save-worthy" content -- frameworks, checklists, reference materials, step-by-steps.
 

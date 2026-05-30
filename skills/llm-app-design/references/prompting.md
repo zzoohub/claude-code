@@ -59,7 +59,7 @@ Return exactly this JSON structure:
 }
 ```
 
-Use schema-constrained decoding or JSON mode when the provider supports it. Always validate the parsed output against a schema (Zod, Pydantic, etc.) before using it — even with constrained decoding, validate.
+Use schema-constrained decoding or JSON mode when the provider supports it, and always validate the parsed output against a schema (Zod, Pydantic, etc.) before using it — constrained decoding guarantees shape, not correctness. See `references/tool-use.md` § Tool use vs structured output for why, and for the provider mechanisms.
 
 ## Few-shot examples
 
@@ -119,9 +119,9 @@ The boundary matters for caching. A system prompt that stays identical across 1M
 
 Some providers (Anthropic, OpenAI, Google) offer extended reasoning modes where the model thinks internally before responding. Rules of thumb:
 
-- For hard reasoning tasks, extended thinking beats manual CoT — the model can think longer internally without inflating the output.
+- For hard reasoning tasks, extended thinking beats manual CoT — the model can think longer internally without inflating the final answer.
 - For easy tasks, it's wasted tokens.
-- Extended thinking output is usually not cached or exposed — treat it as latency and cost, not debuggable artifact.
+- Exposure varies by provider: some return the reasoning as inspectable "thinking" blocks (Anthropic), others surface only a summary or hide it (OpenAI reasoning models). Where it's exposed, it's a useful debugging artifact; where it isn't, treat it as latency and cost you can't inspect. Whether thinking is cached also varies — check the provider docs rather than assuming it's free or discarded.
 
 ## Anti-patterns
 
@@ -143,4 +143,4 @@ Some providers (Anthropic, OpenAI, Google) offer extended reasoning modes where 
 4. Fix the prompt or examples. Keep old versions — prompt regression is real.
 5. Expand eval set as the prompt stabilizes.
 
-Never iterate on prompts by running one example, making a change, and shipping. You'll fix the one case and break three others.
+This loop assumes you have an eval set and a runner to execute it against — `references/evaluation.md` covers how to build, grow, and automate one. Never iterate on prompts by running one example, making a change, and shipping. You'll fix the one case and break three others.

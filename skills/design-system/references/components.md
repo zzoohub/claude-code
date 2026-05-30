@@ -96,10 +96,12 @@ interface ToggleOptions {
 }
 
 interface ToggleResult {
-  props: {
+  toggleProps: {
     role: 'switch';
     'aria-checked': boolean;
     'aria-disabled': boolean | undefined;
+    onClick: () => void;
+    onKeyDown: (e: KeyboardEvent) => void;   // framework-specific event type
     tabIndex: number;
   };
   state: { isOn: boolean; isDisabled: boolean };

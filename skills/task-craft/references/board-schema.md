@@ -15,7 +15,7 @@ Single source of truth for the task board format. Any skill that writes to `task
 | Field | Values | Notes |
 |---|---|---|
 | `id` | `T-NNN`, monotonically increasing | Survives across batches and phases. Never reused. |
-| `feature` | feature name | Maps to `tasks/features/{feature}.md`. Use `infra`, `chore`, `bugfix-{slug}` for non-feature work. |
+| `feature` | feature name | Maps to `tasks/features/{feature}.md` **when that file exists**. One-off `infra` / `chore` / `bugfix-{slug}` rows may have no feature file (`task-add` skips it for trivial work) — those rows must be self-contained, and any later block/abandon note goes to `tasks/features/_misc.md`. |
 | `task` | one-line description | Imperative voice. Avoid duplicating info from feature file. |
 | `type` | `feature \| bugfix \| refactor \| chore \| spike \| hotfix` | Required column. |
 | `priority` | `high \| medium \| low` | **Lowercase. Not `P0/P1/P2/P3`.** |
@@ -30,6 +30,8 @@ Single source of truth for the task board format. Any skill that writes to `task
 
 Pick one grouping per project. Don't mix.
 
+**Phase is not a column.** A task's phase is the `## Phase N` heading it sits under — that heading is the single source of truth. Feature files mirror it in a `phase:` field for worker convenience; the two must always match. When a task moves phase, update both (see `task-status` *Field edits*). Iterations work the same way via their `## Iteration …` heading.
+
 ## Forbidden variants
 
 - ❌ `P0 / P1 / P2 / P3 / P4` priority — not aligned with this schema. (`plan-eng-review` previously used this; reconciled to lowercase.)
@@ -39,8 +41,8 @@ Pick one grouping per project. Don't mix.
 ## Who writes here
 
 - `task-craft` — generates initial board from PRD + arch + UX
-- `task-add` — appends one or more rows
-- `task-status` — patches `status` field only
-- `plan-ceo-review` / `plan-eng-review` — append new rows for issues found during review (using this schema)
+- `task-add` — appends one or more rows (the canonical appender)
+- `task-status` — patches `status`, plus light fields (`priority`, `assignee`, phase moves)
+- `plan-ceo-review` / `plan-eng-review` — do **not** write rows directly; they route approved items through `task-add`, which formats them to this schema
 
-All writers honor the same schema. Migration of older boards: see `task-add` schema-upgrade rules.
+All writers honor the same schema and bump the board's `> Last updated:` header. Migration of older boards: see `task-add`'s **Schema upgrade** section.

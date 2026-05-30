@@ -139,7 +139,8 @@ child.add(ChildOf(parent))
 // Query children of a specific parent
 world.query(ChildOf(parent)).forEach(child => { /* ... */ })
 
-// Wildcard removal
+// Wildcard removal (remove all targets of a relation)
+const Likes = relation()
 player.remove(Likes('*'))
 ```
 
@@ -163,10 +164,14 @@ children.moveTo(0, 2)
 
 ### Event Subscriptions
 
+Lifecycle hooks are registered on the **world** (not the trait) and return an unsubscribe function:
+
 ```typescript
-Position.onAdd((entity) => { /* after trait set */ })
-Position.onRemove((entity) => { /* before data removed */ })
-Position.onChange((entity) => { /* after set() or changed() */ })
+const unsubAdd = world.onAdd(Position, (entity) => { /* after trait added */ })
+const unsubRemove = world.onRemove(Position, (entity) => { /* before trait removed */ })
+const unsubChange = world.onChange(Position, (entity) => { /* after set() or changed() */ })
+
+unsubAdd() // stop listening
 ```
 
 ### createActions

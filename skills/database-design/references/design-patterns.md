@@ -1,5 +1,7 @@
 # PostgreSQL Design Patterns
 
+> Examples use the skill's PK default `UUID DEFAULT uuidv7()` (PG18+); on PG ≤17 generate v7 at the application layer — see SKILL.md.
+
 ## 1. Table Inheritance
 
 Model multiple entity types that share common attributes.
@@ -62,7 +64,7 @@ CREATE TABLE payment_bank_transfers (
 
 ### PostgreSQL Native Inheritance (reference only)
 ```sql
-CREATE TABLE payment_credit_cards () INHERITS (payment);
+CREATE TABLE payment_credit_cards () INHERITS (payments);
 ```
 ⚠️ **Not recommended in production**: FK constraints don't apply to child tables, UNIQUE is per-table only.
 
@@ -78,7 +80,7 @@ CREATE TABLE user_accounts (
 );
 
 -- View for active users only
-CREATE VIEW active_user AS
+CREATE VIEW active_users AS
 SELECT * FROM user_accounts WHERE deleted_at IS NULL;
 
 -- Partial unique index (active users only)
@@ -160,8 +162,8 @@ CREATE TABLE event_stores (
     UNIQUE (aggregate_id, version)  -- optimistic concurrency control
 );
 
-CREATE INDEX idx_events_stores_aggregate ON event_stores (aggregate_id, version);
-CREATE INDEX idx_events_stores_type ON event_stores (aggregate_type, created_at);
+-- UNIQUE (aggregate_id, version) already creates an implicit B-tree index on those columns — no separate index needed.
+CREATE INDEX idx_event_stores_type ON event_stores (aggregate_type, created_at);
 
 -- Current state via projection table
 CREATE TABLE order_projections (
@@ -233,9 +235,10 @@ CREATE TABLE orders (
 );
 
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders FORCE ROW LEVEL SECURITY;  -- without FORCE, the table owner bypasses RLS; superusers and BYPASSRLS roles always bypass. Have the app connect as a non-owner, non-superuser role.
 
 CREATE POLICY tenant_isolation ON orders
-    USING (tenant_id = current_setting('app.current_tenant')::UUID);
+    USING (tenant_id = current_setting('app.current_tenant', true)::UUID);
 ```
 
 ## 7. Polymorphic Association
@@ -293,9 +296,10 @@ WHERE valid_from <= now() AND (valid_until IS NULL OR valid_until > now())
 ORDER BY product_id, valid_from DESC;
 
 -- Range type with exclusion constraint (prevent overlapping reservations)
+CREATE EXTENSION IF NOT EXISTS btree_gist;  -- required to combine a scalar = with a range && in a GiST exclusion constraint
 CREATE TABLE room_reservations (
     id UUID NOT NULL PRIMARY KEY DEFAULT uuidv7(),
-    room_id UUID NOT NULL REFERENCES room(id),
+    room_id UUID NOT NULL REFERENCES rooms(id),
     reserved_period TSTZRANGE NOT NULL,
     EXCLUDE USING GIST (room_id WITH =, reserved_period WITH &&)
 );
@@ -340,3 +344,5 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 ```
+
+⚠️ This only suppresses the `updated_at` bump; the UPDATE still rewrites the row and produces a dead tuple. It also never fires if the application already sets `updated_at` explicitly in the UPDATE (then `NEW.updated_at` always differs from `OLD`). To avoid the write entirely, don't issue no-op UPDATEs (or use the built-in `suppress_redundant_updates_trigger`).

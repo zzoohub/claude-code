@@ -96,7 +96,7 @@ Use Koota for all game state, R3F purely as a view layer:
 // traits.ts
 export const Position = trait({ x: 0, y: 0, z: 0 })
 export const Rotation = trait({ x: 0, y: 0, z: 0 })
-export const MeshRef = trait(() => null as THREE.Mesh | null)
+export const MeshRef = trait(() => null as THREE.Mesh | null) // null until the R3F view mounts; makes consumer null-guards load-bearing
 export const IsPlayer = trait()
 export const IsEnemy = trait()
 ```
@@ -107,7 +107,13 @@ function EnemyView({ entity }: { entity: Entity }) {
   const meshRef = useRef<THREE.Mesh>(null)
 
   useEffect(() => {
-    if (meshRef.current) entity.set(MeshRef, meshRef.current)
+    // add() ensures the trait exists so the entity joins the MeshRef archetype and matches
+    // world.query(Position, MeshRef); set() alone only updates an already-added trait.
+    if (meshRef.current) {
+      entity.add(MeshRef)
+      entity.set(MeshRef, meshRef.current)
+    }
+    return () => { entity.remove(MeshRef) }  // drop the stale mesh ref on unmount
   }, [entity])
 
   return (

@@ -92,6 +92,14 @@ Analyze the page across these dimensions, in order of impact:
 - Mobile experience issues
 - Long load times
 
+### 8. Performance / Core Web Vitals
+
+Slow pages are one of the cheapest large conversion wins, and the effect is biggest on mobile and paid traffic (where abandonment is already higher).
+
+- Measure **LCP, INP, CLS** via PageSpeed Insights (lab) and CrUX / Search Console (real-user field data).
+- Google's "good" thresholds, as rules of thumb: LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1 (targets, not guarantees).
+- Treat failing Core Web Vitals as a high-priority blocker — check early, since fixes are often cheap relative to the lift.
+
 ---
 
 ## Output Format
@@ -104,11 +112,11 @@ Easy changes with likely immediate impact.
 ### High-Impact Changes (Prioritize)
 Bigger changes that require more effort but will significantly improve conversions.
 
-### Test Ideas
+### A/B Test Ideas
 Hypotheses worth A/B testing rather than assuming.
 
-### Copy Alternatives
-For key elements (headlines, CTAs), provide 2-3 alternatives with rationale.
+### Copy Direction (hand to copywriting for final variants)
+For key elements (headlines, CTAs), describe the problem and the angle to pursue — the copywriting skill produces the final variants.
 
 ---
 
@@ -187,4 +195,4 @@ When recommending experiments, consider tests for:
 - Form optimization
 - Navigation and UX
 
-**For comprehensive experiment ideas by page type**: See [references/experiments.md](references/experiments.md)
+**For comprehensive experiment ideas by page type**: See [experiments.md](experiments.md)

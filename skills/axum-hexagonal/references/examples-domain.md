@@ -9,6 +9,7 @@ Models, errors, ports, and service implementation.
 ```rust
 // src/domain/authors/models.rs
 use std::fmt;
+use thiserror::Error;
 use uuid::Uuid;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -64,6 +65,9 @@ impl CreateAuthorRequest {
 
 ```rust
 // src/domain/authors/error.rs
+use thiserror::Error;
+use super::models::AuthorName;
+
 #[derive(Debug, Error)]
 pub enum CreateAuthorError {
     #[error("author with name {name} already exists")]
@@ -77,6 +81,12 @@ pub enum CreateAuthorError {
 
 ```rust
 // src/domain/authors/ports.rs
+use std::future::Future;
+use uuid::Uuid;
+use super::error::CreateAuthorError;
+use super::models::{Author, CreateAuthorRequest};
+use crate::domain::pagination::CursorPage;
+
 pub trait AuthorRepository: Clone + Send + Sync + 'static {
     fn create_author(
         &self, req: &CreateAuthorRequest,
@@ -131,6 +141,12 @@ pub struct CursorPage<T> {
 
 ```rust
 // src/domain/authors/service.rs
+use uuid::Uuid;
+use super::error::CreateAuthorError;
+use super::models::{Author, CreateAuthorRequest};
+use super::ports::{AuthorMetrics, AuthorNotifier, AuthorRepository, AuthorService};
+use crate::domain::pagination::CursorPage;
+
 #[derive(Debug, Clone)]
 pub struct AuthorServiceImpl<R: AuthorRepository, M: AuthorMetrics, N: AuthorNotifier> {
     repo: R, metrics: M, notifier: N,

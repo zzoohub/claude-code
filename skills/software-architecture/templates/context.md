@@ -20,7 +20,7 @@ Verb-centric list extracted from the PRD:
 
 | Path | Target | Drives |
 |---|---|---|
-| e.g., API response (main flow) | p99 < 200ms | Caching? Query optimization? |
+| e.g., API response (main flow) | p99 < 500ms | Caching? Query optimization? |
 | e.g., Uptime | 99.5% (3.6h downtime/month) | Health checks, alerting, redundancy |
 | e.g., Memory usage | < 50MB resident | Data structure choices, streaming |
 

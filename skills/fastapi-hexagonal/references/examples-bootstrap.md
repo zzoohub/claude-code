@@ -12,6 +12,7 @@ App orchestrator, main.py, config, pyproject.toml, and hex-specific test mocks.
 For HTTP-only apps, skip this and call Shell.run() directly in main.py.
 """
 import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine
 from app.config import AppConfig
 from domain.authors.service import AuthorServiceImpl
 from inbound.http.shell import Shell
@@ -25,17 +26,28 @@ class Application:
         self.config = config
 
     async def run(self) -> None:
-        repo = PostgresAuthorRepository(self.config.database_url)
+        # The engine is owned here and threaded into both the repository
+        # (via from_engine) and the Shell (for the /readyz healthcheck).
+        engine = create_async_engine(
+            self.config.database_url,
+            pool_size=10,
+            pool_timeout=3,
+            pool_pre_ping=True,
+        )
+        repo = PostgresAuthorRepository.from_engine(engine)
         metrics = PrometheusMetrics()
         notifier = EmailNotifier()
         service = AuthorServiceImpl(repo, metrics, notifier)
 
-        # TaskGroup cancels siblings on failure
-        async with asyncio.TaskGroup() as tg:
-            shell = Shell(self.config, service)
-            tg.create_task(shell.run())
-            # tg.create_task(scheduler.run())       # batch workers
-            # tg.create_task(periodic_cleanup())     # periodic tasks
+        try:
+            # TaskGroup cancels siblings on failure
+            async with asyncio.TaskGroup() as tg:
+                shell = Shell(self.config, service, engine=engine)
+                tg.create_task(shell.run())
+                # tg.create_task(scheduler.run())       # batch workers
+                # tg.create_task(periodic_cleanup())     # periodic tasks
+        finally:
+            await engine.dispose()
 
     def shutdown(self) -> None:
         pass
@@ -74,6 +86,7 @@ uv run serve
 ```python
 # src/app/main.py
 import asyncio
+from sqlalchemy.ext.asyncio import create_async_engine
 from app.config import AppConfig
 from domain.authors.service import AuthorServiceImpl
 from inbound.http.shell import Shell
@@ -82,12 +95,19 @@ from outbound.prometheus import PrometheusMetrics
 from outbound.email_client import EmailNotifier
 
 
-def main() -> None:
-    config = AppConfig()
-    repo = SqliteAuthorRepository(config.database_url)
+async def serve(config: AppConfig) -> None:
+    engine = create_async_engine(config.database_url, pool_timeout=3)
+    repo = SqliteAuthorRepository.from_engine(engine)
     service = AuthorServiceImpl(repo, PrometheusMetrics(), EmailNotifier())
-    shell = Shell(config, service)
-    asyncio.run(shell.run())
+    shell = Shell(config, service, engine=engine)
+    try:
+        await shell.run()
+    finally:
+        await engine.dispose()
+
+
+def main() -> None:
+    asyncio.run(serve(AppConfig()))
 
 
 if __name__ == "__main__":
@@ -103,9 +123,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class AppConfig(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./db.sqlite"
-    secret_key: str = "change-me"
+    # No default secret in production: the field is required, so the app
+    # refuses to start without SECRET_KEY set (no silent "change-me" signing).
+    secret_key: str = "dev-only-change-me"  # override via env in every non-dev environment
     port: int = 8080
+    # CORS: explicit, non-wildcard defaults. Driven into the middleware from config.
     cors_origins: list[str] = ["http://localhost:3000"]
+    cors_allow_methods: list[str] = ["GET", "POST", "PATCH", "DELETE", "OPTIONS"]
+    cors_allow_headers: list[str] = ["Authorization", "Content-Type", "X-Request-Id"]
+    cors_allow_credentials: bool = True
     access_token_expire_minutes: int = 30
 
     model_config = SettingsConfigDict(
@@ -170,20 +196,32 @@ uv add --dev some-tool     # add dev dependency
 ```python
 # tests/mocks.py
 from uuid import UUID
-from domain.authors.errors import CreateAuthorError, UnknownAuthorError
-from domain.authors.models import Author, CreateAuthorRequest
+from domain.authors.errors import CreateAuthorError, DuplicateAuthorError, UnknownAuthorError
+from domain.authors.models import Author, CreateAuthorRequest, CursorPage
 
 
 class MockAuthorRepository:
-    """Stub — returns configured results."""
+    """Stub — returns configured results.
+
+    The real port contract says ``create_author`` MUST raise
+    ``DuplicateAuthorError`` when the name already exists. The DB adapter gets
+    this for free from a UNIQUE constraint (a race-safe backstop — an app-side
+    check-then-insert would be TOCTOU). The mock has no DB, so it replicates the
+    constraint in memory; otherwise service tests pass against behavior the
+    production adapter doesn't have.
+    """
     def __init__(self, create_result: Author | CreateAuthorError | None = None):
         self._create_result = create_result
         self.create_calls: list[CreateAuthorRequest] = []
+        self._seen_names: set[str] = set()
 
     async def create_author(self, req: CreateAuthorRequest) -> Author:
         self.create_calls.append(req)
         if isinstance(self._create_result, Exception):
             raise self._create_result
+        if req.name.value in self._seen_names:
+            raise DuplicateAuthorError(name=req.name)
+        self._seen_names.add(req.name.value)
         return self._create_result
 
     async def find_author(self, author_id: UUID) -> Author | None:
@@ -234,13 +272,24 @@ class NoOpNotifier:
 ### Test app helpers
 
 ```python
-# Use Shell.build_test_app() for handler/E2E tests:
-app = Shell.build_test_app(service, test_config)
+# Use Shell.build_test_app() for handler/E2E tests (engine powers /readyz):
+engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+app = Shell.build_test_app(service, test_config, engine=engine)
 async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
-    response = await client.post("/authors", json={"name": "Test"})
+    response = await client.post("/v1/authors", json={"name": "Test"})
+    assert response.status_code == 201
+    assert response.headers["Location"] == f"/v1/authors/{response.json()['data']['id']}"
+    assert response.headers["X-Request-Id"]  # echoed/generated by middleware
+
+# GET collection — pagination metadata is nested under `meta` (shared spec):
+list_resp = await client.get("/v1/authors?limit=20")
+body = list_resp.json()
+assert isinstance(body["data"], list)
+assert body["meta"]["limit"] == 20
+assert "next_cursor" in body["meta"]
+assert "has_more" in body["meta"]
 
 # Use SqliteAuthorRepository.from_engine() for integration tests:
-engine = create_async_engine("sqlite+aiosqlite:///:memory:")
 repo = SqliteAuthorRepository.from_engine(engine)
 ```
 
@@ -255,6 +304,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from app.config import AppConfig
 from domain.authors.service import AuthorServiceImpl
 from inbound.http.shell import Shell
+from outbound.postgres.models import Base  # ORM metadata for create_all
 from outbound.sqlite.repository import SqliteAuthorRepository
 from tests.mocks import NoOpMetrics, NoOpNotifier
 
@@ -284,8 +334,9 @@ async def service(repo):
 
 
 @pytest.fixture
-async def client(service, test_config):
-    app = Shell.build_test_app(service, test_config)
+async def client(service, test_config, db_engine):
+    # Engine threaded in so /readyz can probe the DB (mirrors production wiring).
+    app = Shell.build_test_app(service, test_config, engine=db_engine)
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
 ```
@@ -370,6 +421,9 @@ uv run alembic downgrade -1
 
 ```python
 # src/app/application.py — improved with cleanup
+from sqlalchemy.ext.asyncio import create_async_engine
+
+
 class Application:
     def __init__(self, config: AppConfig) -> None:
         self.config = config
@@ -389,7 +443,8 @@ class Application:
 
         try:
             async with asyncio.TaskGroup() as tg:
-                shell = Shell(self.config, service)
+                # Engine threaded into Shell so /readyz can probe the DB.
+                shell = Shell(self.config, service, engine=self._engine)
                 tg.create_task(shell.run())
         finally:
             await self._engine.dispose()
