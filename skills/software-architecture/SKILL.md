@@ -21,7 +21,7 @@ description: |
 # Software Architecture — Full Design Pass
 
 Produces the **full architecture documents** for a new system from a PRD:
-context, system design, and decision log. Use this skill at the start of a
+context, system design, decision records, and risks. Use this skill at the start of a
 new project.
 
 ## Premise
@@ -74,7 +74,7 @@ This skill produces architecture-level decisions. It deliberately **excludes** t
 | 6 | Data Architecture | Where does data live, how does it flow? | `docs/arch/system.md` §3 |
 | 7 | Deployment | How does code get to production? | `docs/arch/system.md` §4 |
 | 8 | Cross-cutting Concerns | What properties hold across all components? | `docs/arch/system.md` §5 |
-| 9 | ADR & Risk Review | Are all decisions recorded? What could go wrong? | `docs/arch/decisions.md` |
+| 9 | ADR & Risk Review | Are all decisions recorded? What could go wrong? | `docs/arch/adr/`, `docs/arch/risks.md` |
 
 **Stages 2 <-> 3 <-> 4 co-evolve**: Domain modeling reveals new ASRs, pattern selection changes domain boundaries. One iteration is usually sufficient.
 
@@ -124,13 +124,14 @@ If the PRD has critical gaps that block architecture decisions, note them as ass
 
 ## Output Structure
 
-The design flow produces three output files:
+The design flow produces these output files:
 
 | File | Stages | Purpose | Template |
 |---|---|---|---|
 | `docs/arch/context.md` | 0-3 | What and why — problem, ASRs, domain model, constraints, assumptions | `templates/context.md` |
 | `docs/arch/system.md` | 4-8 | How — patterns, components, data, deployment, cross-cutting | `templates/system.md` |
-| `docs/arch/decisions.md` | All | Decisions and risks — ADRs, risk register, tech debt | `templates/decisions.md` |
+| `docs/arch/adr/ADR-NNN-{slug}.md` | All | One decision per file — context, options, decision, tradeoffs | `templates/adr.md` |
+| `docs/arch/risks.md` | 9 | Risk register, tech debt, open questions | `templates/risks.md` |
 
 Read the template files before writing output. Follow their structure.
 
@@ -140,18 +141,17 @@ Before updating, check the file's line count. If it exceeds the limit,
 **consolidate** — merge redundant sections, tighten wording, remove items
 already resolved. Trust git history.
 
-Exception for `docs/arch/decisions.md`: ADRs are additive — prepend each new ADR
-at the top (newest first), never rewrite existing ones. If the limit is hit,
-summarize superseded ADRs to one-line form and mark them
-`[superseded by ADR-NNN]` rather than deleting. This skill always writes a
-single-file `decisions.md`; the split-file layout (`decisions/ADR-NNN-{slug}.md`)
-is opt-in via the `arch-decision` skill.
+Exception for ADRs: each decision is its own file at `docs/arch/adr/ADR-NNN-{slug}.md`,
+created fresh and never rewritten — so there is no aggregate line cap. When a decision is
+superseded, set the older ADR's status to `Superseded by ADR-NNN` in its file rather than
+deleting it. The `arch-decision` skill records standalone ADRs into the same `docs/arch/adr/`
+directory.
 
 | File | Limit |
 |---|---|
 | `docs/arch/context.md` | 400 lines |
 | `docs/arch/system.md` | 600 lines |
-| `docs/arch/decisions.md` | 400 lines |
+| `docs/arch/risks.md` | 400 lines |
 
 ---
 
@@ -161,7 +161,7 @@ For future Claude sessions working on this project:
 
 - **New session** -> always load `docs/arch/context.md` first
 - **Implementation work** -> also load `docs/arch/system.md`
-- **Decision point** -> prepend a new ADR at the top of `docs/arch/decisions.md` (newest first) immediately
+- **Decision point** -> write a new ADR file at `docs/arch/adr/ADR-NNN-{slug}.md` immediately
 
 ---
 
@@ -208,7 +208,7 @@ design it was asked to critique is a failure. The only writes allowed are:
 - **Targeted patch** of a specific, named defect, in place — and only after you
   have stated the finding it fixes. One surgical edit per finding, never a
   section-wide rewrite or a "consolidate" pass.
-- **Additive append** to the Risk Register or Open Questions in `decisions.md`.
+- **Additive append** to the Risk Register or Open Questions in `risks.md`.
 - **A new ADR** via the `arch-decision` skill.
 
 If the user wants a full redesign rather than an audit, stop and run Build Mode
@@ -216,16 +216,16 @@ instead — but say so explicitly first.
 
 ### Procedure
 
-1. Read all of `docs/arch/*.md` — `context.md`, `system.md`, `decisions.md`,
-   and `database.md` if it exists.
+1. Read all of `docs/arch/` — `context.md`, `system.md`, `risks.md`, the ADRs
+   in `adr/`, and `database.md` if it exists.
 2. Audit against the **Self-Review checklist** above, the utility tree's
    `[H,H]` ASRs, and the ATAM gate. Those checklist items *are* the review
    criteria — you are checking whether the existing design still passes them.
 3. Rank every finding with the severity rubric below.
 4. Disposition each finding:
    - 🔴 / 🟠 fixable now and unambiguous → targeted patch to the affected doc.
-   - Accepted risk / won't-fix → append to the Risk Register in `decisions.md`.
-   - Needs user input → append to Open Questions in `decisions.md`.
+   - Accepted risk / won't-fix → append to the Risk Register in `risks.md`.
+   - Needs user input → append to Open Questions in `risks.md`.
    - Implies a new decision → new ADR via `arch-decision`.
 5. **Never** create a separate `review.md` — findings live in the docs they
    concern. Return a severity-ranked summary of what you found and did.
@@ -270,7 +270,7 @@ a required reading chain.
 | File | Content |
 |---|---|
 | `references/design-flow.md` | 10-stage methodology (stages 1-9). **Read first.** |
-| `templates/*.md` | Output templates for `docs/arch/context.md`, `docs/arch/system.md`, `docs/arch/decisions.md` |
+| `templates/*.md` | Output templates for `docs/arch/context.md`, `docs/arch/system.md`, `docs/arch/adr/`, and `docs/arch/risks.md` |
 | `references/system-architecture.md` | System patterns, composition flowchart, real-world examples |
 | `references/service-architecture.md` | Internal service structure: hexagonal (default), clean, vertical slice, FC/IS |
 | `references/ai-architecture.md` | LLM integration, RAG, streaming, vector storage, guardrails |

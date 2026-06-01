@@ -2,8 +2,7 @@
 name: arch-decision
 description: |
   Record a single Architecture Decision Record (ADR) for an existing system.
-  Appends one ADR to `docs/arch/decisions.md` (or creates one file under
-  `docs/arch/decisions/ADR-NNN-{slug}.md` if the project uses that layout).
+  Creates one ADR file at `docs/arch/adr/ADR-NNN-{slug}.md`.
   Patches `docs/arch/system.md` only when the decision changes the architecture
   surface (new component, swapped pattern).
   Use when: you need to record one architectural choice on an existing system —
@@ -37,9 +36,8 @@ record an ADR against a missing context, but flag the gap.
 4. States the choice with reasoning tied to an ASR or constraint from
    `context.md` §3.
 5. Records consequences — enables, costs, risks, affected components.
-6. Appends the ADR. Default location: `docs/arch/decisions.md` (append at top —
-   newest first). Alternative location: `docs/arch/decisions/ADR-NNN-{slug}.md`
-   if the project uses split files (check existing layout).
+6. Writes the ADR as a new file at `docs/arch/adr/ADR-NNN-{slug}.md` (one
+   decision per file).
 7. Patches the affected section of `system.md` ONLY if the decision changes
    the surface (new component, new pattern). Otherwise leaves `system.md` alone.
 
@@ -69,12 +67,13 @@ record an ADR against a missing context, but flag the gap.
 - **Revisit when:** Trigger conditions that should prompt reconsideration (scale threshold, library deprecation, new ASR, etc.).
 ```
 
-This extends `software-architecture`'s `templates/decisions.md` ADR format: it shares
-Door / Context / Decision / Why / Rejected / Tradeoff / Revisit-when, **adds** `Status`
-and an explicit `Options` list, and **omits** `Stage` (a standalone decision has no
+This extends `software-architecture`'s `templates/adr.md` ADR format: it shares
+`Status` / Door / Context / Decision / Why / Rejected / Tradeoff / Revisit-when, **adds**
+an explicit `Options` list, and **omits** `Stage` (a standalone decision has no
 design-flow stage). `Rejected` states why each *other* option lost the comparison —
-not a restatement of its cons. Appended ADRs may sit alongside ones authored by
-`software-architecture` in the same file; that mixed field shape is expected.
+not a restatement of its cons. ADRs authored here sit in the same `docs/arch/adr/`
+directory as ones authored by `software-architecture`; that mixed field shape across
+files is expected.
 
 **One-way doors** (analyze carefully): database choice, primary language, auth architecture, core domain model.
 **Two-way doors** (decide fast): library choice, caching strategy, log format, CI tool.
@@ -83,16 +82,15 @@ not a restatement of its cons. Appended ADRs may sit alongside ones authored by
 
 1. **Read context** — `docs/arch/context.md` and `docs/arch/system.md`. If
    either is missing, flag the gap to the user; you can still proceed.
-2. **Get the next ADR number** — Find the highest existing ADR-NNN and add 1.
-   NNN is zero-padded to 3 digits (`ADR-001`). Scan only the layout the project
-   actually uses (`decisions.md` or `decisions/`), not both.
+2. **Get the next ADR number** — Find the highest existing `ADR-NNN` in
+   `docs/arch/adr/` and add 1. NNN is zero-padded to 3 digits (`ADR-001`). If
+   `docs/arch/adr/` doesn't exist yet, start at `ADR-001`.
 3. **Frame one decision** — If multiple decisions surface, ask the user which
    to record first; defer the others to follow-up ADRs.
 4. **Draft 2-4 options** — Include "keep current" as one option.
 5. **Tie the choice to an ASR** — If you can't, the decision probably isn't
    ready, or the ASR list is incomplete (raise that).
-6. **Write the ADR** — Append to `decisions.md` (newest first) or create a new
-   `decisions/ADR-NNN-{slug}.md` file.
+6. **Write the ADR** — Create a new `docs/arch/adr/ADR-NNN-{slug}.md` file.
 7. **Patch system.md if needed** — Only when surface changes (new component,
    new pattern, etc.).
 
@@ -110,10 +108,9 @@ not a restatement of its cons. Appended ADRs may sit alongside ones authored by
 
 ## Output
 
-- `docs/arch/decisions.md` — appended (newest first)
+- `docs/arch/adr/ADR-NNN-{slug}.md` — new ADR file created
 - `docs/arch/system.md` — patched if architecture surface changed
 
-**Line limit:** `decisions.md` — 400 lines (same policy as `software-architecture`;
-the budget covers the whole file, including any Risk Register / Tech Debt sections it
-owns). When exceeded, summarize superseded ADRs to one line and mark them
-`[superseded by ADR-NNN]` rather than deleting.
+**Superseding:** ADRs are one file per decision — there is no aggregate line cap.
+When a new decision replaces an older one, set the older ADR's `Status` to
+`Superseded by ADR-{NNN}` in its file rather than deleting it.

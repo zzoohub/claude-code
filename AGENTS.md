@@ -162,7 +162,8 @@ one agent.
 | Feature spec | `docs/prd/features/{feature}.md` | product-manager | architect, task-manager, developers |
 | Arch context (greenfield sentinel) | `docs/arch/context.md` | architect (software-architecture) | architect (brownfield detection), developers |
 | Architecture | `docs/arch/system.md` | architect (software-architecture) | developers, release-engineer, reviewer |
-| Architecture decisions | `docs/arch/decisions.md` (or `docs/arch/decisions/ADR-NNN-*.md`) | architect (arch-decision) | developers |
+| Architecture decisions (ADRs) | `docs/arch/adr/ADR-NNN-{slug}.md` | architect (software-architecture, arch-decision) | developers |
+| Risks & open questions | `docs/arch/risks.md` | architect (software-architecture) | developers, reviewer |
 | Database design | `docs/arch/database.md` | architect (database-design) | backend-developer, reviewer, task-manager |
 | App UX | `docs/ux/ux-design.md` | ux-designer | frontend/mobile/desktop developers |
 | Screen specs | `docs/ux/screens/{screen}.md` | ux-designer | frontend/mobile/desktop developers |

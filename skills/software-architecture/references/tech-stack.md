@@ -4,7 +4,7 @@ This is not a neutral catalog of technology options — it is a **curated house 
 
 **When to use these**: Default to the options below. They require no additional justification.
 
-**When to deviate**: A choice outside this list requires an ADR in `docs/arch/decisions.md` that explicitly documents:
+**When to deviate**: A choice outside this list requires an ADR in `docs/arch/adr/` that explicitly documents:
 1. Why the house option was insufficient (specific capability gap, not "I prefer X")
 2. What the deviation costs — operational burden, new runtime, extra billing surface
 3. Revisit condition — when should we reconsider going back to the house option?

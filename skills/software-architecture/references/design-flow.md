@@ -198,11 +198,11 @@ For every **[H,H] ASR** from stage 2:
 If a [H,H] ASR has no satisfactory pattern:
 - Revisit the utility tree — is the importance/difficulty rating correct?
 - Consider hybrid patterns
-- If still unsatisfied: document the best-effort pattern and its gaps in `docs/arch/system.md` §1, add to `docs/arch/decisions.md` Risk Register as high-impact risk
+- If still unsatisfied: document the best-effort pattern and its gaps in `docs/arch/system.md` §1, add to the `docs/arch/risks.md` Risk Register as high-impact risk
 
 ### Output
 
-Write to `docs/arch/system.md` §1 (Patterns). Write ADRs for pattern decisions to `docs/arch/decisions.md`.
+Write to `docs/arch/system.md` §1 (Patterns). Write ADRs for pattern decisions as files in `docs/arch/adr/`.
 
 ---
 
@@ -483,7 +483,7 @@ Write to `docs/arch/system.md` §5 (Cross-cutting).
 
 **What it answers**: Are all decisions recorded? What could go wrong?
 
-Most ADRs are already written during stages 4-8. This stage reviews completeness and adds the risk register.
+Most ADRs are already written during stages 4-8. This stage reviews completeness and adds the risk register. ADRs live one-per-file in `docs/arch/adr/`; the risk register, tech debt, and open questions live in `docs/arch/risks.md`.
 
 ### ADR Format
 
@@ -491,6 +491,7 @@ Use this structured ADR format (Nygard/MADR-style fields) for consistency:
 
 ```
 ## ADR-NNN: [Title] — YYYY-MM-DD
+- Status: Accepted | Proposed | Superseded by ADR-NNN
 - Stage: [which design stage produced this decision]
 - Door: One-way (irreversible) | Two-way (reversible)
 - Context: [the situation and forces at play]
@@ -548,8 +549,8 @@ Architecture built by a small team mirrors that team's communication structure �
 
 ### Open Questions
 
-Capture unresolved decisions that block nothing yet but need an answer before the relevant stage ships — each with the options on the table and the information needed to decide. Record them in the **Open Questions** section of `docs/arch/decisions.md` and promote each to an ADR once decided.
+Capture unresolved decisions that block nothing yet but need an answer before the relevant stage ships — each with the options on the table and the information needed to decide. Record them in the **Open Questions** section of `docs/arch/risks.md` and promote each to an ADR (a new file in `docs/arch/adr/`) once decided.
 
 ### Output
 
-Final review of `docs/arch/decisions.md`.
+Final review of the ADRs in `docs/arch/adr/` and `docs/arch/risks.md`.

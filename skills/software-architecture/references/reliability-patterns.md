@@ -290,4 +290,4 @@ When designing any write path, answer:
 - [ ] Can two clients race on the same row? If yes, is there a version column or atomic update?
 - [ ] On the consumer side: is the handler idempotent by `event.id`?
 
-If any answer is "no" or "we'll handle it later," document it as a known risk in `docs/arch/decisions.md`.
+If any answer is "no" or "we'll handle it later," document it as a known risk in `docs/arch/risks.md`.
