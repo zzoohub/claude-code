@@ -82,6 +82,8 @@ Key focus areas:
 2. **Citation Triggers**: Patterns that increase the probability of being cited in AI-generated answers (citing sources and adding statistics are the highest-leverage — see the GEO study in the reference)
 3. **Monitoring & Measurement**: Tracking brand mentions and citations across AI platforms (Profound, Otterly, Peec AI, ZipTie)
 4. **Content Structure for AI**: Beyond extractability — how to format content that AI systems prefer to reference
+5. **Agentic Commerce**: For transactable brands, being *purchasable* by AI shopping agents (machine-readable product feeds + agentic-checkout protocols — OpenAI/Stripe ACP, Google UCP) is a workstream distinct from citation GEO
+6. **Non-English / Korea**: Naver's AI Briefing draws most citations from Naver's own walled-garden UGC, so Korean GEO needs an in-ecosystem playbook; machine-translated mirrors do not inherit citations
 
 ### Content Type Mapping (Detail: `references/content-type-mapping.md`)
 

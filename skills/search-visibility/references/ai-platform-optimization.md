@@ -16,6 +16,8 @@ See also (not prerequisites; each is linked directly from SKILL.md): `geo-conten
 6. [Monitoring AI Visibility](#monitoring-ai-visibility)
 7. [Common Mistakes](#common-mistakes)
 8. [2025-2026 AI Search Landscape Updates](#2025-2026-ai-search-landscape-updates)
+9. [Agentic Commerce — Being Purchasable, Not Just Cited](#agentic-commerce--being-purchasable-not-just-cited)
+10. [Non-English Surfaces — Korea / Naver](#non-english-surfaces--korea--naver)
 
 
 ## How AI Search Platforms Select Sources
@@ -33,10 +35,12 @@ See also (not prerequisites; each is linked directly from SKILL.md): `geo-conten
 
 **Critical stats** (as of early 2026 — these move fast; keep the date and re-verify). Each stat is followed by the decision it should drive:
 - AI Overviews appear in roughly **15-25% of Google queries in broad global keyword studies** (Semrush: peaked ~25% mid-2025, ~16% by Nov 2025), but **45-60% in US-focused / curated-keyword trackers** and per Google's own framing (Advanced Web Ranking ~60% of US queries; BrightEdge/Google ~50%). Varies widely by country, intent, device, and measurement method — treat as directional, not a single fact. **Decision:** measure AIO presence on *your own* tracked query set rather than picking a headline number; size the GEO investment to how many of your queries actually trigger an AIO
-- AI Overviews can cut click-through to the **top organic result by up to ~58%** when present (Ahrefs, Dec 2025). **Decision:** for AIO-present queries, target citation *inside* the AIO, not rank-1 CTR — track mentions, not just clicks
+- AI Overviews initially cut click-through to the **top organic result sharply** when present (Seer Interactive headlines a **~61% CTR decline** Q3→Q4 2025; an earlier iteration of the study put it at ~58%), **but that decline reversed in early 2026.** Per Seer (Apr 24 2026; 53 brands, 5.47M queries, 2.43B impressions, Jan 2025–Feb 2026), organic CTR on AIO queries rebounded from a **1.3% floor (Dec 2025) to 2.4% (Feb 2026)** — an ~85% jump that reversed an 18-month slide. **Being cited now pays:** cited brands earn **~+120% more clicks per impression than uncited** (roughly 2.2x), though cited pages still trail the no-AIO baseline by ~38% (treat as directional, single-study, re-verify quarterly — these are moving fast). **Decision:** for AIO-present queries, target citation *inside* the AIO (it is now worth ~2.2x the clicks of being uncited), and stop modeling AIO as a permanently collapsing CTR ceiling — GEO effort now compounds rather than fighting a falling floor
 - Brands are reportedly cited via third-party sources (Reddit, Wikipedia, review sites) far more than via their own domains. **Decision:** fund third-party presence (Reddit, Wikipedia, review sites) alongside on-site content, not after it
 - Well-structured, sourced content is cited materially more often than thin/undated content. **Decision:** add visible dates, authors, and sources to priority pages before chasing new content
 - Adding statistics and citing sources are among the highest-leverage on-page tactics (see the GEO study below). **Decision:** prioritize adding cited statistics and quotations to existing pages as the first GEO action
+
+**Assistant market share is re-ranking — stop treating Claude and Gemini as secondary** (as of mid-2026; trackers disagree widely by methodology, treat as directional and re-verify quarterly). ChatGPT's share fell well below its earlier ~85-87% dominance. First Page Sage (May 29 2026, US methodology): **ChatGPT 53.1%, Claude 20.9%, Gemini 13.2%, Copilot 8.7%, Perplexity 2.8%**. Other trackers diverge hard — StatCounter still shows ChatGPT ~77% with Claude ~3%; SimilarWeb ~68% with Gemini #2 (~18%) and Claude ~2% — so the *exact* ordering (especially Claude #2) is single-source and methodology-dependent. Scale check: Gemini's app reached ~750M MAU (Google Q4'25 earnings, Feb 2026) and reportedly ~900M by May 2026, vs ChatGPT ~900M weekly active users (Feb 2026). **Decision:** size GEO across at least ChatGPT, Claude, and Gemini — optimizing only for ChatGPT/Google now leaves a large, double-digit slice of assistant usage uncovered. Pick the share figure that matches your own measured referral mix, not a headline.
 
 ---
 
@@ -87,11 +91,12 @@ The **GEO study** (Aggarwal et al., *GEO: Generative Engine Optimization*, KDD 2
 AI systems don't just cite your website — they cite where you appear.
 
 **Third-party sources matter more than your own site:**
-- **Reddit** — typically the single most-cited domain across AI platforms (leads Google AI Overviews and Perplexity; ~12% of ChatGPT citations in Q1 2026, up sharply from ~2% in 2024-25). Highly volatile — Reddit's ChatGPT share swung from ~60% to ~10% of responses within two weeks in Sept 2025
-- **Wikipedia** — consistently a top source (~8% of ChatGPT citations in 2024-25 per Profound; ~13% in Q1 2026 per 5W/Similarweb)
+- **Reddit** — still the **#1 most-cited domain by absolute volume** across AI platforms (Peec AI 30M-source study, Mar 31 2026, ranks it #1 overall; ~2.5x YouTube's total citations) and ~12% of ChatGPT citations in Q1 2026. Highly volatile — Reddit's ChatGPT share swung from ~60% to ~10% within two weeks in Sept 2025
+- **YouTube** — now the **most-cited *social* source by share-of-answers** (cited in ~16% of LLM answers vs Reddit's ~10% over a trailing 6 months — Bluefish, reported by Adweek ~Jan 2026; YouTube's social-citation share roughly doubled Aug–Dec 2025 per Goodie AI's 6.1M-citation analysis) as LLMs extract from transcripts. **Decision:** treat video *with a full transcript* as a first-class citation asset, not a secondary channel — a video without a transcript is invisible to text retrieval (see `technical-seo.md` §8)
+- **Wikipedia** — consistently a top source (~8% of ChatGPT citations in 2024-25 per Profound; higher in some Q1 2026 reads)
+- **Per-engine source pools diverge** — the same Peec study confirms platforms pull from largely different pools (ChatGPT favors Wikipedia/Reddit/Forbes; Google AI favors Facebook/Yelp; Perplexity favors Reddit/LinkedIn/G2). Independent analyses (The Digital Bloom; Averi/Profound) put ChatGPT↔Perplexity domain overlap at only ~11%. **Decision:** a single citation strategy for all engines is wrong — split source-targeting by engine (e.g., Yelp/Facebook for Google, G2/LinkedIn for Perplexity B2B) and track citation share per engine, not in aggregate
 - Industry publications and guest posts
 - Review sites (G2, Capterra, TrustRadius for B2B SaaS)
-- YouTube (frequently cited by Google AI Overviews)
 - Quora answers
 
 (Citation shares vary by platform, study, and month — treat all figures as directional and re-check quarterly.)
@@ -190,7 +195,7 @@ Ranked roughly by how often each format gets cited (published citation-share per
 | Comparisons | `ItemList` | Structured comparison data |
 | Organization | `Organization` | Entity recognition |
 
-Structured data helps AI systems reliably parse entities, pricing, and Q&A, which can improve extractability. The exact visibility impact is not well-quantified and the evidence is mixed, so treat schema as a parsing aid, not a guaranteed visibility multiplier.
+Structured data helps Google and Bing/Copilot reliably parse entities, pricing, and Q&A — Microsoft confirms Bing/Copilot uses schema; Google says no special schema is needed for AI Overviews/AI Mode. But it is **not a proven citation lever** on the AI engines that parse plain text. A controlled Ahrefs test (May 11 2026, 1,885 pages adding JSON-LD vs ~4,000 controls) found Google AI Overviews **−4.6%**, AI Mode **+2.4%**, ChatGPT **+2.2%** (the last two indistinguishable from noise); the widely-repeated "~3x more likely to have JSON-LD" correlation is confounded (schema co-occurs with better-maintained, higher-authority sites). Independent retrieval tests (searchVIU, Dec 2025) found ChatGPT/Claude/Perplexity/Gemini/AI Mode extract only visible HTML and ignore JSON-LD during direct retrieval (treat as directional, re-verify). **Decision:** treat schema as extraction infrastructure for Google/Bing parsing accuracy, not a citation multiplier — do not over-invest in markup at the expense of extractable, stat-dense on-page content.
 
 ---
 
@@ -273,3 +278,30 @@ AI Mode does not answer your exact query directly — it decomposes it into mult
 `llms.txt` is a proposed plain-Markdown file at `/llms.txt` that lists your most important URLs (and optionally `/llms-full.txt` with full content) so LLMs can find canonical content. To publish one: place a Markdown file at the site root with an H1 title, a short summary blockquote, and sectioned lists of links with brief descriptions.
 
 **Caveat (important):** as of early 2026 **no major AI vendor has confirmed reading llms.txt**; crawlers fetch your HTML, and Google's John Mueller compared it to the deprecated keywords meta tag. Adoption is ~10%. It is cheap to publish but should be treated as a speculative, low-priority gesture — do not invest heavily or expect a citation lift.
+
+---
+
+## Agentic Commerce — Being Purchasable, Not Just Cited
+
+Beyond citation, a 2025-2026 agentic-checkout layer now lets assistants *transact*. For product/ecommerce brands, on-page content alone no longer makes you buyable inside AI. (Landscape as of mid-2026 — moving fast, re-verify and re-date.)
+
+| Surface | Mechanism | Entry ticket / fee | Notes |
+|---|---|---|---|
+| **OpenAI/Stripe ACP** (Agentic Commerce Protocol, Sept 29 2025) | Powers ChatGPT Instant Checkout via a Shared Payment Token (merchant stays merchant-of-record) | Publish an **ACP product feed** + stand up agentic-checkout endpoints. **4% merchant fee** (live for Shopify Jan 26 2026; ~9% effective stacked with processing) | Etsy live + 1M+ Shopify merchants. Converted poorly (~3x worse than Walmart.com per Walmart EVP); OpenAI is pivoting toward retailer apps/agent flows |
+| **Google UCP** (Universal Commerce Protocol, Jan 11 2026) | Agentic discovery + checkout over the Shopping Graph (50B+ listings Jan, 60B+ by May 2026); A2A/MCP + AP2 | A complete **Merchant Center feed + checkout-eligible products**. **No added Google fee** | Co-launched with Shopify/Etsy/Wayfair/Target/Walmart. The feed (not just web content) is the entry ticket to AI Mode/Gemini shopping |
+| **Amazon "Alexa for Shopping"** (Rufus retired into it, May 13 2026) | "Buy for Me" agent checks out on third-party retailer sites using stored card/address | Strong product attributes, reviews, Q&A discoverability | Grew 65K → 500K+ products; some retailers say they never opted in |
+| **Perplexity "Buy with Pro" + Merchant Program** | One-click in-chat checkout on PayPal/Venmo rails; merchant stays merchant-of-record | **Zero merchant fee**; ~5-min enrollment | Low-friction enrollment step distinct from generic Perplexity citation work (program details vendor-sourced — directional) |
+| **AP2** (Agent Payments Protocol, donated to FIDO Alliance Apr 28 2026) | Signs Intent/Cart/Payment mandates as tamper-proof authorization | Verified product data + merchant trust signals | Payment auth is converging on signed-mandate standards; MCP Storefront servers are emerging as the "plumbing" (directional/unverified) |
+
+**Decision:** for any transactable brand, treat a clean machine-readable product feed (Google Merchant Center for AI Mode/Gemini; an ACP feed for OpenAI) plus agentic-checkout endpoints as a *separate workstream from citation GEO*, and treat fee-vs-reach (e.g., ChatGPT's 4% vs Google/Perplexity's zero) as a real merchant decision. Being cited/recommended in ChatGPT still matters even where its native checkout underperforms.
+
+---
+
+## Non-English Surfaces — Korea / Naver
+
+This skill is English-global; Korea is the one market with hard platform-disclosed data and a structurally different playbook (as of mid-2026 — re-verify; per-language LLM-citation research is thin, so lean on platform-disclosed data and DIY per-language prompt tracking, not inferred LLM behavior).
+
+- **Naver (~64% Korean search share)** launched **AI Briefing**, which draws **~70% of its citations from Naver's own walled-garden UGC** (Blog, Cafe, Knowledge iN, Premium Content) per Naver's own disclosure. A global-web playbook (own-domain articles, schema, backlinks) is largely *invisible* to Naver AI. **Decision:** for Korean queries, the highest-leverage tactic is publishing optimized content *inside* Naver's ecosystem, and tracking AI Briefing citation share as the core Korean KPI.
+- **"Naver Mate" (launching June 2026)** pays ~3,000 creators/month selected by AI Briefing citation frequency (creator-stipend pool ~20bn won/yr, inside a broader 1 trillion won / 5-yr ecosystem investment) — a literal pay-for-AI-citation economy.
+- **Obsolete targets:** Naver's standalone Cue: (discontinued Mar 2025) and Clova X (shut down Apr 9 2026). The live surfaces are **AI Briefing** now and **AI Tab/agents** next. ChatGPT (GPT-5) is also embedded in KakaoTalk.
+- **Cross-cutting multilingual rule:** non-English pages that merely duplicate an English page get "semantically collapsed" and dropped — a machine-translated mirror does **not** inherit citations. Each locale needs net-new local facts, entities, and authority (Motoko Hunt, Search Engine Land, Jan 2026). Anchor cross-lingual entity recognition to a language-stable Wikidata Q-ID (see `geo-entity-clarity.md`).

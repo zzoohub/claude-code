@@ -68,6 +68,8 @@ Important:
 - Blocking Google-Extended blocks Gemini training data but does NOT block AI Overviews (those use Googlebot). Google-Extended and Applebot-Extended are opt-out tokens, not crawlers.
 - Check your CDN/bot settings as well as robots.txt: some CDNs (e.g., Cloudflare) block AI crawlers by default, so you may be blocking the search bots you want to be cited by (see `ai-platform-optimization.md`). Note also that robots.txt directives do not reliably control every vendor — PerplexityBot has been documented using undeclared stealth crawlers.
 
+**Cloudflare Content Signals Policy (Sept 24 2025)** — distinct from Content Independence Day. A new `Content-Signal:` robots.txt directive lets operators set yes/no per category — **search**, **ai-input** (real-time generative answers), **ai-train** — auto-applied to 3.8M+ managed domains with a recommended default of search=yes, ai-train=no, and **ai-input deliberately left unspecified**. The policy text is CC0 and references EU Directive 2019/790 Article 4 (potential EU legal weight). **Decision:** if you want AI-answer citations, verify `ai-input` is not set to `no` on your managed robots.txt — a managed default can silently opt you out of generative answer engines. Pair with **Pay Per Crawl** (HTTP 402, customers issuing 1B+/day): an engine that won't pay a charged crawler simply won't fetch and therefore can't cite, so decide which *citation* bots to grant free access to, separately from *training* bots you may monetize or block.
+
 ### XML Sitemaps
 
 A file that lists all URLs you want search engines to index.
@@ -169,6 +171,10 @@ For paginated content (category pages, blog archives):
 | Initial load speed | Faster first contentful paint | Slower initial load, faster subsequent navigation |
 
 **Recommendation**: Use SSR or pre-rendering for any content you want discoverable by search engines and AI systems. If your site is built with React, Vue, Angular, or similar frameworks, ensure critical content is server-rendered.
+
+### AI Crawlers Execute Zero JavaScript (a binary extractability prerequisite)
+
+The dedicated AI crawlers **fetch JavaScript files but never execute them**: the Vercel/MERJ study (Dec 17 2024, 500M+ GPTBot fetches) found GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, and PerplexityBot do no JS rendering; independent hands-on tests (Glenn Gabe, gsqi.com) confirmed ChatGPT/Claude/Perplexity could not read JS-dependent pages. Only Google (Gemini via Googlebot/Chromium) renders JS; Bingbot renders partially and inconsistently (so ChatGPT Search, which leans on Bing's index, is the partial exception). **Consequence:** any content that appears only after client-side JS (React/Vue/Angular SPAs — pricing tables, FAQ answers, comparison data) is **invisible** to the largest AI engines unless it is in server-delivered HTML. **Decision:** for JS-framework sites, move every citation-worthy passage into SSR/SSG/prerendered HTML — this is the difference between being citable and being absent from ChatGPT, Claude, and Perplexity, not a nice-to-have.
 
 ### Pre-rendering / Static Site Generation (SSG)
 

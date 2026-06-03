@@ -26,6 +26,10 @@ Two types of presence drive AI visibility:
 
 Both are necessary. Owned presence demonstrates expertise. Earned mentions validate credibility. Together, they give AI systems the confidence to reference you.
 
+### How Much of AI Brand Knowledge Is Off-Site (size GEO effort accordingly)
+
+Most of what an LLM "knows" about a brand comes from off-site sources, so off-site placement should be the *majority* of GEO effort. Omniscient Digital (23,387 citations, 240 branded prompts, Jan 2026) found **earned media ~48%** of brand citations, **third-party/commercial ~30%**, and a brand's **own site only ~23%** (earned hits 82% for review-style queries; owned peaks ~50% only for functionality/integration queries). Muck Rack's Generative Pulse (1M+ AI-cited links, Mar 30 2026) found journalistic/earned media is ~25% of all LLM citations, **~94% of cited links are non-paid**, and cited press releases carry ~2x the statistics and 2.5x the bullets of non-cited ones — with only ~2% overlap between the journalists PR teams pitch most and those AI actually cites. (Exact splits are methodology-dependent — branded vs general queries move the owned-content share — treat as directional, re-verify.) **Decision:** budget GEO so off-site (reviews, forums, editorial, directories) is the majority line item; reserve owned-domain content for product/integration depth; and write earned/press content to the same extractable, stat-dense template this skill teaches for on-page, targeting the outlets AI cites rather than legacy media lists.
+
 ---
 
 ## Owned Presence: Platform Strategies
@@ -50,7 +54,7 @@ Both are necessary. Owned presence demonstrates expertise. Earned mentions valid
 
 ### LinkedIn
 
-**Why it matters for AI**: LinkedIn is a top-cited source in LLM outputs. It signals professional authority and expertise.
+**Why it matters for AI**: LinkedIn surged from outside the top 20 to the **#1 most-cited domain for professional/B2B queries** across all six major AI engines (ChatGPT, Gemini, AI Overviews, AI Mode, Copilot, Perplexity) between Nov 2025 and Feb 2026 — climbing ~#11 to ~#5 on ChatGPT overall, and now **#2 overall behind Reddit** (Profound; Semrush counted ~89,000 cited LinkedIn URLs). Note: the #1 ranking holds for *professional* queries specifically (treat as directional, re-verify quarterly). **Decision:** for B2B/professional brands, treat founder and employee LinkedIn **long-form** content (posts, articles, newsletters — now a large share of LinkedIn's ChatGPT citations) as a first-class citation surface, not just a company profile to complete.
 
 **What to create**:
 - Company page with complete, accurate description aligned with website
@@ -128,6 +132,10 @@ Reviews are a primary source AI systems use when recommending products.
 - Build relationships with industry journalists and analysts
 - Issue press releases for significant milestones (with genuine news value)
 - Offer expert commentary on industry trends and breaking news
+
+### Licensed Platforms & Content Deals
+
+Which sources engines cite is partly a function of commercial **licensing access**, not just content quality — a structural reason a smaller brand can be effectively invisible in ChatGPT despite strong pages. Publishers with OpenAI content-licensing deals saw ~7x the ChatGPT clickthrough of unlicensed publishers (Tollbit State of the Bots, Oct 2025 — though the absolute benefit is small and declining: licensed-publisher CTR fell ~8.8% → ~1.3% across 2025). Citation share tracks licensing status: Wikipedia (free CC) ~47.9% of ChatGPT *top-10* citations; Reddit (paid OpenAI ~$70M/yr and Google ~$60M/yr deals) ~46.7% of Perplexity top-10 and ~21% of Google AIO citations; News Corp–OpenAI ~$50M/yr (treat as directional, re-verify; these are top-10 concentration figures, not share of all citations). **Decision:** prioritize earning presence *on* the licensed platforms engines structurally favor (Reddit threads, an accurate Wikipedia entity, licensed news outlets) and getting your data/quotes into those outlets, alongside own-domain work — pure on-page GEO cannot replicate licensed-platform access.
 
 ### Community Mentions
 
