@@ -5,7 +5,7 @@ description: |
   Use when: building full-stack apps with TanStack Start, using TanStack Router file-based routing,
   writing createServerFn or createMiddleware, deploying TanStack Start apps.
   Also use when user mentions TanStack Start or TanStack Router.
-  Do not use for: Next.js (use vercel-composition-patterns / vercel:nextjs). For SolidJS apps,
+  Do not use for: Next.js (use react-best-practices). For SolidJS apps,
   prefer SolidStart or TanStack Start's Solid adapter — this skill covers React patterns only.
   For React-specific patterns, also read `references/react.md`.
 ---

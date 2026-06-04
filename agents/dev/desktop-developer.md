@@ -26,12 +26,13 @@ Before writing any code, execute these steps in order:
 
 1. **Read project conventions** — `CLAUDE.md` (and any project-convention docs) at the repo root first. Project conventions may override the default paths used below; resolve all later paths against them.
 2. **Read architecture** — `docs/arch/system.md` to identify the web framework for Tauri's UI layer. If missing, infer from `apps/desktop/package.json` (web deps) and `apps/desktop/src-tauri/Cargo.toml` (Tauri version). If the framework still can't be determined, surface a clarifying question in your Notes (you cannot prompt the user interactively).
-3. **Load skills** — `frontend-design:frontend-design` (frontmatter) is preloaded at startup — it's an external plugin; if absent, fall back to `design-system` + general best practice and note it briefly. Load the remaining UI-layer skills at runtime via the `Skill` tool based on the detected UI stack. Rows are **not** mutually exclusive — load every row that applies (e.g. a React TanStack Start app matches both `tanstack-start` and `vercel-composition-patterns`; load both, they are complementary):
+3. **Load skills** — `frontend-design:frontend-design` (frontmatter) is preloaded at startup — it's an external plugin; if absent, fall back to `design-system` + general best practice and note it briefly. Load the remaining UI-layer skills at runtime via the `Skill` tool based on the detected UI stack. Rows are **not** mutually exclusive — load every row that applies (e.g. a React TanStack Start app matches both `tanstack-start` and `composition-patterns`; load both, they are complementary):
    | Skill | Condition |
    |-------|-----------|
    | `tanstack-start` | TanStack Start UI layer (React or Solid) |
-   | `vercel-composition-patterns` | React UI layer (Vite / TanStack Start / Next.js) |
-   | `vercel-react-best-practices` | React UI layer (Vite / TanStack Start / Next.js) |
+   | `composition-patterns` | React component architecture (compound components, avoiding boolean-prop sprawl) |
+   | `react-best-practices` | React / Next.js performance (waterfalls, bundle size, re-renders) |
+   | `react-view-transitions` | Page/route transitions, shared-element & enter/exit animations (React View Transition API) |
    | `design-system` | UI components, styling, theming |
    | `i18n` | User-facing text, internationalization |
    | `motion` | Animation, transitions, scroll, gestures |

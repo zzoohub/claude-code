@@ -17,9 +17,10 @@ each agent reads and writes files by convention**, and **what external tools the
 This repo is **not an application** — it is a **portable skill library + a Claude Code agent layer**.
 There is no product source code here. It ships three things:
 
-- **`skills/`** — **41** framework-agnostic skills, each `skills/<kebab-name>/SKILL.md` plus optional
-  `references/` (deep-dive docs loaded on demand — 31 skills), `templates/` (output scaffolds — `qa`,
-  `software-architecture`), and `scripts/` (helpers — `database-design`, `postgresql`; both `.sql`).
+- **`skills/`** — **45** framework-agnostic skills, each `skills/<kebab-name>/SKILL.md` plus optional
+  `references/` (deep-dive docs loaded on demand — 32 skills), `rules/` (per-rule guideline files —
+  `composition-patterns`, `react-best-practices`, `react-native-skills`), `templates/` (output scaffolds
+  — `qa`, `software-architecture`), and `scripts/` (helpers — `database-design`, `postgresql`; both `.sql`).
   A `SKILL.md` runs on any Agent-Skills-compatible runtime; only `name` + `description` frontmatter
   is load-bearing.
 - **`agents/`** — **15** Claude-Code-only subagent definitions, split `agents/plan/` (4) ·
@@ -34,13 +35,15 @@ There is no product source code here. It ships three things:
 the consuming project an agent operates on — never this library's own contents** (whose only
 top-level dirs are `agents/` and `skills/`). Don't look for app code or those doc trees here.
 
-**Externally-managed skills (symlinks, may be dangling).** Four entries under `skills/` are
-git-tracked symlinks (mode `120000`) into an external store at `../../.agents/skills/`
-(Vercel/Expo-managed) — **dangling in a fresh checkout on this machine**:
-`vercel-composition-patterns`, `vercel-react-best-practices`, `vercel-react-native-skills`,
-`web-design-guidelines`. They resolve only where that store is installed; a `skills/<name>` file
-check fails for them locally, and agents that use them already document a `design-system` fallback.
-So `ls skills/` shows 45 entries but only 41 are real, repo-owned skills.
+**Internalized React/RN skills (formerly external symlinks).** Four skills here were vendored in
+from [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills) (MIT) and scrubbed of
+Vercel-infrastructure coupling so they are self-contained and host-agnostic: `composition-patterns`,
+`react-best-practices`, `react-native-skills` (each ships a `rules/` library) and
+`react-view-transitions` (ships `references/`). They replaced four dangling symlinks into an external
+Vercel/Expo store. The Vercel-Labs `web-design-guidelines` / `writing-guidelines` skills were
+deliberately **not** internalized — they only *wrap* a live WebFetch of Vercel-Labs-hosted rulesets
+(a runtime Vercel-Labs dependency); `design-system` remains the UI-guidance authority. So every entry
+under `skills/` is now a real, repo-owned directory — no symlinks.
 
 **Adding to the library:** a new skill → `skills/<kebab-name>/SKILL.md` (name + description
 frontmatter; follow **Skill conventions** below). A new agent → `agents/<layer>/<name>.md` (follow
@@ -207,7 +210,8 @@ supplies the question UI) and carries any approved tasks to `task-manager`, whic
 
 Each bullet is the agent's **routable skill palette**, not its frontmatter — most of these load on
 demand via the `Skill` tool; only a subset (often one) is preloaded in the agent's `skills:` array
-(e.g. `backend-developer` preloads `[postgresql]`, `growth-optimizer` preloads `[copywriting]`).
+(e.g. `backend-developer` preloads `[postgresql]`, `mobile-developer` preloads `[react-native-skills]`,
+`growth-optimizer` preloads `[copywriting]`).
 Skill names with a colon (`vercel:deploy`) are the runtime Skill-tool namespace; the same skills
 appear under hyphenated dir names in `skills/` when repo-owned.
 
@@ -219,8 +223,8 @@ appear under hyphenated dir names in `skills/` when repo-owned.
 
 **Dev layer (doers):**
 - `backend-developer` → postgresql + one of axum-hexagonal / fastapi-hexagonal / hono-hexagonal / nestjs-hexagonal (by stack) · database-design · correctness-checklists
-- `frontend-developer` → frontend-design + tanstack-start / vercel-composition-patterns / vercel-react-best-practices (by stack) · design-system · motion · i18n · web3d
-- `mobile-developer` → vercel-react-native-skills · expo-app-design (Expo/Vercel-managed) · design-system · motion · i18n
+- `frontend-developer` → frontend-design + tanstack-start / composition-patterns / react-best-practices / react-view-transitions (by stack) · design-system · motion · i18n · web3d
+- `mobile-developer` → react-native-skills · expo-app-design (Expo-managed) · design-system · motion · i18n
 - `desktop-developer` → same web UI skill as frontend + Tauri-specific work
 - `reviewer` → security-checklists · correctness-checklists · maintainability-checklists
 - `verifier` → qa (browse) + playwright (preferred) / claude-in-chrome fallbacks
@@ -364,8 +368,7 @@ These power specific agents. If one is unavailable, the agent falls back as note
 | Dependency | Used by | Purpose | Fallback if missing |
 |---|---|---|---|
 | `frontend-design` plugin | frontend-developer, desktop-developer | Production-grade UI design | `design-system` + general best practice |
-| `vercel-*` skills (Vercel-managed) | frontend/mobile/desktop developers | React / Next / TanStack / RN patterns. Vercel-managed upstream; present in `skills/` only as symlinks into the external `../../.agents/skills/` store (dangling in this checkout — see *What this repository is*) | `design-system` + general best practice |
-| `expo-app-design` plugin (Expo-managed) | mobile-developer | Native Expo/RN UI patterns. Expo-managed upstream, always installed — fall back briefly only if absent | `vercel-react-native-skills` + `design-system` |
+| `expo-app-design` plugin (Expo-managed) | mobile-developer | Native Expo/RN UI patterns. Expo-managed upstream, always installed — fall back briefly only if absent | `react-native-skills` (internalized) + `design-system` |
 | Vercel MCP | release-engineer | Auth session for `vercel:*` skills + CLI (MCP exposes auth only; deploy/env/state run through the skills) | `vercel` CLI via Bash |
 | Cloudflare MCPs (bindings/builds/observability) | release-engineer | Workers/Pages deploy, build logs, runtime logs | `wrangler` CLI via Bash |
 | Supabase MCP | release-engineer | Migrations, edge functions, advisors, logs | `supabase` CLI via Bash |
@@ -410,10 +413,11 @@ Be honest about what this library does **not** do yet, so you don't assume an ow
   but SOC2/ISO, secrets-rotation policy, and vendor risk are not.
 - **Validation/PMF method** — `product-brief` captures the problem; it does not prescribe how to
   validate it (interviews, landing-page smoke tests, Sean Ellis survey).
-- **Orphan + dangling reference** — `skills/web-design-guidelines` is a symlink into the missing
-  external `../../.agents/skills/` store (dangling here) **and** is routed by no agent. `design-system`
-  is the primary UI guidance for frontend/desktop developers. Either restore that store, replace the
-  symlink with a real skill dir and route it, or delete the dead symlink.
+- **Vercel-Labs `web-design-guidelines` / `writing-guidelines` not internalized** — unlike the four
+  React/RN skills vendored in from vercel-labs/agent-skills, these two only *wrap* a live WebFetch of
+  Vercel-Labs-hosted rulesets, so internalizing them as-is would keep a runtime Vercel-Labs dependency;
+  they were left out. `design-system` remains the primary UI-guidance authority for frontend/desktop
+  developers. To adopt them, vendor the remote rulesets into a real skill dir first, then route them.
 - **Stale `.gitignore` whitelist** — the ignore-all-then-allow list still whitelists `!AGENTS.md`
   (deleted — replaced by `CLAUDE.md`) and `!commands/` (no such dir exists), and duplicates
   `!README.md` (no README exists either). Harmless no-ops, but worth pruning on the next pass.

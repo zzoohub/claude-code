@@ -26,8 +26,9 @@ Before writing any code, execute these steps in order:
    | Skill | Condition |
    |-------|-----------|
    | `tanstack-start` | TanStack Start stack (React or Solid) |
-   | `vercel-composition-patterns` | React stack (Next.js / TanStack Start / Vite) |
-   | `vercel-react-best-practices` | React stack (Next.js / TanStack Start / Vite) |
+   | `composition-patterns` | React component architecture (compound components, avoiding boolean-prop sprawl) |
+   | `react-best-practices` | React / Next.js performance (waterfalls, bundle size, re-renders) |
+   | `react-view-transitions` | Page/route transitions, shared-element & enter/exit animations (React View Transition API) |
    | `design-system` | UI components, styling, theming |
    | `i18n` | User-facing text, internationalization |
    | `motion` | Animation, transitions, scroll, gestures |
