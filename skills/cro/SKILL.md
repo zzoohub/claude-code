@@ -29,7 +29,7 @@ What is the ONE primary action? Be specific: "signup", "upgrade to paid", "submi
 ### 2. Map the Current Funnel
 Document every step from entry to conversion. Identify where users enter, what they see, and where they drop off.
 
-If funnel- or field-level data doesn't exist yet, instrument it first — see the `product-analytics` skill (`references/event-tracking-design.md` for the tracking plan, `references/ga4-gtm-setup.md` for GA4/event setup). You can't optimize what you can't measure; absent data, fall back to a heuristic audit and flag that lift estimates are unvalidated.
+If funnel- or field-level data doesn't exist yet, instrument it first — drawing on a product-analytics capability (tracking-plan and GA4/event-setup guidance) if one is available. You can't optimize what you can't measure; absent data, fall back to a heuristic audit and flag that lift estimates are unvalidated.
 
 Before treating funnel/drop-off numbers as exact, account for measurement gaps: consent-banner opt-outs (declined users aren't tracked), Safari/Firefox cookie restrictions and ad-blockers (lost sessions), and GA4 Consent Mode modeled (estimated, not observed) conversions. For high-stakes calls, reconcile against server-side or order-level data.
 
@@ -109,7 +109,7 @@ Every hypothesis needs validation. What works on one site may fail on another. S
 
 This is the default shape. When a reference defines its own Output Format (e.g. `page-cro.md`, `signup-flow-cro.md`, `onboarding-cro.md`, `form-cro.md`), follow the reference's format and treat this template as the fallback.
 
-**Output:** When asked to save a written CRO analysis, write it to `biz/growth/cro/{page-or-flow}-analysis.md` (default).
+**Output:** When asked to save a written CRO analysis (if a file-write capability is available), write it to the growth-output root (default `biz/growth/cro/{page-or-flow}-analysis.md`; caller may redirect the `biz/<area>/` root).
 
 ```markdown
 ## CRO Analysis: [Page/Flow Name]

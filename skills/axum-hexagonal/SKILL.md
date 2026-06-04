@@ -315,7 +315,7 @@ impl FromRef<AppState> for Arc<AppBillingService> { ... }
 
 ## Reliability & Observability Ports
 
-Cross-cutting infrastructure that must not leak into the domain. Define each as a port; implement as adapters. Architecture-level pattern lives in `software-architecture/references/reliability-patterns.md` and `observability.md`.
+Cross-cutting infrastructure that must not leak into the domain. Define each as a port; implement as adapters. The architecture-level pattern lives in the software-architecture skill's references (`reliability-patterns.md`, `observability.md`) if installed; otherwise apply standard patterns — outbox, idempotency keys, retry/backoff, structured logging, RED/USE — inline.
 
 | Port | Purpose | Where it lives |
 |---|---|---|

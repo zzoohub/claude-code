@@ -30,7 +30,7 @@ description: |
 3. **Select 2-3 models** — Don't overload; pick the most applicable.
 4. **Design within guardrails** — Apply the models within the Ethical Guardrails below.
 5. **Implement** — Use copywriting for messaging, cro for flow changes.
-6. **Measure** — Validate with cro experiments; track impact via the data-analyst agent.
+6. **Measure** — Validate with cro experiments; track impact via product-analytics.
 
 ---
 

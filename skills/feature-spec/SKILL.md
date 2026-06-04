@@ -21,28 +21,30 @@ rewriting the vision PRD.
 
 ## Prerequisites
 
-`docs/prd/prd.md` must already exist.
+The PRD must already exist (default `docs/prd/prd.md`; caller may redirect).
 
-**If no PRD exists yet**, stop — this is the wrong skill. A single feature spec
-with no product vision to anchor it has nothing to tie back to. Tell the user
-and route to `prd-craft` (which creates the full PRD plus feature specs), or to
-`product-brief` if the idea is still unvalidated.
+**If no PRD exists yet**, ask the caller rather than halting — a single feature
+spec with no product vision to anchor it has nothing to tie back to. Surface
+that the full-PRD path (which creates the vision PRD plus feature specs) or an
+earlier product-brief path fits better if the idea is still unvalidated, and
+route there if such a capability is available.
 
 ## What This Skill Does
 
-1. Reads the existing `docs/prd/prd.md` to understand the product, target users,
-   success metrics, and existing feature list — these constrain the new feature's
-   shape and naming.
-2. Reads existing `docs/prd/features/*.md` to avoid naming conflicts and to
-   reference related features.
+1. Reads the existing PRD (default `docs/prd/prd.md`; caller may redirect) to
+   understand the product, target users, success metrics, and existing feature
+   list — these constrain the new feature's shape and naming.
+2. Reads existing feature specs (default `docs/prd/features/*.md`) to avoid
+   naming conflicts and to reference related features.
 3. Asks the minimum questions needed to write the spec (problem, journey,
    acceptance — ~3 for a typical feature; ask more only if the feature is
    genuinely complex — multiple user types, compliance, cross-feature
-   dependencies). Skip what's already clear from prd.md or the user's request.
-4. Writes one new `docs/prd/features/{feature}.md` following the template below.
-5. Patches `docs/prd/prd.md` in place. Locate sections by **role**, not by fixed
+   dependencies). Skip what's already clear from the PRD or the user's request.
+4. Writes one new feature spec at `docs/prd/features/{feature}.md` (or the
+   caller's chosen features directory) following the template below.
+5. Patches the PRD in place. Locate sections by **role**, not by fixed
    number (a hand-written or differently-organized PRD may number or title them
-   differently; §5/§6 are just the prd-craft default layout):
+   differently; §5/§6 are just the default full-PRD layout):
    - Find the **Feature Overview** table and add a row for the feature. If a row
      for it already exists, **update it in place** — don't append a duplicate.
    - Find the **Dev Order** / roadmap section and insert (or update) the feature
@@ -97,15 +99,15 @@ Unknowns still being resolved. Flag them — don't invent answers. Remove as the
 
 ## Workflow
 
-1. **Read context** — `docs/prd/prd.md` + relevant existing `docs/prd/features/*.md`
+1. **Read context** — the PRD (default `docs/prd/prd.md`) + relevant existing feature specs (default `docs/prd/features/*.md`)
 2. **Discover the feature** — ask the questions from "What This Skill Does" step 3:
-   - What user problem does this solve? (must tie back to prd.md problem)
+   - What user problem does this solve? (must tie back to the PRD problem)
    - What's the core user journey, end-to-end?
    - What does "done" look like — what acceptance defines success?
 3. **Draft the spec** — Use the feature-spec template; keep it within the 200-line limit
-4. **Patch prd.md** — Add (or update, if already present) the feature's Feature
+4. **Patch the PRD** — Add (or update, if already present) the feature's Feature
    Overview row and Dev Order entry, locating those sections by role. Check
-   prd.md against its 400-line limit first; consolidate if it would exceed.
+   the PRD against its 400-line limit first; consolidate if it would exceed.
 5. **Quality check** — see Quality Bar below
 
 ## Quality Bar
@@ -115,19 +117,18 @@ Unknowns still being resolved. Flag them — don't invent answers. Remove as the
 - [ ] At least one full user journey is mapped
 - [ ] Edge cases cover the failure modes relevant to this feature (invalid/empty input, unauthorized, concurrent/duplicate, limit exceeded, upstream failure, partial success)
 - [ ] Open questions are flagged — no invented answers
-- [ ] Passes the critical PRD anti-patterns: no solution-as-problem Overview, no library/framework names in Requirements, every requirement has evidence (see `prd-craft/references/anti-patterns.md`)
-- [ ] Feature appears exactly once in `prd.md` Feature Overview and once in Dev Order (update in place on re-run, don't duplicate)
-- [ ] Filename matches the kebab-case feature name from prd.md
+- [ ] Passes the critical PRD anti-patterns: no solution-as-problem Overview, no library/framework names in Requirements, every requirement has evidence (see the PRD anti-patterns reference, e.g. `prd-craft/references/anti-patterns.md`, if available)
+- [ ] Feature appears exactly once in the PRD's Feature Overview and once in Dev Order (update in place on re-run, don't duplicate)
+- [ ] Filename matches the kebab-case feature name from the PRD
 
 ## Output
 
-- `docs/prd/features/{feature}.md` — new file
-- `docs/prd/prd.md` — patched (Feature Overview table + Dev Order)
+- `docs/prd/features/{feature}.md` (or the caller's chosen features directory) — new file
+- the PRD (default `docs/prd/prd.md`) — patched (Feature Overview table + Dev Order)
 
-**Line limit:** `docs/prd/features/{feature}.md` — 200 lines. Consolidate if
-over.
+**Line limit:** the feature spec — 200 lines. Consolidate if over.
 
 **Next:** once the spec is approved, the feature flows into the same downstream
-stages as any PRD feature — `arch-decision` (if it needs an architecture call),
-`screen-design` (if it has UI), then `task-add` to break it into tasks. Routing
-hints, not steps this skill performs.
+stages as any PRD feature — an architecture-decision pass (if it needs an
+architecture call), screen design (if it has UI), then task breakdown — using
+those capabilities if available. Routing hints, not steps this skill performs.

@@ -371,7 +371,7 @@ Mark with `@Global()` when the module should be available everywhere without exp
 
 ## Reliability & Observability Ports
 
-Cross-cutting infrastructure that must not leak into the domain. Define each as an abstract class (the same DI-token pattern used for repositories); implement as outbound adapters. Architecture-level pattern lives in `software-architecture/references/reliability-patterns.md` and `observability.md`.
+Cross-cutting infrastructure that must not leak into the domain. Define each as an abstract class (the same DI-token pattern used for repositories); implement as outbound adapters. The architecture-level pattern lives in the software-architecture skill's references (`reliability-patterns.md`, `observability.md`) if installed; otherwise apply the standard patterns inline — outbox, idempotency keys, retry/backoff, structured logging, RED/USE.
 
 | Port | Purpose | Where it lives |
 |---|---|---|

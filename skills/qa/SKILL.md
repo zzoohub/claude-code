@@ -13,6 +13,7 @@ allowed-tools:
   - Read
   - Write
   - AskUserQuestion
+compatibility: Drives the browse tool (a host-coupled headless browser; resolved via `${BROWSE_BIN}` or a `find-browse` resolver). Degrades gracefully without a file-write or user-prompt tool.
 ---
 
 # /qa: Systematic QA Testing
@@ -40,14 +41,16 @@ there is a single source of truth — no binary-path logic is duplicated here.
 ## Locate the browse binary (run this check BEFORE any browse command)
 
 ```bash
-# Single source of truth for binary resolution: browse's bin/find-browse. This block
-# only bootstrap-locates that resolver across the 3 standard skill roots.
+# Single source of truth for binary resolution: browse's find-browse resolver. This block
+# only bootstrap-locates that resolver. Prefer an explicit ${BROWSE_BIN}; else discover the
+# resolver relative to the repo / standard skill roots (host-coupled — adjust if your host
+# installs browse elsewhere).
 _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
 FIND=""
 [ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/browse/bin/find-browse" ] && FIND="$_ROOT/.claude/skills/browse/bin/find-browse"
 [ -z "$FIND" ] && [ -n "$_ROOT" ] && [ -x "$_ROOT/skills/browse/bin/find-browse" ] && FIND="$_ROOT/skills/browse/bin/find-browse"
 [ -z "$FIND" ] && [ -x ~/.claude/skills/browse/bin/find-browse ] && FIND=~/.claude/skills/browse/bin/find-browse
-B=$([ -n "$FIND" ] && "$FIND" 2>/dev/null)
+B="${BROWSE_BIN:-$([ -n "$FIND" ] && "$FIND" 2>/dev/null)}"
 if [ -n "$B" ] && [ -x "$B" ]; then
   echo "READY: $B"
 else
@@ -74,12 +77,13 @@ context, not by this skill.
 
 **Non-interactive callers.** This skill is written for an interactive host that can prompt the user
 and write report files. When a non-interactive caller drives it — e.g. a subagent that preloaded this
-skill via its `skills:` field, with no `Write` or `AskUserQuestion` tool — degrade gracefully:
-- **Don't block on user prompts.** Steps that wait on a human (browse build consent, 2FA/OTP, CAPTCHA)
-  can't run; skip them and, if that blocks progress, report the blocker to the caller instead of waiting.
-- **Don't assume `Write`.** If you can't persist the markdown report / `baseline.json`, return your
-  findings to the caller in your own format. Screenshots are unaffected — the browse binary writes those
-  itself via Bash.
+skill, with no user-prompt or file-write tool present — degrade gracefully:
+- **Don't block on user prompts.** When no user-prompt capability is available, steps that wait on a human
+  (browse build consent, 2FA/OTP, CAPTCHA) can't run; skip them and, if that blocks progress, report the
+  blocker to the caller instead of waiting.
+- **Don't assume a file-write tool.** If none is present and you can't persist the markdown report /
+  `baseline.json`, return your findings to the caller in your own format. Screenshots are unaffected — the
+  browse binary writes those itself via Bash.
 
 **Create output directories:**
 

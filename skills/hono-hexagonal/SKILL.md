@@ -309,7 +309,7 @@ This is optional but powerful — particularly useful for monorepo setups where 
 
 ## Reliability & Observability Ports
 
-Cross-cutting infrastructure that must not leak into the domain. Define each as a TS interface; implement as adapters. Architecture-level pattern lives in `software-architecture/references/reliability-patterns.md` and `observability.md`.
+Cross-cutting infrastructure that must not leak into the domain. Define each as a TS interface; implement as adapters. The architecture-level pattern lives in the software-architecture skill's references (`reliability-patterns.md`, `observability.md`) if installed; otherwise apply the standard patterns inline — outbox, idempotency keys, retry/backoff, structured logging, RED/USE metrics.
 
 | Port | Purpose | Where it lives |
 |---|---|---|

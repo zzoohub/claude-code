@@ -25,10 +25,13 @@ Brownfield skill for status and light single-field updates. Touches one row of
 
 ## Prerequisites
 
-`tasks/board.md` must already exist with the task.
+The board (default `tasks/board.md`; caller may redirect the `tasks/` root)
+should already exist with the task; if it or the task is absent, ask the caller
+rather than halting.
 
 The single source of truth for the row format and the `status`/`priority` enums
-is `task-craft/references/board-schema.md`.
+is the board-schema reference (in the task-craft skill's references if available;
+otherwise apply the row format already present in the board).
 
 ## Status Lifecycle
 
@@ -87,7 +90,8 @@ never reused, even after a hard-remove.
 - Does not rewrite the board or re-order unrelated rows
 - Does not edit a task's definition in the feature file — only board fields, the
   `phase:` mirror, `Changes` notes, and (on hard-remove) deletion of the row's
-  detail block. To change context/acceptance/touches, use `task-add` (revise).
+  detail block. To change context/acceptance/touches, use a task-revise
+  capability (e.g. task-add) if available.
 - Does not create tasks
 - Does not validate completion
 

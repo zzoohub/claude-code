@@ -43,7 +43,7 @@ You are not here to rubber-stamp this plan. You are here to make it extraordinar
 4. **Interactions have edge cases.** Double-click, navigate-away-mid-action, slow connection, stale state, back button. Map them.
 5. **Observability is scope, not afterthought.** New dashboards, alerts, runbooks are first-class deliverables.
 6. **Diagrams are mandatory.** No non-trivial flow goes undiagrammed. ASCII art for every new data flow, state machine, processing pipeline, dependency graph, decision tree. (This governs *deliverables*; the question-escape-hatch governs only AskUserQuestion calls — produce required diagrams regardless of whether issues are found.)
-7. **Everything deferred must be written down.** Vague intentions are lies. `tasks/board.md` (via `task-add`) or it doesn't exist.
+7. **Everything deferred must be written down.** Vague intentions are lies. `tasks/board.md` (via a task-capture capability such as `task-add` if available) or it doesn't exist.
 8. **Optimize for the 6-month future, not just today.** If this solves today's problem but creates next quarter's nightmare, say so.
 9. **You may say "scrap it and do this instead."** If there's a fundamentally better approach, table it.
 
@@ -64,10 +64,10 @@ Step 0 > System audit > Error/rescue map > Test diagram > Failure modes > Securi
 Never skip Step 0, the system audit, the error/rescue map, the failure modes, or the security threat model — these are the highest-leverage outputs. Security may be compressed but never dropped.
 
 ## Step -1: Locate the plan
-Find the plan/vision under review before anything else:
+Find the plan/vision under review before anything else (default doc roots are `docs/<area>/`, e.g. `docs/prd/`; the caller may redirect them):
 * If the user pasted it or named a path, use that.
-* Otherwise look in `docs/prd/`, a rough plan doc, or the current chat, and confirm with the user which artifact is "the plan."
-* If no plan/PRD exists, STOP and tell the user there is nothing to review — route them to `product-brief` or `prd-craft` first. Do not invent a plan.
+* Otherwise look in the PRD root (default `docs/prd/`; caller may redirect), a rough plan doc, or the current chat, and confirm with the user which artifact is "the plan."
+* If no plan/PRD exists, ask the caller for one rather than halting — and if a brief/PRD-authoring capability (e.g. `product-brief` or `prd-craft`) is available, suggest routing there first. Do not invent a plan.
 
 ## PRE-REVIEW SYSTEM AUDIT (before Step 0)
 This is not the review — it is the context you need to review intelligently. Run (read-only):
@@ -77,7 +77,7 @@ git diff main --stat                           # What's already changed
 git stash list                                 # Any stashed work
 grep -r "TODO\|FIXME\|HACK\|XXX" --include="*.ts" --include="*.tsx" --include="*.rs" --include="*.py" -l
 ```
-Then read `CLAUDE.md` (project conventions), the plan itself, `tasks/board.md`, `tasks/features/*.md`, and existing architecture docs. When reading `tasks/`: note tasks this plan touches/blocks/unlocks; check deferred work related to this plan; map known pain points to this plan's scope.
+Then read the project-conventions file if present (e.g. `CLAUDE.md`), the plan itself, `tasks/board.md`, `tasks/features/*.md`, and existing architecture docs. When reading `tasks/`: note tasks this plan touches/blocks/unlocks; check deferred work related to this plan; map known pain points to this plan's scope.
 
 Map: current system state · what's already in flight (open PRs, branches, stashes) · existing pain points relevant to this plan · FIXME/TODO in files this plan touches.
 
@@ -90,7 +90,7 @@ Report findings before Step 0.
 ## Step 0: Nuclear Scope Challenge + Mode Selection
 Work through `references/review-sections.md` → "Step 0" for the full premise-challenge / existing-code-leverage / dream-state / temporal-interrogation prompts. The decision points:
 
-**Mode selection — present three options (one AskUserQuestion call; see "How to ask questions"):**
+**Mode selection — present three options as a recommended-resolution choice (rendered interactively via AskUserQuestion if the runtime provides it, otherwise as plain text; see "How to ask questions"):**
 1. **SCOPE EXPANSION** — the plan is good but could be great. Propose the ambitious version, then review it. Build the cathedral.
 2. **HOLD SCOPE** — the scope is right. Review with maximum rigor; make it bulletproof.
 3. **SCOPE REDUCTION** — the plan is overbuilt. Propose a minimal version, then review it.
@@ -107,15 +107,15 @@ After scope and mode are agreed, run the 10 review sections in **`references/rev
 Each section ends with the section gate (below). Apply mode-specific behavior per **`references/mode-reference.md`**.
 
 ## Section gate (applies after every step and section)
-After each section: surface its issues using the question protocol below, then **pause and wait for the user before the next section.** Resolve all raised issues before proceeding.
+After each section: produce a structured list of its issues, each with a recommended resolution, using the question protocol below — then **pause and wait for the user before the next section** when an interactive user is present. Resolve all raised issues before proceeding.
 * **Per-section issue budget:** surface at most the top 5-8 issues per section; capture the long tail as a single deferred task (see required outputs). Don't open a blocking question for every low-severity nit.
-* **Non-interactive fallback:** if AskUserQuestion is unavailable (headless/CI/no interactive user), do NOT block and do NOT fabricate an answer. Emit each issue with its recommended option pre-selected, mark it `UNRESOLVED-AUTO` in Unresolved Decisions, and continue.
+* **When no interactive prompt is available** (headless/CI/no interactive user, or the runtime lacks AskUserQuestion): do NOT block and do NOT fabricate an answer. Emit each issue as plain text with its recommended option pre-selected, mark it `UNRESOLVED-AUTO` in Unresolved Decisions, and continue.
 
 ## How to ask questions
-Map your output onto the AskUserQuestion tool's actual shape: a `question` body plus a list of `options`, each a card with a short `label` and a `description`. The tool renders the cards and auto-appends an "Other" choice — you do NOT hand-write "A) B) C)" and the tool does not letter them for you.
+The primary output is a structured list of issues/decisions, each carrying a recommended resolution: a `question` body plus a list of `options`, each a card with a short `label` and a `description`. If the runtime provides AskUserQuestion, render the cards interactively (it auto-appends an "Other" choice — you do NOT hand-write "A) B) C)" and it does not letter them for you); otherwise present the same body-and-options structure as plain text.
 
 For every issue:
-* **One issue = one AskUserQuestion call.** Never combine multiple issues into one question.
+* **One issue = one question/decision** (one AskUserQuestion call if rendering interactively). Never combine multiple issues into one question.
 * Describe the problem concretely with `file:line` references.
 * Put your **recommendation in the `question` body**, ending with "Recommended: the first option — <one-line reason mapped to an engineering preference>."
 * Make the **recommended option the FIRST** entry in `options`, with its `label` suffixed "(Recommended)". Each option's `description` carries its one-line tradeoff (effort, risk, maintenance). Add a "do nothing" option only when it's a real choice; rely on the tool's auto "Other" for open-ended answers.
@@ -125,7 +125,7 @@ For every issue:
 * **Escape hatch:** if a section has no issues, say so and move on. If an issue has an obvious fix with no real alternatives, state what you'll do and move on — don't waste a question.
 
 ## Required Outputs
-Produce all applicable outputs per **`references/required-outputs.md`** (NOT-in-scope, What-already-exists, Dream-state delta, Error/Rescue registry, Failure Modes registry, tasks/board.md updates via `task-add`, Delight Opportunities [EXPANSION], mandatory diagrams, stale-diagram audit, completion summary, unresolved decisions).
+Produce all applicable outputs per **`references/required-outputs.md`** (NOT-in-scope, What-already-exists, Dream-state delta, Error/Rescue registry, Failure Modes registry, tasks/board.md updates (via a task-capture capability such as `task-add` if available), Delight Opportunities [EXPANSION], mandatory diagrams, stale-diagram audit, completion summary, unresolved decisions).
 
 ## Formatting Rules
 * NUMBER issues and LETTER options **in the written report** (e.g. "3A") — not in the AskUserQuestion cards.

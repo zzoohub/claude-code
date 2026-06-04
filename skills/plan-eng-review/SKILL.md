@@ -33,11 +33,11 @@ Review this plan thoroughly before any code is written. For every issue, explain
 Before anything else, find the plan/design doc under review:
 * If the user pasted it or named a path, use that.
 * Otherwise look in `docs/arch/`, `docs/prd/`, or the current branch diff, and confirm with the user which artifact is "the plan."
-* If no plan/design doc exists, STOP and tell the user there is nothing to review — route them to `software-architecture` (to create the design doc) or `prd-craft` (if even the PRD is missing). Do not invent a plan.
+* If no plan/design doc exists, there is nothing to review — ask the caller rather than halting, and (if such a capability is available) suggest creating the design doc via `software-architecture`, or the PRD via `prd-craft` if even that is missing. Do not invent a plan.
 
 ## Pre-review context (before Step 0)
 You will be asked to cite `file:line`, name realistic production failure modes, and flag DRY violations — all of which require having actually read the code. Gather context first:
-* Read `CLAUDE.md` (project conventions), plus the plan/design doc itself.
+* Read project conventions (default `CLAUDE.md`; caller may redirect the docs/conventions root), plus the plan/design doc itself.
 * `git log --oneline -20` on this branch. If prior commits show a previous review cycle (review-driven refactors, reverts), note what changed and review those areas MORE aggressively — recurring problem areas are architectural smells.
 * `grep` the files the plan touches for existing patterns and `TODO`/`FIXME`.
 
@@ -62,7 +62,7 @@ Answer these before reviewing:
 1. **What existing code already partially or fully solves each sub-problem?** Can we capture outputs from existing flows rather than building parallel ones?
 2. **What is the minimum set of changes that achieves the stated goal?** Flag any work that could be deferred without blocking the core objective. Be ruthless about scope creep.
 3. **Complexity check:** >8 files touched or >2 new classes/services is a smell — challenge whether the same goal can be achieved with fewer moving parts.
-4. **Tasks cross-reference:** Read `tasks/board.md` and `tasks/features/*.md` if they exist. Are deferred items blocking this plan? Can any be bundled in without expanding scope? Does this plan create new work to capture as a task?
+4. **Tasks cross-reference:** Read the task board (default `tasks/board.md`; caller may redirect the tasks/ root) and `tasks/features/*.md` if they exist. Are deferred items blocking this plan? Can any be bundled in without expanding scope? Does this plan create new work to capture as a task?
 
 Then ask which mode (one AskUserQuestion call — see "How to ask questions"):
 1. **TRIM:** Trim *clearly redundant* work from the fixed plan, then review the trimmed version. This removes obvious dead weight only — it does NOT re-open scope or rethink premises. (Distinct from `plan-ceo-review`'s SCOPE REDUCTION mode, which genuinely cuts scope.) For a genuine scope rethink or a 10x-ambition pass, hand off to `plan-ceo-review`.
@@ -72,8 +72,8 @@ Then ask which mode (one AskUserQuestion call — see "How to ask questions"):
 **If the user does not pick TRIM, respect that fully.** Your job becomes making the chosen plan succeed, not lobbying for a smaller one. Raise scope concerns once here; afterward optimize within the chosen scope. Do not silently reduce scope, skip planned components, or re-argue for less work in later sections.
 
 ## Section gate (applies after every review section)
-After each section: surface its issues using the question protocol below, then **pause and wait for the user before moving to the next section.** Resolve all raised issues in a section before proceeding.
-* **Non-interactive fallback:** if AskUserQuestion is unavailable (headless/CI/no interactive user), do NOT block and do NOT fabricate an answer. Emit each issue with its recommended option pre-selected, mark it `UNRESOLVED-AUTO` in the Unresolved Decisions output, and continue.
+After each section: surface its issues as a structured list of issues with recommended resolutions using the question protocol below, then **pause and wait for the user before moving to the next section.** Resolve all raised issues in a section before proceeding. Render interactively (e.g. AskUserQuestion) if the runtime provides it; otherwise present as plain text.
+* **Non-interactive mode:** if interactive prompting is unavailable (headless/CI/no interactive user), do NOT block and do NOT fabricate an answer. Emit each issue with its recommended option pre-selected, mark it `UNRESOLVED-AUTO` in the Unresolved Decisions output, and continue.
 
 ## Review Sections (after scope is agreed)
 
@@ -103,7 +103,7 @@ Evaluate:
 ### 3. Test review
 Make a diagram of all new UX, new data flow, new codepaths, and new branches/outcomes. For each, note what is new in this plan. Then ensure each new item has a test (vitest, nextest, pytest, or the project's test runner). For each, name the happy-path test, the failure-path test (which specific failure), and the edge-case test (nil, empty, boundary, concurrent).
 
-For LLM/prompt changes: check `CLAUDE.md` for prompt-related file patterns. If this plan touches any of them, state which eval suites must run, which cases to add, and what baselines to compare against. Then confirm the eval scope with the user via AskUserQuestion — phrased as concrete options (e.g. "Run suite X only" / "Run X + add cases Y" / "Skip evals"), not a yes/no.
+For LLM/prompt changes: check project conventions for prompt-related file patterns. If this plan touches any of them, state which eval suites must run, which cases to add, and what baselines to compare against. Then confirm the eval scope with the user — phrased as concrete options (e.g. "Run suite X only" / "Run X + add cases Y" / "Skip evals"), not a yes/no — rendered interactively (e.g. AskUserQuestion) if the runtime provides it, otherwise as plain text.
 
 **STOP — apply the section gate.**
 
@@ -117,7 +117,7 @@ Evaluate:
 **STOP — apply the section gate.**
 
 ## How to ask questions
-This skill drives AskUserQuestion. Map your output onto the tool's actual shape: a `question` body plus a list of `options`, where each option is a card with a short `label` and a `description`. The tool renders the option cards and auto-appends an "Other" choice — you do NOT hand-write "A) B) C)" and the tool does not letter them for you.
+This skill produces a structured list of issues with recommended resolutions; render it interactively via AskUserQuestion if the runtime provides it, otherwise present the same content as plain text. When AskUserQuestion is available, map your output onto the tool's actual shape: a `question` body plus a list of `options`, where each option is a card with a short `label` and a `description`. The tool renders the option cards and auto-appends an "Other" choice — you do NOT hand-write "A) B) C)" and the tool does not letter them for you.
 
 For every issue:
 * **One issue = one AskUserQuestion call.** Never combine multiple issues into one question. (In SMALL CHANGE mode this means a short sequence of calls at the end — one per section's top issue — not a single fused mega-question.)
@@ -145,9 +145,9 @@ The plan should use ASCII diagrams for any non-trivial data flow, state machine,
 For each new codepath in the test-review diagram, list one realistic production failure (timeout, nil reference, race condition, stale data) and whether: (1) a test covers it, (2) error handling exists, (3) the user sees a clear error or a silent failure. **Any codepath with no test AND no error handling AND a silent failure → CRITICAL GAP.**
 
 ### tasks/board.md updates
-This skill does **not** write the board itself. After the user approves a task, invoke the **`task-add`** skill (the canonical appender) to add it — `task-add` owns ID assignment, grouping, and schema conformance. Row + detail shape are defined by `task-craft/references/board-schema.md` (canonical): the board row is 8 columns `| id | feature | task | type | priority | status | assignee | touches |`, `type` ∈ `feature | bugfix | refactor | chore | spike | hotfix`, `priority` is lowercase `high | medium | low`, and `status` lifecycle (`backlog → active → blocked → done`) is owned by the `task-status` skill — do not hand-maintain a "Completed" section here.
+This skill does **not** write the board itself. After the user approves a task, hand it to the canonical task-appender capability (`task-add`) if available — that capability owns ID assignment, grouping, and schema conformance. Row + detail shape follow the canonical board schema (`task-craft/references/board-schema.md` if installed): the board row is 8 columns `| id | feature | task | type | priority | status | assignee | touches |`, `type` ∈ `feature | bugfix | refactor | chore | spike | hotfix`, `priority` is lowercase `high | medium | low`, and the `status` lifecycle (`backlog → active → blocked → done`) is owned by the task-status capability — do not hand-maintain a "Completed" section here.
 
-Present each potential task as its own individual AskUserQuestion (never batch tasks — one per question; never silently skip this step). For each, describe:
+Present each potential task individually (never batch tasks — one per issue; never silently skip this step), rendered via AskUserQuestion if the runtime provides it, otherwise as plain text. For each, describe:
 * **What:** one-line description.
 * **Why:** the concrete problem solved or value unlocked.
 * **Pros / Cons:** what you gain; cost, complexity, risk.
@@ -157,7 +157,7 @@ Present each potential task as its own individual AskUserQuestion (never batch t
 * **Touches:** comma-separated file/dir paths the task creates or modifies (required — used for conflict detection).
 * **Depends on:** prerequisites or ordering, or "None".
 
-Then present options (recommended first): **A)** Hand off to `task-add` to append the row · **B)** Skip — not valuable enough · **C)** Promote into the current scope and review it now (still no code). Do NOT append vague bullets — a TODO without context is worse than none.
+Then present options (recommended first): **A)** Hand off to the task-appender capability (`task-add` if available) to append the row · **B)** Skip — not valuable enough · **C)** Promote into the current scope and review it now (still no code). Do NOT append vague bullets — a TODO without context is worse than none.
 
 ### Completion summary
 Display this at the end so the user sees all findings at a glance:
@@ -173,7 +173,7 @@ Display this at the end so the user sees all findings at a glance:
 - Failure modes: ___ critical gaps flagged
 - Unresolved decisions: ___ (listed below)
 
-In SMALL CHANGE mode, the required outputs reduce to: test diagram + failure modes + completion summary + a single tasks round (still one AskUserQuestion per proposed task — the "never batch tasks" rule holds). BIG CHANGE and TRIM produce all required outputs.
+In SMALL CHANGE mode, the required outputs reduce to: test diagram + failure modes + completion summary + a single tasks round (still one issue per proposed task — the "never batch tasks" rule holds). BIG CHANGE and TRIM produce all required outputs.
 
 ### Unresolved decisions
 If the user does not respond to an AskUserQuestion, interrupts to move on, or a decision was auto-deferred in non-interactive mode, list these as "Unresolved decisions that may bite you later." Never silently default to an option.

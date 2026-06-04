@@ -22,20 +22,22 @@ Use this once when starting a new project.
 
 ## Inputs
 
-Read before generating tasks:
+Read before generating tasks (caller may redirect the `docs/<area>/` roots; defaults shown):
 
-- `docs/prd/prd.md` — dev order, feature overview, scope
+- the PRD (default `docs/prd/prd.md`; caller may redirect) — dev order, feature overview, scope
 - `docs/prd/features/*.md` — detailed requirements per feature
 - `docs/arch/` — architecture decisions (stack, component boundaries, patterns)
 - `docs/arch/database.md` — data model (if exists)
 - `docs/ux/` — user flows, wireframes, screen specs (if exists)
 
-If architecture docs don't exist, flag it. Tasks without architecture decisions
-tend to need rework.
+If architecture docs don't exist, flag it and ask the caller rather than halting.
+Tasks without architecture decisions tend to need rework.
 
 ---
 
 ## Output Structure
+
+Write under the task root (default `tasks/`; caller may redirect):
 
 ```
 tasks/
@@ -77,7 +79,7 @@ The board is the single source of truth for task state.
 
 ### Format
 
-Canonical row schema: `references/board-schema.md`. All writers follow it: `task-craft`, `task-add`, and `task-status` write directly; `plan-ceo-review` / `plan-eng-review` route through `task-add`.
+Canonical row schema: `references/board-schema.md`. All writers follow it: the craft, add, and status capabilities write directly; review capabilities route through the add capability where available.
 
 ```markdown
 # Task Board
@@ -228,7 +230,7 @@ new one), do **not** run the generation workflow and do **not** overwrite
      type-appropriate.
 3. Output a prioritized findings list (🔴 blocker / 🟠 should-fix / 🟡 nit),
    each citing the offending `T-NNN` and a concrete fix. Do **not** rewrite the
-   board — propose changes and let the user apply them via `task-add` /
-   `task-status`.
+   board — propose changes and let the user apply them via the add / status
+   capabilities if available.
 
 ---

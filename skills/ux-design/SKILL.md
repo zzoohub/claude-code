@@ -19,17 +19,19 @@ description: |
 
 # UX Design — Full App Pass
 
-Produces the **application-level UX** (`docs/ux/ux-design.md`) plus per-screen
-specs for every screen in the initial design.
+Produces the **application-level UX** (the UX design doc, default
+`docs/ux/ux-design.md`; the caller may redirect the `docs/ux/` root) plus
+per-screen specs for every screen in the initial design.
 
 ## Context Check
 
-If `docs/prd/prd.md` or `docs/prd/features/*.md` exists, read it first. Use as
-input, not constraint.
+If the PRD or feature specs exist (default `docs/prd/prd.md` or
+`docs/prd/features/*.md`), read them first. Use as input, not constraint.
 
-**If `docs/ux/ux-design.md` already exists**, this is not a fresh greenfield
+**If the UX design doc already exists**, this is not a fresh greenfield
 pass — do not rewrite it blindly. Branch:
-- Single screen to add or change → stop and use `screen-design` instead.
+- Single screen to add or change → hand off to a single-screen design
+  capability (e.g. `screen-design`) if available.
 - Audit/critique request ("review my UX", "what's wrong with this flow") → run
   **Review / Diagnose Mode** (below).
 - Genuine app-wide restructure the user explicitly asked for → proceed, but
@@ -225,8 +227,8 @@ read-only:
    make the minimal targeted edits — still no full-doc rewrite unless they ask
    for a restructure.
 
-This mirrors the Review / Audit pattern in `prd-craft`: a critique by default,
-edits only on request.
+This mirrors the standard Review / Audit pattern (as in `prd-craft` if
+available): a critique by default, edits only on request.
 
 ---
 
@@ -234,7 +236,7 @@ edits only on request.
 
 Split output into two levels:
 
-### `docs/ux/ux-design.md` — Application-Level Design
+### `docs/ux/ux-design.md` (default) — Application-Level Design
 
 The single source of truth for app-wide UX decisions. Covers:
 
@@ -276,5 +278,6 @@ Before updating, check the file's line count. If it exceeds the limit, first con
 ### Next
 
 Routing hints, not steps this skill performs: once the UX is approved, hand
-visual styling and design tokens to `design-system`, and break the screens into
-implementation work with `task-add`.
+visual styling and design tokens to a design-system capability (e.g.
+`design-system`), and break the screens into implementation work with a
+task-tracking capability (e.g. `task-add`) — each if available.

@@ -10,8 +10,8 @@ description: |
   Do NOT use for: paywall UI optimization (use cro), pricing-page copy (use copywriting),
   psychology principles only (use marketing-psychology), revenue analytics (use product-analytics),
   or referral incentive structure (use growth-loops; pricing sets only the referral reward $).
-  Output scope: public tier strategy → `biz/marketing/pricing.md` (marketer agent); in-app
-  paywall/upgrade pricing → `biz/growth/paywall-pricing.md` (growth-optimizer agent).
+  Output scope: public tier strategy → the pricing doc (default `biz/marketing/pricing.md`); in-app
+  paywall/upgrade pricing → the paywall-pricing doc (default `biz/growth/paywall-pricing.md`); caller may redirect the `biz/<area>/` root.
 ---
 
 # Pricing Strategy

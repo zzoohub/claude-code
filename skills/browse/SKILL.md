@@ -13,6 +13,7 @@ allowed-tools:
   - Bash
   - Read
   - AskUserQuestion
+compatibility: Host-coupled — ships a compiled binary (TypeScript + Playwright via Bun); requires a Bash-capable runtime that can run `./setup` and locate the binary (default via the bundled `bin/find-browse` resolver; override with `$BROWSE_BIN`).
 ---
 <!-- Hand-maintained. The upstream gstack doc generator (gen:skill-docs) was not
      vendored into this fork, so edit this file directly and keep the command
@@ -20,7 +21,7 @@ allowed-tools:
 
 # browse: QA Testing & Dogfooding
 
-> **Tool-skill notice**: Unlike most skills in this repo, `browse` ships a compiled binary (TypeScript + Playwright via Bun). Run `./setup` once before use. Source lives in `src/`; build emits `dist/browse`. For fork/upstream policy, see [UPSTREAM.md](UPSTREAM.md).
+> **Tool-skill notice**: Unlike most skills in this repo, `browse` ships a compiled binary (TypeScript + Playwright via Bun) — it is host-coupled and needs a Bash-capable runtime. Run `./setup` once before use. Source lives in `src/`; build emits `dist/browse`. The SETUP block locates the binary via the bundled resolver; a host that places it elsewhere can set `$BROWSE_BIN`. For fork/upstream policy, see [UPSTREAM.md](UPSTREAM.md).
 
 Persistent headless Chromium. First call auto-starts (~3s), then ~100ms per command.
 State persists between calls (cookies, tabs, login sessions).
@@ -32,10 +33,10 @@ State persists between calls (cookies, tabs, login sessions).
 # source: src/find-browse.ts). It owns all path/layout logic; this block only locates the
 # resolver across the 3 standard skill roots, then derives the READY/NEEDS_SETUP contract.
 _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-FIND=""
-[ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/browse/bin/find-browse" ] && FIND="$_ROOT/.claude/skills/browse/bin/find-browse"
+FIND="${BROWSE_BIN:-}"   # caller may point BROWSE_BIN straight at the binary or resolver
+[ -z "$FIND" ] && [ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/browse/bin/find-browse" ] && FIND="$_ROOT/.claude/skills/browse/bin/find-browse"
 [ -z "$FIND" ] && [ -n "$_ROOT" ] && [ -x "$_ROOT/skills/browse/bin/find-browse" ] && FIND="$_ROOT/skills/browse/bin/find-browse"
-[ -z "$FIND" ] && [ -x ~/.claude/skills/browse/bin/find-browse ] && FIND=~/.claude/skills/browse/bin/find-browse
+[ -z "$FIND" ] && [ -x ~/.claude/skills/browse/bin/find-browse ] && FIND=~/.claude/skills/browse/bin/find-browse   # default host root; not required if BROWSE_BIN is set
 B=$([ -n "$FIND" ] && "$FIND" 2>/dev/null)
 if [ -n "$B" ] && [ -x "$B" ]; then
   echo "READY: $B"

@@ -19,7 +19,7 @@ description: |
 
 Strategies for reducing both voluntary and involuntary churn through proactive intervention, cancel flow optimization, and payment recovery.
 
-**Output:** Write the churn-prevention strategy to `biz/growth/churn-prevention.md` and the dunning / payment-recovery playbook to `biz/growth/dunning.md` (defaults).
+**Output:** Write the churn-prevention strategy to the growth docs root (default `biz/growth/churn-prevention.md`; caller may redirect the `biz/<area>/` root) and the dunning / payment-recovery playbook to `biz/growth/dunning.md`. If no file-write tool is present, return the content inline.
 
 ---
 
@@ -121,7 +121,7 @@ See `references/cancel-flow-patterns.md` for compliant UI patterns.
 
 ## Customer Health Score Framework
 
-This section owns the **scoring-model design** (which signals, weights, and thresholds). The instrumented `biz/analytics/health-score.md` artifact and the live data pipeline that computes scores belong to the **product-analytics / data-analyst** side — same methodology-vs-artifact split applied in § Churn Diagnosis.
+This section owns the **scoring-model design** (which signals, weights, and thresholds). The instrumented `biz/analytics/health-score.md` artifact and the live data pipeline that computes scores belong to a **product-analytics capability** (if available) — same methodology-vs-artifact split applied in § Churn Diagnosis.
 
 Track these signals to identify at-risk users before they churn:
 
@@ -171,14 +171,14 @@ For risk signals with directional lead-time heuristics and proactive interventio
 
 ## Churn Diagnosis
 
-This skill owns **operational churn diagnosis tied to intervention** — the split and the cancel-reason themes that drive save-offer and dunning design. For deep retention-cohort analysis, retention curves, segmentation, and Aha-Moment work, use the **product-analytics** skill.
+This skill owns **operational churn diagnosis tied to intervention** — the split and the cancel-reason themes that drive save-offer and dunning design. For deep retention-cohort analysis, retention curves, segmentation, and Aha-Moment work, hand off to a **product-analytics capability** if available.
 
 ### Diagnose for intervention (owned here)
 - **Voluntary vs involuntary?** Check the split first — the solutions are completely different (dunning/retry for involuntary; save offers + health monitoring for voluntary).
 - **Cancel-reason themes** — group exit-survey data by reason to drive the dynamic save-offer mapping (see `references/cancel-flow-patterns.md`).
 
 ### Hand off to product-analytics (deep analysis)
-Retention-cohort dimensions (time cohort, plan tier, acquisition channel, usage pattern), churn-rate-by-cohort trends, last-action-before-churn, and the "features retained users use that churned users don't" (Aha-Moment) gap are retention-analytics work — use the product-analytics skill for those.
+Retention-cohort dimensions (time cohort, plan tier, acquisition channel, usage pattern), churn-rate-by-cohort trends, last-action-before-churn, and the "features retained users use that churned users don't" (Aha-Moment) gap are retention-analytics work — route those to a product-analytics capability if available.
 
 ### Churn Rate Benchmarks
 

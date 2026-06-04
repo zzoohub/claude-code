@@ -307,7 +307,7 @@ Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 
 ## Reliability & Observability Ports
 
-Cross-cutting infrastructure that must not leak into the domain. Define each as a `Protocol`; implement as adapters. Architecture-level pattern lives in `software-architecture/references/reliability-patterns.md` and `software-architecture/references/observability.md`.
+Cross-cutting infrastructure that must not leak into the domain. Define each as a `Protocol`; implement as adapters. The architecture-level pattern lives in the software-architecture skill's references (`reliability-patterns.md`, `observability.md`) if installed; otherwise apply the standard patterns inline — outbox, idempotency keys, retry/backoff, structured logging, RED/USE.
 
 | Port | Purpose | Where it lives |
 |---|---|---|

@@ -24,17 +24,18 @@ Designs one screen against an existing app-level UX without rewriting
 
 ## Prerequisites
 
-`docs/ux/ux-design.md` must already exist (defines IA, global patterns, shared
-interactions). **If it does not exist, stop — this is greenfield; use
-`ux-design` instead.**
+The app-level UX (default `docs/ux/ux-design.md`; caller may redirect the
+`docs/ux/` root) defines IA, global patterns, and shared interactions. If it is
+absent, this is likely greenfield — ask the caller (an app-level UX capability,
+e.g. `ux-design`, fits better) rather than halting.
 
 **Methodology lives in the `ux-design` skill.** This skill is lean by design and
 has no reference files of its own. For the depth behind each quality bar —
 JTBD framing, the 7-state state-machine table, undo/feedback patterns,
 error/empty-state copy formulas, and contrast/touch-target/safe-area specs —
 consult `skills/ux-design/references/{design-process, interaction-patterns,
-ux-writing, ergonomics, cognitive-principles}.md` as needed (loaded on demand,
-not duplicated here).
+ux-writing, ergonomics, cognitive-principles}.md` if available (loaded on
+demand, not duplicated here); otherwise apply the quality bar below directly.
 
 ## What This Skill Does
 
@@ -59,8 +60,9 @@ procedure.
 - Does not produce tasks
 
 **Next:** routing hints, not steps this skill performs — once the screen spec is
-approved, use `task-add` to break it into implementation tasks, and
-`design-system` for visual tokens and components.
+approved, a task-breakdown capability (e.g. `task-add`) can split it into
+implementation tasks, and a design-token capability (e.g. `design-system`)
+covers visual tokens and components, if available.
 
 ## Workflow
 
@@ -98,10 +100,10 @@ subset — if the two ever diverge, defer to `ux-design`.
 
 ## Output
 
-- `docs/ux/screens/{screen}.md` — new or updated file
-- `docs/ux/ux-design.md` — patched only if IA/conventions change
+- the screen spec (default `docs/ux/screens/{screen}.md`; caller may redirect) — new or updated file
+- the app-level UX file — patched only if IA/conventions change
 
-**Line limit:** `docs/ux/screens/{screen}.md` — 300 lines. If exceeded, split
+**Line limit:** the screen spec — 300 lines. If exceeded, split
 into child screens (e.g., `settings-profile.md`, `settings-billing.md`).
 
 **Naming:** kebab-case matching the screen name. Modals, drawers, and sheets

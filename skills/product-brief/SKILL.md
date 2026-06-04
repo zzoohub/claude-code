@@ -29,7 +29,9 @@ Keep the brief lean — anything the PRD covers in depth does not belong here.
 
 A brief is a discovery tool for *new product directions*, not for incremental
 feature work on an existing product. For one feature on a product that already has
-`docs/prd/prd.md`, use **feature-spec**; for a full new-product PRD, use **prd-craft**.
+a PRD (default `docs/prd/prd.md`; caller may redirect the `docs/<area>/` root),
+hand off to a feature-spec capability if available; for a full new-product PRD,
+hand off to a PRD-authoring capability (e.g. prd-craft) if available.
 
 ## What a Product Brief Is (and Is Not)
 
@@ -158,8 +160,9 @@ Grounded in evidence, names a specific situation, quantifies the pain.
 
 ## Output
 
-Save to `docs/prd/product-brief.md`, updating that file in place. When the user
-explicitly explores a second, distinct direction, use
+Save to the brief (default `docs/prd/product-brief.md`; caller may redirect),
+updating that file in place — if no file-write capability is present, return the
+brief inline. When the user explicitly explores a second, distinct direction, use
 `docs/prd/product-brief-{slug}.md` so a new direction does not overwrite a prior one.
 
 <!-- Author housekeeping: keep this skill under ~175 lines and keep description

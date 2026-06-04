@@ -19,7 +19,7 @@ description: |
 
 # PRD Craft — Vision PRD for a New Product
 
-Builds the **vision PRD** (`docs/prd/prd.md`) plus a feature spec for every
+Builds the **vision PRD** (the PRD, default `docs/prd/prd.md`; the caller may redirect the `docs/prd/` root) plus a feature spec for every
 feature the PRD lists. Use when you're defining a new product from scratch.
 
 ## Core Philosophy
@@ -84,8 +84,8 @@ blindly — branch:
   rewrite the vision in place. Confirm the pivot scope with the user first so
   you don't discard a still-valid vision.
 - Otherwise it's probably a **single-feature add** → return to the user and
-  suggest the `feature-spec` skill, which patches the PRD in place without
-  rewriting the vision.
+  suggest a single-feature-spec capability if available (e.g. the `feature-spec`
+  skill), which patches the PRD in place without rewriting the vision.
 
 ### Phase 1: Discovery Interview
 
@@ -275,14 +275,15 @@ Links to supporting materials (don't inline them).
 
 ### Phase 3: Extract Features into Specs
 
-For each feature in the PRD's Feature Overview table, create
-`docs/prd/features/{feature}.md` (kebab-case filename matching the §5 name).
+For each feature in the PRD's Feature Overview table, create a feature spec
+under the PRD's `features/` directory (default `docs/prd/features/{feature}.md`;
+kebab-case filename matching the §5 name).
 
-The **`feature-spec` skill owns the canonical template, field guidance, and
-quality bar** — invoke it per feature, or generate inline from the same template
-if batch-generating. Read `references/feature-spec.md` for the batch-generation
-flow and how it differs from standalone use. Do not maintain a second copy of the
-template here.
+A dedicated feature-spec capability (e.g. the `feature-spec` skill) owns the
+canonical template, field guidance, and quality bar — use it per feature if
+available, or generate inline from the same template if batch-generating. Read
+`references/feature-spec.md` for the batch-generation flow and how it differs
+from standalone use. Do not maintain a second copy of the template here.
 
 ---
 
@@ -340,8 +341,8 @@ After presenting the initial draft:
 ## Next Steps
 
 Once the PRD + feature specs are approved, the PRD is an input — not the finish
-line. Hand off to the next stages of the planning pipeline (routing hints, not
-inline reads):
+line. Hand off to the next stages of the planning pipeline if such capabilities
+are available (routing hints, not inline reads):
 
 1. **Architecture** — `software-architecture` for a new system, or `arch-decision`
    for a brownfield change → `docs/arch/`

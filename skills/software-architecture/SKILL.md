@@ -42,7 +42,7 @@ Great architecture documents are **decision records, not implementation manuals*
 ## Two Modes
 
 - **Build Mode (default)** — produce or extend the full architecture from a PRD via the Design Flow below. This is everything in this file except the Review / Diagnose Mode section.
-- **Review / Diagnose Mode** — a **read-only** audit of an *existing* architecture. Triggered when `docs/arch/context.md` already exists and the user asks to review / audit / diagnose rather than build. It critiques the docs and never regenerates `context.md` or `system.md`. Jump to the [Review / Diagnose Mode](#review--diagnose-mode) section and follow it instead of the Design Flow.
+- **Review / Diagnose Mode** — a **read-only** audit of an *existing* architecture. Triggered when the architecture context doc already exists (default `docs/arch/context.md`; caller may redirect) and the user asks to review / audit / diagnose rather than build. It critiques the docs and never regenerates the context or system doc. Jump to the [Review / Diagnose Mode](#review--diagnose-mode) section and follow it instead of the Design Flow.
 
 ---
 
@@ -86,10 +86,12 @@ See `references/design-flow.md` for detailed methodology for each stage.
 
 ## Stage 0 — Auto-Classification
 
-**First, read the PRD by path:**
-- `docs/prd/prd.md` (vision, dev order, success metrics)
-- `docs/prd/features/*.md` (per-feature requirements)
-- `docs/prd/product-brief.md` (upstream brief, if present)
+**First, read the PRD by path** (defaults below; the caller may redirect to other locations):
+- the PRD (default `docs/prd/prd.md`) — vision, dev order, success metrics
+- per-feature requirements (default `docs/prd/features/*.md`)
+- the upstream product brief (default `docs/prd/product-brief.md`), if present
+
+If the PRD is absent at the expected path, ask the caller where it lives rather than halting.
 
 Then analyze the PRD content and classify the software automatically. No user questions — derive everything from the PRD.
 
@@ -124,7 +126,7 @@ If the PRD has critical gaps that block architecture decisions, note them as ass
 
 ## Output Structure
 
-The design flow produces these output files:
+The design flow produces these output files (default paths; the caller may redirect the `docs/arch/` root):
 
 | File | Stages | Purpose | Template |
 |---|---|---|---|
@@ -144,8 +146,8 @@ already resolved. Trust git history.
 Exception for ADRs: each decision is its own file at `docs/arch/adr/ADR-NNN-{slug}.md`,
 created fresh and never rewritten — so there is no aggregate line cap. When a decision is
 superseded, set the older ADR's status to `Superseded by ADR-NNN` in its file rather than
-deleting it. The `arch-decision` skill records standalone ADRs into the same `docs/arch/adr/`
-directory.
+deleting it. A standalone-ADR capability (e.g. the `arch-decision` skill, if available) records
+into the same `docs/arch/adr/` directory.
 
 | File | Limit |
 |---|---|
@@ -198,18 +200,18 @@ Before finalizing, verify:
 ## Review / Diagnose Mode
 
 Use this mode when the user asks to **review, audit, or diagnose an existing
-architecture** — not to build a new one. Trigger: `docs/arch/context.md`
-already exists and the intent is to critique, not create.
+architecture** — not to build a new one. Trigger: the architecture context doc
+(default `docs/arch/context.md`) already exists and the intent is to critique, not create.
 
 **Hard rule — never regenerate.** Do NOT run the Design Flow and do NOT rewrite
-`context.md` or `system.md` wholesale. A review that silently overwrites the
+the context or system doc wholesale. A review that silently overwrites the
 design it was asked to critique is a failure. The only writes allowed are:
 
 - **Targeted patch** of a specific, named defect, in place — and only after you
   have stated the finding it fixes. One surgical edit per finding, never a
   section-wide rewrite or a "consolidate" pass.
 - **Additive append** to the Risk Register or Open Questions in `risks.md`.
-- **A new ADR** via the `arch-decision` skill.
+- **A new ADR** via a standalone-ADR capability (e.g. the `arch-decision` skill, if available).
 
 If the user wants a full redesign rather than an audit, stop and run Build Mode
 instead — but say so explicitly first.
@@ -226,7 +228,7 @@ instead — but say so explicitly first.
    - 🔴 / 🟠 fixable now and unambiguous → targeted patch to the affected doc.
    - Accepted risk / won't-fix → append to the Risk Register in `risks.md`.
    - Needs user input → append to Open Questions in `risks.md`.
-   - Implies a new decision → new ADR via `arch-decision`.
+   - Implies a new decision → new ADR via a standalone-ADR capability (e.g. the `arch-decision` skill, if available).
 5. **Never** create a separate `review.md` — findings live in the docs they
    concern. Return a severity-ranked summary of what you found and did.
 
@@ -240,8 +242,9 @@ instead — but say so explicitly first.
 - 🟡 **Medium** — structural improvement; a doc gap that fails the 6-Month Test.
 - 🟢 **Low** — wording, nits, optional consistency fixes.
 
-For data-model and schema findings, also apply the `database-design` skill's
-"When Reviewing an Existing Schema" checklist rather than re-deriving criteria here.
+For data-model and schema findings, also apply the schema-review checklist from a
+database-design capability (e.g. the `database-design` skill's "When Reviewing an
+Existing Schema" checklist, if available) rather than re-deriving criteria here.
 
 ---
 

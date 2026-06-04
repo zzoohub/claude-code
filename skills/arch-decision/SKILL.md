@@ -23,8 +23,10 @@ Record one decision, tied to the existing system's ASRs, without rewriting
 
 ## Prerequisites
 
-`docs/arch/context.md` and `docs/arch/system.md` should exist. You can still
-record an ADR against a missing context, but flag the gap.
+The architecture docs root defaults to `docs/arch/` (caller may redirect).
+`docs/arch/context.md` and `docs/arch/system.md` are the inputs; if either is
+absent, ask the caller rather than halting — you can still record an ADR
+against a missing context, but flag the gap.
 
 ## What This Skill Does
 
@@ -67,7 +69,8 @@ record an ADR against a missing context, but flag the gap.
 - **Revisit when:** Trigger conditions that should prompt reconsideration (scale threshold, library deprecation, new ASR, etc.).
 ```
 
-This extends `software-architecture`'s `templates/adr.md` ADR format: it shares
+This aligns with the standard `software-architecture` ADR template (in that skill's
+templates if installed; otherwise the format above is self-sufficient): it shares
 `Status` / Door / Context / Decision / Why / Rejected / Tradeoff / Revisit-when, **adds**
 an explicit `Options` list, and **omits** `Stage` (a standalone decision has no
 design-flow stage). `Rejected` states why each *other* option lost the comparison —
@@ -108,7 +111,7 @@ files is expected.
 
 ## Output
 
-- `docs/arch/adr/ADR-NNN-{slug}.md` — new ADR file created
+- the new ADR file (default `docs/arch/adr/ADR-NNN-{slug}.md`) — created
 - `docs/arch/system.md` — patched if architecture surface changed
 
 **Superseding:** ADRs are one file per decision — there is no aggregate line cap.

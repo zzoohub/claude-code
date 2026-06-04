@@ -24,7 +24,7 @@ definition — picking the right group and the next available ID.
 
 ## Prerequisites
 
-`tasks/board.md` must already exist.
+The board (default `tasks/board.md`; the caller may redirect the `tasks/` root) should already exist — if absent, ask the caller (or use task-craft if such a capability is available) rather than halting.
 
 ## What This Skill Does
 
@@ -89,8 +89,8 @@ Type Guide** in `task-craft`.
    - Spike → the question to answer + time-box
 3. **Pick the next ID** — highest existing `T-NNN` + 1. ID assignment must be
    serialized: allocate a contiguous block when adding several at once, and
-   when agents add in parallel let the orchestrator hand out IDs so two adds
-   can't claim the same number.
+   when several adds run in parallel let a single coordinator hand out IDs (if
+   one is available) so two adds can't claim the same number.
 4. **Choose the group** — see step 5 above (phases vs iterations)
 5. **Write the row** — append to `tasks/board.md` in the right group
 6. **Write task details** — append to `tasks/features/{feature}.md` (or
@@ -179,7 +179,7 @@ Keep upgrades minimal; don't reformat unrelated rows.
 
 ## Output
 
-- `tasks/board.md` — patched (rows added in correct group, `> Last updated:` bumped)
+- the board (default `tasks/board.md`) — patched (rows added in correct group, `> Last updated:` bumped)
 - `tasks/features/{feature}.md` — updated (or created if absent and the task
   warrants context)
 - On a revise: the task's detail block edited, `Changes` appended, and any
