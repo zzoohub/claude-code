@@ -93,7 +93,7 @@ outputs: `skills/**/dist/`, `skills/**/node_modules/`, `skills/**/*.bun-build`.
   intent and invoke the right skill. *Doers* (dev + biz) do the work, calling skills as needed.
 - **Agents never call other agents.** Each agent invokes *skills* only. Sequencing across agents
   is orchestrated by the main conversation (you, or the top-level assistant). The **workflow
-  chains** in [`WORKFLOWS.md`](WORKFLOWS.md) are the intended sequences — run them step by step,
+  chains** in [`PLAYBOOK.md`](PLAYBOOK.md) are the intended sequences — run them step by step,
   checking each output before the next agent consumes it.
 - **Skills load on demand.** An agent pulls a skill into context only when the task needs it.
   Skills hold the method, the format, and the quality bar; agents hold the routing and judgment.
@@ -215,7 +215,7 @@ Detail that doesn't belong in every turn's context lives in two companions. Thes
 markdown links, **not** `@imports` — Claude Code does not auto-load them; they cost nothing until an
 agent chooses to open one:
 
-- [`WORKFLOWS.md`](WORKFLOWS.md) — how the agents chain end to end: the 5 workflow sequences (full
+- [`PLAYBOOK.md`](PLAYBOOK.md) — how the agents chain end to end: the 5 workflow sequences (full
   launch, feature, growth, GTM, review), the task-status ownership rules, and the solo-founder
   minimum spine.
 - [`REFERENCE.md`](REFERENCE.md) — static lookup tables: the agent skill-palette **roster**,

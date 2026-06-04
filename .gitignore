@@ -6,6 +6,8 @@
 !.gitignore
 !README.md
 !CLAUDE.md
+!REFERENCE.md
+!PLAYBOOK.md
 !AGENTS.md
 !agents/
 !agents/**
