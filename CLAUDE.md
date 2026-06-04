@@ -1,12 +1,83 @@
-# CLAUDE.md — human reference map (not auto-loaded)
+# CLAUDE.md
 
-**What this file is:** a human-readable reference map of this agent + skill library — a
-maintainer's guide to **which agent to call for a given intent**, **how the agents chain end to
-end**, **where each agent reads and writes files by convention**, and **what external tools the
-system depends on**.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+**What this file is:** the auto-loaded reference map of this agent + skill library — a maintainer's
+guide to **which agent to call for a given intent**, **how the agents chain end to end**, **where
+each agent reads and writes files by convention**, and **what external tools the system depends on**.
+(It was formerly `AGENTS.md`, renamed so Claude Code auto-loads it as project instructions.)
 
 > The plan agents are the domain owners of their doc trees: `product-manager` owns `docs/prd/`,
 > `architect` owns `docs/arch/`, `ux-designer` owns `docs/ux/`, `task-manager` owns `tasks/`.
+
+---
+
+## What this repository is
+
+This repo is **not an application** — it is a **portable skill library + a Claude Code agent layer**.
+There is no product source code here. It ships three things:
+
+- **`skills/`** — **41** framework-agnostic skills, each `skills/<kebab-name>/SKILL.md` plus optional
+  `references/` (deep-dive docs loaded on demand — 31 skills), `templates/` (output scaffolds — `qa`,
+  `software-architecture`), and `scripts/` (helpers — `database-design`, `postgresql`; both `.sql`).
+  A `SKILL.md` runs on any Agent-Skills-compatible runtime; only `name` + `description` frontmatter
+  is load-bearing.
+- **`agents/`** — **15** Claude-Code-only subagent definitions, split `agents/plan/` (4) ·
+  `agents/dev/` (7) · `agents/biz/` (4). Each `.md` carries `name`, `description`, `tools`, `model`,
+  `skills`, `color` frontmatter (+ an `mcpServers` array on the 4 MCP-bound agents: `verifier`,
+  `release-engineer`, `data-analyst`, `desktop-developer`). `agents/` is the source of truth; Claude
+  Code consumes agents from `.claude/agents/` — this repo does **not** vendor that mapping (deploy or
+  symlink per environment). The only `.claude/` content here is `settings.local.json`.
+- **`CLAUDE.md`** — this auto-loaded reference map (formerly `AGENTS.md`).
+
+**The `apps/*`, `db/`, `docs/`, `tasks/`, and `biz/` paths referenced throughout this file describe
+the consuming project an agent operates on — never this library's own contents** (whose only
+top-level dirs are `agents/` and `skills/`). Don't look for app code or those doc trees here.
+
+**Externally-managed skills (symlinks, may be dangling).** Four entries under `skills/` are
+git-tracked symlinks (mode `120000`) into an external store at `../../.agents/skills/`
+(Vercel/Expo-managed) — **dangling in a fresh checkout on this machine**:
+`vercel-composition-patterns`, `vercel-react-best-practices`, `vercel-react-native-skills`,
+`web-design-guidelines`. They resolve only where that store is installed; a `skills/<name>` file
+check fails for them locally, and agents that use them already document a `design-system` fallback.
+So `ls skills/` shows 45 entries but only 41 are real, repo-owned skills.
+
+**Adding to the library:** a new skill → `skills/<kebab-name>/SKILL.md` (name + description
+frontmatter; follow **Skill conventions** below). A new agent → `agents/<layer>/<name>.md` (follow
+**Agent conventions** below).
+
+## Commands
+
+This is a **documentation/config library — there is no repo-wide build, test, lint, or format
+step** (no root `package.json`, Makefile, `justfile`, or CI). Skills and agents are markdown. There
+are exactly two exceptions:
+
+**`skills/browse`** — the only buildable/testable component: a TypeScript + Playwright tool that Bun
+compiles into a ~63MB standalone binary. `dist/` is gitignored, so it must be rebuilt after clone.
+Run from `skills/browse/`:
+
+```bash
+./setup            # one-time, idempotent: bun install + Playwright Chromium + build + git-SHA stamp
+bun install        # deps only
+bun run build      # compile dist/browse + dist/find-browse (bun build --compile)
+bun run typecheck  # tsc --noEmit
+bun test           # Bun's runner auto-discovers test/*.test.ts (there is no `test` script)
+```
+
+Requires `bun` (`curl -fsSL https://bun.sh/install | bash`) and `git`. `skills/qa` *drives* this
+binary (resolved via `$BROWSE_BIN` or the bundled `bin/find-browse`) but has no build of its own.
+See `skills/browse/UPSTREAM.md` for its frozen-fork posture.
+
+**SQL helper scripts** — psql-ready diagnostics, run by hand against a target Postgres DB (not a
+script runner):
+
+```bash
+psql <conn> -f skills/postgresql/scripts/query_diagnostics.sql   # slow queries/locks/bloat (needs pg_stat_statements)
+psql <conn> -f skills/database-design/scripts/schema_review.sql  # unindexed FKs, unused indexes, missing constraints
+```
+
+`.gitignore` uses an ignore-all-then-whitelist pattern (comments are in Korean) and excludes build
+outputs: `skills/**/dist/`, `skills/**/node_modules/`, `skills/**/*.bun-build`.
 
 ---
 
@@ -83,13 +154,20 @@ Claude Code, by design.
   but writes no status. The main session sequences the chain and triggers the close.
 - **Model policy is intentionally uniform `opus`** (reviewer/verifier = `sonnet`).
   Not a cost oversight — leave it.
+- **Frontmatter fields.** Every agent sets `name`, `description`, `tools`, `model`, `skills`,
+  `color`. The 4 MCP-dependent agents (`verifier`, `release-engineer`, `data-analyst`,
+  `desktop-developer`) additionally declare an `mcpServers:` array plus the matching `mcp__*` globs
+  in `tools:`. "Agents never call other agents" is enforced *structurally* — no agent is granted a
+  subagent-spawning tool; routers' `tools:` are `Skill`-only. (Two *skills*, `plan-ceo-review` and
+  `plan-eng-review`, pin `allowed-tools` too, though they are not host-coupled — only `browse`/`qa`
+  carry `compatibility:`.)
 
 ### Why this lives here
 
-`AGENTS.md` is a non-auto-loaded human reference map. Conventions belong here (and
-runtime overrides in the consuming project's `CLAUDE.md`) — never baked into a skill,
-which must stay portable. Several conventions above were chosen by blind A/B
-experiment, not assertion.
+This file (`CLAUDE.md`, formerly `AGENTS.md`) is the reference map for **this library**.
+Conventions belong here — never baked into a skill, which must stay portable; a *consuming*
+project layers its own runtime overrides in its own `CLAUDE.md`. Several conventions above were
+chosen by blind A/B experiment, not assertion.
 
 ---
 
@@ -127,6 +205,12 @@ supplies the question UI) and carries any approved tasks to `task-manager`, whic
 
 ## Agent roster
 
+Each bullet is the agent's **routable skill palette**, not its frontmatter — most of these load on
+demand via the `Skill` tool; only a subset (often one) is preloaded in the agent's `skills:` array
+(e.g. `backend-developer` preloads `[postgresql]`, `growth-optimizer` preloads `[copywriting]`).
+Skill names with a colon (`vercel:deploy`) are the runtime Skill-tool namespace; the same skills
+appear under hyphenated dir names in `skills/` when repo-owned.
+
 **Plan layer (routers — no skills of their own):**
 - `product-manager` → product-brief · prd-craft · feature-spec
 - `architect` → software-architecture · arch-decision · database-design · llm-app-design
@@ -134,7 +218,7 @@ supplies the question UI) and carries any approved tasks to `task-manager`, whic
 - `task-manager` → task-craft · task-add · task-status
 
 **Dev layer (doers):**
-- `backend-developer` → postgresql + one of axum / fastapi / hono / nestjs-hexagonal (by stack) · database-design · correctness-checklists
+- `backend-developer` → postgresql + one of axum-hexagonal / fastapi-hexagonal / hono-hexagonal / nestjs-hexagonal (by stack) · database-design · correctness-checklists
 - `frontend-developer` → frontend-design + tanstack-start / vercel-composition-patterns / vercel-react-best-practices (by stack) · design-system · motion · i18n · web3d
 - `mobile-developer` → vercel-react-native-skills · expo-app-design (Expo/Vercel-managed) · design-system · motion · i18n
 - `desktop-developer` → same web UI skill as frontend + Tauri-specific work
@@ -240,6 +324,7 @@ one agent.
 | Architecture decisions (ADRs) | `docs/arch/adr/ADR-NNN-{slug}.md` | architect (software-architecture, arch-decision) | developers |
 | Risks & open questions | `docs/arch/risks.md` | architect (software-architecture) | developers, reviewer |
 | Database design | `docs/arch/database.md` | architect (database-design) | backend-developer, reviewer, task-manager |
+| AI feature design | `docs/arch/ai-features/{feature}.md` | architect (llm-app-design) | backend-developer, developers |
 | App UX | `docs/ux/ux-design.md` | ux-designer | frontend/mobile/desktop developers |
 | Screen specs | `docs/ux/screens/{screen}.md` | ux-designer | frontend/mobile/desktop developers |
 | Task board | `tasks/board.md` | task-manager | developers, release-engineer |
@@ -279,7 +364,7 @@ These power specific agents. If one is unavailable, the agent falls back as note
 | Dependency | Used by | Purpose | Fallback if missing |
 |---|---|---|---|
 | `frontend-design` plugin | frontend-developer, desktop-developer | Production-grade UI design | `design-system` + general best practice |
-| `vercel-*` skills (Vercel-managed) | frontend/mobile/desktop developers | React / Next / TanStack / RN patterns. Vercel-managed upstream, always installed — fall back briefly only if absent | `design-system` + general best practice |
+| `vercel-*` skills (Vercel-managed) | frontend/mobile/desktop developers | React / Next / TanStack / RN patterns. Vercel-managed upstream; present in `skills/` only as symlinks into the external `../../.agents/skills/` store (dangling in this checkout — see *What this repository is*) | `design-system` + general best practice |
 | `expo-app-design` plugin (Expo-managed) | mobile-developer | Native Expo/RN UI patterns. Expo-managed upstream, always installed — fall back briefly only if absent | `vercel-react-native-skills` + `design-system` |
 | Vercel MCP | release-engineer | Auth session for `vercel:*` skills + CLI (MCP exposes auth only; deploy/env/state run through the skills) | `vercel` CLI via Bash |
 | Cloudflare MCPs (bindings/builds/observability) | release-engineer | Workers/Pages deploy, build logs, runtime logs | `wrangler` CLI via Bash |
@@ -325,6 +410,10 @@ Be honest about what this library does **not** do yet, so you don't assume an ow
   but SOC2/ISO, secrets-rotation policy, and vendor risk are not.
 - **Validation/PMF method** — `product-brief` captures the problem; it does not prescribe how to
   validate it (interviews, landing-page smoke tests, Sean Ellis survey).
-- **Orphan reference** — `skills/web-design-guidelines` is not routed by any agent;
-  `design-system` is the primary UI guidance for frontend/desktop developers. Either
-  deprecate `web-design-guidelines` or give it an explicit role if you keep it.
+- **Orphan + dangling reference** — `skills/web-design-guidelines` is a symlink into the missing
+  external `../../.agents/skills/` store (dangling here) **and** is routed by no agent. `design-system`
+  is the primary UI guidance for frontend/desktop developers. Either restore that store, replace the
+  symlink with a real skill dir and route it, or delete the dead symlink.
+- **Stale `.gitignore` whitelist** — the ignore-all-then-allow list still whitelists `!AGENTS.md`
+  (deleted — replaced by `CLAUDE.md`) and `!commands/` (no such dir exists), and duplicates
+  `!README.md` (no README exists either). Harmless no-ops, but worth pruning on the next pass.
