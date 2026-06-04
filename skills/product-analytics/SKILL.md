@@ -1,16 +1,21 @@
 ---
 name: product-analytics
 description: |
-  Product analytics methodology for SaaS: Aha Moment discovery, retention cohort analysis,
-  Carrying Capacity modeling, PMF assessment, and Kill/Keep/Scale decisions.
-  Use when: finding/validating Aha Moments, making Kill/Keep/Scale calls,
-  diagnosing activation bottlenecks, segmenting retained vs churned users, evaluating CC trends,
-  or when user mentions "Aha Moment", "retention curve", "cohort analysis", "Carrying Capacity",
-  "PMF", "product-market fit", "kill criteria", "activation rate", "retention plateau",
-  "user segmentation", "tracking plan", "GA4", "UTM", "A/B test results",
-  "Sean Ellis survey", "GRR", "NRR", "revenue retention".
+  Analytics methodology that fits the product type — picks the right frame before measuring.
+  Logged-in SaaS product → Aha Moment discovery, retention cohort analysis, Carrying Capacity
+  modeling, PMF assessment, Kill/Keep/Scale. Login-less content/marketing site → acquisition
+  channels, top & conversion-assisting content, engagement depth, lead conversion.
+  Use when: choosing an analytics frame for a product, finding/validating Aha Moments, making
+  Kill/Keep/Scale calls, diagnosing activation bottlenecks, segmenting retained vs churned users,
+  evaluating CC trends, analyzing content/traffic for a blog or marketing site, or when user
+  mentions "Aha Moment", "retention curve", "cohort analysis", "Carrying Capacity", "PMF",
+  "product-market fit", "kill criteria", "activation rate", "retention plateau", "user segmentation",
+  "tracking plan", "GA4", "UTM", "A/B test results", "Sean Ellis survey", "GRR", "NRR",
+  "revenue retention", "content analytics", "blog analytics", "traffic sources", "top posts",
+  "scroll depth", "read completion", "engaged time", "time on page".
   Do NOT use for: tracking code implementation (developer task),
   CRO experiment design (use cro skill), marketing content (use copywriting skill),
+  SEO/AEO/GEO strategy and search-query research (use search-visibility skill),
   referral/viral loop design or the K-factor model and targets (use growth-loops skill),
   or churn intervention — cancel-flow, save-offer, dunning, at-risk health-scoring
   (use churn-prevention skill).
@@ -18,11 +23,30 @@ description: |
 
 # Product Analytics Methodology
 
-Frameworks for discovering what drives retention, measuring product health, and making data-driven kill/keep/scale decisions.
+Methodology for turning analytics into one business decision — first picking the frame that fits the
+product type, then applying it. The **product frame** (logged-in, repeat-use) discovers what drives
+retention and makes kill/keep/scale calls; the **content-site frame** (login-less) measures
+acquisition, engagement, and lead conversion.
 
 ---
 
-## Core Mental Model
+## First: Pick the Analytics Frame
+
+Before any framework below, decide what kind of product you're analyzing — the right metrics differ structurally.
+
+| If the product is… | …use this frame | Spine |
+|---|---|---|
+| **A logged-in product** — persistent identity, repeat use (SaaS, app) | **Product frame** (this file, Core Mental Model onward) | Aha Moment → Retention → Carrying Capacity → Kill/Keep/Scale |
+| **A login-less content / marketing site** — mostly anonymous browsing, conversion = a lead/inquiry (blog, docs, lead-gen) | **Content-site frame** (`references/content-site-analytics.md`) | Acquisition → Engagement → Conversion (lead) |
+
+The frames are not interchangeable: a content site has no persistent identity, no repeat-usage
+retention curve, and no usage equilibrium — so Aha Moment, retention cohorts, and Carrying Capacity
+don't apply, and forcing them produces noise. Everything from **Core Mental Model** down is the
+**product frame**; on a content site, jump to the content-site reference.
+
+---
+
+## Core Mental Model *(product frame — logged-in, repeat-use products)*
 
 All product analytics serves one question: **Should this product be killed, kept, or scaled?**
 
@@ -45,6 +69,7 @@ These are not independent. Aha Moment drives activation rate, activation rate dr
 | Event naming, tracking plan design, validation | `references/event-tracking-design.md` |
 | GA4 setup, GTM configuration, UTM strategy | `references/ga4-gtm-setup.md` |
 | A/B test results analysis, statistical rigor | `references/ab-test-analysis.md` |
+| Content/marketing-site analytics (login-less): acquisition, engagement, content perf, lead conversion | `references/content-site-analytics.md` |
 
 ---
 
