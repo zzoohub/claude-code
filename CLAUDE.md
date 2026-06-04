@@ -1,17 +1,9 @@
-# AGENTS.md — human reference map (not auto-loaded)
+# CLAUDE.md — human reference map (not auto-loaded)
 
 **What this file is:** a human-readable reference map of this agent + skill library — a
 maintainer's guide to **which agent to call for a given intent**, **how the agents chain end to
 end**, **where each agent reads and writes files by convention**, and **what external tools the
 system depends on**.
-
-**What this file is NOT:** it is **not auto-loaded by Claude Code** (Claude Code reads
-`CLAUDE.md`, not `AGENTS.md`), and the agents and skills **do not depend on it** at runtime.
-Nothing here is read at boot. Editing this file does not change agent behavior.
-
-**For runtime project conventions or path overrides**, use the consuming project's `CLAUDE.md` —
-that is the file Claude Code actually loads. Treat the tables below as a description of the
-*default* conventional layout, not a runtime contract.
 
 > The plan agents are the domain owners of their doc trees: `product-manager` owns `docs/prd/`,
 > `architect` owns `docs/arch/`, `ux-designer` owns `docs/ux/`, `task-manager` owns `tasks/`.
