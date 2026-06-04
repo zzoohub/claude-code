@@ -35,6 +35,72 @@ that is the file Claude Code actually loads. Treat the tables below as a descrip
 
 ---
 
+## Design philosophy & conventions
+
+The split below is the load-bearing idea; the rest follows from it.
+
+**Orchestrator ⊥ capability.** A **skill** is a portable, framework-agnostic
+*capability* (the method, format, and quality bar). An **agent** is a
+Claude-Code-only *orchestrator* (routing, judgment, file I/O, sequencing). This is
+separation of mechanism (skill) from policy (agent) — ports & adapters: the skill is
+the dependency-free core, each runtime is an adapter. **The portable unit is the
+skill, not the agent.** A `SKILL.md` runs on any Agent-Skills-compatible runtime
+(Claude Code, Hermes, OpenClaw, Codex, …); a `.claude/agents/*.md` runs only in
+Claude Code, by design.
+
+### Skill conventions (keep skills portable)
+
+- **Framework-agnostic.** No `$ARGUMENTS`, no harness-only tools, no `AskUserQuestion`
+  as a requirement. Only `name` + `description` are load-bearing frontmatter; the body
+  is plain instructions any runtime reads.
+- **Paths are defaults, not contracts.** Write "the X (default `docs/…`; caller may
+  redirect)" — never a hardcoded destination. The default preserves current behavior;
+  the caller (an agent) may override.
+- **Prerequisites degrade gracefully.** "If absent, ask the caller" — never a
+  framework-specific hard-stop.
+- **No `## Contract` / Inputs-Outputs / YAML block.** Decouple by editing existing
+  lines in place ("Lean-inline"). A blind A/B (6-0) showed a dedicated section adds
+  body surface that competes for the model's attention and *lowers craft-output
+  quality* — quality, not token cost, is the reason.
+- **Body cross-references are soft** ("via the X capability, if available"). The
+  `description` block's "use the Y skill" routing text is harmless metadata other
+  runtimes ignore — leave it.
+- **Host-coupled skills declare it** via the standard `compatibility:` frontmatter
+  (e.g. `browse`/`qa` ship a binary; resolve it via `${BROWSE_BIN}`, not a fixed path).
+
+### Agent conventions (own the orchestration the skills don't)
+
+- **Agents never call other agents.** Cross-agent sequencing is the main session's
+  job; sequencing an agent's *own* skills in dependency order is fine.
+- **The agent owns the three things a decoupled skill hands back:**
+  1. **Input provisioning.** Read `CLAUDE.md` first (it may redirect roots), resolve
+     and pass the doc paths the skill needs, so the skill's "ask the caller" never
+     dead-ends in a subagent that cannot prompt. A genuinely missing input becomes a
+     *text question in the return summary*, never an interactive prompt. Each plan
+     agent lists these in a **Required Inputs** section.
+  2. **Output paths.** The agent owns where artifacts land (the skill's path is a
+     caller-overridable default). See the Default doc locations table.
+  3. **Sequencing / build.** The agent drives the skill to produce + place the
+     artifact and reports back. Chains removed from skill bodies (e.g.
+     `software-architecture` → `arch-decision` per decision) live in the owning agent.
+- **Task lifecycle has one owner per transition.** `task-manager` writes the **left
+  edge** (`backlog`→`active` + assignee, on dispatch) and the **close**
+  (`active`→`done`) — the close only after the main session confirms reviewer *and*
+  verifier passed. Builder agents never self-certify `done` (they leave the task
+  `active`, or mark `blocked` if they couldn't finish); the verifier *proves* behavior
+  but writes no status. The main session sequences the chain and triggers the close.
+- **Model policy is intentionally uniform `opus`** (reviewer/verifier = `sonnet`).
+  Not a cost oversight — leave it.
+
+### Why this lives here
+
+`AGENTS.md` is a non-auto-loaded human reference map. Conventions belong here (and
+runtime overrides in the consuming project's `CLAUDE.md`) — never baked into a skill,
+which must stay portable. Several conventions above were chosen by blind A/B
+experiment, not assertion.
+
+---
+
 ## Intent → agent decision table
 
 Find the row that matches what you want, call that agent.
@@ -60,7 +126,10 @@ Find the row that matches what you want, call that agent.
 
 For a plan review *before* writing code, the main agent can invoke the `plan-ceo-review`
 (scope/vision) or `plan-eng-review` (locked-scope execution rigor) skills directly — these are
-not owned by an agent.
+not owned by an agent. The review skill **proposes** task rows but does not place them: after the
+review, the main session renders the structured issue list interactively (it is the runtime that
+supplies the question UI) and carries any approved tasks to `task-manager`, which appends them via
+`task-add`.
 
 ---
 
@@ -108,6 +177,20 @@ reviewer          → security + correctness + maintainability (blocking gate)
 verifier          → real-browser / API verification (behavior gate)
 release-engineer   → ship to production + post-deploy health check
 ```
+
+**Who writes task status, and when.** No builder self-certifies its own task `done`.
+The main session owns the status edges and drives them through `task-manager` (agents
+never call each other):
+- *Before* a builder runs, the main session has `task-manager` move the task
+  `backlog` → `active` and set the assignee (`task-manager` owns this left edge; the
+  board ships assignees as `—`).
+- A builder leaves its task `active` and returns a verdict; it only ever moves the task
+  to `blocked` itself, when it couldn't finish.
+- The main session marks the task `done` (via `task-manager`) **only after both reviewer
+  and verifier pass** — `verifier` proves behavior but writes no status by design.
+
+This keeps the closer unambiguous and matches `task-status`'s rule that completion is
+verified before `done` is written.
 Optionally insert a plan review (`plan-ceo-review` for scope, `plan-eng-review` for rigor)
 between architect and task-manager.
 

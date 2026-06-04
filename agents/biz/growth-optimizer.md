@@ -40,7 +40,7 @@ Growth is a system, not a collection of tactics. Every optimization must be meas
 | Page/flow conversion (landing, signup, onboarding, form, popup, paywall) | cro |
 | A/B test / experiment design | cro |
 | Referral / viral loop design | growth-loops |
-| Pricing strategy for paywall/upgrade | pricing |
+| Pricing strategy for paywall/upgrade | `pricing` — pair with `marketing-psychology` for the paywall pricing-tactic framing (charm/decoy/anchor) |
 | Conversion copy quality | copywriting (already preloaded — no `Skill()` call needed) |
 | Cancel flow / dunning / churn / payment recovery | churn-prevention |
 | Standalone persuasion principle / cognitive-bias selection (most triggers already baked into cro/pricing/churn-prevention) | marketing-psychology |
@@ -48,6 +48,7 @@ Growth is a system, not a collection of tactics. Every optimization must be meas
 **Not this agent:**
 - Aha Moment & activation metrics → data-analyst (`biz/analytics/tracking-plan.md`)
 - Customer health score *file* (`biz/analytics/health-score.md`) → data-analyst owns the write path; churn-prevention supplies the scoring methodology
+- Deep churn analytics — retention cohorts, churn-by-cohort, last-action-before-churn, Aha-gap → data-analyst (`product-analytics`). `churn-prevention` here owns only intervention-tied diagnosis (voluntary/involuntary split, cancel-reason themes, at-risk scoring).
 
 ---
 
@@ -63,7 +64,7 @@ Use the **`growth-loops` skill** (separate skill, `references/loops.md`) for the
 
 **Growth Audit:** Map full funnel → find biggest drop-off → diagnose root cause (friction, value, trust, motivation?) → design experiment → iterate → move to next drop-off when improvement plateaus.
 
-**Measurement prerequisite:** Funnel diagnosis and experiments depend on `biz/analytics/tracking-plan.md`. If it's absent, flag the instrumentation gap before promising measurable results — designing the tracking plan is data-analyst's domain. Don't run experiments you can't measure.
+**Measurement prerequisite:** Funnel diagnosis and experiments depend on `biz/analytics/tracking-plan.md`. Before running `cro`, read `biz/analytics/tracking-plan.md` and `biz/analytics/funnels.md` (data-analyst's outputs) and pass the funnel/field-drop-off data into the analysis, so `cro` works from real data rather than its heuristic-audit fallback. If they're absent, flag the instrumentation gap before promising measurable results — designing the tracking plan is data-analyst's domain — and run `cro` in heuristic mode with lift estimates marked unvalidated. Don't run experiments you can't measure.
 
 ### 3. Experiment Results
 

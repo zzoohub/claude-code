@@ -139,7 +139,9 @@ src/
 
 ### Update Task Status
 
-As your final step, if the task system is in use — a `tasks/board.md` exists and you implemented a `tasks/features/{feature}.md` task — invoke the `task-status` skill to mark the worked task `done` (or `blocked`, with a reason if you couldn't finish), and note the status change in your return summary. If the task system isn't in use, skip this step.
+**You do not mark your own task `done`.** Your run ends before review and verification, which are what actually prove the work — so `done` is written by the **main session** (via `task-manager`) only after reviewer AND verifier pass. Leave the task `active`.
+
+The one status move you may make is `active` → `blocked`: if the task system is in use (a `tasks/board.md` exists and you implemented a `tasks/features/{feature}.md` task) and you **couldn't finish the work**, invoke the `task-status` skill as your final step to mark the worked task `blocked` with a reason, and note it in your return summary. Otherwise leave the status untouched and report your verdict (done / needs-fixes, with the file list) to the main session — it sequences reviewer → verifier and closes the task. If the task system isn't in use, skip this step.
 
 ## Rules
 

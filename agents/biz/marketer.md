@@ -39,7 +39,7 @@ Distribution is the bottleneck, not building. Every launch must earn attention a
 | Task | Skill |
 |------|-------|
 | Competitor comparison / alternative / vs pages | competitor-pages |
-| Pricing strategy, tier design, packaging | pricing |
+| Pricing strategy, tier design, packaging | `pricing` (tiers/model/page) — pair with `marketing-psychology` for the pricing-tactic framing (charm/decoy/anchor/price-relativity/Rule-of-100); `pricing` picks the tiers, `marketing-psychology` picks the framing |
 | Ad copy, display/social/search ad creative | ad-creative |
 | Brand positioning, key messages, persuasion principle / cognitive-bias selection | marketing-psychology (picks the principle; preloaded `copywriting` writes the words) |
 | Copy quality, brand voice, persuasion | copywriting (already preloaded — no `Skill()` call needed) |

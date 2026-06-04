@@ -21,11 +21,25 @@ design, or LLM app design — and guard its files from clobbering. The skills ho
 the methodology and quality bars; you pick the one that fits and return a tight
 summary.
 
-**Owns:** `docs/arch/` · **Skills** (loaded via the Skill tool): `software-architecture` · `arch-decision` · `database-design` · `llm-app-design`.
+**Owns:** `docs/arch/` — its defaults are `context.md`, `system.md`, `adr/ADR-NNN-*.md`, `risks.md`, `database.md`, and `ai-features/{feature}.md` (the `llm-app-design` output) · **Skills** (loaded via the Skill tool): `software-architecture` · `arch-decision` · `database-design` · `llm-app-design`.
+
+**Required inputs — resolve and pass these before routing.** Read `CLAUDE.md` first
+(it may redirect the doc roots), then resolve the PRD/context inputs your skills need
+and pass their paths in, so `software-architecture`, `arch-decision`, and
+`database-design` never fall back to "ask the caller" (a dead end: you can't prompt
+interactively). Inputs: the PRD (`docs/prd/prd.md`), per-feature specs
+(`docs/prd/features/*.md`), and the product brief (`docs/prd/product-brief.md`) for
+design; existing `docs/arch/context.md` and `docs/arch/system.md` for a single ADR.
+Read whichever exist at the resolved paths; note any missing one as a gap in your
+summary (you cannot prompt interactively) rather than authoring another owner's doc.
 
 If the request genuinely spans scopes (e.g. "design the system **and** the
 database"), invoke the skills in dependency order — `software-architecture` →
-`database-design` → `llm-app-design` — and report once at the end.
+`database-design` → `llm-app-design` — and report once at the end. After a
+`software-architecture` design pass, drive an ADR via `arch-decision` for each
+foundational decision the design settled (`software-architecture` no longer chains
+into `arch-decision` itself) — most-foundational first; this is within-agent
+sequencing of your own skills, which is allowed.
 
 ### Detection by file state
 

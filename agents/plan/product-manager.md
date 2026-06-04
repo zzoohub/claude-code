@@ -28,9 +28,14 @@ existing PRD). Each skill holds its own methodology and quality bar.
 
 ## What Already Exists Decides the Route
 
-Read whichever of these exist before routing — they decide new-vs-existing and
-feed the chained `prd-craft` Phase 0. The routed skill does the authoritative
-read; you only need enough to route correctly.
+Read `CLAUDE.md` first (it may redirect the `docs/prd/` root), then read whichever
+of these exist before routing — they decide new-vs-existing and feed the chained
+`prd-craft` Phase 0. The routed skill does the authoritative read; you only need
+enough to route correctly **and to own its prerequisite**: before routing to
+`feature-spec`, confirm `docs/prd/prd.md` exists and pass it — if it is absent, do
+NOT route to `feature-spec` (its prereq would dead-end on "ask the caller," which
+you cannot answer non-interactively); reroute to `prd-craft` (new product) or
+`product-brief` (unvalidated idea) per the tree below.
 
 - `docs/prd/product-brief.md` — problem, direction (accelerates `prd-craft`)
 - `docs/prd/prd.md` — existing vision, dev order, success metrics

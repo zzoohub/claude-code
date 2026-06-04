@@ -128,7 +128,9 @@ Shipping a desktop app is more than the webview — cover the full lifecycle whe
 
 ### Close the Task
 
-As your final step, update the task board if the task system is in use. If a `tasks/board.md` exists and you implemented a `tasks/features/{feature}.md` task, invoke the `task-status` skill to mark the worked task `done` (or `blocked`, with a reason if you couldn't complete it), and note the status change in your return summary. If the task system isn't in use, skip this step.
+**You do not mark your own task `done`.** Your run ends before review and verification, which are what actually prove the work — so `done` is written by the **main session** (via `task-manager`) only after reviewer AND verifier pass. Leave the task `active`.
+
+The one status move you may make is `active` → `blocked`: if the task system is in use (a `tasks/board.md` exists and you implemented a `tasks/features/{feature}.md` task) and you **couldn't complete the work**, invoke the `task-status` skill as your final step to mark the worked task `blocked` with a reason, and note it in your return summary. Otherwise leave the status untouched and report your verdict (done / needs-fixes, with the file list) to the main session — it sequences reviewer → verifier and closes the task. If the task system isn't in use, skip this step.
 
 ## What You Return
 
@@ -160,7 +162,7 @@ As your final step, update the task board if the task system is in use. If a `ta
 [Any assumptions made, questions for the user, or cross-domain dependencies identified — e.g. CI/signing config outside apps/desktop/]
 
 ## Task Status (if task system in use)
-[Worked task marked done / blocked via task-status skill — with reason if blocked]
+[Verdict: done — ready for review/verify | blocked — reason. Task left `active` for the main session to close after reviewer + verifier pass; marked `blocked` here only if I couldn't complete it.]
 ```
 
 ## Rules

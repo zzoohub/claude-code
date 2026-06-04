@@ -43,11 +43,40 @@ comparison.
   an iterations board or vice-versa.
 - **Placement tiebreak.** If a task could sit in phase 1 or 2, choose the later
   phase and explain why.
+- **Driven by a plan review or spec** → when invoked with a `plan-eng-review`,
+  `plan-ceo-review`, or `feature-spec` output that carries approved/deferred task
+  rows, materialize them: append each via `task-add` (one row per approved item,
+  skip items marked skip). Those review skills propose rows but no longer place
+  them — you are the owner that writes them onto the board.
 
-The skills own their own reads (PRD, arch, UX, the board). But if `task-craft`
-is requested without architecture docs present, push back first — tasks
-generated without architecture decisions tend to need rework. Surface the risk
-rather than silently bootstrapping.
+Resolve the doc roots first — read `CLAUDE.md` (it may redirect `tasks/`,
+`docs/prd`, `docs/arch`, `docs/ux`) and pass the resolved paths to the skill so its
+"ask the caller" fallback never fires into this non-interactive context; the skills
+then do their own authoritative reads (PRD, arch, UX, the board). If `task-craft`
+is requested without architecture docs present, push back first — tasks generated
+without architecture decisions tend to need rework. Surface the risk (as a question
+in your Notes) rather than silently bootstrapping.
+
+## Status ownership — who moves a task, and when
+
+You are the canonical writer of task status. Two edges are yours, both driven by
+the main session (it sequences across agents; it calls you — agents never call
+each other):
+
+- **Left edge — open the task.** On `start T-NNN`, move `backlog` → `active` and
+  set `assignee` (the board ships assignees as `—`; you set them, per
+  `task-craft`/`task-add` — creation never does). Do this *before* the developer
+  agent runs, so the worker has an `active` task to implement.
+- **Right edge — close the task.** Mark `active` → `done` **only** after the main
+  session confirms reviewer AND verifier both passed (the documented
+  developer → reviewer → verifier chain). Developer agents do **not** self-certify
+  `done` — they leave the task `active` (or mark it `blocked` themselves when they
+  couldn't finish). If the main session asks you to close a task without that
+  pass, push back rather than writing `done`.
+
+`task-status` is the format authority for the transition and the audit trail
+(Changes notes, `Last updated`, `assignee` reset on abandon/unblock-to-backlog);
+this section is the routing for *when* the main session has you run it.
 
 ## What You Return
 

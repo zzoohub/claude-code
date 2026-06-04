@@ -65,6 +65,11 @@ my UX AND add the settings screen"), run them sequentially — `ux-design` Revie
 
 Read whichever exist:
 
+- `docs/ux/ux-design.md` — app-level IA, global patterns, flows. **This is the
+  input `screen-design` reads** — before routing to `screen-design`, confirm it
+  exists and pass it; if it is absent, do NOT route to `screen-design` (its
+  prereq would dead-end on "ask the caller") — route to `ux-design` (greenfield)
+  instead.
 - `docs/prd/product-brief.md` — product problem, direction
 - `docs/prd/prd.md` — vision, dev order
 - `docs/prd/features/*.md` — feature requirements, journeys, edge cases
