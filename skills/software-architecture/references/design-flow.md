@@ -46,7 +46,7 @@ Architecturally Significant Requirements (ASRs) are the requirements that shape 
 
 ### ASR Filter Criteria
 
-A requirement is architecturally significant if it matches any of these 7 filters:
+A requirement is architecturally significant if it matches any of these 8 filters:
 
 | # | Filter | Example |
 |---|---|---|
@@ -57,6 +57,7 @@ A requirement is architecturally significant if it matches any of these 7 filter
 | 5 | No precedent — team hasn't built this before | First-time real-time collaboration |
 | 6 | Past failure — similar systems have failed here | Data migration from legacy system |
 | 7 | Regulatory — compliance mandates specific approaches | GDPR data residency, SOC 2 |
+| 8 | Threat-derived — a STRIDE pass over a trust-boundary-crossing flow surfaces a spoof/tamper/disclosure/EoP risk | Tenant isolation under a compromised service token; tampering on the outbox relay |
 
 ### Utility Tree
 
@@ -139,7 +140,7 @@ Same term, different rules = different bounded context.
 
 ### Ubiquitous Language Glossary
 
-Code terms must match PRD terms 1:1. No synonyms, no abbreviations that diverge from business language.
+Code terms must match PRD terms 1:1 **within a bounded context**. No synonyms, no abbreviations that diverge from business language. Across contexts the *same* term may carry different meaning (e.g. "User" in auth vs. billing) — that is correct, not a violation; keep the glossary per-context.
 
 | Term | Definition | Code Mapping |
 |---|---|---|
@@ -224,7 +225,7 @@ One iteration through stages 2->3->4->(back to 2 if needed) is usually sufficien
 
 ### Tech Stack Selection
 
-Choose technologies that fit the ASRs and patterns from stages 2-4. Record each choice with rationale in the "Core Technology" table of `docs/arch/system.md` §2. Use `references/tech-stack.md` as a reference — selections outside the list are fine if justified.
+Choose technologies that fit the ASRs and patterns from stages 2-4. Record each choice with rationale in the "Core Technology" table of `docs/arch/system.md` §2. Use `references/house-stack.md` as a reference — selections outside the list are fine if justified.
 
 ### Hexagonal Architecture (Default)
 
@@ -301,6 +302,12 @@ For each data store, document:
 - Why this storage type
 - Consistency model (strong, eventual, session)
 
+For each *stateful* store that the scale/latency ASRs make significant, also decide the **distributed-data shape** — a one-word "eventual" hides the real choices:
+- **Replication topology**: single-leader / multi-leader / leaderless, and the read anomaly it admits (read-your-writes, monotonic-reads).
+- **CAP/PACELC trade-off**, stated per store: "on a partition choose A or C; else trade latency vs. consistency as X." (Canon: Brewer CAP; Abadi PACELC; Kleppmann *Designing Data-Intensive Applications* ch. 5/6/9.)
+
+Partitioning/sharding-key choice and read-replica execution are a *schema* concern — hand them to a database-design capability (e.g. the `database-design` skill, if available); this stage selects only the topology and consistency model.
+
 **Versioned migrations are mandatory** for relational databases — no manual schema changes in production.
 
 ### AI Data
@@ -336,6 +343,16 @@ Write to `docs/arch/system.md` §3 (Data).
 Minimum gates: **test -> lint -> security scan -> build -> smoke test -> deploy**.
 
 No manual deployment steps. Everything in the pipeline is reproducible.
+
+### Deployment Strategy
+
+How a release reaches production is an architectural decision with a deployability-vs-stability trade-off — record it as an ADR:
+- **Rollout shape**: rolling / blue-green / canary (progressive %). Default to canary for user-facing services with real traffic; blue-green when you need instant total rollback.
+- **Release ≠ deploy**: ship code dark and gate exposure with feature flags (see `system-architecture.md` § Feature Flags) so deploy risk and release risk decouple.
+- **Rollback / forward-fix trigger**: the SLO condition that auto-aborts a rollout, and whether recovery is rollback or roll-forward.
+- **Schema-during-deploy**: expand-contract ordering so a migration and the code needing it ship safely under live traffic (execution is owned by a migration capability such as the `postgresql` skill, if available).
+
+This stage decides the strategy and records the ADR; the lock-safe **execution** of a release and rollback is a release-engineering concern (e.g. the `release-engineer` agent) — define the boundary, don't do its job here.
 
 ### Cost Estimation
 
@@ -417,6 +434,8 @@ Read `references/reliability-patterns.md` for transaction boundaries, idempotenc
 
 ### Security
 
+**Surface the requirement first (threat modeling).** Before listing controls, run a lightweight **STRIDE** pass over the C4 boundary diagram and the Key Data Flows: for each trust-boundary-crossing flow, ask which of Spoofing / Tampering / Repudiation / Information disclosure / Denial-of-service / Elevation-of-privilege applies, and promote any material finding back into the Stage-2 utility tree as a security ASR (filter #8) so it hits the ATAM gate like every other driver. Canon: Shostack (STRIDE, DFD trust boundaries); Saltzer-Schroeder (fail-safe defaults, least privilege, complete mediation) as the generative lens the checklist below only echoes. Hand the per-diff vulnerability/OWASP list to a security-review capability (e.g. the `security-checklists` skill, if available) — don't inline it here.
+
 Defense in depth — never rely on a single security control:
 
 1. **Edge**: Rate limiting, WAF, DDoS protection
@@ -484,6 +503,8 @@ Write to `docs/arch/system.md` §5 (Cross-cutting).
 **What it answers**: Are all decisions recorded? What could go wrong?
 
 Most ADRs are already written during stages 4-8. This stage reviews completeness and adds the risk register. ADRs live one-per-file in `docs/arch/adr/`; the risk register, tech debt, and open questions live in `docs/arch/risks.md`.
+
+**ADR numbering is a shared namespace.** A standalone-ADR capability (e.g. the `arch-decision` skill) appends to the same `docs/arch/adr/` directory under the same "highest existing number + 1" rule. When re-running this stage on a system that already has ADRs, allocate numbers from the directory's current max — never restart at ADR-001. On a true collision (two files grabbed the same number), the later writer renumbers.
 
 ### ADR Format
 

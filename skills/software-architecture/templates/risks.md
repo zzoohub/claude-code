@@ -6,9 +6,15 @@
 
 # Risk Register
 
+<!-- Seed prompts below mirror the design's highest-leverage non-AI risks — replace with this system's real ones. -->
+
 | Risk | Impact | Probability | Mitigation |
 |---|---|---|---|
-| ... | ... | ... | ... |
+| e.g. Security: tenant data leak across a trust boundary | ... | ... | STRIDE-surfaced ASR (filter #8) + RLS + per-tenant authz tests |
+| e.g. Data: replica lag breaks read-your-writes | ... | ... | Replication topology choice (Stage 6); read-from-leader on critical path |
+| e.g. Capacity: traffic spike exceeds modeled QPS | ... | ... | Load test to the ASR p99; autoscale + backpressure |
+| e.g. External dependency outage | ... | ... | Timeout + retry budget + graceful degradation (Stage 8) |
+| e.g. Write hazard: lost update / double-process | ... | ... | Outbox, idempotency keys, optimistic concurrency |
 
 ## AI Risks
 <!-- Include only if PRD involves AI/LLM features -->

@@ -212,6 +212,21 @@ Domain-Driven Design tactical patterns can be applied **with any service archite
 
 **Don't over-apply DDD**: For simple CRUD domains, DDD tactical patterns add unnecessary abstraction. Use when the domain warrants it — complex rules, many invariants, rich behavior. "Is this entity just a data bag? Then skip Aggregate."
 
+### Strategic Context Mapping
+
+Tactical patterns structure code *inside* a context; **context mapping** governs the relationship *between* contexts — and those relationships are where change is absorbed or propagated, so name them explicitly when two contexts integrate. Canon: Evans (DDD), Vernon (IDDD).
+
+| Relationship | What it means | Use when |
+|---|---|---|
+| **Anti-Corruption Layer (ACL)** | A translation layer keeping a foreign/legacy model from leaking into yours | Integrating a vendor or legacy system whose model you don't control |
+| **Open-Host Service (OHS)** | A published, stable protocol many consumers integrate against | You are upstream to several consumers and want one contract, not N |
+| **Published Language** | A shared, versioned schema (events/DTOs) at the boundary | Multiple contexts exchange data and must evolve compatibly |
+| **Conformist** | Downstream adopts upstream's model as-is | Upstream won't negotiate and an ACL isn't worth the cost |
+| **Shared Kernel** | A small shared model two teams co-own | Two contexts genuinely share a core concept and coordinate tightly |
+| **Customer/Supplier** | Downstream's needs prioritized in upstream's planning | Upstream can flex; the dependency is a negotiated partnership |
+
+ACL and OHS are the load-bearing boundary-protection patterns: an ACL stops upstream churn from forcing changes on you; an OHS lets you change internals without breaking consumers.
+
 ---
 
 ## Anti-Patterns

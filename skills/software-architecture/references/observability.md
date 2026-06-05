@@ -2,7 +2,7 @@
 
 Observability is the property that lets you ask **new questions** about production behavior without shipping new code. The three signal types — traces, metrics, logs — are how that property is achieved. Treat observability as an architectural concern, not a "we'll add logging later" task.
 
-This file covers the architectural decisions. Vendor / SDK choice is in `tech-stack.md`.
+This file covers the architectural decisions. Vendor / SDK choice is in `house-stack.md`.
 
 ## Table of Contents
 
@@ -40,7 +40,7 @@ Application -> OTel SDK -> OTLP -> OTel Collector -> [ Tempo | Jaeger | Axiom | 
                                                   -> [ Loki | Elastic | Axiom | Datadog | ...            ]
 ```
 
-The backend names above illustrate the vendor-neutral fan-out; the house pick is Axiom (+ CF Workers Logpush) per `tech-stack.md`.
+The backend names above illustrate the vendor-neutral fan-out; the house pick is Axiom (+ CF Workers Logpush) per `house-stack.md`.
 
 **Why this matters architecturally**:
 

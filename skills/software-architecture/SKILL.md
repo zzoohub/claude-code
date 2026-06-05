@@ -109,6 +109,8 @@ Then analyze the PRD content and classify the software automatically. No user qu
 | Game | real-time, state sync, tick rate | Determinism, netcode, asset pipeline |
 | Embedded/IoT | device, firmware, constrained | Resource constraints, OTA, communication protocol |
 
+> **Scope honesty**: the deep method (Stages 1-9) and reference library are shaped for **web / API / service-backed systems** (including AI features). For CLI, library/SDK, game, embedded, mobile, and desktop, Stage 0 gives you the right framing and the house-stack rows, but the downstream stages stay service-shaped — carry that type's "Architecture Implications" yourself as a checklist; they are not separately-resourced tracks.
+
 ### Architecture Dimensions (Auto-Extract)
 
 From the PRD, extract:
@@ -184,7 +186,7 @@ Before finalizing, verify:
 
 - [ ] Every [H,H] ASR from the utility tree has a corresponding pattern in the design
 - [ ] ATAM gate passed — all [H,H] items verified against chosen patterns
-- [ ] Ubiquitous language terms match code terms 1:1
+- [ ] Ubiquitous language terms match code terms 1:1 *within each bounded context* (the same term may legitimately differ across contexts)
 - [ ] Fitness functions defined for key architectural properties (3-5 CI checks)
 - [ ] Quality targets have numbers (not "fast" or "reliable" — actual thresholds)
 - [ ] Cost estimate exists for two traffic levels (baseline + growth)
@@ -256,7 +258,7 @@ Existing Schema" checklist, if available) rather than re-deriving criteria here.
 
 **Read based on Stage 0 findings**:
 - Pattern selection -> `system-architecture.md`, `service-architecture.md`
-- Technology selection (Stage 5, Component Design) -> `tech-stack.md` (house stack; deviations need an ADR)
+- Technology selection (Stage 5, Component Design) -> `house-stack.md` (opinionated house stack; deviations need an ADR)
 - AI features in PRD -> `ai-architecture.md` (+ `ai-agents.md` if agents needed)
 - Cross-cutting -> `operational-patterns.md`
 - Writes that must not be lost / duplicated / interleaved -> `reliability-patterns.md`
@@ -272,13 +274,13 @@ a required reading chain.
 
 | File | Content |
 |---|---|
-| `references/design-flow.md` | 10-stage methodology (stages 1-9). **Read first.** |
+| `references/design-flow.md` | Design-flow methodology, stages 1-9 (Stage 0 lives in this SKILL.md). **Read first.** |
 | `templates/*.md` | Output templates for `docs/arch/context.md`, `docs/arch/system.md`, `docs/arch/adr/`, and `docs/arch/risks.md` |
 | `references/system-architecture.md` | System patterns, composition flowchart, real-world examples |
 | `references/service-architecture.md` | Internal service structure: hexagonal (default), clean, vertical slice, FC/IS |
 | `references/ai-architecture.md` | LLM integration, RAG, streaming, vector storage, guardrails |
 | `references/ai-agents.md` | Agent patterns, protocols (MCP/A2A/AG-UI), durable execution, safety |
-| `references/tech-stack.md` | Pre-vetted technology options — language, framework, infra, data, AI, services |
+| `references/house-stack.md` | Opinionated, non-portable house stack (deviations need an ADR) — language/runtime, framework, infra, data, AI, services |
 | `references/operational-patterns.md` | Resilience, background jobs, caching, rate limiting |
 | `references/reliability-patterns.md` | Transaction boundaries, idempotency, outbox, concurrency control |
 | `references/observability.md` | OpenTelemetry strategy, traces/metrics/logs, sampling, health checks |
