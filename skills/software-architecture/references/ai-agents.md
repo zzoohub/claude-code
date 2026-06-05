@@ -25,59 +25,13 @@ Architecture patterns, protocols, and infrastructure for LLM-powered autonomous 
 
 ## 1. When to Use Agents vs. Pipelines
 
-| Signal | Use Pipeline | Use Agent |
-|---|---|---|
-| Steps are predictable and fixed | Yes | - |
-| Tool selection depends on intermediate results | - | Yes |
-| Needs self-correction on failure | - | Yes |
-| User interaction is structured (forms, wizards) | Yes | - |
-| Open-ended exploration or reasoning needed | - | Yes |
-| Latency-critical, deterministic output | Yes | - |
-
-**Default to pipelines.** Agents add non-determinism, cost, and debugging complexity. Use them only when the task genuinely requires adaptive behavior. Most production use cases need **workflows** (predetermined orchestration) rather than fully autonomous agents.
-
-*Reference: Anthropic, "Building Effective Agents" (Dec 2024) — their key thesis is "resist complexity; start with simple patterns."*
+The workflow-vs-agent decision is **design discipline** — see `llm-app-design/references/agents.md` (and the shape table in `llm-app-design/SKILL.md`). The one-line rule: if you can draw the flowchart before running, build a workflow (cheaper, faster, debuggable); reach for an autonomous agent only when the *model* must choose the next step at runtime. Everything below assumes you've decided an agent is warranted and covers the **system-level** concerns of running one.
 
 ---
 
 ## 2. Agent Patterns
 
-### Pattern Hierarchy (Simple -> Complex)
-
-Start at the top. Move down only when a simpler pattern can't meet requirements.
-
-**1. Augmented LLM**
-Single LLM enhanced with tools, retrieval, and memory. No loop — one-shot or few-turn. This handles the majority of "AI-powered features."
-
-**2. Prompt Chaining**
-Break tasks into sequential LLM calls with fixed handoff points. Each step is deterministic. Output of step N feeds into step N+1.
-
-**3. Routing**
-Classify input and direct to specialized handlers. A central router analyzes the task and delegates to the right tool chain or sub-agent.
-
-**4. Parallelization (Scatter-Gather)**
-Run multiple LLM calls simultaneously, aggregate results. For embarrassingly parallel tasks.
-
-**5. Orchestrator-Workers**
-Central LLM delegates to specialized worker LLMs. The orchestrator decomposes the task, assigns sub-tasks, and consolidates results.
-
-**6. Evaluator-Optimizer (Reflection)**
-One LLM generates output, another evaluates it, loop until quality threshold met.
-
-**7. Autonomous Agent (ReAct Loop)**
-The full agent loop: reason -> act (use tool) -> observe result -> reason again. Use only when the task genuinely requires adaptive, multi-step tool orchestration where steps can't be predetermined.
-
-### Specialized Patterns
-
-**Plan-and-Execute**: Agent creates a full plan first, then executes step-by-step, re-planning if a step fails. Plans are treated as mutable — agents re-plan based on new observations.
-
-**Tool-Use-First**: Agent defaults to tool invocation rather than open-ended reasoning. Dominant in production where deterministic tool behavior is preferred.
-
-**Agentic RAG**: Extends classic RAG with autonomous planning, iterative multi-step retrieval, and verification.
-
-**Sub-Agents (Context Isolation)**: Orchestrator spawns isolated sub-agents with their own context windows. Sub-agents don't pollute the main agent's context.
-
-*References: Anthropic, "Building Effective Agents"; OpenAI, "A Practical Guide to Building Agents" (2025)*
+The pattern hierarchy — Augmented LLM → Prompt Chaining → Routing → Parallelization → Orchestrator-Workers → Evaluator-Optimizer → ReAct (plus Plan-and-Execute, Tool-Use-First, Agentic RAG, Sub-Agents) — is **design discipline**, owned by `llm-app-design/references/agents.md`. Start at the top of the ladder; move down only when a simpler pattern can't meet requirements. This file picks up at the infrastructure those patterns need: protocols (§3), durable state (§4-5), multi-agent orchestration (§6), and safety (§8).
 
 ---
 
@@ -193,10 +147,7 @@ Context engineering is the discipline of designing the full information environm
 
 ### Tool Schema Design
 
-- **Clear, descriptive names and descriptions** — the LLM reads these to decide which tool to call
-- **Structured schemas** (JSON Schema) for input and output with validation
-- **Minimal surface area** — each tool does one thing well
-- **Descriptive error messages** — when a tool fails, the error should help the agent self-correct
+Tool/function-schema design (naming, descriptions, input/output schemas, self-correcting error messages) is **design discipline** — see `llm-app-design/references/tool-use.md`. At the system level what matters is that tool schemas are validated at the trust boundary and scoped to the agent's permissions (§8).
 
 ---
 
@@ -286,26 +237,9 @@ Separately, serial chains compound failure multiplicatively (90%-reliable steps:
 
 ## 7. Evaluation & Observability
 
-### Key Metrics
+### Evaluation (design — pointer)
 
-| Metric | What It Measures |
-|---|---|
-| **Task completion rate** | Did the agent finish the job? |
-| **Correctness** | Was the output right? |
-| **Step efficiency** | How many steps/tool calls vs. optimal path? |
-| **Cost** | Total token spend |
-| **Latency** | End-to-end time, time-to-first-action |
-| **Reliability (pass^k)** | Does it succeed k times out of k runs? |
-| **Safety** | Did it violate any guardrails? |
-
-### Evaluation Approaches
-
-| Approach | When to Use |
-|---|---|
-| **Offline (curated test sets)** | Repeatable regression testing |
-| **LLM-as-Judge** | Scalable quality scoring. Must calibrate against human judgment. |
-| **Trajectory evaluation** | Evaluate the full sequence of tool calls and reasoning |
-| **Online A/B testing** | Measure business outcomes, not just model quality |
+Agent eval **metrics** (task completion, step efficiency, pass^k, trajectory eval) and **approaches** (offline golden sets, LLM-as-judge calibration, online A/B) are eval design — see `llm-app-design/references/evaluation.md`. The system-level half — what to emit and watch in production — is below.
 
 ### What to Trace
 

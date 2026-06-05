@@ -112,6 +112,8 @@ Client --POST /chat--> API Server --SSE stream--> LLM Provider
 
 RAG connects the LLM to your data. Instead of relying on the model's training data alone, you retrieve relevant context from your own documents and include it in the prompt.
 
+**Altitude split**: this section owns the *system* slice of RAG — when retrieval is the right shape, the tier escalation as a topology decision, vector storage by scale, and the retrieval **latency budget**. The retrieval *mechanics* (chunking, hybrid weighting, reranker choice, embedding-model selection) are design discipline — see `llm-app-design/references/rag.md`.
+
 ### When to Use RAG
 
 - The LLM needs access to **private or recent data** not in its training set
@@ -162,31 +164,11 @@ Choose based on your scale and existing infrastructure:
 
 **Default**: pgvector on your existing PostgreSQL — it keeps your data in one place. Only break out to a dedicated vector DB when you hit performance ceilings or need vector-specific features.
 
-### Chunking Strategy
+### Chunking & Embedding (design — pointer)
 
-| Document Type | Strategy | Chunk Size |
-|---|---|---|
-| FAQ / knowledge base | Fixed-size or recursive | 256-512 tokens |
-| Technical docs / API refs | Structure-aware (headers, sections) | 400-600 tokens |
-| Legal / contracts | Semantic + structure-aware | 300-500 tokens |
-| Long-form narrative | Recursive with larger overlap | 512-1024 tokens |
-| Source code | AST-aware (function/class level) | Function boundaries |
-
-**Default**: Start with recursive character splitting at 400-512 tokens with 10-20% overlap. Optimize chunking only after measuring retrieval quality.
-
-### Embedding Models
-
-**Do not hardcode a specific embedding model.** The leaderboard shifts every few months.
-
-**Selection criteria** (in priority order):
-1. **Retrieval quality**: Check the current MTEB leaderboard for your language mix
-2. **Max input tokens**: Must accommodate your chunk size
-3. **Multilingual support**: Required for multilingual content
-4. **Dimensions**: Lower dimensions = less storage. Many models support Matryoshka (variable dimensions)
-5. **Cost**: Compare per-token pricing across providers
-6. **Latency**: On-device/self-hosted models for latency-critical paths
-
-**Decision process**: Before choosing an embedding model, search for current benchmarks and compare the top 3-5 options against these criteria for your specific use case.
+Chunk strategy/size/overlap and embedding-model selection (MTEB, multilingual, max input) are **retrieval-design** decisions — see `llm-app-design/references/rag.md`. Two consequences survive at architecture altitude:
+- **Chunking sizes the vector store**: chunk size sets your vector count (storage cost + index build time) and overlap multiplies it — size the store from the expected chunk count, not raw document size.
+- **Embedding dimensions size storage**: don't hardcode the model (the leaderboard shifts); lower output dimensions (or Matryoshka truncation) cut vector storage 50-75%.
 
 ---
 
@@ -309,6 +291,8 @@ Standard RED metrics (Rate, Errors, Duration) plus AI-specific metrics:
 
 ### Prompt Management
 
+*Where prompts live and how they version* is a system decision (below); *how to write them* is design — see `llm-app-design/references/prompting.md`.
+
 For production systems with multiple prompts that evolve over time:
 
 - **Decouple prompts from code**: Store prompts in a registry, fetch at runtime. Enables changes without redeployment.
@@ -333,16 +317,7 @@ Inspired by TDD/BDD but reimagined for LLM systems:
 
 ### RAG Quality Evaluation
 
-| Metric | What It Measures | Reasonable starting target (tune per use case) |
-|---|---|---|
-| **Precision@k** | % of retrieved chunks that are relevant | depends heavily on k — often 0.4-0.6 when you deliberately over-retrieve |
-| **Recall@k** | % of relevant chunks that were retrieved | > 70% |
-| **Faithfulness** | Does the answer stick to retrieved context? | > 90% |
-| **Answer relevance** | Does the answer address the question? | > 85% |
-
-These are illustrative starting points, not industry standards — set thresholds against your own golden set and tolerance (recall@k and faithfulness are usually the gating metrics, not precision@k).
-
-**Evaluation approach**: Build a golden test set (50-100 question-answer pairs with source documents). Run retrieval + generation on each, score with an LLM-as-judge. Automate this as a CI step.
+Metric selection (precision@k, recall@k, faithfulness, answer-relevance), thresholds, and golden-set design are eval **design** — see `llm-app-design/references/evaluation.md`. The architecture concern is that RAG quality runs as a **CI fitness function**: a golden set scored by an LLM-as-judge, automated as a CI step, blocking merge below threshold, and traceable to the exact prompt/model/retrieval version (per EDD above).
 
 ### Agent Reliability Testing
 
