@@ -2,6 +2,8 @@
 
 > Examples use the skill's PK default `UUID DEFAULT uuidv7()` (PG18+); on PG ≤17 generate v7 at the application layer — see SKILL.md → 'Primary Key Type Decision'.
 
+These patterns are the **agility engine**, not just outage-avoidance: they are what let you keep a hard, fully-constrained schema *and* change it routinely (see SKILL.md → "Modeling for Change"). The right answer to fast-changing requirements is a cheap, safe, reversible change *process* — these patterns — not a soft, under-constrained schema *shape*.
+
 ## Table of Contents
 
 1. [Core Principles](#core-principles)
@@ -13,7 +15,7 @@
 
 ## Core Principles
 
-1. **Every migration has a rollback** — no exceptions
+1. **Every migration has a rollback** — no exceptions — and the rollback is **tested, not just written**: run forward → rollback → forward in CI against a production-scale snapshot, and assert the schema returns to its prior state. An untested rollback fails at 3am, which is the only time you reach for it
 2. **Version-controlled** — migrations are numbered sequentially
 3. **Tested on production-scale data** — a migration that works on 1000 rows may break on 10 million
 4. **Backup before migration** — always
@@ -39,6 +41,15 @@ db/migrations/
 ```
 
 ## Zero-Downtime Migration Patterns
+
+### Schema is a contract — inventory consumers first
+
+Expand-contract protects the *deploying application* during a rolling deploy. But the schema is a contract with consumers that do **not** redeploy in lockstep, and a literal "now drop the old column" breaks them silently:
+
+- **CDC / ETL pipelines** (Debezium, Fivetran) — a column rename is usually a *drop + add* to these tools, so the downstream stream/warehouse column vanishes mid-stream.
+- **Read replicas feeding a BI/analytics warehouse**, **sibling services** reading the same DB, **materialized views** (a renamed/dropped column makes `REFRESH` fail), and **API serializers** that shape responses directly from columns.
+
+So before any **rename / retype / drop**: *inventory who else reads this table*, apply expand-contract across that whole consumer set (not just the app), and treat the change as breaking until every consumer — including the nightly job nobody owns — has migrated. The phases below are the mechanism; the consumer inventory is what decides when each phase is actually safe.
 
 ### Fail Fast on Locks
 Even 'safe' DDL (e.g. ADD COLUMN) briefly takes an ACCESS EXCLUSIVE lock; if it can't acquire it because of a long-running transaction, it waits AND every subsequent query on that table queues behind it (a leading cause of migration outages). Set a short lock_timeout so the migration fails fast and you retry, instead of stalling all traffic:
@@ -227,11 +238,13 @@ DROP TABLE user_accounts;
 
 For tables with millions+ rows, batch all data modifications:
 
-⚠️ This block issues its own COMMITs, so it must NOT run inside a wrapping transaction — disable single-transaction mode in your migration runner (e.g. psql without -1), or move it to a stored PROCEDURE invoked via CALL. Backfills generally should live in a separate idempotent script, not the transactional migration file.
+⚠️ **A `DO` block cannot `COMMIT`.** An anonymous `DO` block always runs in an atomic context, so a `COMMIT`/`ROLLBACK` inside one raises `ERROR: invalid transaction termination` (SQLSTATE 2D000) on **every** PostgreSQL version — unconditionally, whether or not a wrapping transaction exists. To commit per batch *inside the database* you must use a **`PROCEDURE` invoked via `CALL`** (and the `CALL` must not itself be inside an outer transaction — run it via `psql` **without** `-1`, not bundled into a `BEGIN…COMMIT`). Backfills should live in a separate idempotent script, not the transactional migration file.
 
 ```sql
--- Batch update pattern (keyset walk by primary key)
-DO $$
+-- Batch update pattern (keyset walk by primary key) — a PROCEDURE, because it COMMITs per batch.
+-- (A DO block here would fail: COMMIT inside DO raises ERROR: invalid transaction termination.)
+CREATE PROCEDURE backfill_user_phone()
+LANGUAGE plpgsql AS $$
 DECLARE
     batch_size INT := 5000;
     rows_scanned INT;
@@ -262,10 +275,14 @@ BEGIN
         EXIT WHEN last_id IS NULL;  -- no more rows past the cursor
 
         RAISE NOTICE 'Scanned % rows', rows_scanned;
-        COMMIT;
+        COMMIT;                 -- legal here: a PROCEDURE run via CALL, not inside an outer transaction
         PERFORM pg_sleep(0.1);  -- brief pause to reduce load
     END LOOP;
 END $$;
+
+-- Run it with the CALL un-wrapped (psql without -1), then drop it:
+CALL backfill_user_phone();
+DROP PROCEDURE backfill_user_phone();
 ```
 
 ## Post-Migration Checklist

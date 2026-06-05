@@ -181,6 +181,12 @@ CREATE TABLE orders (
 );
 ```
 
+**Reference-data lifecycle** — choosing a lookup table over an `ENUM` trades a schema-evolution problem (`ALTER TYPE`) for a *data-management* one. The lookup **rows are part of the schema contract** (code and FKs depend on specific ids/names existing), so manage them like schema, not like user data:
+
+- Ship seed rows as **idempotent** migrations — `INSERT … ON CONFLICT (name) DO NOTHING` (use `DO UPDATE` to propagate a renamed label/description to existing rows) — so re-running is safe and environments don't drift.
+- Version them: add a value via a *new* migration, never by editing an applied one (the same anti-drift rule as DDL).
+- Keep ids **stable and deterministic across environments** so FKs line up — prefer the natural key (`name`) for FKs, or assign ids explicitly, rather than relying on `GENERATED … IDENTITY`, whose values can diverge between dev/staging/prod. This is distinct from the `backfill_` migration verb, which is for production *data*, not reference rows.
+
 ## JSONB Hybrid (relational + flexible)
 
 Best for data with a flexible or frequently changing structure.

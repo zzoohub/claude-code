@@ -11,8 +11,12 @@ description: |
   "plan migration", "review schema", "design ERD",
   or discusses database architecture, data modeling, or PostgreSQL performance.
   Do NOT use for simple SELECT queries, one-off SQL syntax questions,
-  non-database application logic, or writing/EXPLAIN-tuning queries and
-  executing operational migrations (use postgresql skill).
+  non-database application logic, writing/EXPLAIN-tuning queries, or the
+  lock-safe EXECUTION of a migration against live traffic — choosing
+  CONCURRENTLY vs NOT VALID, batching a live backfill, sequencing
+  expand-contract under load (use postgresql skill). This skill decides
+  WHAT schema change to make and how to structure migration files;
+  postgresql decides HOW to run it safely in production.
 ---
 
 # PostgreSQL Database Design Skill
@@ -25,8 +29,8 @@ PostgreSQL-specific database design skill. Provides systematic guidance from sch
 Database design must be completed before writing code. Always follow this sequence:
 
 1. **Requirements analysis**: What data, who uses it, how is it accessed?
-2. **Conceptual → Logical → Physical**: Design all three diagrams in order
-3. **Explicit trade-offs**: Every design decision has a reason and a cost
+2. **Conceptual → Logical → Physical**: name entities, relationships, and business rules *before* columns and types. The conceptual/logical pass (on paper, platform-neutral) is where the expensive mistakes — wrong entity boundaries, a missed many-to-many, a mis-identified business key — are still cheap to fix; descend to physical DDL/ERD only once they hold.
+3. **Explicit trade-offs**: Every design decision has a reason and a cost — and the cost includes future *change* cost, not just storage and latency (see **Modeling for Change**)
 
 ### 2. PostgreSQL First
 - All examples and DDL use PostgreSQL syntax
@@ -47,6 +51,41 @@ Indexes:      idx_{table}_{columns} (e.g., idx_orders_created_at)
 Constraints:  {type}_{table}_{columns} (e.g., uq_user_email, chk_orders_amount)
 Enums:        snake_case (order_status, NOT OrderStatus)
 ```
+
+## Modeling for Change: Core vs Supporting, Stable vs Volatile
+
+The most consequential schema decision is not a data type — it's deciding **what to model rigidly and what to model loosely**. Two axes settle it:
+
+- **Position** — is this the *core* subdomain where the business differentiates, or a *supporting/generic* one (settings, integrations, metadata)? Spend your scarcest modeling effort on the core (DDD). "Model core differently" does **not** mean "softer at the core" — the opposite: the core is exactly where you most want `NOT NULL` / `FK` / `CHECK` / `UNIQUE`, because the core's invariants *are* the business.
+- **Rate of change** — is the shape stable, or does it churn with every requirement?
+
+|              | **Core / differentiating** | **Supporting / generic** |
+|---|---|---|
+| **Stable**   | Fully normalized, rich constraints, explicit aggregate boundaries, deliberate transaction design. Invest here. | Simple relational + lookup tables. Don't over-model. |
+| **Volatile** | Keep the shape relational and constrained; absorb change through the **migration machinery**, not by softening the model. | The one quadrant where JSONB-hybrid / config-driven / app-layer flexibility is the *default* — and even here keep a relational spine. |
+
+This is the single rule that unifies the otherwise-scattered `ENUM`-vs-lookup, STI-vs-CTI, and JSONB-hybrid heuristics elsewhere in this skill.
+
+### Two kinds of agility — keep them straight
+
+"Agile schema" silently conflates two opposite things:
+
+- **Flexible *shape*** — a generic, parameterized model (EAV, JSONB-for-everything) that absorbs change without DDL. Almost always the wrong trade: it buys malleability by surrendering the integrity guarantees and query performance that are the database's reason to exist, and relocates every invariant into N application call sites that drift. Its named failure modes — **EAV / inner-platform effect**, the **JSONB swamp** (no planner statistics, no query-shaped indexes), and **speculative generality / YAGNI** (an abstraction tax paid every day for requirements that never arrive) — are the anti-patterns this section exists to prevent. None is a substitute for modeling.
+- **Flexible *process*** — evolutionary database design: version-controlled migrations, expand-contract, `NOT VALID`/`VALIDATE`, dual-write, strangler-fig, `CONCURRENTLY`, mandatory *tested* rollbacks. This is the right agility. `references/migration-patterns.md` is **not merely outage-avoidance — it is the engine that lets you keep a hard, fully-constrained schema and still change it weekly.** A team that runs those patterns routinely does not need a soft schema to move fast.
+
+The schema is your **slowest-changing, highest-blast-radius, longest-lived layer** — code rolls back in seconds; a bad `DROP` on a 500M-row table does not. So **don't soften the model to dodge migration; make migration so routine that a rigid schema costs nothing in speed.** Rigid shape + fluid process are complements, not a trade-off.
+
+### Where volatility actually belongs
+
+Most "fast-changing requirements" are **behavior/policy** volatility — pricing rules, eligibility, workflow steps, feature gating — not data-model volatility. Model those as config rows or application logic so they change without DDL. (Double-edged: pushing *too much* policy into generic config rows re-creates the inner-platform effect one level up; three boring nullable columns are sometimes more testable and auditable than a homegrown rules engine. Judge per case — the question is "is this *shape* volatility or *value* volatility?")
+
+### The one legitimate exception — flexible shape *as the product*
+
+When user-defined structure **is** the differentiator — metadata platforms (Stripe `metadata`), custom fields (Shopify metafields, Salesforce), CMS / CRM / low-code, EHR / FHIR — a **controlled flexible core** is the correct core model, not an edge concession. Keep a relational spine, type what you can, index for the real queries (GIN / expression indexes), and write down which invariants you've chosen to enforce in the application instead of the DB. "Flexibility belongs at the edges" is a strong default *with this real, commercially important exception* — don't apply it as a law.
+
+### Design the spine up front, defer the speculation
+
+"Design for the full product vision" means the **relational spine + integrity invariants + key relationships** — the parts that are cheap to get right now and expensive to retrofit: the **one-way doors** (PK type, tenancy model, partition/distribution key, normalization boundaries). It does **not** mean every speculative column for features not yet being built. **YAGNI applies to *shape*; it does not apply to *invariants*.**
 
 ## Workflow: When a Database Design Is Requested
 
@@ -83,7 +122,7 @@ If a DB-domain decision differs from what the design doc implies, **state the de
 
 **Feature-aware schema** (read before writing any DDL):
 
-Design the **full schema for the complete product vision** (so you don't paint yourself into a corner), then split migrations by domain so features can ship independently.
+Design the **full relational spine + integrity invariants + key relationships** for the product vision — the one-way doors (PK type, tenancy model, partition/distribution key, normalization boundaries) that are cheap to get right now and expensive to retrofit — **not** every speculative column for features not yet being built (see **Modeling for Change** → "Design the spine up front, defer the speculation"). Then split migrations by domain so features can ship independently.
 
 If the project tracks features in planning docs (e.g. `docs/prd/features/*.md` or any similar `features/` directory), read the relevant spec and **tag tables/indexes with the feature** in comments — e.g., `[auth]`, `[billing]`, `[workspace]`. The tags drive which migration file each table lives in, and the dev order in the PRD determines file numbering (`001_create_user_accounts.sql` → `002_create_workspaces.sql` → ...).
 
@@ -97,6 +136,7 @@ Don't collapse all of MVP into one mega-migration. Don't over-split into per-tab
 3. Evaluate denormalization needs → consult `references/normalization-guide.md`
 4. Choose appropriate data types → consult `references/data-types-guide.md`
 5. Define constraints (PK, FK, UNIQUE, CHECK, NOT NULL)
+6. **Classify sensitive columns** at design time (public / internal / PII / regulated) — record the tag in `COMMENT ON COLUMN`. One pass that then drives four decisions the skill otherwise makes ad hoc per column: audit/event-payload exclusion (Critical Rules + `design-patterns.md` §3), column-encryption choice (and its loss of B-tree indexability), erasure obligations (`design-patterns.md` "Erasure vs immutable history"), and GRANT scoping (Roles & Least Privilege)
 
 ### Step 3: Transaction & Concurrency Design
 → consult `references/acid-transactions.md`
@@ -150,28 +190,27 @@ COMMENT ON COLUMN schema_name.table_name.column IS 'Column description';
 - Design around query patterns: ensure indexes support WHERE/JOIN, limit resultsets, cache computed data
 
 ### Step 7: Migration Plan
-→ consult `references/migration-patterns.md`
+→ consult `references/migration-patterns.md` — the **engine that lets a rigid schema stay agile** (see **Modeling for Change**), not just outage-avoidance.
 - Version-controlled migration scripts
-- Rollback scripts are mandatory
+- Rollback scripts are mandatory — and **tested** (run forward → rollback → forward on a production-scale snapshot in CI), not merely written. An untested rollback fails at 3am, which is the only time you need it
 - Zero-downtime migration strategies
+- **Schema is a contract**: before any rename/retype/drop, inventory who else reads the table beyond the deploying app (read-replica→warehouse, CDC/ETL, sibling services, materialized views, API serializers) and expand-contract across that whole set
 
 ### Step 8: Pre-Output Quality Gate
 
-Before writing `docs/arch/database.md` or any migration file, every item below must be true. A failing item either blocks output or gets explicitly called out in the document with rationale.
+Before writing `docs/arch/database.md` or any migration file, **every Critical Rule (below) must hold** — money is `NUMERIC`, timestamps `TIMESTAMPTZ`, FKs indexed, `ON DELETE` explicit, `CONCURRENTLY` on live tables, destructive ops via expand-contract — plus every item here (these add what the Critical Rules don't cover). A failing item either blocks output or gets explicitly called out in the document with rationale.
 
 **Structural integrity**
 - [ ] Every table has a PRIMARY KEY
 - [ ] Every FK column used in JOIN or filter has an index (PG does not auto-create); FKs intentionally left unindexed are documented in a comment or ADR
 - [ ] Every entity table has `created_at` (and `updated_at` unless append-only). Pure association/pivot tables may omit both when no audit trail is needed
-- [ ] No FLOAT/REAL used for money — NUMERIC(p,s) only
-- [ ] All timestamps are TIMESTAMPTZ, not TIMESTAMP
 - [ ] ENUMs used only where value set is stable; otherwise lookup table
+- [ ] Sensitive columns classified (PII/regulated tagged in `COMMENT ON COLUMN`); PII kept out of audit/event payloads
 
 **Constraints and safety**
 - [ ] NOT NULL on every column that logically cannot be null
 - [ ] CHECK constraints on domain values (email format, positive amounts, status whitelist)
 - [ ] UNIQUE constraints on every business-identity column (email, slug, external_id)
-- [ ] ON DELETE behavior explicit on every FK (CASCADE / RESTRICT / SET NULL / SET DEFAULT / NO ACTION)
 
 > **NULL semantics:** a `CHECK` passes when its expression is NULL/UNKNOWN — `CHECK (amount > 0)` does *not* reject a NULL `amount`, so pair domain CHECKs with `NOT NULL` when null is invalid. Standard `UNIQUE` treats each NULL as distinct (multiple NULLs allowed); add `NOT NULL`, or use `UNIQUE NULLS NOT DISTINCT` (PG15+), when at most one null-or-distinct row is intended.
 
@@ -185,10 +224,9 @@ Before writing `docs/arch/database.md` or any migration file, every item below m
 - [ ] No obvious unused redundancy (e.g., `(a)` + `(a, b)` — drop `(a)`)
 
 **Migrations**
-- [ ] Every migration file has a matching `*.rollback.sql`
+- [ ] Every migration file has a matching `*.rollback.sql`, and the rollback is **tested** (forward→rollback→forward on a prod-scale snapshot), not just written
 - [ ] Files are split per-domain (no single `001_initial_schema.sql`)
-- [ ] `CREATE INDEX CONCURRENTLY` used for indexes on any table that will see production traffic before the index finishes
-- [ ] Destructive operations (DROP COLUMN, RENAME) follow expand-contract pattern, not direct
+- [ ] Destructive/renaming migrations checked against **all** downstream consumers, not just the deploying app (CDC/ETL, replicas→warehouse, MVs, sibling services)
 
 **Deviations**
 - [ ] Any decision that deviates from the design doc (`docs/arch/system.md`) is noted inline with reason
@@ -232,7 +270,7 @@ For runnable diagnostic queries (unindexed FKs, unused indexes, oversized rows, 
 
 ## Output
 
-Produce these files:
+Produce these files (default destinations — the caller/agent may redirect the `docs/arch/` and `db/migrations/` roots):
 
 | File | Content |
 |---|---|

@@ -106,6 +106,15 @@ UPDATE user_accounts SET deleted_at = now() WHERE id = '...';
 - Every query needs `WHERE deleted_at IS NULL` → solve with views or Row-Level Security
 - Deleted data accumulates → schedule periodic archiving
 
+### Erasure vs. immutable history (GDPR/CCPA right-to-erasure)
+
+Soft delete, the audit trail (§3), and event sourcing (§4) all **retain personal data by design** — the row stays physically present, whole-row snapshots land in `audit_logs`, and events are immutable. That collides head-on with a data-subject erasure request (GDPR Art. 17), and it is expensive to retrofit because it touches every table's delete story plus the audit and event payload shapes. Decide the reconciliation *before* adopting these patterns at scale:
+
+- **Crypto-shredding (preferred)** — store the subject's PII encrypted under a per-subject key (separate key store) and *destroy the key* on erasure. The soft-deleted rows and immutable events stay structurally intact for integrity/audit, but the PII inside them becomes permanently unreadable — one action satisfies soft-delete, audit, and event-sourcing immutability at once.
+- **Keep PII out of immutable payloads** — put only a pseudonymous subject id in `audit_logs` / event `event_data`, never name/email/etc. (the same redaction the Audit Trail warning below already requires), so erasure never has to rewrite history.
+- **Tombstone / pseudonymize** — on erasure, overwrite the subject's PII columns with a sentinel while keeping the row and its FKs for referential integrity.
+- When none is possible, record the retention/erasure obligation as an ADR. Pairs with the "classify sensitive columns" step in SKILL.md.
+
 ## 3. Audit Trail
 
 ### Trigger-based automatic audit logging
@@ -163,6 +172,8 @@ CREATE TRIGGER trg_orders_audit
     FOR EACH ROW EXECUTE FUNCTION fn_audit_trigger();
 ```
 
+> **Erasure:** whole-row `to_jsonb` payloads retain PII in `audit_logs` indefinitely. Keep PII out of the payload (pseudonymous id only) or crypto-shred — see "Erasure vs. immutable history" under §2.
+
 ## 4. Event Sourcing
 
 Store every state change as an event. Derive current state by replaying events.
@@ -197,6 +208,8 @@ CREATE TABLE order_projections (
 ```
 
 **When to use**: Finance, inventory, or any domain requiring complete change history for legal/business reasons.
+
+> **Erasure:** events are immutable by design — reconcile with right-to-erasure up front via crypto-shredding or PII-free payloads (see §2 "Erasure vs. immutable history"), not by rewriting the event store later.
 
 ## 5. CQRS (Command Query Responsibility Segregation)
 

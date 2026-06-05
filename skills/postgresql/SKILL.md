@@ -21,7 +21,7 @@ Focuses on writing correct, performant queries and solving production PostgreSQL
 ### 1. Design First, Query Second
 This skill operates on an existing schema. It assumes:
 - Naming follows snake_case convention (tables plural, FKs singular as `referenced_table_id`)
-- PKs are `BIGINT GENERATED ALWAYS AS IDENTITY` unless UUID is justified
+- PKs are `UUID` v7 (`DEFAULT uuidv7()`, PG18+; generated at the app layer pre-18) by default — `BIGINT GENERATED ALWAYS AS IDENTITY` only for high-volume internal tables (events, audit logs, metrics) where the 8-byte savings measurably matter. Inherited from the database-design skill's PK decision
 - All tables have `created_at` and `updated_at` (TIMESTAMPTZ)
 - Columns ordered largest-to-smallest for alignment optimization
 - FK columns are indexed (PostgreSQL does NOT auto-index FKs)

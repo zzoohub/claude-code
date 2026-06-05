@@ -195,6 +195,32 @@ CREATE TABLE sessions_p3 PARTITION OF sessions FOR VALUES WITH (MODULUS 4, REMAI
 - For time-series: partition interval should keep recent partitions "hot" in shared_buffers
 - Rule of thumb: each partition between 100MB-1GB
 
+### Data Lifecycle: Retention via Partition Drop
+
+Range partitioning by `created_at` is PostgreSQL's canonical **retention primitive**: dropping or detaching an old partition is an O(1) catalog operation, versus a `DELETE` that scans, locks, bloats, and must be VACUUMed afterward.
+
+```sql
+-- Enforce "keep 90 days": detach the old partition, then archive or drop it
+ALTER TABLE access_logs DETACH PARTITION access_logs_2025_01 CONCURRENTLY;  -- PG14+: no ACCESS EXCLUSIVE on the parent
+-- archive out-of-database before dropping (tiering to object storage):
+--   COPY access_logs_2025_01 TO PROGRAM 'gzip > /archive/access_logs_2025_01.csv.gz' (FORMAT csv);
+DROP TABLE access_logs_2025_01;
+```
+
+- **Hot/cold tiering**: move older partitions to a cheaper tablespace (`ALTER TABLE … SET TABLESPACE`) instead of dropping, when the data must stay queryable but rarely is.
+- **Automate** the retention window and partition creation with `pg_partman` (`retention` / `retention_keep_table` settings) rather than hand-rolling a schedule.
+- Retention *policy* (how long to keep) is a system-level decision (SKILL.md → DB-domain vs system-level); the *mechanism* here is DB-domain — design the partition key so the policy is executable as a partition drop.
+
+### When single-node Postgres runs out
+
+Partitioning scales table *management* and read replicas scale *reads*, but neither scales **write throughput beyond a single primary**. Signals you've hit that ceiling: sustained write-IOPS saturation on the primary, a working set larger than one machine's RAM/disk, or per-tenant blast-radius isolation needs. Options:
+
+- **Distributed Postgres (Citus)** — shard across nodes by a **distribution key**. That key must sit in the PK and most indexes and is *design-time, hard to change* (the same one-way door as PK type) — ideally align it with the `tenant_id` you already carry for multi-tenancy.
+- **App-level sharding** — route by tenant/hash in the application: more control, more operational burden.
+- **Accept the limit** — most products never reach it; don't shard speculatively (YAGNI).
+
+Whether to make the platform jump is a *system-level* call (`docs/arch/system.md`); the DB-design job is to **not foreclose it** — keep the prospective distribution key in the PK so you aren't forced into a full rewrite later.
+
 ## 5. Query Performance Patterns
 
 ### Keyset Pagination (avoid OFFSET)
