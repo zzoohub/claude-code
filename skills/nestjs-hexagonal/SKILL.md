@@ -295,7 +295,7 @@ For **request-scoped correlation** (request_id, tenant_id, userId) without threa
 | Item | Value |
 |------|-------|
 | Password hashing | `@node-rs/argon2` (default), `bcrypt` (fallback) |
-| JWT library | **`jose`** (default — modern, EdDSA/ES256 first-class, ESM/CJS, JWK support, no CVE backlog). Use `@nestjs/passport` + `passport-jwt` only when you also need session / OAuth strategies in the same app. **Do not use `jsonwebtoken`** — CJS-only, slow-to-patch security history (e.g. CVE-2022-23529), no native ES module support. |
+| JWT library | **`jose`** (default — zero-dependency, Web Crypto based, EdDSA/ES256 first-class, ESM/CJS, JWK/JWKS support). Use `@nestjs/passport` + `passport-jwt` only when you also need session / OAuth strategies in the same app. **Do not use `jsonwebtoken`** — CJS-only, no native ES module support, slower to adopt modern JOSE features (EdDSA, JWKS). |
 | JWT algorithm | **Asymmetric ES256/EdDSA** (canonical — verifiers hold only the public key via JWKS; validate `aud`/`iss`). HS256 symmetric secret only for a single-service / dev setup that both issues and verifies. See the guard in `references/examples-adapters.md`. |
 | JWT access token | 15 min |
 | JWT refresh (web) | 90 days |

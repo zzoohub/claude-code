@@ -66,7 +66,12 @@ import {
  * reads `published_at IS NULL ORDER BY id LIMIT N`, publishes, then updates
  * `published_at`. `traceparent` carries the originating request's trace.
  */
+// Composite index MUST be a CLASS-level decorator. As a *property* decorator
+// `@Index(name, [cols])` silently ignores the columns array and indexes only
+// the decorated property — here it would index published_at alone, leaving the
+// relay's `published_at IS NULL ORDER BY id` scan uncovered.
 @Entity({ name: "outbox" })
+@Index("idx_outbox_unpublished", ["publishedAt", "id"])
 export class OutboxEntity {
   @PrimaryGeneratedColumn("uuid")
   id!: string;
@@ -89,8 +94,6 @@ export class OutboxEntity {
   @CreateDateColumn({ name: "created_at", type: "timestamptz" })
   createdAt!: Date;
 
-  // Index covers the relay's "find next batch" query.
-  @Index("idx_outbox_unpublished", ["publishedAt", "id"])
   @Column({ name: "published_at", type: "timestamptz", nullable: true })
   publishedAt!: Date | null;
 }
@@ -325,7 +328,7 @@ For atomicity that spans multiple repositories (aggregate write + outbox enqueue
 // src/inbound/http/pipes/zod-validation.pipe.ts
 import { UnprocessableEntityException } from "@nestjs/common";
 import { createZodValidationPipe } from "nestjs-zod";
-import type { ZodError, ZodIssue } from "zod";
+import { z, type ZodError } from "zod";
 
 /**
  * nestjs-zod's pipe, customized so validation failures match the API's
@@ -346,11 +349,14 @@ import type { ZodError, ZodIssue } from "zod";
  * always names a meaningful field. (Zod 4 also offers `z.treeifyError` /
  * `z.flattenError`; this keeps the flat `errors[]` contract.)
  */
-function fieldOf(issue: ZodIssue): string {
+function fieldOf(issue: z.core.$ZodIssue): string {
   if (issue.path.length > 0) return issue.path.join(".");
-  if (issue.code === "invalid_union" && Array.isArray(issue.unionErrors)) {
-    for (const sub of issue.unionErrors) {
-      const named = sub.issues.find((i) => i.path.length > 0);
+  // Zod 4: a union failure carries `errors` (an array of issue-arrays), NOT
+  // Zod 3's `unionErrors` (arrays of ZodError) — that property no longer exists
+  // on a v4 issue. Flatten and prefer a sub-issue that names a field.
+  if (issue.code === "invalid_union") {
+    for (const subIssues of issue.errors) {
+      const named = subIssues.find((i) => i.path.length > 0);
       if (named) return named.path.join(".");
     }
   }
@@ -358,18 +364,23 @@ function fieldOf(issue: ZodIssue): string {
 }
 
 export const ZodValidationPipe = createZodValidationPipe({
-  createValidationException: (error: ZodError) =>
-    new UnprocessableEntityException({
+  // nestjs-zod types this callback as (error: unknown) => Error, so accept
+  // `unknown` and narrow inside — annotating the param as ZodError fails to
+  // assign under strictFunctionTypes.
+  createValidationException: (error: unknown) => {
+    const zerr = error as ZodError;
+    return new UnprocessableEntityException({
       type: "https://api.example.com/errors/validation-failed",
       title: "Validation Failed",
       status: 422,
       detail: "Request body failed validation",
-      errors: error.issues.map((e) => ({
+      errors: zerr.issues.map((e) => ({
         field: fieldOf(e),
         code: e.code,
         message: e.message,
       })),
-    }),
+    });
+  },
 });
 ```
 
@@ -743,8 +754,9 @@ export class ProblemDetail {
 // src/inbound/http/guards/jwt-auth.guard.ts
 //
 // `jose` (https://github.com/panva/jose) is the modern JWT/JOSE library:
-// EdDSA/ES256 first-class, ESM/CJS, JWK/JWKS, no CVE backlog. Prefer it
-// over `jsonwebtoken` (CJS-only, slow-to-patch security history).
+// zero-dependency, Web Crypto based, EdDSA/ES256 first-class, ESM/CJS,
+// JWK/JWKS. Prefer it over `jsonwebtoken` (CJS-only, no native ESM, slower
+// to adopt modern JOSE features).
 //
 // Canonical example below is ASYMMETRIC (ES256 over a JWKS) — matches
 // api-design.md ("prefer ES256/EdDSA once multiple services verify"):
@@ -1140,6 +1152,7 @@ A KV-shaped table keyed by `(scope, key)` with a unique constraint. Wrap the use
 export type Acquire =
   | { tag: "new" }
   | { tag: "replay"; response: Buffer }
+  | { tag: "processing" } // winner still in flight — caller must NOT re-run
   | { tag: "conflict" };
 
 export abstract class IdempotencyStore {
@@ -1153,6 +1166,42 @@ export abstract class IdempotencyStore {
     key: string,
     response: Buffer,
   ): Promise<void>;
+}
+```
+
+```typescript
+// src/outbound/typeorm/entities/idempotency.entity.ts
+import { Column, CreateDateColumn, Entity, PrimaryColumn } from "typeorm";
+
+/**
+ * Natural composite PK (scope, key) IS the unique constraint that collapses the
+ * INSERT race. `response` is null while the winning request is still in flight;
+ * `expiresAt` bounds growth so a crash between acquire() and store() can't leave
+ * a permanent in-flight row (a periodic purge reclaims expired rows).
+ */
+@Entity({ name: "idempotency_keys" })
+export class IdempotencyEntity {
+  @PrimaryColumn({ type: "text" })
+  scope!: string;
+
+  @PrimaryColumn({ type: "text" })
+  key!: string;
+
+  @Column({ name: "request_hash", type: "text" })
+  requestHash!: string;
+
+  @Column({ type: "bytea", nullable: true })
+  response!: Buffer | null;
+
+  @CreateDateColumn({ name: "created_at", type: "timestamptz" })
+  createdAt!: Date;
+
+  @Column({
+    name: "expires_at",
+    type: "timestamptz",
+    default: () => "now() + interval '24 hours'",
+  })
+  expiresAt!: Date;
 }
 ```
 
@@ -1175,7 +1224,13 @@ export class PostgresIdempotencyStore extends IdempotencyStore {
   }
 
   async acquire(scope: string, key: string, hash: string): Promise<Acquire> {
-    // Insert-or-fetch — unique (scope, key) collapses races to one winner.
+    // Insert-or-fetch — unique (scope, key) collapses the INSERT race to one
+    // winner. ON CONFLICT DO NOTHING ... RETURNING returns 1 row on a fresh
+    // insert and 0 on conflict, so the actual RETURNING row count (result.raw)
+    // is the signal — NOT identifiers.length. The PK is supplied at insert time
+    // (the natural (scope, key) here, or a client-generated uuid elsewhere), so
+    // identifiers is non-empty even on an ignored conflict; identifiers.length
+    // === 1 would ALWAYS report "new" and the store would never detect replays.
     const result = await this.em()
       .createQueryBuilder()
       .insert()
@@ -1185,13 +1240,18 @@ export class PostgresIdempotencyStore extends IdempotencyStore {
       .returning("scope")
       .execute();
 
-    if (result.identifiers.length === 1) return { tag: "new" };
+    if ((result.raw as unknown[]).length === 1) return { tag: "new" };
 
+    // Lost the INSERT race (or a prior request owns this key) — read the winner.
     const row = await this.em().findOneByOrFail(IdempotencyEntity, { scope, key });
     if (row.requestHash !== hash) return { tag: "conflict" };
+    // response present → completed, safe to replay. Otherwise the winner is
+    // still in flight: return "processing" so the interceptor short-circuits
+    // with a retryable 409 instead of RE-RUNNING the handler (which would
+    // double-execute the very side effect the key exists to make idempotent).
     return row.response
       ? { tag: "replay", response: row.response }
-      : { tag: "new" }; // in-flight
+      : { tag: "processing" };
   }
   // store(...) updates the row with the response bytes via this.em().update(...)
 }
@@ -1208,9 +1268,10 @@ Wire as a NestJS interceptor that checks the `Idempotency-Key` header before inv
 // Flow:
 //   1. No Idempotency-Key header → skip (lookup-free fast path).
 //   2. Acquire (scope, key, request-hash) on the store.
-//        "replay"   → respond with the cached body, same status code.
-//        "conflict" → 409 — same key, different request body.
-//        "new"      → run the handler, then store the serialised response.
+//        "replay"     → respond with the cached body, same status code.
+//        "conflict"   → 409 — same key, different request body.
+//        "processing" → 409 — same key, original still in flight; retry shortly.
+//        "new"        → run the handler, then store the serialised response.
 //
 // Apply selectively (controller- or route-scoped) — not globally. GET should
 // not pay the round-trip; non-mutating endpoints don't need replay protection.
@@ -1260,6 +1321,18 @@ export class IdempotencyInterceptor implements NestInterceptor {
             detail: "Idempotency-Key already used with a different request body",
           });
         }
+        if (outcome.tag === "processing") {
+          // A prior request with this key is still running. Do NOT call
+          // next.handle() — re-running would double-execute the side effect.
+          // Tell the client to retry once the original completes.
+          throw new ConflictException({
+            type: "https://api.example.com/errors/idempotency-in-flight",
+            title: "Request In Progress",
+            status: 409,
+            detail:
+              "A request with this Idempotency-Key is still being processed; retry shortly",
+          });
+        }
         if (outcome.tag === "replay") {
           // Replay path — short-circuit the handler, return the cached body
           // verbatim. Stored body includes status, headers + serialised JSON.
@@ -1294,7 +1367,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
 }
 ```
 
-Apply at the controller (`@UseInterceptors(IdempotencyInterceptor)`) or per route. Combine with a unique `(scope, key)` constraint in the store — that's what collapses concurrent retries to a single winner.
+Apply at the controller (`@UseInterceptors(IdempotencyInterceptor)`) or per route. Combine with a unique `(scope, key)` constraint in the store — that's what collapses the concurrent **INSERT** race to a single winner; the losers replay the stored response (once complete) or get a retryable 409 while it's still in flight, and are never re-run. Register `IdempotencyEntity` in the persistence module (`entities` + `forFeature([IdempotencyEntity])`) and bind `{ provide: IdempotencyStore, useClass: PostgresIdempotencyStore }`.
 
 ---
 

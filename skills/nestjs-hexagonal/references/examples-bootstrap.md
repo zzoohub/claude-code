@@ -133,9 +133,14 @@ import { DomainExceptionFilter } from "./inbound/http/filters/domain-exception.f
         mount: true,
         generateId: true,
         idGenerator: () => randomUUID(),
-        setup: (cls, req) => {
+        // nestjs-cls middleware setup signature is (cls, req, res) — three
+        // params. `res` is available, so stamp X-Request-Id here to cover ALL
+        // responses (success + bodiless 204/304), not just the error path.
+        setup: (cls, req, res) => {
           cls.set("requestId", cls.getId());
-          // Populate tenantId / userId from guard or header here once auth runs.
+          res.setHeader("X-Request-Id", cls.getId());
+          // tenantId / userId must be set in the JWT guard, NOT here — CLS
+          // middleware runs before guards (cls.set("userId", payload.sub)).
         },
       },
     }),
@@ -295,7 +300,7 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
     "@nestjs/common": "^11.0",
     "@nestjs/core": "^11.0",
     "@nestjs/platform-express": "^11.0",
-    "@nestjs/config": "^11.0",
+    "@nestjs/config": "^4.0",
     "@nestjs/swagger": "^11.0",
     "@nestjs/terminus": "^11.0",
     "@nestjs/typeorm": "^11.0.1",
@@ -321,6 +326,7 @@ bunx typeorm-ts-node-commonjs migration:revert -d ./data-source.ts
     "vitest": "^3.0",
     "@vitest/coverage-v8": "^3.0",
     "unplugin-swc": "^1.5",
+    "@swc/core": "^1.5",
     "supertest": "^7.0",
     "ts-node": "^10.9",
     "@types/express": "^5",
@@ -375,7 +381,7 @@ Key: `emitDecoratorMetadata` and `experimentalDecorators` are required for NestJ
 
 ## Vitest config
 
-Vitest replaces Jest as the test runner — faster startup, native ESM, better with Bun. The catch: Vitest doesn't transform decorators by default. Use `unplugin-swc` so `@Injectable`, `@Entity`, etc. emit reflect metadata correctly.
+Vitest replaces Jest as the test runner — faster startup, native ESM, better with Bun. The catch: Vitest doesn't transform decorators by default. Use `unplugin-swc` so `@Injectable`, `@Entity`, etc. emit reflect metadata correctly. `unplugin-swc` has a **required** peer `@swc/core` — both must be in `devDependencies` or the transform won't load.
 
 ```typescript
 // vitest.config.ts
