@@ -38,7 +38,8 @@ Nitro plugin → `node .output/server/index.mjs`).
 
 `src/router.tsx` and `src/routes/__root.tsx` are the two required files. The server entry
 (`src/server.ts`) and client entry (`src/client.tsx`) are optional — the Vite plugin provides
-defaults if you omit them.
+defaults if you omit them. Those default entries import a **`getRouter`** factory from
+`src/router.tsx`, so the router file must export the factory under exactly that name (see Router below).
 
 Optional TypeScript config: set `"jsx": "react-jsx"` and `"moduleResolution": "Bundler"` in tsconfig,
 and enable path aliases with `resolve: { tsconfigPaths: true }` in `vite.config.ts`.
@@ -47,16 +48,18 @@ and enable path aliases with `resolve: { tsconfigPaths: true }` in `vite.config.
 
 ```tsx
 // src/router.tsx
-import { createRouter as createTanStackRouter } from '@tanstack/react-router'
+import { createRouter } from '@tanstack/react-router'
 import { routeTree } from './routeTree.gen'
 
-export function createRouter() {
-  return createTanStackRouter({ routeTree, scrollRestoration: true })
+// MUST be exported as `getRouter` — the framework's default server/client
+// entries import this exact name. Exporting `createRouter` is a build error.
+export function getRouter() {
+  return createRouter({ routeTree, scrollRestoration: true })
 }
 
 declare module '@tanstack/react-router' {
   interface Register {
-    router: ReturnType<typeof createRouter>
+    router: ReturnType<typeof getRouter>
   }
 }
 ```
@@ -97,14 +100,14 @@ Install `@tanstack/react-query` + `@tanstack/react-router-ssr-query`, then wire 
 
 ```tsx
 // src/router.tsx
-import { createRouter as createTanStackRouter } from '@tanstack/react-router'
+import { createRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
 import { QueryClient } from '@tanstack/react-query'
 import { routeTree } from './routeTree.gen'
 
-export function createRouter() {
+export function getRouter() {
   const queryClient = new QueryClient()
-  const router = createTanStackRouter({
+  const router = createRouter({
     routeTree,
     scrollRestoration: true,
     context: { queryClient },

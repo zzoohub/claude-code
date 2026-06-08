@@ -332,6 +332,12 @@ export default defineConfig({
 | Cloudflare | `cloudflare({ viteEnvironment: { name: 'ssr' } })` as the **first** plugin + `wrangler.jsonc` (`"main": "@tanstack/react-start/server-entry"`, `"compatibility_flags": ["nodejs_compat"]`). Not Nitro |
 | Netlify | `import netlify from '@netlify/vite-plugin-tanstack-start'` → `netlify()`. Not Nitro |
 
+> **Cloudflare = Vite plugin, not Nitro.** Do **not** hand-write an `assets` block in `wrangler.jsonc` —
+> the `cloudflare()` plugin wires static-asset serving automatically. `.output/public` is the **Nitro**
+> output dir and does **not** apply to the Cloudflare build. A complete basic `wrangler.jsonc` is just
+> `$schema`, `name`, `compatibility_date`, `compatibility_flags: ["nodejs_compat"]`,
+> `main: "@tanstack/react-start/server-entry"` (optionally `observability.enabled`) — nothing else.
+
 ---
 
 ## Anti-Patterns
@@ -342,6 +348,7 @@ export default defineConfig({
 - **Business logic in route files** → routes are thin. Logic in FSD feature/entity layers
 - **Client state for URL-worthy data** → `validateSearch` + `Route.useSearch()`
 - **`.validator()` / `tanstackStart({ server: { preset } })`** → renamed/removed: use `.inputValidator()` and the Nitro Vite plugin
+- **Router factory exported as `createRouter`** → the default server/client entries import `getRouter`; export the factory as `getRouter` (build error otherwise)
 
 ---
 
