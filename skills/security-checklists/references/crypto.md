@@ -20,7 +20,7 @@
 
 | Check | Why | CWE |
 |-------|-----|-----|
-| Bcrypt (cost ≥12) or Argon2id for passwords | GPU/ASIC resistance | CWE-916 |
+| Argon2id (preferred) or bcrypt (cost ≥12) for passwords | GPU/ASIC resistance | CWE-916 |
 | bcrypt input length handled — pre-hash (e.g. base64(SHA-256)) passwords >72 bytes; bcrypt silently truncates at 72 bytes / first NULL byte (Argon2id/scrypt have no such limit) | Silent password weakening, hash collisions | CWE-916 |
 | NEVER MD5, SHA1, SHA256 alone for passwords | No key stretching, rainbow tables | CWE-916 |
 | Unique salt per password (auto-handled by bcrypt/argon2) | Pre-computation attacks | CWE-916 |

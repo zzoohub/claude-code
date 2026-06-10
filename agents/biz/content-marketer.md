@@ -62,7 +62,7 @@ Use email-marketing skill. Core sequences: welcome, newsletter, nurture, re-enga
 
 ### 4. SEO & Blog (`biz/marketing/content/blog/`)
 
-Use search-visibility skill. Keyword research → content briefs → optimized articles. Includes AEO/GEO for AI search.
+Use search-visibility skill. Keyword research → content briefs → optimized articles. Includes AEO/GEO for AI search. Audits, keyword research, and search strategy docs land in `biz/marketing/seo/` (articles themselves stay in `content/blog/`).
 
 ### 5. Build-in-Public
 
@@ -85,6 +85,7 @@ Only create a new file when the deliverable genuinely doesn't exist yet.
 | Social content | `biz/marketing/content/social/` |
 | Email sequences | `biz/marketing/content/email/` |
 | Blog / SEO content | `biz/marketing/content/blog/` |
+| SEO/AEO/GEO audits + search strategy | `biz/marketing/seo/` |
 | Changelog | `biz/marketing/content/changelog/` |
 | Marketing assets | `biz/marketing/assets/` |
 

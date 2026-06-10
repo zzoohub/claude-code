@@ -33,6 +33,11 @@ target.
   in sync with `src/commands.ts`).
 - Added a self-contained `./setup` (the upstream build lived in the gstack
   root `setup`).
+- Local doc-string touch-ups (2026-06): pruned the `commands.ts` header's
+  references to unvendored files (`gen-skill-docs` / `skill-parser` /
+  `skill-check`), documented `wait`'s optional `[timeoutMs]` arg in the
+  registry + CLI help, and added "macOS only" to `cookie-import-browser`'s
+  registry description. No behavior changes.
 
 ## If you ever want a specific upstream fix
 

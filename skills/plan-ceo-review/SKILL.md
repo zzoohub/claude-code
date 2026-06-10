@@ -24,7 +24,7 @@ allowed-tools:
   - AskUserQuestion
 ---
 
-# Mega Plan Review Mode
+# Plan Review — CEO Mode (scope & vision)
 
 ## Philosophy
 You are not here to rubber-stamp this plan. You are here to make it extraordinary, catch every landmine before it explodes, and ensure that when it ships, it ships at the highest standard. Your posture depends on the mode the user picks:
@@ -77,6 +77,7 @@ git diff main --stat                           # What's already changed
 git stash list                                 # Any stashed work
 grep -r "TODO\|FIXME\|HACK\|XXX" --include="*.ts" --include="*.tsx" --include="*.rs" --include="*.py" -l
 ```
+(Adjust the `--include` globs to the project's languages, and `main` to its default branch.)
 Then read the project-conventions file if present (e.g. `CLAUDE.md`), the plan itself, `tasks/board.md`, `tasks/features/*.md`, and existing architecture docs. When reading `tasks/`: note tasks this plan touches/blocks/unlocks; check deferred work related to this plan; map known pain points to this plan's scope.
 
 Map: current system state · what's already in flight (open PRs, branches, stashes) · existing pain points relevant to this plan · FIXME/TODO in files this plan touches.
@@ -98,6 +99,10 @@ Work through `references/review-sections.md` → "Step 0" for the full premise-c
 Context-dependent defaults (make the default the recommended first option):
 * Greenfield feature → EXPANSION · Bug fix / hotfix → HOLD · Refactor → HOLD · Plan touching >15 files → suggest REDUCTION · User says "go big"/"ambitious"/"cathedral" → EXPANSION.
 
+Non-interactive runs don't stall on mode selection either: apply the
+context-dependent default, record it as `UNRESOLVED-AUTO (mode defaulted)` in
+Unresolved Decisions, and continue.
+
 Once selected, commit fully. Do not silently drift.
 
 ## Review Sections
@@ -109,6 +114,7 @@ Each section ends with the section gate (below). Apply mode-specific behavior pe
 ## Section gate (applies after every step and section)
 After each section: produce a structured list of its issues, each with a recommended resolution, using the question protocol below — then **pause and wait for the user before the next section** when an interactive user is present. Resolve all raised issues before proceeding.
 * **Per-section issue budget:** surface at most the top 5-8 issues per section; capture the long tail as a single deferred task (see required outputs). Don't open a blocking question for every low-severity nit.
+* **Whole-review budget:** a healthy full pass lands 15-30 decisions total. Past ~40 you are litigating nits — batch the tail into deferred tasks and keep moving.
 * **When no interactive prompt is available** (headless/CI/no interactive user, or the runtime lacks AskUserQuestion): do NOT block and do NOT fabricate an answer. Emit each issue as plain text with its recommended option pre-selected, mark it `UNRESOLVED-AUTO` in Unresolved Decisions, and continue.
 
 ## How to ask questions
@@ -130,7 +136,7 @@ Produce all applicable outputs per **`references/required-outputs.md`** (NOT-in-
 ## Formatting Rules
 * NUMBER issues and LETTER options **in the written report** (e.g. "3A") — not in the AskUserQuestion cards.
 * Recommended option always listed first; one sentence max per option.
-* After each section, pause and wait for feedback.
+* After each section, pause and wait for feedback (interactive runs — headless runs follow the section-gate fallback instead).
 * Use **CRITICAL GAP** / **WARNING** / **OK** for scannability.
 
 ## References

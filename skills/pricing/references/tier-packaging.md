@@ -120,7 +120,7 @@ Choose the metric that correlates most directly with value delivered:
 
 ### Choosing Your Metric
 
-Apply the HOPE framework (see SKILL.md Step 2). If two metrics score similarly, favor the one that's more **familiar** to your buyer — unfamiliar metrics create friction in the buying process.
+Apply the four value-metric tests (see SKILL.md Step 2). If two metrics score similarly, favor the one that's more **familiar** to your buyer — unfamiliar metrics create friction in the buying process.
 
 ---
 
@@ -285,7 +285,7 @@ Show the monthly equivalent of annual pricing to make the savings concrete:
 
 - [ ] Defined target persona for each tier (who exactly is this for?)
 - [ ] Conducted willingness-to-pay research (Van Westendorp minimum)
-- [ ] Identified value metric using HOPE framework
+- [ ] Identified value metric using the four value-metric tests
 - [ ] Researched competitor pricing (tiers, features, metrics)
 - [ ] Mapped features to tiers with clear rationale per feature
 - [ ] Validated tier structure with 5-10 target customers

@@ -59,7 +59,7 @@ After X days of free use:
 1. **Headline** — Focus on what they get: "Unlock [Feature] to [Benefit]"
 2. **Value Demonstration** — Preview, before/after, "With Pro you could..."
 3. **Feature Comparison** — Highlight key differences, current plan marked
-4. **Pricing** — Clear, simple, annual vs. monthly options
+4. **Pricing** — Clear, simple, annual vs. monthly options (tier boundaries and price points come from the pricing capability — this file owns how the paywall *presents* them)
 5. **Social Proof** — Customer quotes, "X teams use this"
 6. **CTA** — Specific and value-oriented: "Start Getting [Benefit]"
 7. **Escape Hatch** — Clear "Not now" or "Continue with Free"

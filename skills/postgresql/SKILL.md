@@ -80,7 +80,8 @@ Key checks:
 - Connection pooling configured
 - VACUUM/ANALYZE strategy in place
 - Monitoring for slow queries and lock contention
-- For live diagnostics, run `scripts/query_diagnostics.sql` (psql-ready queries for slow queries, locks, bloat, vacuum lag, stale stats)
+- **Standing guards**: `pg_stat_statements` always on; `auto_explain` (or `log_min_duration_statement`) capturing the actual plans of slow queries — aggregates tell you *which* query regressed, auto_explain tells you *why*
+- `scripts/query_diagnostics.sql` (slow queries, locks, bloat, vacuum lag, stale stats) — run **weekly and during every incident**, not just when something feels slow
 
 ## Quick Decision Table
 
@@ -121,13 +122,14 @@ Key checks:
 - **NUMERIC for money, not FLOAT** — floating-point arithmetic introduces rounding errors in financial calculations (inherited from database-design)
 - **Keyset pagination over OFFSET** — OFFSET scans and discards skipped rows (cost grows with page depth); keyset seeks directly via the index. See `references/query-patterns.md`
 - **CONCURRENTLY for production indexes** — `CREATE INDEX` without CONCURRENTLY takes a write lock on the entire table, blocking inserts/updates until done
+- **`SET lock_timeout` before any production DDL** — even "safe" DDL takes a brief ACCESS EXCLUSIVE lock; if it queues behind a long transaction, **every subsequent query on that table queues behind it** — the classic migration outage. Fail fast and retry instead (see `references/production-ops.md` § Migration Session Preamble)
 - **Use PROCEDURE for batched backfills** — DO blocks run in a single transaction and cannot COMMIT between batches; use `CREATE PROCEDURE` + `CALL` for incremental commits (see `references/production-ops.md`)
 
 ## Recent Postgres Versions (use when available)
 
 | Version | Released | Notable additions |
 |---|---|---|
-| **PG 18** | 2025-09-25 | Built-in `uuidv7()`; async I/O improvements; explicit `uuidv4()` alias (UUIDv4 already available via `gen_random_uuid()` since PG 13) |
+| **PG 18** | 2025-09-25 | Built-in `uuidv7()`; async I/O improvements; `EXPLAIN ANALYZE` includes `BUFFERS` by default; explicit `uuidv4()` alias (UUIDv4 already available via `gen_random_uuid()` since PG 13) |
 | **PG 17** | 2024-09 | `MERGE ... RETURNING`; `JSON_TABLE`; incremental sort improvements; faster `vacuum` |
 | **PG 16** | 2023-09 | `pg_stat_io` (per-IO-type stats — complements per-query `BUFFERS`); logical decoding on standby; parallel apply of large transactions |
 | **PG 15** | 2022-10 | `MERGE` statement |
@@ -140,12 +142,15 @@ Practical implications:
 
 ### DDL portability (PG18 vs ≤PG17)
 
-When generating UUID-keyed DDL, default to PG 18 (`DEFAULT uuidv7()`). For PG 17 and below, generate UUIDs at the application layer or use `gen_random_uuid()` (UUIDv4, built into core since PG 13 — no `pgcrypto` needed):
+When generating UUID-keyed DDL, default to PG 18 (`DEFAULT uuidv7()`). For PG 17 and below, **generate UUIDv7 at the application layer** and pass it into INSERT (no column DEFAULT) — that preserves the time-ordered B-tree locality the PK decision is built on. `gen_random_uuid()` (UUIDv4, core since PG 13) is acceptable **only for low-volume/low-write tables**: random v4 fragments hot B-trees (the database-design skill's Critical Rule).
 
 ```sql
 -- PG 18+ (preferred)
 id UUID PRIMARY KEY DEFAULT uuidv7()
 
--- PG 17 and below (UUIDv4 — random, not time-ordered)
+-- PG 17 and below (preferred): no DEFAULT; app generates UUIDv7
+id UUID PRIMARY KEY
+
+-- PG 17 and below, low-write tables only (UUIDv4 — random, fragments hot B-trees)
 id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 ```

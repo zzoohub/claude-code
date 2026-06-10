@@ -15,7 +15,7 @@
 
 ## Why Retention Is the Only Metric That Matters
 
-Acquisition can be bought. Revenue can be inflated. But retention is the unmanipulable signal of whether your product delivers value. A product with 80% D30 retention and 100 users will outperform a product with 10% D30 retention and 10,000 users — every time.
+Acquisition can be bought. Revenue can be inflated. But retention is the unmanipulable signal of whether your product delivers value. A product with 80% D30 retention and 100 users beats one with 10% D30 retention and 10,000 users on every horizon that matters: the first can buy growth and keep it; the second leaks whatever it buys.
 
 ---
 
@@ -123,8 +123,8 @@ Plot cohort retention curves. The shape tells you everything:
 
 | Metric | Median | Top Quartile | Elite |
 |--------|--------|--------------|-------|
-| GRR (Gross Revenue Retention) | 90% | 95%+ | 97%+ |
-| NRR (Net Revenue Retention) | 106% | 115%+ | 120%+ |
+| GRR (Gross Revenue Retention) | 88-90% | 95%+ | 97%+ |
+| NRR (Net Revenue Retention) | 101-106% (survey-dependent; medians have compressed since 2022) | 115%+ | 120%+ |
 
 **Warning**: High NRR can mask poor GRR. NRR of 130% with GRR of 70% = losing 30% of customers but making it up with upsells. That's fragile.
 
@@ -228,7 +228,7 @@ Priority segments:
 
 ## Implementation in PostHog
 
-All retention analysis is executed via PostHog MCP server:
+Execute retention analysis via a PostHog capability (MCP tools or the UI), if available:
 
 | Analysis | PostHog Feature | How |
 |----------|----------------|-----|
@@ -237,14 +237,14 @@ All retention analysis is executed via PostHog MCP server:
 | Stickiness | **Stickiness** insight | Distribution of active days/weeks. Bimodal = healthy (casual + power users) |
 | User journey analysis | **Paths** | Compare paths of retained vs churned users |
 | Behavioral segments | **Cohorts** | Create cohorts by behavior, plan, channel for segmented retention |
-| Revenue retention (GRR/NRR) | **HogQL** | Custom SQL queries on revenue events. PostHog has no built-in revenue analytics — build cohort tables manually via HogQL |
+| Revenue retention (GRR/NRR) | **HogQL** | Custom SQL on revenue events. PostHog's built-in Revenue analytics (Stripe-synced MRR, in flux) has no cohort-level GRR/NRR — build those via HogQL |
 | Custom cohort tables | **HogQL** | Full SQL control for any analysis the UI doesn't support |
 
 ---
 
 ## Revenue Retention (GRR/NRR) via HogQL
 
-PostHog has no built-in revenue analytics. Use HogQL to build revenue retention cohorts from subscription/payment events.
+PostHog's built-in Revenue analytics (Stripe-synced MRR dashboards — still in flux) does not produce cohort-level GRR/NRR. Use HogQL to build revenue retention cohorts from subscription/payment events.
 
 ### Gross Revenue Retention (GRR)
 
@@ -292,6 +292,12 @@ ORDER BY month
 
 NRR includes expansion (upgrades) and contraction (downgrades). It answers: "Is each cohort paying us more or less over time?"
 
+**Event-schema assumption:** each user's recurring charge lands as **one** amount-bearing event per
+month (`purchase_completed` or `subscription_renewed`). If `subscription_upgraded` /
+`subscription_downgraded` fire *in addition to* a same-month renewal carrying the full new amount,
+drop them from the `IN` list below — the next renewal already reflects the change, and summing both
+double-counts. (Their `revenue_delta` property is for plan-change reporting, not this sum.)
+
 ```sql
 -- NRR: Monthly revenue retention including expansion/contraction
 WITH monthly_revenue AS (
@@ -331,12 +337,16 @@ ORDER BY month
 
 | GRR | NRR | Diagnosis |
 |-----|-----|-----------|
-| >95% | >110% | Healthy — low churn, good expansion |
-| >95% | ~100% | Retention is solid but no expansion — pricing/packaging opportunity |
+| ≥95% | >110% | Healthy — low churn, good expansion |
+| 90-95% | 100-110% | The median zone — solid retention, modest expansion; pricing/packaging upside |
+| ≥90% | <100% | Keeping customers but shrinking accounts — contraction problem, check packaging/seat counts |
 | <90% | >110% | Masking churn with upsells — fragile, fix retention |
 | <90% | <100% | Revenue shrinking — urgent, fix product or pricing |
 
-Adapt these queries to your event schema. The key events are `purchase_completed`, `subscription_renewed`, `subscription_upgraded`, `subscription_downgraded`, and `subscription_cancelled` — each should include an `amount` property.
+Adapt these queries to your event schema. The load-bearing events are `purchase_completed` and
+`subscription_renewed`, each carrying the recurring `amount`; plan changes flow through the next
+renewal's amount (or ride `subscription_upgraded`/`downgraded` events — see the NRR schema note
+above); cancellation is the *absence* of the next renewal, which the LEFT JOIN already handles.
 
 ---
 
@@ -347,10 +357,14 @@ If cohort retention stabilizes, estimate LTV:
 ```
 Estimated Lifetime (months) = 1 / Monthly Churn Rate at Plateau
 
-LTV = ARPU × Estimated Lifetime
+LTV = ARPU × Gross Margin % × Estimated Lifetime
 
 LTV:CAC Ratio Target: ≥ 3:1
 CAC Payback Period Target: ≤ 12 months
 ```
+
+The canonical 3:1 target (David Skok's SaaS metrics) assumes **margin-adjusted** LTV. Skipping the
+gross-margin term overstates LTV by ~25% at typical 80% SaaS margins — and by 2x+ for low-margin
+AI products — passing products that fail the real test.
 
 If the plateau hasn't formed yet, use the most recent cohort's decay rate as a conservative estimate. Do not extrapolate from early, unstable cohorts.

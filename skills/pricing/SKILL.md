@@ -22,6 +22,8 @@ A 1% improvement in pricing yields an **11% increase in profit** (McKinsey). Mon
 
 This skill provides the frameworks, data, and decision tools to get pricing right.
 
+(The benchmark figures throughout — growth rates, adoption lifts, conversion ranges — are directional industry numbers from 2024-2026 reports. They drift; verify against current sources before quoting them externally.)
+
 ---
 
 ## Pricing Strategy Framework
@@ -40,7 +42,7 @@ Apply the **10x Rule**: your product should deliver at least 10x the value of it
 
 The value metric is what you charge for. It determines your entire pricing architecture.
 
-Use the **HOPE Framework** to evaluate candidate metrics:
+Evaluate candidate metrics against the **four value-metric tests**:
 
 | Dimension | Question | Weight |
 |-----------|----------|--------|

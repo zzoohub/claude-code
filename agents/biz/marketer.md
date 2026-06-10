@@ -113,6 +113,7 @@ Only create a new file when the deliverable genuinely doesn't exist yet.
 | Launch materials | `biz/marketing/launch/` |
 | Pricing strategy | `biz/marketing/pricing.md` |
 | Competitor analysis | `biz/marketing/competitors.md` |
+| Competitor page drafts | `biz/marketing/competitor-pages/{slug}.md` |
 | Ad creative | `biz/marketing/assets/` |
 
 **Pricing scope:** `biz/marketing/pricing.md` (this agent) = public-facing tier/packaging strategy. In-app paywall/upgrade/checkout pricing → growth-optimizer (`biz/growth/paywall-pricing.md`).

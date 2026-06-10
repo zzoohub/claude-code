@@ -158,4 +158,4 @@ Much harder than evaluating single-shot models. You need to eval:
 - **Cost and latency per task.** How many steps, how many tokens?
 - **Safety.** Did it stay within scope? Any tool misuse?
 
-See `references/evaluation.md` for eval patterns. Agent evaluation often requires trace analysis (not just final output comparison) — budget for that.
+Metric definitions — pass^k vs pass@k reliability, step efficiency, trajectory scoring — live in `references/evaluation.md` § Agent evals. Agent evaluation often requires trace analysis (not just final output comparison) — budget for that.

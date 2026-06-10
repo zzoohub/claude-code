@@ -88,7 +88,7 @@ import { AuthorServiceImpl } from "../domain/authors/service";
 import { createApp } from "../inbound/http/app";
 import { DrizzleAuthorRepository } from "../outbound/drizzle/repository";
 import { NoOpMetrics, NoOpNotifier } from "../outbound/noop";
-import { createDb } from "../outbound/drizzle/client";
+import { createDb, closeDb } from "../outbound/drizzle/client";
 
 const config = loadConfig();
 const db = createDb(config.DATABASE_URL);
@@ -100,21 +100,39 @@ const app = createApp({
   healthPing: async () => { await db.execute(sql`SELECT 1`); },
 });
 
-serve(
+const server = serve(
   { fetch: app.fetch, port: config.PORT },
   (info) => {
     console.log(`Server running at http://localhost:${info.port}`);
   },
 );
 
-// Graceful shutdown
-process.on("SIGTERM", () => {
-  console.log("SIGTERM received, shutting down...");
-  process.exit(0);
-});
-process.on("SIGINT", () => {
-  console.log("SIGINT received, shutting down...");
-  process.exit(0);
+// Graceful shutdown — bare `process.exit(0)` drops in-flight requests and
+// leaks pool connections. Drain first, then close the pool, then exit.
+const shutdown = (signal: string) => {
+  console.log(`${signal} received, shutting down...`);
+  server.close(async () => {
+    await closeDb(db); // from outbound/drizzle/client.ts — driver imports stay out of server.ts
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(1), 10_000).unref(); // failsafe if the drain hangs
+};
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+```
+
+## Bootstrap (Deno)
+
+Same wiring as Bun — only the serve call differs (deps via `npm:` specifiers or an import map):
+
+```typescript
+// src/app/server.ts — Deno
+Deno.serve({ port: config.PORT }, app.fetch);
+
+// Deno handles SIGINT; add SIGTERM cleanup for orchestrated deploys:
+Deno.addSignalListener("SIGTERM", async () => {
+  await closeDb(db);
+  Deno.exit(0);
 });
 ```
 
@@ -174,6 +192,12 @@ export function createDb(url: string) {
   sqlite.run("PRAGMA journal_mode = WAL;");
   sqlite.run("PRAGMA foreign_keys = ON;");
   return drizzle(sqlite, { schema });
+}
+
+// Graceful shutdown calls this. Drizzle exposes the underlying driver as db.$client.
+// bun:sqlite: close() — pg Pool: `await db.$client.end()` — postgres.js: `await db.$client.end({ timeout: 5 })`
+export async function closeDb(db: ReturnType<typeof createDb>) {
+  db.$client.close();
 }
 
 // For Postgres with node-postgres:

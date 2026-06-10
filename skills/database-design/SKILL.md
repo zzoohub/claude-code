@@ -120,6 +120,15 @@ If a DB-domain decision differs from what the design doc implies, **state the de
 - Transaction requirements (ACID strictness)
 - Scaling plans (single server vs distributed)
 
+**Size the schema (back-of-envelope)** — turn the scale numbers (from `context.md` §2's scale envelope if present, else the answers above) into per-table arithmetic before any DDL. The numbers gate decisions that are otherwise vibes:
+
+- **Per hot table**: rows/day × bytes/row (padded column widths + ~24B tuple header — see `references/performance-patterns.md` §1) → size at 1yr / 3yr; ×1.3-1.5 for indexes and bloat. Sum the hot tables against RAM — that's the working set.
+- **Partitioning gate**: compute months-to-~100M-rows from rows/day. Partition when the table crosses hundreds of millions *within the design horizon* or retention must be a partition drop — not because "logs feel big".
+- **PK economics, quantified**: UUID→BIGINT saves 8 bytes × rows × (PK index + every referencing FK column + every index carrying it). At 1B rows that's ~8GB in the PK index alone — that's when "measurably matters" starts. At 10M rows it's ~80MB — irrelevant; take UUID v7's external-safety instead.
+- **MV-vs-live-join**: estimate the join fan-out at target volume before reaching for a materialized view (denormalization needs measured cost — `references/normalization-guide.md`).
+
+A ×3 error changes nothing here; a ×100 error changes the design. State the inputs so the arithmetic is checkable; record it in `docs/arch/database.md` under Requirements.
+
 **Feature-aware schema** (read before writing any DDL):
 
 Design the **full relational spine + integrity invariants + key relationships** for the product vision — the one-way doors (PK type, tenancy model, partition/distribution key, normalization boundaries) that are cheap to get right now and expensive to retrofit — **not** every speculative column for features not yet being built (see **Modeling for Change** → "Design the spine up front, defer the speculation"). Then split migrations by domain so features can ship independently.
@@ -176,6 +185,7 @@ COMMENT ON COLUMN schema_name.table_name.column IS 'Column description';
 
 ### Step 5: Index Strategy
 → consult `references/indexing-strategy.md`
+- **Every index cites an access path.** List the top access paths first (query shape | expected frequency | latency need), then derive each index from one; record the table in `docs/arch/database.md`. An index serving no listed path is a delete candidate; a hot path served by no index is a seq scan waiting for data volume.
 - Verify auto-indexes on PK; manually create indexes on FK columns (PostgreSQL does NOT auto-index FK)
 - Identify columns frequently used in WHERE, JOIN, ORDER BY
 - Calculate selectivity: distinct values / total rows
@@ -218,7 +228,11 @@ Before writing `docs/arch/database.md` or any migration file, **every Critical R
 - [ ] Every tenant-scoped table has `tenant_id` column AND RLS policy — or schema/database-per-tenant is chosen with ADR
 - [ ] Composite indexes lead with `tenant_id` where tenant-scoped queries dominate
 
+**Sizing**
+- [ ] Size envelope computed for hot tables (rows/day × bytes/row → 1yr/3yr); partitioning and PK-type choices cite its numbers, not vibes
+
 **Indexes**
+- [ ] Every index traces to a listed access path (Step 5); no index without a path, no hot path without an index
 - [ ] Partial indexes used for low-selectivity boolean/status columns (don't index `WHERE is_deleted = false` globally)
 - [ ] Composite index column order follows equality → range → sort rule
 - [ ] No obvious unused redundancy (e.g., `(a)` + `(a, b)` — drop `(a)`)
@@ -247,8 +261,21 @@ Use this checklist:
 8. **Scalability**: Partitioning, read replicas
 9. **Ingestion pattern**: Append-only vs backfill vs update-heavy implications
 10. **Storage**: Column ordering for alignment (large tables only) → `references/performance-patterns.md`
+11. **Lifecycle**: retention per large table is *executable* (partition drop, not mass DELETE); erasure obligations reconciled (crypto-shred / PII-free immutable payloads — `references/design-patterns.md` §2)
 
 For runnable diagnostic queries (unindexed FKs, unused indexes, oversized rows, missing constraints), see `scripts/schema_review.sql` — psql-ready queries you can execute directly against the target database.
+
+When invoked from an architecture review, rank findings with the caller's severity rubric (e.g. the software-architecture skill's 🔴/🟠/🟡/🟢) so the two audits merge cleanly.
+
+## Standing Guards (CI / cron)
+
+A schema review is a point-in-time audit; these keep it true continuously — the database-grain analogue of architecture fitness functions:
+
+1. **Migration round-trip in CI** — forward → rollback → forward against a production-scale snapshot on every migration PR (the Step 7 / Pre-Output Gate rule, automated). A chain that has only ever run forward has an untested rollback.
+2. **Drift check** — build a scratch database from the full migration chain, `pg_dump --schema-only` both it and each long-lived environment, and diff (or use a schema-diff tool such as `migra`). Any difference means schema was mutated outside migrations — this is the standing enforcement of "auto-DDL is forbidden".
+3. **Scheduled `scripts/schema_review.sql`** — monthly, and after every launch, against production: unindexed FKs, unused indexes, dead-tuple ratios, lock pile-ups. Keep `pg_stat_statements` enabled (Recommended Extensions) so query regressions between runs are attributable.
+
+Wire 1-2 into CI; 3 is a cron job plus a human reading the output.
 
 ## Key Design Patterns Summary
 
@@ -267,6 +294,7 @@ For runnable diagnostic queries (unindexed FKs, unused indexes, oversized rows, 
 | Pessimistic Locking | High contention, short transactions | `references/acid-transactions.md` |
 | Optimistic Locking | Low contention, user-facing workflows | `references/acid-transactions.md` |
 | Queue (SKIP LOCKED) | Task/job queue processing | `references/acid-transactions.md` |
+| Outbox / Idempotency tables | Reliable side effects, retry-safe writes | Table shapes live in a reliability capability (e.g. the software-architecture skill's `reliability-patterns.md`), if available — this skill turns them into migrations |
 
 ## Output
 
@@ -274,7 +302,7 @@ Produce these files (default destinations — the caller/agent may redirect the 
 
 | File | Content |
 |---|---|
-| `docs/arch/database.md` | **Table of Contents** (linked) → Requirements summary → ERD (Mermaid, consult `references/mermaid-erd.md` for syntax) → Schema decisions & trade-offs → Transaction design → Index strategy → Performance notes → Migration plan. Design doc deviations noted inline. Start with a TOC right after the title — the document gets long and a TOC makes it navigable. |
+| `docs/arch/database.md` | **Table of Contents** (linked) → Requirements summary (incl. the size envelope) → ERD (Mermaid, consult `references/mermaid-erd.md` for syntax) → Schema decisions & trade-offs → Transaction design → Access paths & index strategy → Performance notes → Migration plan. Design doc deviations noted inline. Start with a TOC right after the title — the document gets long and a TOC makes it navigable. |
 | `db/migrations/NNN_<verb>_<domain>.sql` | Executable DDL split **per domain** (never a single "initial schema" file). Each file pairs with `NNN_<verb>_<domain>.rollback.sql`. See naming convention below. |
 
 ### Migration File Naming

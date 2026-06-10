@@ -17,15 +17,31 @@ For runnable diagnostic queries against a live database (slowest queries, lock w
 
 ## 1. Zero-Downtime Migrations
 
+### The Migration Session Preamble (run first, every time)
+
+Even "safe" DDL (`ADD COLUMN`, `ADD CONSTRAINT ... NOT VALID`) takes a **brief ACCESS EXCLUSIVE lock**. If a long-running transaction holds the table, the DDL waits — and every subsequent query on that table queues **behind the waiting DDL**. That queue, not the DDL itself, is the classic migration outage. Fail fast and retry instead:
+
+```sql
+SET lock_timeout = '2s';        -- DDL gives up instead of stalling all traffic
+SET statement_timeout = '15min'; -- bound the whole step (size to the operation)
+-- on lock_timeout failure: wait, retry; if it keeps failing, find the blocker
+-- (long transaction / idle-in-transaction) via scripts/query_diagnostics.sql #10
+```
+
+(`CREATE/DROP/REINDEX ... CONCURRENTLY` can't run inside a transaction block — set these at session level, not inside one `BEGIN...COMMIT`.)
+
+**Execution runbook**: backup/snapshot → session preamble → run the step → verify (invalid-index check, constraint validated) → `ANALYZE` affected tables → watch error rates and lock waits before the next step.
+
 ### Adding NOT NULL Constraint (safe pattern)
 ```sql
--- Step 1: Add CHECK constraint without validation (instant, no lock)
+-- Step 1: Add CHECK constraint without validation (brief ACCESS EXCLUSIVE —
+-- fails fast under the preamble's lock_timeout instead of queueing traffic)
 ALTER TABLE user_accounts ADD CONSTRAINT chk_user_email_nn
     CHECK (email IS NOT NULL) NOT VALID;
 
 -- Step 2: Backfill NULLs in batches (see Backfilling section)
 
--- Step 3: Validate (scans table, minimal lock — NOT ACCESS EXCLUSIVE)
+-- Step 3: Validate (scans under SHARE UPDATE EXCLUSIVE — reads AND writes continue)
 ALTER TABLE user_accounts VALIDATE CONSTRAINT chk_user_email_nn;
 
 -- Step 4: Convert to actual NOT NULL (instant, planner uses validated constraint)
@@ -79,53 +95,49 @@ Single UPDATE on millions of rows = table lock + WAL bloat. Always batch.
 
 Transaction control (COMMIT between batches) requires a `PROCEDURE` — `DO` blocks run in a single transaction and cannot commit mid-execution.
 
-Use plain `FOR UPDATE` (not `SKIP LOCKED`) for a backfill that must touch every row: `SKIP LOCKED` omits rows currently locked by concurrent writers, and a batch that skips all of its candidates returns 0 rows — prematurely ending an `EXIT WHEN affected = 0` loop with rows still un-backfilled. (`SKIP LOCKED` is for competing-worker queues, not exhaustive backfills.)
+**No `FOR UPDATE`, no `SKIP LOCKED`** in the batch select: the `UPDATE` takes its own row locks, and the idempotent `IS NULL` recheck makes a concurrently-modified row safe to skip. `SKIP LOCKED` in particular is for competing-worker queues, never exhaustive backfills — it silently omits locked rows, and combined with an "exit when 0 rows" loop can end the backfill with rows still unprocessed.
+
+Walk the table by **primary-key keyset**, not by re-scanning a `WHERE new_column IS NULL` predicate: the predicate scan re-reads already-processed (now dead) pages on every batch — quadratic page reads on a big table unless you add a partial index just for the backfill. The keyset cursor visits each page once. (Same canonical shape as the database-design skill's `migration-patterns.md`.)
 
 ```sql
 CREATE OR REPLACE PROCEDURE backfill_new_column(batch_size INT DEFAULT 5000)
 LANGUAGE plpgsql AS $$
 DECLARE
-    affected INT;
+    last_id UUID := '00000000-0000-0000-0000-000000000000';
+    rows_scanned INT;
 BEGIN
     LOOP
-        WITH batches AS (
+        WITH batch AS (
             SELECT id FROM user_accounts
-            WHERE new_column IS NULL
+            WHERE id > last_id
+            ORDER BY id
             LIMIT batch_size
-            FOR UPDATE  -- NOT skip locked: an exhaustive backfill must touch every row
+        ), updated AS (
+            UPDATE user_accounts u
+            SET new_column = compute_value(u.old_column)
+            FROM batch b
+            WHERE u.id = b.id AND u.new_column IS NULL  -- idempotent: safe to re-run
+            RETURNING u.id
         )
-        UPDATE user_accounts u
-        SET new_column = compute_value(u.old_column)
-        FROM batches b WHERE u.id = b.id;
+        SELECT count(*), (SELECT id FROM batch ORDER BY id DESC LIMIT 1)
+        INTO rows_scanned, last_id FROM batch;
 
-        GET DIAGNOSTICS affected = ROW_COUNT;
-        EXIT WHEN affected = 0;
-        COMMIT;  -- releases locks, writes WAL for this batch only
-        PERFORM pg_sleep(0.1);  -- reduce load between batches
+        EXIT WHEN last_id IS NULL;  -- no rows past the cursor
+        COMMIT;                     -- releases locks, bounds WAL per batch
+        PERFORM pg_sleep(0.1);      -- throttle between batches
     END LOOP;
 END $$;
 
--- Run it:
+-- Run it (CALL must not be wrapped in an outer transaction — psql without -1):
 CALL backfill_new_column(5000);
 
 -- Clean up when done:
 DROP PROCEDURE backfill_new_column;
 ```
 
-**Alternative (simple loop from application code)** — if your migration framework doesn't support procedures, loop from the app:
-```sql
--- Run this in a loop from application code, each call in its own transaction:
-WITH batches AS (
-    SELECT id FROM user_accounts
-    WHERE new_column IS NULL
-    LIMIT 5000
-    FOR UPDATE  -- plain FOR UPDATE: every row must be backfilled (see note above)
-)
-UPDATE user_accounts u
-SET new_column = compute_value(u.old_column)
-FROM batches b WHERE u.id = b.id;
--- Check affected rows; stop when 0
-```
+**Throttle against replication lag**: batch backfills are WAL storms — on a replicated setup, check `pg_stat_replication` (`replay_lag`) between batches and pause/raise the sleep when replicas fall behind, or read-after-write traffic on replicas starts failing while the backfill runs.
+
+**Alternative (simple loop from application code)** — if your migration framework doesn't support procedures, run the same keyset batch from the app, each iteration in its own transaction, carrying `last_id` forward and stopping when the batch comes back empty.
 
 ## 3. VACUUM & ANALYZE Strategy
 
@@ -191,15 +203,22 @@ reserve_pool_size = 5          # emergency extra connections
 ### Find Unused Indexes
 ```sql
 SELECT
-    schemaname, tablename, indexname,
-    idx_scan AS times_used,
-    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
-FROM pg_stat_user_indexes
-WHERE idx_scan = 0
-    AND indexrelid NOT IN (
+    s.schemaname, s.relname AS tablename, s.indexrelname AS indexname,
+    s.idx_scan AS times_used,
+    pg_size_pretty(pg_relation_size(s.indexrelid)) AS index_size
+FROM pg_stat_user_indexes s
+JOIN pg_index ix ON ix.indexrelid = s.indexrelid
+-- idx_scan is cumulative since the last stats reset — trust 0 only over a
+-- representative window (PG16+ has last_idx_scan for recency).
+WHERE s.idx_scan = 0
+    -- never drop what enforces uniqueness or feeds logical replication:
+    AND NOT ix.indisunique
+    AND NOT ix.indisprimary
+    AND NOT ix.indisreplident
+    AND s.indexrelid NOT IN (
         SELECT conindid FROM pg_constraint WHERE contype IN ('p', 'u')
     )
-ORDER BY pg_relation_size(indexrelid) DESC;
+ORDER BY pg_relation_size(s.indexrelid) DESC;
 ```
 
 ### Rebuild Bloated Indexes (zero-downtime)
@@ -208,7 +227,7 @@ REINDEX INDEX CONCURRENTLY idx_orders_created_at;
 
 -- Or create-new + swap (more control)
 CREATE INDEX CONCURRENTLY idx_orders_created_at_new ON orders (created_at);
-DROP INDEX idx_orders_created_at;
+DROP INDEX CONCURRENTLY idx_orders_created_at;  -- plain DROP takes ACCESS EXCLUSIVE and queues traffic
 ALTER INDEX idx_orders_created_at_new RENAME TO idx_orders_created_at;
 ```
 
@@ -228,7 +247,7 @@ LIMIT 20;
 
 | Parameter | OLTP | OLAP | Description |
 |-----------|------|------|-------------|
-| shared_buffers | 25-40% RAM | 50-70% RAM | Shared memory cache |
+| shared_buffers | 25-40% RAM | 25-40% RAM | Shared memory cache — above ~40% tends to hurt: PostgreSQL also relies on the OS page cache, so oversizing causes double-buffering |
 | work_mem | 4-64MB | 64MB-1GB | Per-operation sort/hash |
 | maintenance_work_mem | 512MB-2GB | 1-4GB | VACUUM, CREATE INDEX |
 | effective_cache_size | 75% RAM | 75% RAM | Planner estimate of OS cache |
@@ -280,6 +299,20 @@ On managed PostgreSQL services (RDS, Cloud SQL, Neon, Supabase), this extension 
 SELECT pg_stat_statements_reset();
 ```
 
+### auto_explain — capture the plan, not just the aggregate
+
+`pg_stat_statements` tells you *which* query regressed; `auto_explain` logs the *actual plan* of the slow execution — the difference between knowing and guessing during an incident:
+
+```ini
+shared_preload_libraries = 'pg_stat_statements,auto_explain'
+auto_explain.log_min_duration = '500ms'   # log plans for anything slower
+auto_explain.log_analyze = on             # include actual rows/timing
+auto_explain.log_buffers = on
+auto_explain.sample_rate = 1.0            # lower (e.g. 0.1) on very hot systems — log_analyze adds overhead
+```
+
+At minimum, set `log_min_duration_statement = '1s'` so slow statements land in the log even without the module.
+
 ## 8. Monitoring Checklist
 
 | What to Monitor | Query / Tool | Threshold |
@@ -292,3 +325,7 @@ SELECT pg_stat_statements_reset();
 | Slow queries | `pg_stat_statements` | Investigate top 10 by avg_ms |
 | Connection count | `pg_stat_activity` | Alert at 80% of max_connections |
 | WAL generation rate | `pg_stat_wal` (PG14+) | Baseline + alert on spikes |
+| Replication lag | `pg_stat_replication` (`replay_lag`) | Alert past what read-after-write flows tolerate; throttle backfills against it |
+| Idle-in-transaction sessions | `pg_stat_activity` (`state = 'idle in transaction'`) | Alert > 5 min — they block VACUUM, `VALIDATE`, and DDL; set `idle_in_transaction_session_timeout` as the backstop |
+
+Run `../scripts/query_diagnostics.sql` weekly and during every incident — point-in-time reads of these same signals, plus FK/index/bloat checks.

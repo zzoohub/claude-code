@@ -55,13 +55,9 @@ These belong in the PRD or feature specs:
 
 1. **Problem-first.** The brief exists to articulate a problem worth solving.
 2. **Brief means brief.** One page. Detail belongs downstream (see above).
-3. **No jargon.** Write it so anyone can understand.
+3. **No jargon.** Write it so anyone can understand — direct, confident, active
+   voice, short sentences; match the user's formality, lean conversational.
 4. **Living document.** Evolves through discovery. Never "done."
-
-## Tone
-
-Direct, confident. Active voice, short sentences. Match the user's formality level;
-when in doubt, lean conversational.
 
 ## Process
 
@@ -130,7 +126,7 @@ Before presenting, verify:
 - [ ] Problem is grounded in evidence, not assumption; target user is specific
 - [ ] Direction describes the experience, not a feature list; Core bet names the insight
 - [ ] Success signal is an observable change, not a metric with a target/timeframe
-- [ ] The whole brief fits on one page
+- [ ] The whole brief fits on one page (≲60 markdown lines)
 - [ ] Open questions are honest — gaps flagged, not papered over
 
 ## Calibration: Weak vs. Strong
@@ -150,6 +146,15 @@ Grounded in evidence, names a specific situation, quantifies the pain.
 
 **Success Signal — Weak:** "D1 retention hits 40% by Q3." (a metric with a timeframe — belongs in the PRD)
 **Success Signal — Strong:** "Engineers check deploy health unprompted, and users stop reporting breakages first."
+
+## Graduating to the PRD
+
+Hand off to PRD authoring when the problem and target user have evidence and
+the core bet has survived the open questions — the validation method itself
+(interviews, smoke tests) is outside this skill. Once the PRD exists it owns
+scope, metrics, and feature detail; the brief remains the one-page context
+downstream readers (e.g. marketing) consume — on a vision pivot, refresh the
+brief's Problem and Direction too, or it quietly poisons those readers.
 
 ## When Reviewing an Existing Brief
 

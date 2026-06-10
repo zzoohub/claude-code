@@ -2,23 +2,17 @@
 name: product-analytics
 description: |
   Analytics methodology that fits the product type — picks the right frame before measuring.
-  Logged-in SaaS product → Aha Moment discovery, retention cohort analysis, Carrying Capacity
-  modeling, PMF assessment, Kill/Keep/Scale. Login-less content/marketing site → acquisition
-  channels, top & conversion-assisting content, engagement depth, lead conversion.
-  Use when: choosing an analytics frame for a product, finding/validating Aha Moments, making
-  Kill/Keep/Scale calls, diagnosing activation bottlenecks, segmenting retained vs churned users,
-  evaluating CC trends, analyzing content/traffic for a blog or marketing site, or when user
-  mentions "Aha Moment", "retention curve", "cohort analysis", "Carrying Capacity", "PMF",
-  "product-market fit", "kill criteria", "activation rate", "retention plateau", "user segmentation",
-  "tracking plan", "GA4", "UTM", "A/B test results", "Sean Ellis survey", "GRR", "NRR",
-  "revenue retention", "content analytics", "blog analytics", "traffic sources", "top posts",
-  "scroll depth", "read completion", "engaged time", "time on page".
-  Do NOT use for: tracking code implementation (developer task),
-  CRO experiment design (use cro skill), marketing content (use copywriting skill),
-  SEO/AEO/GEO strategy and search-query research (use search-visibility skill),
-  referral/viral loop design or the K-factor model and targets (use growth-loops skill),
-  or churn intervention — cancel-flow, save-offer, dunning, at-risk health-scoring
-  (use churn-prevention skill).
+  Logged-in product → Aha Moment, retention cohorts, Carrying Capacity, PMF, Kill/Keep/Scale.
+  Login-less content site → acquisition, engagement, content performance, lead conversion.
+  Use when: choosing an analytics frame, finding Aha Moments, Kill/Keep/Scale calls,
+  activation/retention diagnosis, content-site traffic analysis, or when user mentions
+  "Aha Moment", "retention curve", "cohort analysis", "Carrying Capacity", "PMF", "kill criteria",
+  "activation rate", "tracking plan", "GA4", "UTM", "A/B test results", "Sean Ellis survey",
+  "GRR", "NRR".
+  Do NOT use for: tracking code implementation (developer task), CRO experiment design (use cro),
+  marketing content (use copywriting), SEO/AEO/GEO strategy (use search-visibility), viral-loop
+  design and the K model/targets (use growth-loops), or churn intervention and health-score design
+  (use churn-prevention; score *execution* against live data stays here).
 ---
 
 # Product Analytics Methodology
@@ -43,6 +37,10 @@ The frames are not interchangeable: a content site has no persistent identity, n
 retention curve, and no usage equilibrium — so Aha Moment, retention cohorts, and Carrying Capacity
 don't apply, and forcing them produces noise. Everything from **Core Mental Model** down is the
 **product frame**; on a content site, jump to the content-site reference.
+
+**Hybrid** (a logged-in product with a marketing site/blog): run both frames, each scoped to its
+surface — content-site frame pre-signup, product frame post-signup. State the split; never average
+metrics across the seam.
 
 ---
 
@@ -71,6 +69,11 @@ These are not independent. Aha Moment drives activation rate, activation rate dr
 | A/B test results analysis, statistical rigor | `references/ab-test-analysis.md` |
 | Content/marketing-site analytics (login-less): acquisition, engagement, content perf, lead conversion | `references/content-site-analytics.md` |
 
+**Output:** analyses and deliverables land under the analytics dir (default `biz/analytics/` —
+tracking plan `tracking-plan.md`, funnel/retention analyses `funnels.md`, dashboards `dashboards.md`,
+Kill/Keep/Scale + CC `kill-criteria.md`, reports `reports/`; caller may redirect). If no file-write
+capability is present, return results inline.
+
 ---
 
 ## Quick Decision Framework
@@ -80,11 +83,12 @@ These are not independent. Aha Moment drives activation rate, activation rate dr
 ```
 Plot cohort retention curves (D1, D7, D14, D30, D60, D90)
 ├── Curve keeps declining without flattening → No PMF. Fix product.
-├── Curve flattens but plateau < 10% → Weak/early PMF. Improve activation.
-└── Curve flattens with plateau ≥ 10% → PMF exists. Optimize growth.
+├── Curve flattens but plateau < 20% → Weak/early PMF (<5% = treat as no PMF).
+│     Raise the plateau first (retention → activation); keep acquisition cautious.
+└── Curve flattens with plateau ≥ 20% → PMF established. Optimize growth.
 ```
 
-Plateau height bands (the single authoritative scale): <5% No PMF · 5-10% Weak · 10-20% Early PMF · 20-40% Solid PMF · >40% Strong PMF. See `references/retention-analysis.md` for the full benchmark table and per-band actions.
+Plateau height bands (the single authoritative scale — B2B SaaS, directional; consumer products typically need roughly double): <5% No PMF · 5-10% Weak · 10-20% Early PMF · 20-40% Solid PMF · >40% Strong PMF. See `references/retention-analysis.md` for the full benchmark table and per-band actions.
 
 ### What to fix first?
 
@@ -97,13 +101,13 @@ Always in this order (most teams do it backwards):
 
 | Signal | Kill | Keep | Scale |
 |--------|------|------|-------|
-| Retention plateau | None (<5%) | Emerging (5-20%) | Established (>20%) |
+| Retention plateau | None after 8+ weeks (<5%) | Emerging (5-20%) | Established (>20%) |
 | CC trend (30d) | Declining | Flat | Rising |
 | Activation rate | <10% | 10-30% | >30% |
 | Organic inflow | Near zero | Steady | Growing |
 | Usage frequency | <1x/month | 1-3x/month | >3x/month |
 
-Usage frequency matters: products used <3x/month rarely develop a retention plateau.
+Usage frequency matters: below 1x/month a retention plateau is nearly impossible — reconsider the product; at 1-3x/month habit formation is fragile, so weight the other signals more.
 
 ---
 
@@ -115,7 +119,7 @@ Usage frequency matters: products used <3x/month rarely develop a retention plat
 4. **Trends > snapshots.** A rising 5% beats a declining 15%.
 5. **Segment everything.** The insight is almost always in a segment, not the average.
 6. **Small numbers require humility.** <100 users in a cohort = directional only.
-7. **Speed over precision.** Directionally correct in 30 minutes > precise in 3 days.
+7. **Speed over precision.** Directionally correct in 30 minutes > precise in 3 days. (Exception: strategy-defining calls — Aha Moment validation, kill decisions — get the full rigor.)
 8. **Correlation ≠ causation.** Especially for Aha Moment candidates — validate with experiments.
 
 ---

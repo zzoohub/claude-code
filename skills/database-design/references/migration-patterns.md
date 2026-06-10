@@ -95,7 +95,9 @@ DROP INDEX IF EXISTS idx_user_email;
 -- Step 1: Add column as nullable
 ALTER TABLE user_accounts ADD COLUMN phone TEXT;
 
--- Step 2: Backfill existing rows (in batches)
+-- Step 2: Backfill existing rows — batch this on large tables (see § Large Table
+-- Migrations); a single full-table UPDATE is one long transaction that blocks
+-- VACUUM, bloats the table, and holds locks for the duration
 UPDATE user_accounts SET phone = 'unknown' WHERE phone IS NULL;
 
 -- Step 3: Add NOT NULL constraint with NOT VALID (no table scan)

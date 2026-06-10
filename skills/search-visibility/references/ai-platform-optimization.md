@@ -253,8 +253,8 @@ The AI search surface is fragmenting. Optimize per platform — not just for "AI
 
 | Surface | What changed | What to do |
 |---|---|---|
-| **Google AI Mode** (separate from AI Overviews) | Agentic "query fan-out" SERP launched 2025; distinct ranking signals from classic SERP / Overviews | Check both surfaces; optimize for the implied sub-questions (see "Optimizing for AI Mode" below); favors structured, source-able content |
-| **Google AI Overviews** | On a large share of searches (~15-25% in broad global studies, 45-60% in US/curated trackers); appearance volatile | Optimize for citation, not click — measure mentions, not just CTR |
+| **Google AI Search — AI Overviews + AI Mode merged** (I/O 2026) | At I/O 2026 (May 2026) Google merged AI Overviews and AI Mode into one seamless AI Search experience — Gemini 3.5 Flash as default model, live worldwide; AI Mode passed 1B monthly users. "Separate tab" framing is obsolete; agentic "query fan-out" is now default-Search behavior | Optimize for the implied sub-questions (see "Optimizing for AI Mode" below); favors structured, source-able content; track the merged surface as one |
+| **Google AI Overviews** (within the merged experience) | On a large share of searches (~15-25% in broad global studies, 45-60% in US/curated trackers; pre-merge figures); appearance volatile | Optimize for citation, not click — measure mentions, not just CTR |
 | **ChatGPT Search** (search.chatgpt.com) | Launched late 2024; distinct from ChatGPT-with-browsing. Controlled by OAI-SearchBot in robots.txt | Source-citation behavior differs from Perplexity; track separately |
 | **Perplexity Spaces / Shopping** | Product-recommendation surfaces with structured product data | Product schema (Offer, Review, AggregateRating) is now key for product visibility |
 | **Apple Intelligence / Gemini-powered Siri** (iOS 26.x, rolling out 2026) | Jan 2026: Apple signed a multi-year deal (reported ~$1B/yr) for a custom Google **Gemini** model to power the rebuilt Siri and Apple Foundation Models; first features in iOS 26.4, fuller conversational Siri expected at iOS 27 (Sept 2026). ChatGPT (GPT-5) remains an optional handoff, not the default | Gemini/Google signals increasingly drive Apple-device AI answers — prioritize the same structured, source-able content that helps in Gemini / AI Overviews. ChatGPT still matters as a secondary handoff |
@@ -266,7 +266,7 @@ The AI search surface is fragmenting. Optimize per platform — not just for "AI
 
 ### Optimizing for Google AI Mode (query fan-out)
 
-AI Mode does not answer your exact query directly — it decomposes it into multiple related sub-questions ("query fan-out"), retrieves passages for each, and synthesizes one answer. Practical implications:
+AI Mode does not answer your exact query directly — it decomposes it into multiple related sub-questions ("query fan-out"), retrieves passages for each, and synthesizes one answer. Since the May 2026 I/O merge, this fan-out behavior is part of the default Google AI Search experience, not an opt-in tab. Practical implications:
 
 - Optimize for the **sub-questions implied by a topic**, not just the head query. A page that only answers "best CRM" may be skipped in favor of pages that cleanly answer "best CRM for small teams," "CRM with the easiest setup," "CRM pricing compared," etc.
 - Cover a topic comprehensively with **self-contained, individually-extractable passages** (one clear answer per heading) so different fan-out sub-questions can each retrieve a relevant chunk.

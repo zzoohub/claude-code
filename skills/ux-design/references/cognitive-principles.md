@@ -314,3 +314,10 @@ Behavioral science applied to interface design. Use this reference when diagnosi
 | System feels slow | Doherty Threshold | Goal Gradient |
 | Users don't return | Aesthetic-Usability | Peak-End, Jakob's Law |
 | Users don't complete profiles | Zeigarnik Effect | Goal Gradient |
+
+**When principles conflict** (they will — Fitts says make targets bigger,
+Hick says show fewer; Von Restorff says make it stand out, Jakob says keep it
+standard): the principle protecting the **critical-path action of the user's
+ONE goal on that screen** wins. Apply the losing principle to everything off
+the critical path, and note the trade-off in the screen spec so a later
+redesign doesn't "fix" it backwards.

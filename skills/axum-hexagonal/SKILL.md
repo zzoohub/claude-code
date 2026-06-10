@@ -3,7 +3,7 @@ name: axum-hexagonal
 description: |
   Axum 0.8+ with hexagonal architecture patterns in Rust.
   Use when: building any Rust API — this is the default backend implementation skill.
-  Covers: API design (utoipa-axum + OpenApiRouter), domain modeling, ports & adapters, service layer, error handling, testing.
+  Covers: API design (utoipa-axum + OpenApiRouter), domain modeling, ports & adapters, service layer, error handling, testing, sqlx migrations, cursor pagination, healthcheck endpoints.
   Do not use for: database schema design (use database-design skill); non-Rust stacks (use hono/fastapi/nestjs-hexagonal).
 ---
 
@@ -132,7 +132,11 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
 - **API docs** — `utoipa-axum` generates OpenAPI from code via `OpenApiRouter` + `routes!` + `split_for_parts()`. Serve with `utoipa-swagger-ui` or `utoipa-scalar`. Consult `references/api-design.md` for conventions and `references/api-patterns.md` for HTTP patterns.
 - **Middleware (Tower layers)** — lives in inbound layer, invisible to domain.
   Layers wrap services: `TraceLayer → TimeoutLayer → CompressionLayer → CorsLayer`.
-- **Health checks** live in the inbound layer (not domain). Readiness probes check DB pool.
+- **Health checks** live in the inbound layer (not domain), registered outside auth middleware.
+  `/health` (liveness) returns 200 unconditionally — **never check dependencies there**: a liveness
+  probe that touches a flaky DB cascade-restarts every replica. `/ready` (readiness) acquires from
+  the DB pool and returns **503** (not 500) so the load balancer sheds traffic; the pool's
+  `acquire_timeout` bounds the probe, so a hung DB fails fast.
 
 ### Non-HTTP Inbound Adapters
 
@@ -218,11 +222,38 @@ PgPoolOptions::new()
 
 ---
 
+## Migrations (sqlx)
+
+Migrations are infrastructure — they live in `migrations/` at the crate root, not in any hex layer.
+
+```bash
+sqlx migrate add -r create_authors   # migrations/<ts>_create_authors.{up,down}.sql
+sqlx migrate run                     # apply via CLI
+```
+
+- **Embedded vs CLI — pick one path**: single-binary deploys run `sqlx::migrate!().run(&pool).await?` at startup (the binary carries its migrations); orchestrated platforms run the CLI as a release step before rollout.
+- Re-run `cargo sqlx prepare` after every query change; CI verifies with `cargo sqlx prepare --check`.
+- Schema *design* belongs to a database-design capability; lock-safe execution against live traffic to a migration capability (e.g. the `postgresql` skill) — this skill only wires the mechanism.
+
+---
+
+## Logging & Tracing
+
+- The `tracing` facade is Rust's stdlib-logging equivalent — macros (`info!`, `warn!`, `error!`) are fine in any layer, domain included. What stays out of the domain is the *subscriber/exporter* (`tracing-subscriber`, OTel pipeline) — that is infrastructure, initialized once in bootstrap.
+- Production: `tracing_subscriber` with `EnvFilter` (`RUST_LOG`) + JSON formatter to stdout. Dev: human-readable `fmt`.
+- Log **fields, not formatted strings**: `info!(author.id = %id, "author created")` — the string form is unqueryable.
+- Correlation: `SetRequestIdLayer`/`PropagateRequestIdLayer` assign and echo `X-Request-Id`; `TraceLayer` spans every request (see the layer stack in `references/examples-adapters.md`).
+- Span/metric emission the *domain* needs goes through the `Tracer`/`Meter` ports (below) — keeps OTel crates out of `domain/`.
+
+---
+
 ## Security
 
 | Item | Value |
 |------|-------|
 | Password hashing | `argon2` crate (RustCrypto) |
+| JWT library | `jsonwebtoken` crate |
+| JWT signing | **ES256/EdDSA** (asymmetric) when multiple services verify; `HS256` only for a single service that both issues and verifies (see `api-design.md`) |
 | JWT access token | 15 min |
 | JWT refresh (web) | 90 days |
 | JWT refresh (mobile) | 1 year |
@@ -313,6 +344,19 @@ impl FromRef<AppState> for Arc<AppBillingService> { ... }
 
 ---
 
+## Enforce the Boundary (CI)
+
+"Domain never imports infrastructure" is a fitness function, not an honor system — guard it on every PR (if the `software-architecture` skill is installed, this is its Stage-8 fitness functions at code level):
+
+- **Compiler as guard (best)**: when the project outgrows one crate, split `domain/` into its own workspace crate whose `Cargo.toml` lists no axum/sqlx/tower deps — violating the boundary becomes a compile error.
+- **Until then**, a crude grep gate is honest and sufficient:
+  `! grep -rE 'use (axum|sqlx|tower|utoipa)' src/domain/`
+- **Baseline CI**: `cargo fmt --check` → `cargo clippy --all-targets -- -D warnings` → `cargo sqlx prepare --check` → `SQLX_OFFLINE=true cargo test`.
+
+→ CI snippet: `references/examples-bootstrap.md`
+
+---
+
 ## Reliability & Observability Ports
 
 Cross-cutting infrastructure that must not leak into the domain. Define each as a port; implement as adapters. The architecture-level pattern lives in the software-architecture skill's references (`reliability-patterns.md`, `observability.md`) if installed; otherwise apply standard patterns — outbox, idempotency keys, retry/backoff, structured logging, RED/USE — inline.
@@ -326,6 +370,8 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 **Architectural rule**: domain emits **typed domain events** (e.g. an `AuthorEvent` enum — plain data, no `serde_json`); the outbound adapter persists the aggregate AND the outbox rows in a single `sqlx::Transaction` (`&mut **tx`), serializing each event to the JSON payload column in the adapter. A separate **outbox relay** binary polls `outbox` and publishes asynchronously — this is the only safe way to pair a DB write with a broker publish.
 
 **Why not split outbox into its own port?** sqlx's `Transaction` is not `Send` across multiple owners cleanly, and exposing it across two ports either leaks the type or forces a heavyweight `UnitOfWork` abstraction. The pragmatic Rust answer is: the repository adapter is responsible for both writes within its own tx, and a *typed domain event* (e.g. `AuthorEvent`) is what crosses the port boundary — JSON serialization stays in the adapter, keeping `domain/` free of serde-shaped payloads.
+
+**Optimistic concurrency (lost-update protection)**: any aggregate two clients can update concurrently carries a `version` column. Writes are conditional — `UPDATE authors SET name = $1, version = version + 1 WHERE id = $2 AND version = $3`; `rows_affected() == 0` means someone else won the race → return a domain `VersionConflict` error → **409** (or **412** when the client sent `If-Match`/ETag, per `api-design.md`). Idempotency keys protect against the *same* client retrying; the version column protects against *different* clients racing — payments-grade endpoints need both.
 
 → Adapter examples: `references/examples-adapters.md`
 
@@ -355,6 +401,7 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 | Question | Answer |
 |----------|--------|
 | Transactions? | Adapter (repository impl), use `&mut **tx` |
+| Lost updates? | `version` column + conditional UPDATE; `rows_affected() == 0` → 409/412 |
 | Validation? | Domain model constructors |
 | Error mapping? | `From<DomainError> for ApiError` in inbound |
 | Business orchestration? | Service impl |
@@ -379,6 +426,8 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 - [ ] All handlers (HTTP, tasks, webhooks): parse → service → respond
 - [ ] Transactions in adapters only, `&mut **tx` for SQLx 0.8/0.9
 - [ ] Errors: domain enum → `From<DomainError> for ApiError` → RFC 9457
+- [ ] Racing aggregates carry a `version` column; 0-rows-affected writes map to 409/412
+- [ ] Boundary enforced in CI: workspace-crate split or grep gate (see Enforce the Boundary)
 
 ### Framework
 - [ ] Axum wrapped in `HttpServer`, `build_router()` for tests

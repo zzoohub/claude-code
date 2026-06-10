@@ -111,6 +111,7 @@ Three categories: **Repository** (data), **Metrics** (observability), **Notifier
   `UnknownAuthorError` -> log server-side, return generic message. Use RFC 9457 ProblemDetails.
 - **API docs** — use `@hono/zod-openapi` for route definitions with automatic OpenAPI generation. Consult `references/api-design.md` for conventions and `references/api-patterns.md` for HTTP patterns.
 - **Middleware ordering** — register global middleware before routes (order matters for CORS).
+- **Request-ID middleware** — `requestId()` from `hono/request-id`, typed into `Variables`; echo `X-Request-Id` on every response and stamp it into error logs (correlation lives in the header, not the body).
 - **Sub-applications** — use `app.route('/prefix', subApp)` to mount feature-specific Hono instances.
 
 ### Non-HTTP Inbound Adapters
@@ -211,8 +212,8 @@ Use for admin panels and small/static datasets. Provides `total` count for page 
 
 Healthcheck endpoints are infrastructure — they bypass the domain entirely. Wire them directly in `createApp()`.
 
-- `/healthz` — always returns 200 (liveness, "is the process alive?")
-- `/readyz` — checks DB connectivity (readiness, "can it serve traffic?")
+- `/healthz` — always returns 200 (liveness, "is the process alive?"). **Never check dependencies here** — a liveness probe that touches a flaky DB cascade-restarts every replica.
+- `/readyz` — checks DB connectivity (readiness, "can it serve traffic?"). Returns **503** (not 500) on failure so the load balancer sheds traffic.
 
 **Register health routes BEFORE auth/DI middleware** so a global `requireAuth` doesn't 401 the probes, and wrap the readiness `ping()` in a timeout (`Promise.race`) so a hung DB returns a fast 503 instead of stalling the probe.
 
@@ -254,6 +255,7 @@ For simple apps, `console.log` is fine — Hono's built-in `hono/logger` middlew
 |------|-------|
 | Password hashing | `@node-rs/argon2` (default), `bcrypt` (fallback) |
 | JWT library | `hono/jwt` middleware or `jose` |
+| JWT signing | **ES256/EdDSA** (asymmetric) when multiple services verify; `HS256` only for a single service that both issues and verifies (see `api-design.md`) |
 | JWT access token | 15 min |
 | JWT refresh (web) | 90 days |
 | JWT refresh (mobile) | 1 year |
@@ -284,6 +286,23 @@ The entry point varies by runtime:
 
 ---
 
+## Graceful Shutdown
+
+Bare `process.exit(0)` drops in-flight requests and leaks pool connections. Drain first, then close the pool:
+
+| Runtime | Pattern |
+|---------|---------|
+| Node.js | capture `const server = serve(...)`; on SIGTERM/SIGINT: `server.close()` → `closeDb(db)` → exit, with a `setTimeout(…, 10_000).unref()` failsafe if the drain hangs |
+| Bun | `const server = Bun.serve(...)`; signal handler: `await server.stop()` → `closeDb(db)` |
+| Deno | `Deno.addSignalListener("SIGTERM", ...)` → `closeDb(db)` |
+| Cloudflare Workers | platform-managed — nothing to do |
+
+`closeDb` lives next to `createDb` in `outbound/drizzle/client.ts` (pg `pool.end()`, postgres.js `sql.end()`, bun:sqlite `close()`) so driver imports stay out of `server.ts`.
+
+> Full shutdown example: `references/examples-bootstrap.md`
+
+---
+
 ## RPC Type Safety
 
 Hono's RPC client (`hc`) provides end-to-end type safety without code generation. When using it:
@@ -307,7 +326,20 @@ This is optional but powerful — particularly useful for monorepo setups where 
 
 ---
 
-## Reliability & Observability Ports
+## Enforce the Boundary (CI)
+
+"Domain never imports infrastructure" is a fitness function, not an honor system — guard it on every PR (if the `software-architecture` skill is installed, this is its Stage-8 fitness functions at code level):
+
+```js
+// .dependency-cruiser.cjs (excerpt)
+forbidden: [
+  { name: "domain-stays-pure", severity: "error",
+    from: { path: "^src/domain" },
+    to: { path: "^src/(inbound|outbound)|^node_modules/(hono|drizzle-orm|postgres|pg)" } },
+],
+```
+
+Run `depcruise src` in CI next to `tsc --noEmit`, lint, and tests; add `madge --circular src` to keep the import graph acyclic. (`eslint-plugin-boundaries` is an equivalent alternative if the rule should live in ESLint.)
 
 Cross-cutting infrastructure that must not leak into the domain. Define each as a TS interface; implement as adapters. The architecture-level pattern lives in the software-architecture skill's references (`reliability-patterns.md`, `observability.md`) if installed; otherwise apply the standard patterns inline — outbox, idempotency keys, retry/backoff, structured logging, RED/USE metrics.
 
@@ -320,6 +352,8 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 **Architectural rule**: domain emits **`DomainEvent`** plain objects; the outbound adapter persists the aggregate AND the outbox rows inside one Drizzle `db.transaction(async (tx) => ...)` callback. A separate **outbox relay** (background task or worker) publishes rows asynchronously.
 
 **Edge runtime constraint**: on Cloudflare Workers + D1, `db.transaction` is locally scoped to one request and the standard OTel JS SDK does not run (Node-only deps). The `Tracer` port abstraction lets you swap to manual `traceparent` propagation + a Workers-friendly exporter (e.g., otel-cf-workers) without changing application code. If you target Node only (Bun, Deno-compat), this constraint doesn't apply.
+
+**Optimistic concurrency (lost-update protection)**: any aggregate two clients can update concurrently carries a `version` column. Writes are conditional — `` .update(authors).set({ ...changes, version: sql`${authors.version} + 1` }).where(and(eq(authors.id, id), eq(authors.version, expected))) `` — then check the affected count (`.returning()` length or driver `rowCount`); zero rows means someone else won → domain conflict error → **409** (or **412** with `If-Match`/ETag, per `api-design.md`). Idempotency keys cover the *same* client retrying; the version column covers *different* clients racing — you usually need both.
 
 → Adapter examples: `references/examples-adapters.md`
 
@@ -347,6 +381,7 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 | Question | Answer |
 |----------|--------|
 | Transactions? | Adapter (repository impl) via `db.transaction()` |
+| Lost updates? | `version` column + conditional update; 0 rows affected → 409/412 |
 | Validation? | Zod at transport boundary, domain constructors for business rules |
 | Error mapping? | `app.onError()` in inbound |
 | Business orchestration? | Service impl |
@@ -372,13 +407,17 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 - [ ] All handlers (HTTP, tasks, webhooks): parse -> service -> respond
 - [ ] Transactions in adapters only, DB row <-> domain mapper in outbound
 - [ ] Errors: domain hierarchy -> `app.onError()` -> RFC 9457
+- [ ] Racing aggregates carry a `version` column; 0-rows-affected writes map to 409/412
+- [ ] Boundary enforced in CI: dependency-cruiser (or eslint-plugin-boundaries) rule (see Enforce the Boundary)
 
 ### Framework
 - [ ] Hono wrapped in `createApp()`, `createTestApp()` for tests
 - [ ] DI via `createMiddleware()` + `c.var` with typed `Variables`
 - [ ] Zod validation via `zValidator()` on routes
 - [ ] CORS middleware before routes
+- [ ] `requestId()` middleware; `X-Request-Id` echoed and logged
 - [ ] `/healthz` and `/readyz` endpoints
+- [ ] Graceful shutdown on Node/Bun: drain the server, then `closeDb()`
 - [ ] `hono/secure-headers` middleware enabled
 
 ### Database

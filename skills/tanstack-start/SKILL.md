@@ -159,7 +159,46 @@ await createPostFn({ data: { title: 'Hello', content: '...' } })
 
 Server functions may `throw redirect({ to: '/login' })` or `throw notFound()` (both from `@tanstack/react-router`) — these integrate with the route lifecycle.
 
-**Rule: Server functions are the data layer.** API routes only for webhooks/external consumers.
+**Rule: server functions are the data seam — at one of two altitudes.** When Start *is* the whole backend (no separate API service), they own data access directly (`db.*` as above). When the system has a dedicated backend (e.g. a hexagonal `apps/api`), server functions are a thin BFF: forward auth, call the API, shape the response — domain logic stays in the backend; don't grow a second one inside `features/*/api/`. Either way, server routes (below) exist only for webhooks/external consumers.
+
+### Server Routes (webhooks / external consumers)
+
+```tsx
+// src/routes/api/stripe-webhook.ts
+export const Route = createFileRoute('/api/stripe-webhook')({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const sig = request.headers.get('stripe-signature')
+        // verify the signature against the RAW body, before parsing
+        const event = verifyStripeSignature(await request.text(), sig)
+        await handleEvent(event)
+        return new Response(null, { status: 200 })
+      },
+    },
+  },
+})
+```
+
+Raw `Request` in, raw `Response` out — no RPC envelope, callable by anything. Webhook handlers verify the signature first and return 200 fast (queue heavy work).
+
+---
+
+## Security Model
+
+**Every server function is a public endpoint.** The build compiles each `createServerFn` into an HTTP-reachable RPC route — anyone can invoke it with crafted input, whether or not your UI calls it. Design each one as you would a public API endpoint:
+
+- **Route guards are UX, not security.** `beforeLoad` / `_auth.tsx` gate *navigation*; they do not protect the functions a page calls. Enforcement lives on the function: attach auth middleware to every sensitive or mutating server function. A function without it is deliberately public — name it so (`publicSearch`, not `search`).
+- **Authenticated ≠ authorized.** A valid session proves who's calling, not whether they may touch this row. Check ownership/policy inside the handler (`WHERE id = ? AND user_id = ?`) or any by-id server function is an IDOR.
+- **Validate every input** — `.inputValidator(schema)` on any function that takes data. The schema is the trust boundary.
+- **Thrown errors serialize to the client.** `throw new Error(dbError.message)` ships internals to the browser. Throw generic messages, log details server-side. (`redirect()` / `notFound()` are control flow, not errors.)
+- **Expected failures are values, not throws** — return a discriminated union (`{ ok: false, code: 'limit_reached' }`) for domain outcomes the UI must handle; reserve throws for redirects and the exceptional.
+
+### Server/Client Boundary
+
+- Loaders are isomorphic (see Data Loading) — server-only work goes in server functions.
+- **`serverOnly()` / `clientOnly()`** (from `@tanstack/react-start`) wrap functions so importing them on the wrong side fails at build time instead of silently leaking.
+- **Env vars**: only `VITE_`-prefixed vars reach the client bundle — and all of them do, statically inlined. A secret in a `VITE_*` var ships to every browser. Server secrets stay unprefixed and are read only inside server functions/middleware.
 
 ---
 
@@ -306,6 +345,8 @@ export const Route = createFileRoute('/_auth')({
 })
 ```
 
+This guard is navigation UX. The *enforcement* is the auth middleware on each server function the guarded pages call — see Security Model.
+
 ---
 
 ## Deployment
@@ -342,6 +383,7 @@ export default defineConfig({
 
 ## Anti-Patterns
 
+- **Trusting a route guard to protect a server function** → guards gate navigation only; the function is still a public endpoint — put auth middleware on the function itself
 - **API routes for internal data** → server functions (type-safe, no HTTP overhead)
 - **Data fetching in `beforeLoad`** → use `loader` (beforeLoad is sequential; loaders are parallel)
 - **Skipping `validateSearch`** → always validate search params for type safety
@@ -369,6 +411,16 @@ export default defineConfig({
 - [ ] Appropriate `ssr` option per route
 - [ ] No browser APIs during server render
 - [ ] `head()` for SEO on content routes
+
+### Security
+- [ ] Every sensitive/mutating server function carries auth middleware (route guards don't protect functions)
+- [ ] Ownership/policy check inside handlers for user/tenant-scoped rows
+- [ ] No internals in thrown error messages; expected failures returned as typed values
+- [ ] No secrets in `VITE_*` env vars; server-only code behind `serverOnly()` or server functions
+
+### Guards (CI)
+- [ ] `tsc --noEmit` passes; `routeTree.gen.ts` is current (regenerate + `git diff --exit-code`)
+- [ ] Production build runs in CI against the actual deploy target (Nitro preset / CF plugin)
 
 ### Framework-Specific
 → React: `references/react.md`

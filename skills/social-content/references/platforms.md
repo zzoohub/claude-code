@@ -203,7 +203,7 @@ Design: Consistent brand colors, readable fonts, minimal text per slide
 ## TikTok
 
 ### Algorithm Mechanics
-**Major 2025-2026 shift: Follower-First Testing.** New videos are now shown primarily to existing followers first. Performance among followers determines whether content reaches non-followers. This fundamentally changed TikTok from a "anyone can go viral" platform to one where building a loyal follower base matters.
+**Reported 2025-2026 shift: follower-first testing** (creator-observed, not officially documented — verify before betting a strategy on it): new videos appear to be shown to existing followers first, with follower performance gating non-follower reach. If it holds, it moves TikTok from "anyone can go viral" toward loyal-follower-base-first.
 
 **Three main signals:**
 1. User interactions (watch, like, share, comment, skip)
@@ -212,7 +212,7 @@ Design: Consistent brand colors, readable fonts, minimal text per slide
 
 **Critical metrics:**
 - Rewatch/loop rate (highest priority)
-- Completion rate: **70%+ needed to go viral in 2026** (up from 50% in 2024)
+- Completion rate: creators report **~70%+ for viral reach in 2026** (vs ~50% cited for 2024) — directional, no official threshold exists
 - Shares and meaningful comments
 - "Qualified Views" = users watching past the 5-second mark
 
@@ -259,7 +259,7 @@ Design: Consistent brand colors, readable fonts, minimal text per slide
 ### Algorithm Mechanics
 YouTube runs **five separate recommendation systems**: Home, Suggested Videos, Search, Subscriptions, and Shorts. Each has different ranking factors.
 
-**2025-2026 shift: Satisfaction-weighted discovery.** Beyond clicks and watch time, YouTube now measures whether viewers **felt their time was well spent** (via surveys, sentiment analysis). Content that generates high satisfaction gets boosted.
+**Satisfaction-weighted discovery** (long-running and increasingly weighted — survey-based "valued watchtime", not new in 2025): beyond clicks and watch time, YouTube measures whether viewers **felt their time was well spent**. High-satisfaction content gets boosted.
 
 **Key insights:**
 - Shorts recommendation engine is now **fully decoupled** from long-form (poor Shorts won't drag down your long-form)
@@ -341,6 +341,8 @@ Community-driven; each subreddit has unique norms. ~121M daily active uniques, ~
 
 ## Product Hunt
 
+> Launch *strategy* — the timing call, tagline, channel sequencing — belongs to the marketing-strategy capability's launch playbook; on conflict it wins. This section is platform mechanics for the launch threads and comment engagement this skill owns.
+
 ### Pre-Launch (30+ days before)
 1. Start participating in PH discussions (comments, upvotes, feedback to other makers)
 2. Build "hunter" network -- get people to follow your product page and maker profiles
@@ -376,6 +378,8 @@ Community-driven; each subreddit has unique norms. ~121M daily active uniques, ~
 ---
 
 ## Hacker News
+
+> Same ownership note as Product Hunt above: launch strategy and the one-off title are the launch playbook's call; this section covers HN mechanics for the threads and comments this skill owns.
 
 ### Algorithm & Ranking
 - Time-decayed vote scoring: every 45 minutes the gravity multiplier increases

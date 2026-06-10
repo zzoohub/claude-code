@@ -109,6 +109,24 @@ async function createRenderer(): Promise<THREE.WebGPURenderer | null> {
 }
 ```
 
+### Context / Device Loss (runtime)
+
+Init success doesn't end the story — the GPU can disappear at runtime (driver reset, OS GPU switch, tab eviction). Unhandled, the scene silently freezes or goes black:
+
+```typescript
+// WebGL (fallback path): listen on the canvas; resources are gone after restore
+renderer.domElement.addEventListener('webglcontextlost', (e) => {
+  e.preventDefault()   // signal intent to restore
+  pauseSimulation()
+})
+renderer.domElement.addEventListener('webglcontextrestored', () => {
+  reinitRenderer()     // textures/buffers must be re-uploaded — rerun your createRenderer() path
+  resumeSimulation()
+})
+```
+
+On the WebGPU path, loss surfaces as the underlying `GPUDevice.lost` promise (resolving with a `reason`; `'destroyed'` means you did it on purpose). The device handle is backend-internal in Three — the practical recovery is the same: tear down and re-run your `createRenderer()` path, then re-add scene resources.
+
 Use **Node materials** (`MeshStandardNodeMaterial`, `MeshPhysicalNodeMaterial`, etc.) instead of classic materials when targeting TSL/WebGPU.
 
 ### Vite Configuration
@@ -163,7 +181,7 @@ renderer.setAnimationLoop((time) => {
 })
 ```
 
-`delta` is seconds since last frame -- use it for frame-rate-independent animation.
+`delta` is seconds since last frame -- use it for frame-rate-independent animation. **Clamp it**: after a hidden-tab return or debugger pause, `getDelta()` comes back seconds long and explodes physics/tween math — `const dt = Math.min(delta, 0.1)`.
 
 ### Loading Assets
 
@@ -217,7 +235,7 @@ if (intersects.length > 0) {
 
 ### Thread Architecture
 
-3D/XR apps are performance-critical. Offload heavy work from the main thread to keep rendering smooth.
+3D/XR apps are performance-critical. **Pick the device class and its budget first** — draw calls / triangles / DPR per platform in `references/performance.md` — because a scene built without a budget retrofits into a rewrite. On XR the budget is a comfort floor, not a target: missed frames are motion sickness, not just jank. Then offload heavy work from the main thread to keep rendering smooth.
 
 | Thread | Responsibility |
 |---|---|
@@ -230,6 +248,8 @@ if (intersects.length > 0) {
 | **AudioWorklet** | Spatial audio processing |
 
 The general pattern: Workers write simulation results into `SharedArrayBuffer`, main thread reads every frame to update Three.js transforms. This requires COOP/COEP headers (already in the Vite config above).
+
+**Hidden tabs pause rendering, not simulation**: `requestAnimationFrame` stops when the tab hides, but Workers (physics, ECS) and AudioWorklets keep running — burning battery and advancing the simulation away from the last rendered frame. Listen for `visibilitychange` and pause/resume the worker tick together with the render loop (and clamp `delta` on return — see Render Loop).
 
 For full details on Worker separation, data transfer patterns (postMessage vs SharedArrayBuffer vs Transferable), and WASM threading setup, see `references/threading.md`.
 

@@ -8,7 +8,7 @@ description: |
 
 # Interactive Motion
 
-**Verification**: Motion is judged perceptually, not by unit tests. Before shipping, confirm: the `prefers-reduced-motion` fallback renders the final state (not a broken mid-state), no layout shift (CLS), 60fps on the target device, and every gesture-driven action has a non-gesture accessibility fallback. The genuinely unit-testable surface is narrow — D3 chart-factory `update`/`destroy` contracts and pure interpolation/worklet functions.
+**Verification**: Motion is judged perceptually, not by unit tests. Before shipping, confirm: the `prefers-reduced-motion` fallback renders the final state (not a broken mid-state), animations touch only compositor properties (`transform`/`opacity` — the golden rule in `references/web-conventions.md` § Performance Rules), no layout shift (CLS), no main-thread jank on interaction (INP), 60fps on the target device, and every gesture-driven action has a non-gesture accessibility fallback. The genuinely unit-testable surface is narrow — D3 chart-factory `update`/`destroy` contracts and pure interpolation/worklet functions.
 
 ## Philosophy
 
@@ -107,6 +107,7 @@ Need animation?
 |
 +-- Route/page transition?
 |   +-- Cross-fade, shared element --> View Transitions API
+|   |   (React: the react-view-transitions skill, if available, owns React's <ViewTransition> layer)
 |   +-- Complex overlay wipe --> GSAP timeline
 |
 +-- Cursor/mouse interaction?
@@ -227,6 +228,6 @@ Motion's effect on these is highly context-dependent — treat the column as a d
 | SaaS / Dashboard | Perceived performance | Skeleton + shimmer often > spinner (context-dependent) |
 | E-commerce | Add-to-cart rate | Measure lift from interactive product media; hover only reaches the ~40% with a pointer — give touch an equivalent tap/zoom affordance |
 | Mobile app | Gesture success rate | Users complete swipe/drag interactions |
-| All | Core Web Vitals / frame rate | No CLS, 60fps maintained |
+| All | Core Web Vitals / frame rate | No CLS; INP within target (animation JS must not block input response); 60fps maintained |
 
 > Full theory: 12 UX Motion Principles, Cognitive Foundations, Direction Plan template -> `references/motion-theory.md`

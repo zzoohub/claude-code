@@ -53,16 +53,23 @@ AND NOT EXISTS (
 ORDER BY table_name, constraint_name;
 
 -- 4. Unused indexes (wasting storage and slowing writes)
+-- idx_scan is cumulative since the last stats reset — trust 0 only over a representative
+-- window (check stats_reset in pg_stat_database; PG16+ has last_idx_scan for recency).
 SELECT
-    schemaname, tablename, indexname,
-    idx_scan AS times_used,
-    pg_size_pretty(pg_relation_size(indexrelid)) AS index_size
-FROM pg_stat_user_indexes
-WHERE idx_scan = 0
-AND indexrelid NOT IN (
+    s.schemaname, s.relname AS tablename, s.indexrelname AS indexname,
+    s.idx_scan AS times_used,
+    pg_size_pretty(pg_relation_size(s.indexrelid)) AS index_size
+FROM pg_stat_user_indexes s
+JOIN pg_index ix ON ix.indexrelid = s.indexrelid
+WHERE s.idx_scan = 0
+-- never drop what enforces uniqueness or feeds logical replication
+AND NOT ix.indisunique
+AND NOT ix.indisprimary
+AND NOT ix.indisreplident
+AND s.indexrelid NOT IN (
     SELECT conindid FROM pg_constraint WHERE contype IN ('p', 'u')
 )
-ORDER BY pg_relation_size(indexrelid) DESC
+ORDER BY pg_relation_size(s.indexrelid) DESC
 LIMIT 20;
 
 -- 5. Tables needing VACUUM (high dead tuple ratio)

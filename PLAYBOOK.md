@@ -15,7 +15,7 @@ other** — the main session drives the chain and owns the handoffs.
 
 ## 1. Full product launch (idea → production)
 ```
-product-manager   → docs/prd/prd.md (+ feature specs)
+product-manager   → docs/prd/prd.md (+ product brief, feature specs)
 architect         → docs/arch/system.md (+ ADRs, schema)
 ux-designer       → docs/ux/ux-design.md (+ screen specs)
 task-manager      → tasks/board.md (+ feature task files)
@@ -40,8 +40,9 @@ never call each other):
 
 This keeps the closer unambiguous and matches `task-status`'s rule that completion is
 verified before `done` is written.
-Optionally insert a plan review (`plan-ceo-review` for scope, `plan-eng-review` for rigor)
-between architect and task-manager.
+Optionally insert a plan review: `plan-ceo-review` (scope/vision) after product-manager,
+while scope is still negotiable; `plan-eng-review` (execution rigor) between architect
+and task-manager, once the design doc locks scope.
 
 ## 2. Feature on an existing product
 ```

@@ -2,6 +2,8 @@
 
 Practical frameworks for pricing page design, annual/monthly strategy, price localization, expansion revenue, and A/B testing.
 
+This file owns the strategy-coupled page defaults (tier count/order, annual toggle and discount depth, badges, localization). Conversion *diagnosis* of the page — funnel position, friction, trust, test execution — belongs to a CRO capability (e.g. the `cro` skill), if available.
+
 ---
 
 ## Table of Contents

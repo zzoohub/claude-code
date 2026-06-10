@@ -36,6 +36,8 @@
 - Redis `GET` then `SET` without `WATCH` or Lua script (non-atomic)
 - File-based operations without file locking
 
+> **Sibling lens:** the *accident*-driven versions of these flaws (client retries, crash mid-operation, replica lag — no attacker required) are owned by the `correctness-checklists` skill, if available. Same mechanics, different threat model — when money or inventory moves, apply both.
+
 ---
 
 ## Numeric Manipulation

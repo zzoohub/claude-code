@@ -220,8 +220,9 @@ Use for admin panels and small/static datasets. Provides `total` count for page 
 
 Healthcheck endpoints are infrastructure — they bypass the domain entirely. Wire them directly in Shell.
 
-- `/healthz` — always returns 200 (liveness, "is the process alive?")
-- `/readyz` — checks DB connectivity (readiness, "can it serve traffic?"). Returns **503** (not 500) when the DB is unreachable, so the load balancer stops routing traffic.
+- `/healthz` — always returns 200 (liveness, "is the process alive?"). **Never check dependencies here** — a liveness probe that touches a flaky DB cascade-restarts every replica.
+- `/readyz` — checks DB connectivity (readiness, "can it serve traffic?"). Returns **503** (not 500) when the DB is unreachable, so the load balancer stops routing traffic. `pool_timeout` bounds the probe — a hung DB fails fast instead of stalling the prober.
+- Health routes bypass auth — they're wired directly in Shell, before any auth dependency.
 
 The healthcheck needs the engine. Thread it explicitly: bootstrap creates the engine and passes it into `Shell(config, service, engine=...)`; `_build_app`/`build_test_app` accept it and call `app.include_router(health_routes(engine))`.
 
@@ -279,6 +280,8 @@ Ensure `engine.dispose()` in a `finally` block for clean shutdown.
 | Timestamps | `datetime.now(UTC)` (not deprecated `utcnow()`) |
 | CORS | Explicit origins, methods, headers from config (no wildcard); set `allow_credentials` explicitly |
 | JWT signing | **ES256/EdDSA** (asymmetric) for multi-service user-facing auth; `HS256` only as a labeled single-service/dev fallback |
+| Security headers | No ASGI helmet equivalent — set HSTS, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` in one small middleware (or the `secure` package) |
+| Rate limiting | Terminate at the gateway/LB; if enforced in-process, emit the 429 as `application/problem+json` like every other error |
 
 Auth dependency (`get_current_user`) lives in inbound layer. Domain never handles raw tokens. Never sign tokens with the dev placeholder secret — require a real `SECRET_KEY` from the environment in every non-dev deployment.
 
@@ -289,6 +292,8 @@ Auth dependency (`get_current_user`) lives in inbound layer. Domain never handle
 Construct adapters → assemble service → start. **No FastAPI/SQLAlchemy imports.**
 
 Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
+
+Shutdown: uvicorn traps SIGINT/SIGTERM and runs the lifespan shutdown — `engine.dispose()` belongs there (or in the Application orchestrator's `finally`). Set `timeout_graceful_shutdown` so a hung request can't stall the drain.
 
 → Full bootstrap, Application orchestrator, Alembic setup, and CI examples: `references/examples-bootstrap.md`
 
@@ -305,7 +310,24 @@ Package management: `uv`. Commit `uv.lock`. Use `uv run` to execute.
 
 ---
 
-## Reliability & Observability Ports
+## Enforce the Boundary (CI)
+
+"Domain never imports infrastructure" is a fitness function, not an honor system — Python's import system won't stop anyone; `import-linter` will (if the `software-architecture` skill is installed, this is its Stage-8 fitness functions at code level):
+
+```ini
+# .importlinter
+[importlinter]
+root_package = src
+
+[importlinter:contract:layers]
+name = Hexagonal layers
+type = layers
+layers =
+    src.inbound : src.outbound
+    src.domain
+```
+
+`domain` is the bottom layer (imports nothing above it); `inbound : outbound` are independent siblings. Run `lint-imports` in CI next to `ruff check`, `pyright`/`mypy`, and `pytest`.
 
 Cross-cutting infrastructure that must not leak into the domain. Define each as a `Protocol`; implement as adapters. The architecture-level pattern lives in the software-architecture skill's references (`reliability-patterns.md`, `observability.md`) if installed; otherwise apply the standard patterns inline — outbox, idempotency keys, retry/backoff, structured logging, RED/USE.
 
@@ -318,6 +340,8 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 **Architectural rule**: domain emits **`DomainEvent`** dataclasses; the application service opens a UnitOfWork (`async with uow:`) and calls both the aggregate repo and the outbox repo inside it. Same `AsyncSession` = same transaction. A separate **outbox relay** worker (background task or separate process) publishes rows asynchronously.
 
 **Why UnitOfWork instead of letting each repo create its own session?** SQLAlchemy's `AsyncSession` *is* the unit of work. If two repos own two different sessions, you're back to dual writes. UoW makes the shared session explicit and the tx boundary visible at the call site.
+
+**Optimistic concurrency (lost-update protection)**: any aggregate two clients can update concurrently carries a `version` column. With the ORM, set `version_id_col` on the mapper — flushes emit `WHERE version = :expected` and raise `StaleDataError` on a miss; map that to a domain conflict error in the adapter. Raw-SQL adapters: conditional `UPDATE ... WHERE id = :id AND version = :v` + check `rowcount`. Surface as **409** (or **412** with `If-Match`/ETag, per `api-design.md`). Idempotency keys cover the *same* client retrying; the version column covers *different* clients racing — you usually need both.
 
 → Adapter examples: `references/examples-adapters.md`
 
@@ -347,6 +371,7 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 | Question | Answer |
 |----------|--------|
 | Transactions? | Adapter (repository impl) |
+| Lost updates? | `version_id_col` (ORM) or conditional UPDATE + `rowcount`; stale write → 409/412 |
 | Validation? | Domain model constructors / value objects |
 | Error mapping? | `@app.exception_handler` in inbound |
 | Business orchestration? | Service impl |
@@ -372,6 +397,8 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 - [ ] All handlers (HTTP, tasks, webhooks): parse → service → respond
 - [ ] Transactions in adapters only, ORM ↔ domain mapper in outbound
 - [ ] Errors: domain hierarchy → exception handlers → RFC 9457
+- [ ] Racing aggregates carry a `version` column; stale writes map to 409/412
+- [ ] Boundary enforced in CI: `import-linter` layers contract (see Enforce the Boundary)
 
 ### Framework
 - [ ] Shell wraps FastAPI, `build_test_app()` for tests

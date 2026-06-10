@@ -13,7 +13,7 @@ allowed-tools:
   - Bash
   - Read
   - AskUserQuestion
-compatibility: Host-coupled — ships a compiled binary (TypeScript + Playwright via Bun); requires a Bash-capable runtime that can run `./setup` and locate the binary (default via the bundled `bin/find-browse` resolver; override with `$BROWSE_BIN`).
+compatibility: Host-coupled — ships a compiled binary (TypeScript + Playwright via Bun); requires a Bash-capable runtime that can run `./setup` and locate the binary (default via the bundled `bin/find-browse` resolver; or set `$BROWSE_BIN` to the binary path directly).
 ---
 <!-- Hand-maintained. The upstream gstack doc generator (gen:skill-docs) was not
      vendored into this fork, so edit this file directly and keep the command
@@ -29,15 +29,17 @@ State persists between calls (cookies, tabs, login sessions).
 ## SETUP (run this check BEFORE any browse command)
 
 ```bash
-# Resolve the browse binary via the bundled resolver (bin/find-browse → dist/find-browse,
-# source: src/find-browse.ts). It owns all path/layout logic; this block only locates the
-# resolver across the 3 standard skill roots, then derives the READY/NEEDS_SETUP contract.
+# Resolve the browse binary. Contract: $BROWSE_BIN, when set, is the path to the browse
+# BINARY itself (not the resolver) — identical semantics to the qa skill's block. Otherwise
+# delegate to the bundled resolver (bin/find-browse → dist/find-browse, source:
+# src/find-browse.ts), which owns all path/layout logic; this block only locates it across
+# the 3 standard skill roots, then derives the READY/NEEDS_SETUP contract.
 _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
-FIND="${BROWSE_BIN:-}"   # caller may point BROWSE_BIN straight at the binary or resolver
-[ -z "$FIND" ] && [ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/browse/bin/find-browse" ] && FIND="$_ROOT/.claude/skills/browse/bin/find-browse"
+FIND=""
+[ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/browse/bin/find-browse" ] && FIND="$_ROOT/.claude/skills/browse/bin/find-browse"
 [ -z "$FIND" ] && [ -n "$_ROOT" ] && [ -x "$_ROOT/skills/browse/bin/find-browse" ] && FIND="$_ROOT/skills/browse/bin/find-browse"
-[ -z "$FIND" ] && [ -x ~/.claude/skills/browse/bin/find-browse ] && FIND=~/.claude/skills/browse/bin/find-browse   # default host root; not required if BROWSE_BIN is set
-B=$([ -n "$FIND" ] && "$FIND" 2>/dev/null)
+[ -z "$FIND" ] && [ -x ~/.claude/skills/browse/bin/find-browse ] && FIND=~/.claude/skills/browse/bin/find-browse   # default host root
+B="${BROWSE_BIN:-$([ -n "$FIND" ] && "$FIND" 2>/dev/null)}"
 if [ -n "$B" ] && [ -x "$B" ]; then
   echo "READY: $B"
 else
@@ -209,7 +211,7 @@ Refs are invalidated on navigation — run `snapshot` again after `goto`.
 | `upload <sel> <file> [file2...]` | Upload file(s) |
 | `useragent <string>` | Set user agent |
 | `viewport <WxH>` | Set viewport size |
-| `wait <sel|--networkidle|--load|--domcontentloaded>` | Wait for element, network idle, or page load (timeout: 15s) |
+| `wait <sel|--networkidle|--load|--domcontentloaded> [timeoutMs]` | Wait for element, network idle, or page load (default timeout 15s; the optional timeout-ms arg applies to selector and --networkidle waits) |
 
 ### Inspection
 | Command | Description |

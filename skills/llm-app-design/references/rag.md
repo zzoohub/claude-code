@@ -71,6 +71,16 @@ This costs a few tokens per chunk and massively improves retrieval quality.
 
 Iterate based on eval results — there's no universal right answer.
 
+## Choosing the embedding model
+
+An index-time commitment: queries must embed with the **same model + version** as the index, and changing it means re-embedding the corpus. Select on:
+
+- **Your retrieval eval, not the leaderboard.** Use benchmark retrieval slices (e.g. MTEB's retrieval subset) to shortlist, then decide on your own golden (query → expected-doc) set — leaderboard rank ≠ rank on your corpus and query style.
+- **Language coverage.** English-centric embedders silently degrade recall on multilingual corpora; verify on non-English goldens if you have any.
+- **Max input length ≥ chunk size.** A 512-token embedder silently truncates 1,000-token chunks — the chunking design above and the model choice are coupled decisions.
+- **Output dimensions.** Storage and search cost scale with dimensions; Matryoshka-style models truncate dimensions for large savings at modest quality loss. (The vector-store sizing consequence is owned at the architecture layer — `software-architecture/references/ai-architecture.md` §3.)
+- **Pin and plan the migration.** Pin model+version, cache embeddings keyed by it (`references/production.md` § Caching), and treat any model change as a scheduled re-embed migration, not a config flip.
+
 ## Retrieval: more than vector search
 
 Pure vector (embedding) search retrieves semantically similar chunks. It's great for fuzzy queries ("how do I cancel"), bad for exact queries ("error code E1042").
@@ -128,8 +138,10 @@ Answer using only the information above. If the passages do not contain the answ
 
 RAG evals are multi-stage — a final-answer eval can't tell you whether retrieval, ranking, or generation failed.
 
-- **Retrieval hit rate:** for a golden set of (query, expected_doc_id) pairs, does the retriever include the right doc in top-K? Track separately for top-1, top-5, top-20.
+- **Retrieval hit rate (recall@k):** for a golden set of (query, expected_doc_id) pairs, does the retriever include the right doc in top-K? Track separately for top-1, top-5, top-20.
+- **Precision@k:** of the k chunks you actually inject, how many are relevant? Low precision poisons generation even when recall is perfect — irrelevant chunks are noise the model must ignore.
 - **Answer faithfulness:** does the generated answer actually come from the retrieved chunks, or is it hallucinated? Use LLM-as-judge with a "cite or abstain" prompt.
+- **Answer relevance:** does the answer address the question asked? A faithful, factually-correct but off-target answer still fails the user. Judge-scored.
 - **Answer correctness:** compared to the golden answer.
 - **Latency breakdown:** embed time, retrieval time, rerank time, generation time. Optimize the bottleneck.
 

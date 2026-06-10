@@ -50,6 +50,14 @@ D2 diagram (C4 Level 2) showing major runtime containers, communication protocol
 |---|---|---|
 | ... | ... | ... |
 
+### Interface Contract
+<!-- Include if the system has external consumers -->
+
+- **Protocol style**: [REST / RPC / GraphQL / + MCP server] — [why]
+- **Versioning posture**: [additive-only / versioned]
+- **Error contract**: [RFC 9457 problem+json or equivalent]
+- **Pagination default**: [cursor / offset, per operational-patterns]
+
 ### AI Components
 <!-- Include only if PRD involves AI/LLM features -->
 
@@ -68,6 +76,8 @@ D2 diagram (C4 Level 2) showing major runtime containers, communication protocol
 | Store | Holds | Why This Type | Consistency |
 |---|---|---|---|
 | ... | ... | ... | ... |
+
+**Durability** (per store holding the only copy of anything): RPO [...], RTO [...], backup mechanism [PITR / snapshots], restore-test cadence [...]
 
 ### Key Data Flows
 
@@ -99,6 +109,13 @@ test -> lint -> security scan -> build -> smoke test -> deploy
 ### Scaling Model
 
 [Scale-to-zero / auto-scale / always-on / single-instance] — [rationale]
+
+### Scaling Ladder
+
+| Load | First bottleneck | Trigger metric (on a §5 dashboard) | Planned response |
+|---|---|---|---|
+| 10x | ... | ... | ... |
+| 100x | ... | ... | One honest sentence is enough |
 
 ### Cost Estimate
 
@@ -134,6 +151,14 @@ Cost alerting threshold: [80% of ceiling from ASR]
 | No circular deps | `madge --circular` | Pre-commit |
 | Domain independence | Import rules | CI |
 | Response time | Performance test | Post-deploy |
+
+Every [H,H] ASR appears either here (CI guard) or in the SLO table below (runtime guard) — the §1 ATAM check proved the design once; guards keep it true.
+
+### SLOs & Error Budgets
+
+| SLI | Target (from ASR) | Error budget | Page (fast burn) | Ticket (slow burn) |
+|---|---|---|---|---|
+| e.g., availability | 99.5% | 3.6h/month | 14.4x burn over 1h | 3x burn over 6h |
 
 ### Auth & Security
 <!-- Include if users exist -->

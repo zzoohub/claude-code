@@ -334,6 +334,7 @@
 | Timeout on long-running operations | Thread/connection exhaustion | CWE-400 |
 | Regex patterns reviewed for catastrophic backtracking | ReDoS | CWE-1333 |
 | Batch endpoints limit items per request | Amplification attacks | CWE-770 |
+| Rate-limit state returned in headers (`RateLimit-*`; legacy `X-RateLimit-*` still common) + `Retry-After` on 429 | Clients can't self-regulate; synchronized retry storms | CWE-770 |
 
 **Patterns to catch:**
 - No rate limiting middleware at all

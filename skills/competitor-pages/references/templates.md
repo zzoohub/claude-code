@@ -376,7 +376,7 @@ Frame weaknesses as scope decisions, not failures:
 
 ### Product + Offer (per product compared)
 
-> **Only include `aggregateRating` if the rating is genuinely displayed on the page AND comes from real reviews.** Don't self-rate your own product or paste placeholder numbers — fake or markup-only ratings risk a Google manual action that strips ALL your rich results, and self-controlled reviews on `Organization`/`LocalBusiness` types are outright ineligible for the star feature. The compliant source is independent third-party reviews you're licensed to display (e.g., aggregated G2/Capterra). For pure SaaS, `SoftwareApplication` (with `Offer`/`AggregateRating` nested) models the product more precisely than bare `Product`. The `price` must match the price shown on the page.
+> **Only include `aggregateRating` if the rating is genuinely displayed on the page AND comes from real reviews.** Don't self-rate your own product or paste placeholder numbers — fake or markup-only ratings risk a Google manual action that strips ALL your rich results, and self-controlled reviews on `Organization`/`LocalBusiness` types are outright ineligible for the star feature. The compliant source is independent third-party reviews you're licensed to display (e.g., aggregated G2/Capterra). For pure SaaS, `SoftwareApplication` (with `Offer`/`AggregateRating` nested) models the product more precisely than bare `Product` — to use it, swap `@type` in the example below and add `applicationCategory` + `operatingSystem`; the rest of the shape is identical. The `price` must match the price shown on the page.
 
 ```json
 {

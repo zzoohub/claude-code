@@ -1,11 +1,11 @@
 /**
  * Command registry — single source of truth for all browse commands.
  *
- * Dependency graph:
+ * Dependency graph (this fork — see UPSTREAM.md):
  *   commands.ts ──▶ server.ts (runtime dispatch)
- *                ──▶ gen-skill-docs.ts (doc generation)
- *                ──▶ skill-parser.ts (validation)
- *                ──▶ skill-check.ts (health reporting)
+ *                ──▶ test/* (registry assertions)
+ *   The SKILL.md command tables are hand-maintained against this registry —
+ *   upstream's gen-skill-docs / skill-parser / skill-check were not vendored.
  *
  * Zero side effects. Safe to import from build scripts and tests.
  */
@@ -67,12 +67,12 @@ export const COMMAND_DESCRIPTIONS: Record<string, { category: string; descriptio
   'type':    { category: 'Interaction', description: 'Type into focused element', usage: 'type <text>' },
   'press':   { category: 'Interaction', description: 'Press key — Enter, Tab, Escape, ArrowUp/Down/Left/Right, Backspace, Delete, Home, End, PageUp, PageDown, or modifiers like Shift+Enter', usage: 'press <key>' },
   'scroll':  { category: 'Interaction', description: 'Scroll element into view, or scroll to page bottom if no selector', usage: 'scroll [sel]' },
-  'wait':    { category: 'Interaction', description: 'Wait for element, network idle, or page load (timeout: 15s)', usage: 'wait <sel|--networkidle|--load|--domcontentloaded>' },
+  'wait':    { category: 'Interaction', description: 'Wait for element, network idle, or page load (default timeout 15s; the optional timeout-ms arg applies to selector and --networkidle waits)', usage: 'wait <sel|--networkidle|--load|--domcontentloaded> [timeoutMs]' },
   'upload':  { category: 'Interaction', description: 'Upload file(s)', usage: 'upload <sel> <file> [file2...]' },
   'viewport':{ category: 'Interaction', description: 'Set viewport size', usage: 'viewport <WxH>' },
   'cookie':  { category: 'Interaction', description: 'Set cookie on current page domain', usage: 'cookie <name>=<value>' },
   'cookie-import': { category: 'Interaction', description: 'Import cookies from JSON file', usage: 'cookie-import <json>' },
-  'cookie-import-browser': { category: 'Interaction', description: 'Import cookies from Comet, Chrome, Arc, Brave, or Edge (opens picker, or use --domain for direct import)', usage: 'cookie-import-browser [browser] [--domain d]' },
+  'cookie-import-browser': { category: 'Interaction', description: 'Import cookies from Comet, Chrome, Arc, Brave, or Edge (opens picker, or use --domain for direct import). macOS only', usage: 'cookie-import-browser [browser] [--domain d]' },
   'header':  { category: 'Interaction', description: 'Set custom request header (colon-separated, sensitive values auto-redacted)', usage: 'header <name>:<value>' },
   'useragent': { category: 'Interaction', description: 'Set user agent', usage: 'useragent <string>' },
   'dialog-accept': { category: 'Interaction', description: 'Auto-accept next alert/confirm/prompt. Optional text is sent as the prompt response', usage: 'dialog-accept [text]' },

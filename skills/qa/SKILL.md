@@ -78,9 +78,10 @@ context, not by this skill.
 **Non-interactive callers.** This skill is written for an interactive host that can prompt the user
 and write report files. When a non-interactive caller drives it — e.g. a subagent that preloaded this
 skill, with no user-prompt or file-write tool present — degrade gracefully:
-- **Don't block on user prompts.** When no user-prompt capability is available, steps that wait on a human
-  (browse build consent, 2FA/OTP, CAPTCHA) can't run; skip them and, if that blocks progress, report the
-  blocker to the caller instead of waiting.
+- **Don't block on user prompts.** When no user-prompt capability is available: the browse build consent
+  may be skipped — attempt the one-time `./setup` directly (it is idempotent) and fall back per the caller's
+  policy if it fails. Steps that genuinely need a human (2FA/OTP, CAPTCHA) can't run; skip them and, if that
+  blocks progress, report the blocker to the caller instead of waiting.
 - **Don't assume a file-write tool.** If none is present and you can't persist the markdown report /
   `baseline.json`, return your findings to the caller in your own format. Screenshots are unaffected — the
   browse binary writes those itself via Bash.
@@ -119,7 +120,7 @@ This is the **primary mode** for developers verifying their work. When the user 
    404, blank, and error pages, so it can pick a port the app isn't actually on.
    ```bash
    APP_URL=""
-   for port in 3000 3001 4000 5000 5173 8000 8080 9000; do
+   for port in 3000 3001 4000 4321 5000 5173 8000 8080 8787 9000; do
      code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$port" 2>/dev/null)
      [ -n "$code" ] && [ "$code" != "000" ] && APP_URL="http://localhost:$port" \
        && echo "Found app on :$port (HTTP $code)" && break
@@ -232,6 +233,7 @@ Then follow the **per-page exploration checklist** (see `references/issue-taxono
    $B screenshot "$REPORT_DIR/screenshots/page-mobile.png"
    $B viewport 1280x720
    ```
+8. **Auth boundaries** — What happens logged out? Different user roles? (if relevant)
 
 **Depth judgment:** Spend more time on core features (homepage, dashboard, checkout, search) and less on secondary pages (about, terms, privacy).
 
@@ -306,6 +308,7 @@ Compute each category score (0-100), then take the weighted average.
 ### Links (weight: 10%)
 - 0 broken → 100
 - Each broken link → -15 (minimum 0)
+- Broken links are scored *here* — do not also deduct them as Functional issues (no double-counting; the taxonomy lists them under Functional only for triage labeling)
 
 ### Per-Category Scoring (Visual, Functional, UX, Content, Performance, Accessibility)
 Each category starts at 100. Deduct per finding:
@@ -388,7 +391,7 @@ Include the trace zip in the QA report for any bug filed.
 2. **Verify before documenting.** Retry the issue once to confirm it's reproducible, not a fluke.
 3. **Never include credentials.** Write `[REDACTED]` for passwords in repro steps.
 4. **Write incrementally.** Append each issue to the report as you find it. Don't batch.
-5. **Never read source code.** Test as a user, not a developer.
+5. **Never judge from source code.** Test as a user, not a developer. (Diff-aware mode reads the diff only to pick *what* to test — never to decide from the code whether it works.)
 6. **Check console after every interaction.** JS errors that don't surface visually are still bugs.
 7. **Test like a user.** Use realistic data. Walk through complete workflows end-to-end.
 8. **Depth over breadth.** 5-10 well-documented issues with evidence > 20 vague descriptions.

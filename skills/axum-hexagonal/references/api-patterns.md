@@ -89,7 +89,7 @@ All use `Content-Type: application/problem+json`.
 
 **409 Conflict**: `{ "type": ".../duplicate", "status": 409, "detail": "Email already exists" }`
 
-**429 Rate Limited**: `application/problem+json` body **plus** headers `Retry-After: 30`, `X-RateLimit-Remaining: 0` (every error — including the limiter's 429 — is a problem document, not a bare `{statusCode, message}`):
+**429 Rate Limited**: `application/problem+json` body **plus** headers `Retry-After: 30`, `RateLimit-Remaining: 0` (legacy `X-RateLimit-*` names still common; every error — including the limiter's 429 — is a problem document, not a bare `{statusCode, message}`):
 ```json
 { "type": ".../rate-limited", "title": "Too Many Requests", "status": 429,
   "detail": "Rate limit exceeded; retry after 30s" }
@@ -117,11 +117,29 @@ GET /v1/posts?page=3&limit=10
 
 ## Conditional Request (ETag)
 
+**Read — cache validation:**
+
 ```http
 GET /v1/users/usr_123
 If-None-Match: "9f62089e"
 → 304 Not Modified
 ```
+
+**Write — lost-update protection (optimistic concurrency):**
+
+```http
+PATCH /v1/users/usr_123
+If-Match: "9f62089e"
+{ "name": "Ada Byron Lovelace" }
+→ 200 OK, ETag: "a1c30b7d"
+
+# Someone else updated the resource first:
+→ 412 Precondition Failed (application/problem+json)
+{ "type": ".../version-conflict", "title": "Precondition Failed", "status": 412,
+  "detail": "Resource changed since ETag \"9f62089e\" — re-fetch and retry" }
+```
+
+Server-side this is the `version` column doing the conditional write. The same conflict surfaced through an application-level version field (no ETag header) returns **409**; via `If-Match` it returns **412** (RFC 9110).
 
 ---
 

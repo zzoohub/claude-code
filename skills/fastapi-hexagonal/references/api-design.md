@@ -143,7 +143,7 @@ DELETE → 204, mark `deleted_at` internally. Filter deleted by default. `?inclu
 | Service-to-service | mTLS |
 | Webhooks | HMAC-SHA256 |
 
-Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`, `X-Request-Id` (correlation)
+Headers: `RateLimit-Limit`, `RateLimit-Remaining` (legacy `X-RateLimit-*` names still common), `Retry-After`, `X-Request-Id` (correlation)
 
 `Idempotency-Key` for safe POST retries.
 
@@ -173,6 +173,7 @@ Headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`, `X-Request
 - [ ] POST → 201, DELETE → 204, async → 202
 - [ ] Collections have cursor pagination
 - [ ] Errors use RFC 9457 with `application/problem+json`
+- [ ] Mutable resources honor `If-Match`/ETag — stale writes return 412 (or 409 via a version field)
 - [ ] Create/Update types exclude readOnly fields (id, created_at, updated_at)
 - [ ] Custom actions use `POST /resources/{id}/{verb}`
 - [ ] No nesting beyond 2 levels

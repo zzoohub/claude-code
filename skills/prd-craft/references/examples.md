@@ -1,8 +1,8 @@
 # PRD Section Examples
 
 Concrete good/bad examples for the PRD sections where calibration matters most.
-Reference this when writing a PRD to calibrate quality and depth. (The Appendix
-is mechanical and has no example.)
+Reference this when writing a PRD to calibrate quality and depth. (§9 Open
+Questions and the §10 Appendix are mechanical and have no examples.)
 
 ## Table of Contents
 
@@ -141,7 +141,8 @@ is mechanical and has no example.)
 **Good:**
 
 > Ordered riskiest-assumption-first: the error baseline is the part we're least
-> sure works, so it leads.
+> sure works, so v0.1 exists to prove it — health-checker sits ahead of it only
+> because the monitor depends on it.
 >
 > **v0.1 — Core**
 > 1. health-checker — nothing reports without checks [Must]

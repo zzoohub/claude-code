@@ -48,7 +48,7 @@ backlog ──start──▶ active ──complete──▶ done
 | `backlog` | `active` | `start T-NNN [--assignee=X]` | Optionally set assignee |
 | `active` | `done` | `complete T-NNN` | None (assignee kept as the record of who did it) |
 | `active` | `blocked` | `block T-NNN — {reason}` | Append note to feature file |
-| `blocked` | `active` or `backlog` | `unblock T-NNN [--to=active]` | Default returns to backlog; clear `assignee` to `—` when landing in backlog |
+| `blocked` | `active` or `backlog` | `unblock T-NNN [--to=active]` | Default returns to backlog — the original session is gone; dispatch decides who resumes it. Clear `assignee` to `—` when landing in backlog |
 | any | `backlog` | `abandon T-NNN — {reason}` | Append reason to feature file Changes; clear `assignee` to `—` |
 
 > `start` / `complete` / `block` / … are shorthand for the transition, not
@@ -72,7 +72,14 @@ ever real — it keeps the audit trail. **Hard-remove** — delete the board row
 its `### T-NNN` detail block — only for a row created in error (a duplicate or a
 typo-task). On hard-remove, append a dated `Changes` note recording the deletion
 and why (to `tasks/features/_misc.md` if the task had no feature file). IDs are
-never reused, even after a hard-remove.
+never reused, even after a hard-remove. Before deleting, sweep for references:
+any other task whose `depends_on` points at the removed ID must be updated (or
+the removal reconsidered) — a hard-remove must not leave dangling dependencies.
+
+**Re-opening `done` work:** prefer a new `bugfix` / `refactor` task that
+references the old ID — `done` is the audit record that the work once passed
+review and verification. Abandon a `done` row only when the work itself is
+being rolled back or invalidated, with the reason logged.
 
 ## What This Skill Does
 
@@ -105,6 +112,11 @@ never reused, even after a hard-remove.
    validation and (for block/abandon) finding the feature file.
 3. **Validate the transition** — see lifecycle table above. Reject invalid
    transitions (e.g., `done` → `active` without explicit user override).
+   For `start`, also check readiness: every `depends_on` of the task is
+   `done` (phases are the coarse grouping; `depends_on` is the precise gate).
+   Starting over an unmet dependency needs the caller's explicit confirmation
+   — deliberate pull-forward happens, but a silent ordering violation rots
+   the board.
 4. **Edit the row in `tasks/board.md`** — change only the target cell(s):
    `status`, and `assignee` (set on start, cleared to `—` on
    unblock-to-backlog / abandon). For a phase move, relocate the row to the
@@ -127,13 +139,16 @@ never reused, even after a hard-remove.
 
 - [ ] Task ID exists on the board (matched on the `| T-NNN |` cell)
 - [ ] Transition is valid per the lifecycle table
+- [ ] For start: `depends_on` all `done`, or the pull-forward was explicitly
+      confirmed by the caller
 - [ ] Only the relevant row in `tasks/board.md` was edited
 - [ ] On unblock-to-backlog / abandon: `assignee` reset to `—`
 - [ ] On a phase move: board section and feature-file `phase:` both updated
 - [ ] For block/abandon: feature file (or `_misc.md`) `Changes` has a dated
       entry with reason
 - [ ] For hard-remove: row and `### T-NNN` detail block both deleted, deletion
-      logged to `Changes`, and the ID is never reused
+      logged to `Changes`, the ID never reused, and no other task's
+      `depends_on` left pointing at the removed ID
 - [ ] `> Last updated:` header bumped
 - [ ] For complete: the work is actually verified (caller's responsibility —
       this skill trusts the caller)

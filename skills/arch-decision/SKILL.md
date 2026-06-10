@@ -42,6 +42,8 @@ against a missing context, but flag the gap.
    decision per file).
 7. Patches the affected section of `system.md` ONLY if the decision changes
    the surface (new component, new pattern). Otherwise leaves `system.md` alone.
+8. Reconciles `docs/arch/risks.md` when the decision resolves an Open Question
+   or accepts a risk — the Open-Question → ADR promotion loop closes here.
 
 ## What This Skill Does NOT Do
 
@@ -57,7 +59,7 @@ against a missing context, but flag the gap.
 
 - **Status:** Accepted | Proposed | Superseded by ADR-{NNN}
 - **Door:** One-way (irreversible) | Two-way (reversible)
-- **Context:** Issue motivating this decision. Cite ASRs from `docs/arch/context.md` §3, and the feature spec at `docs/prd/features/{feature}.md` if feature-driven.
+- **Context:** Issue motivating this decision. Cite ASRs from `docs/arch/context.md` §3, and the feature spec at `docs/prd/features/{feature}.md` if feature-driven. For performance/scale/cost-driven decisions, include the **measured trigger** (observed metric, breached threshold, bill).
 - **Options:**
   1. **{Option A}** — pros / cons
   2. **{Option B}** — pros / cons
@@ -66,7 +68,7 @@ against a missing context, but flag the gap.
 - **Why:** Reason tied to ASR or constraint.
 - **Rejected:** Why other options were rejected.
 - **Tradeoff:** Positive and negative consequences. Affected components from `system.md` §2 (or "none").
-- **Revisit when:** Trigger conditions that should prompt reconsideration (scale threshold, library deprecation, new ASR, etc.).
+- **Revisit when:** Trigger conditions that should prompt reconsideration. Scale/cost triggers name a **metric + threshold** that is (or now becomes) observable on a dashboard — a revisit trigger nobody can see never fires.
 ```
 
 This aligns with the standard `software-architecture` ADR template (in that skill's
@@ -81,38 +83,71 @@ files is expected.
 **One-way doors** (analyze carefully): database choice, primary language, auth architecture, core domain model.
 **Two-way doors** (decide fast): library choice, caching strategy, log format, CI tool.
 
+When options differ in reversibility, weigh it explicitly: a cheaply-reversible option beats an otherwise-equal one-way option — optionality is part of the payoff, not a tiebreaker.
+
+**Retroactive ADRs (gap-fill):** when recording a decision the design doc already settled but never recorded (e.g. an audit against the `software-architecture` Minimum-ADRs list found a gap), reconstruct the options and rationale *as they were actually weighed* — record history faithfully rather than re-litigating a settled decision. If the original rationale can't be reconstructed, say so in Context and record the current best understanding.
+
 ## Workflow
 
 1. **Read context** — `docs/arch/context.md` and `docs/arch/system.md`. If
    either is missing, flag the gap to the user; you can still proceed.
 2. **Get the next ADR number** — Find the highest existing `ADR-NNN` in
    `docs/arch/adr/` and add 1. NNN is zero-padded to 3 digits (`ADR-001`). If
-   `docs/arch/adr/` doesn't exist yet, start at `ADR-001`.
-3. **Frame one decision** — If multiple decisions surface, ask the user which
-   to record first; defer the others to follow-up ADRs.
-4. **Draft 2-4 options** — Include "keep current" as one option.
-5. **Tie the choice to an ASR** — If you can't, the decision probably isn't
-   ready, or the ASR list is incomplete (raise that).
+   `docs/arch/adr/` doesn't exist yet, start at `ADR-001`. If two writers grab
+   the same number in parallel, the later writer renumbers.
+3. **Frame one decision** — If multiple decisions surface, ask the caller which
+   to record first (or default to the most foundational — the one the others
+   depend on); defer the rest to follow-up ADRs.
+4. **Draft 2-4 options** — Include "keep current" as one option. Weigh each on
+   the driving quality attributes, cost delta (infra **and** migration effort),
+   reversibility (note each option's door if they differ), and blast radius
+   (affected components).
+5. **Tie the choice to an ASR — with evidence** — If you can't tie it, the
+   decision probably isn't ready, or the ASR list is incomplete (raise that).
+   Performance/scale/cost-driven decisions additionally cite a **measured
+   number** — the observed metric, the breached ASR threshold, the monthly
+   bill — or are explicitly labeled assumption-driven, naming the number a
+   time-boxed spike would validate. "We expect growth" justifies a Scaling
+   Ladder entry, not an architecture change.
 6. **Write the ADR** — Create a new `docs/arch/adr/ADR-NNN-{slug}.md` file.
 7. **Patch system.md if needed** — Only when surface changes (new component,
-   new pattern, etc.).
+   new pattern, etc.). A surface change usually moves the guards too: update
+   the affected fitness-function / SLO rows in `system.md` §5 (where the doc
+   tracks them) so the new decision is guarded like the old one was, and
+   reconcile the Scaling Ladder in §4 — if this ADR executes a deferred
+   escalation, mark that ladder row done; if it defers one, add the trigger
+   metric there.
+8. **Reconcile `docs/arch/risks.md`** (if present) — if this decision resolves
+   an Open Question, close it with a pointer to the ADR; if the decision
+   *accepts* a risk (a known gap, a deferred mitigation), append it to the Risk
+   Register. The Open-Question → ADR promotion loop only works if this step
+   actually closes it.
 
 ## Quality Bar
 
 - [ ] One decision, clearly named
 - [ ] 2-4 realistic options considered, including "keep current"
 - [ ] Decision tied to a specific ASR or constraint from `context.md`
+- [ ] Scale/cost claims carry a measured number — or an explicit assumption plus
+      the spike that would validate it
+- [ ] Revisit-when names an observable metric + threshold for scale/cost triggers
 - [ ] Consequences spelled out (enables / costs / risks / affected components)
 - [ ] ADR number is unique and monotonically increasing
 - [ ] If the decision changes architecture surface, `system.md` is patched in
-      the affected section
+      the affected section — including its fitness-function / SLO / Scaling
+      Ladder entries where the doc tracks them
+- [ ] `risks.md` reconciled, if applicable (resolved Open Question closed;
+      accepted risk appended)
 - [ ] Status is valid (`Accepted`, or `Proposed` if pending review; if this ADR
       replaces an existing one, mark that older ADR `Superseded by ADR-{NNN}`)
 
 ## Output
 
 - the new ADR file (default `docs/arch/adr/ADR-NNN-{slug}.md`) — created
-- `docs/arch/system.md` — patched if architecture surface changed
+- `docs/arch/system.md` — patched if architecture surface changed (including
+  guard / Scaling Ladder entries where tracked)
+- `docs/arch/risks.md` — touched only to close a resolved Open Question or
+  append an accepted risk
 
 **Superseding:** ADRs are one file per decision — there is no aggregate line cap.
 When a new decision replaces an older one, set the older ADR's `Status` to

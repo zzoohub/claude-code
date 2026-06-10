@@ -36,6 +36,18 @@ What this system does and does not do.
 
 D2 system context diagram (C4 Level 1) — the system as a black box showing actors, external systems, and data flows.
 
+### Scale Envelope
+
+Back-of-envelope, derivation shown so the arithmetic is checkable:
+
+| Metric | Value | Derivation |
+|---|---|---|
+| Peak RPS (read / write) | ... | DAU × actions/day ÷ 86,400 × peak factor |
+| Data growth | .../year | rows/day × bytes/row |
+| Working set | ... | hot data actually queried |
+| Largest payload | ... | ... |
+| **Scale class** | S / M / L | gates pattern legitimacy in Stage 4 |
+
 ---
 
 ## 3. ASR & Utility Tree
@@ -88,10 +100,11 @@ Past-tense verbs extracted from PRD:
 
 D2 context map showing bounded contexts and their relationships.
 
-| Context | Owns | Key Entities |
-|---|---|---|
-| e.g., Identity | Auth, sessions, profiles | User, Session |
-| e.g., Billing | Subscriptions, payments | Subscription, Invoice |
+| Context | Type | Owns | Key Entities | Sourcing |
+|---|---|---|---|---|
+| e.g., Matching | Core | Ranking, recommendation rules | Match, Score | Build — invest (hexagonal rigor) |
+| e.g., Identity | Generic | Auth, sessions, profiles | User, Session | Buy — managed auth + thin adapter |
+| e.g., Billing | Generic | Subscriptions, payments | Subscription, Invoice | Buy — Stripe + webhook adapter |
 
 ### Ubiquitous Language
 

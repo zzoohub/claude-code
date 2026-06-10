@@ -61,7 +61,7 @@ List-Unsubscribe-Post: List-Unsubscribe=One-Click
 - [ ] DMARC published at `p=none` (or stricter) with `rua=` reporting
 - [ ] `List-Unsubscribe` + `List-Unsubscribe-Post: List-Unsubscribe=One-Click` on every marketing email
 - [ ] One-click unsubscribe endpoint processes the POST without login
-- [ ] Google Postmaster Tools account set up; complaint rate monitored weekly
+- [ ] Google Postmaster Tools account set up; complaint rate monitored weekly — daily during warm-up or volume changes; a single-day jump past ~0.2% → pause marketing sends and audit before resuming
 - [ ] All marketing sent from a subdomain (e.g., `mail.yourapp.com`), not root
 
 ### Downstream Benefit: BIMI

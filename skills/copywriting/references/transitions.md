@@ -112,7 +112,7 @@ Use connecting words sparingly but effectively:
 
 ## Scannable Flow (Eyeball Monkey Bars)
 
-Most internet readers scan rather than read (Nielsen Norman Group, *How Users Read on the Web*, 1997). Copy must feel effortless — like swinging from one monkey bar to the next.
+Most internet readers scan rather than read (Nielsen Norman Group, *How Users Read on the Web*, 1997). Copy must feel effortless — like swinging from one monkey bar to the next ("eyeball monkey bars" is copywriter Ashlyn Carter's term).
 
 - Break up text frequently. Short paragraphs reign supreme.
 - Use bullet brigades: bold text, numbered lists to highlight key points.

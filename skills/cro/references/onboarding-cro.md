@@ -46,7 +46,7 @@ Show advancement. Celebrate completions. Make the path visible.
 
 ### Aha Moment
 
-The Aha Moment methodology (discovery process, retention-predictive-value metric, FDR controls, examples by product type) is canonical in **`product-analytics/references/aha-moment-discovery.md`**. Run that analysis to find your Aha Moment before designing onboarding.
+The Aha Moment methodology (discovery process, retention-predictive-value metric, the multiple-comparisons/FDR guard on parameter sweeps, canonical product examples) is canonical in **`product-analytics/references/aha-moment-discovery.md`**. Run that analysis to find your Aha Moment before designing onboarding.
 
 For onboarding CRO, you need only the outcome: a specific user action that predicts retention. Common shapes:
 - Project management: create first project + add team member

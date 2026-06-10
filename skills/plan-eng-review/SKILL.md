@@ -23,7 +23,7 @@ allowed-tools:
   - Bash
 ---
 
-# Plan Review Mode
+# Plan Review — Eng Mode (locked-scope execution rigor)
 
 Review this plan thoroughly before any code is written. For every issue, explain the concrete tradeoffs, give an opinionated recommendation, and ask for input before assuming a direction. **Do NOT make code changes and do NOT start implementation** — this is a review.
 
@@ -42,7 +42,7 @@ You will be asked to cite `file:line`, name realistic production failure modes, 
 * `grep` the files the plan touches for existing patterns and `TODO`/`FIXME`.
 
 ## Priority hierarchy
-If you are low on context or asked to compress: Step 0 > Test diagram > Failure modes > Opinionated recommendations > Everything else. Never skip Step 0 or the test diagram.
+If you are low on context or asked to compress: Step 0 > Test diagram > Failure modes > Security checks (§1) > Opinionated recommendations > Everything else. Never skip Step 0 or the test diagram; security may be compressed but never dropped.
 
 ## Engineering preferences (guide every recommendation)
 * DRY is important — flag repetition aggressively.
@@ -69,6 +69,12 @@ Then ask which mode (one AskUserQuestion call — see "How to ask questions"):
 2. **BIG CHANGE:** Work through interactively, one section at a time (Architecture → Code Quality → Tests → Performance), at most 8 top issues per section.
 3. **SMALL CHANGE:** Compressed review — Step 0 + one combined pass covering all 4 sections, picking the single most important issue per section (think hard — this forces prioritization). Present as one numbered list at the end, then ask the issues in a short sequence of AskUserQuestion calls (one per issue — see "How to ask questions").
 
+Context-dependent defaults (recommend first): clear redundancy already spotted
+in Step 0 → TRIM; plan touches ≲8 files or a single component → SMALL CHANGE;
+multi-component design doc → BIG CHANGE. Non-interactive runs don't stall here:
+apply the default, record `UNRESOLVED-AUTO (mode defaulted)` in Unresolved
+Decisions, and continue.
+
 **If the user does not pick TRIM, respect that fully.** Your job becomes making the chosen plan succeed, not lobbying for a smaller one. Raise scope concerns once here; afterward optimize within the chosen scope. Do not silently reduce scope, skip planned components, or re-argue for less work in later sections.
 
 ## Section gate (applies after every review section)
@@ -83,7 +89,18 @@ Evaluate:
 * Dependency graph and coupling concerns.
 * Data flow patterns and potential bottlenecks. For every new data flow, trace all four paths: happy path, nil/missing input, empty/zero-length input, and upstream-error.
 * Scaling characteristics and single points of failure.
-* Security architecture (auth, data access, API boundaries).
+* Security — locked scope still ships vulnerabilities, so check the four
+  highest-leverage items: attack-surface delta (new endpoints, params, jobs);
+  input validation on every new user input (nil, empty, over-length, injection —
+  incl. LLM prompt injection); authorization scoping on every new data access
+  (can user A reach user B's data by manipulating IDs?); secrets in env vars,
+  never hardcoded. For a dedicated threat-model pass — or the full 10-section
+  review with security, observability, deployment, and trajectory as their own
+  gates — use `plan-ceo-review` (HOLD SCOPE), if available; post-code, a
+  security-checklists capability.
+* Observability of each new flow: which log line or metric proves it works in
+  production, and which one tells you it broke? Observability is scope, not
+  afterthought.
 * Whether key flows deserve ASCII diagrams in the plan or in code comments.
 * For each new codepath or integration point, describe one realistic production failure (timeout, cascade, nil ref, auth failure) and whether the plan accounts for it.
 
@@ -153,11 +170,12 @@ Present each potential task individually (never batch tasks — one per issue; n
 * **Pros / Cons:** what you gain; cost, complexity, risk.
 * **Context:** enough that someone picking this up in 3 months understands the motivation, current state, and where to start.
 * **Type:** `feature | bugfix | refactor | chore | spike | hotfix`
+* **Effort:** S / M / L / XL (the task-capture capability splits L/XL proposals into session-sized tasks)
 * **Priority:** `high | medium | low` (canonical 3-level — see `board-schema.md`). high = blocking/critical-this-cycle; medium = important not urgent; low = nice-to-have.
 * **Touches:** comma-separated file/dir paths the task creates or modifies (required — used for conflict detection).
 * **Depends on:** prerequisites or ordering, or "None".
 
-Then present options (recommended first): **A)** Hand off to the task-appender capability (`task-add` if available) to append the row · **B)** Skip — not valuable enough · **C)** Promote into the current scope and review it now (still no code). Do NOT append vague bullets — a TODO without context is worse than none.
+Then present options (recommended first): **Hand off** to the task-appender capability (`task-add` if available) to append the row · **Skip** — not valuable enough · **Promote** into the current scope and review it now (still no code). (No A/B/C letters on the option cards — lettering is report-text only.) Do NOT append vague bullets — a TODO without context is worse than none.
 
 ### Completion summary
 Display this at the end so the user sees all findings at a glance:
@@ -182,4 +200,4 @@ If the user does not respond to an AskUserQuestion, interrupts to move on, or a 
 * NUMBER issues (1, 2, 3...) and give LETTERS for options (A, B, C...) **in the written report** (not in the AskUserQuestion cards).
 * Recommended option is always listed first.
 * Keep each option to one sentence — the user should pick in under 5 seconds.
-* After each review section, pause and wait for feedback before moving on.
+* After each review section, pause and wait for feedback before moving on (interactive runs — headless runs follow the section-gate fallback instead).

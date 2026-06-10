@@ -28,6 +28,20 @@ These are recommended defaults — branch when the project differs: **Next.js Pa
 
 > **Variable syntax differs between platforms.** Web/Next (ICU MessageFormat via next-intl/Paraglide) uses single braces: `Hello, {name}`. Expo/mobile (i18next) uses double braces: `Hello, {{name}}`. Same string sources across web + mobile require either a syntax-conversion build step or maintaining separate message files. Most teams keep them separate.
 
+## Retrofitting an Existing App ("translate my app")
+
+Order matters — translation is the *last* step, not the first:
+
+1. **Wire the library + a pseudolocale first** (§10), before extracting
+   anything — now every unextracted string is visibly un-mangled.
+2. **Extract feature-by-feature, not file-by-file** — `feature.context.purpose`
+   keys fall out naturally, and each PR ships a fully-switchable feature
+   instead of a half-translated layer.
+3. **Turn on the no-literal-string lint** (§7) once a feature is extracted, so
+   it can't regress while the rest migrates.
+4. **Order translations last**, when keys have stopped churning — translating
+   mid-extraction pays twice.
+
 ---
 
 ## Core Principles
@@ -151,7 +165,12 @@ Translators ship partial files, so non-base locales *will* have gaps. Configure 
 - **i18next:** set `fallbackLng` (falls back automatically) and `returnEmptyString: false`; use `saveMissing` + a reporter in dev.
 - **Paraglide:** a key missing in a locale falls back to `baseLocale`. Per-locale gaps are *not* a compiler error (only an unknown message id is) — catch them with inlang lint / Sherlock.
 
-Posture: never crash, fall back to base locale, log the gap. Add a CI key-parity check (inlang CLI, `i18next-parser`, or next-intl `createMessagesDeclaration` to turn gaps into type errors).
+Posture: never crash, fall back to base locale, log the gap. Two CI guards keep
+this true over time: a **key-parity check** (inlang CLI, `i18next-parser`, or
+next-intl `createMessagesDeclaration` to turn gaps into type errors), and a
+**no-literal-string lint** (`eslint-plugin-i18next`'s `no-literal-string`, or
+`react/jsx-no-literals`) so new hardcoded UI strings can't land after
+extraction — without it the extraction work silently regresses.
 
 ### 8. Locale Fallback Chains
 
@@ -195,6 +214,7 @@ Language (what to translate) is independent from region (currency, date/number c
 - [ ] Pluralization uses platform-native syntax AND only the CLDR categories each language has (ja/ko/id: `other` only)
 - [ ] Formatting via `Intl`/library formatters, never hand-formatted in text; currency from region, not language
 - [ ] Missing-key fallback configured per library — degrade to base locale, never crash
+- [ ] CI guards on: key-parity check + no-literal-string lint (§7)
 - [ ] Locale-aware sorting via `Intl.Collator`; explicit `timeZone` for SSR dates
 - [ ] Language persistence: cookie (web), localStorage (mobile)
 - [ ] SEO: `<html lang>`, `hreflang` alternates (web only)

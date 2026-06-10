@@ -41,11 +41,12 @@ Describe the ideal end state 12 months out. Does this plan move toward or away f
 **SCOPE EXPANSION** — run all three:
 1. **10x check:** What's the version 10x more ambitious that delivers 10x more value for 2x the effort? Describe it concretely.
 2. **Platonic ideal:** If the best engineer in the world had unlimited time and perfect taste, what would this look like? What would the user feel? Start from experience, not architecture.
-3. **Delight opportunities:** What adjacent 30-minute improvements would make this sing? List at least 3.
+3. **Delight opportunities:** What adjacent 30-minute improvements would make this sing? List at least 3 now — the Delight Opportunities required output grows the list to 5+ by review's end.
 
 **HOLD SCOPE** — run this:
 1. **Complexity check:** >8 files or >2 new classes/services is a smell — challenge whether the goal needs fewer moving parts.
 2. What is the minimum set of changes that achieves the stated goal? Flag deferrable work.
+3. **10x check (optional here):** run it only if the plan smells under-ambitious. Surfacing a better version is allowed even while holding scope; act on it only if the user re-picks the mode.
 
 **SCOPE REDUCTION** — run this:
 1. **Ruthless cut:** What is the absolute minimum that ships value? Everything else is deferred. No exceptions.
@@ -179,7 +180,7 @@ Test ambition check (all modes): the test that lets you ship at 2am Friday; the 
 
 Test pyramid check: many unit, fewer integration, few E2E — or inverted? Flakiness risk: flag tests depending on time, randomness, external services, ordering. Load/stress test requirements for frequently-called or data-heavy codepaths.
 
-For LLM/prompt changes: check `CLAUDE.md` for the "Prompt/LLM changes" file patterns. If this plan touches any, state which eval suites must run, which cases to add, what baselines to compare against.
+For LLM/prompt changes: check the project-conventions file (e.g. `CLAUDE.md`) for prompt/LLM-change file patterns. If this plan touches any, state which eval suites must run, which cases to add, what baselines to compare against.
 
 ## Section 7: Performance Review
 * N+1 queries. For every new relation traversal: eager loading (Drizzle `with`, SQLAlchemy `joinedload`, etc.)?

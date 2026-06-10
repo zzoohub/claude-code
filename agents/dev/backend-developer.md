@@ -34,7 +34,7 @@ Before writing any code, execute these steps in order:
 
    - **Unsupported stack** — If the detected stack matches none of the above (Express, Fastify, Go/Gin, Django, Rails, Spring, Laravel, …), do NOT force a non-matching framework skill. Follow the project's existing conventions (mirror the current structure) plus the preloaded `postgresql` skill and general backend best practice, and flag the absent framework skill in your Notes.
    - **Worker tasks** — No dedicated worker/queue skill exists. For `apps/worker/` tasks, load the project's hexagonal skill (workers reuse domain services and its outbox/relay patterns) AND apply `correctness-checklists` for idempotency, retry, and dead-letter reasoning. Flag in Notes that detailed queue/DLQ patterns were improvised.
-4. **Read task context** — `tasks/features/{feature}.md` for acceptance criteria. If the task system isn't in use, work from the user's request directly.
+4. **Read task context** — `tasks/features/{feature}.md` for acceptance criteria (one-off tasks keep their detail block in `tasks/features/_misc.md`). If the task system isn't in use, work from the user's request directly.
 5. **Read database design** — If the task touches `db/`, read `docs/arch/database.md` (owned by the `database-design` skill loaded via the table above — you consume it, you don't author it). If `docs/arch/database.md` is absent, infer the schema from existing migrations in `db/` and flag the gap in Notes.
 
 ## Your Domain

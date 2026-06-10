@@ -245,8 +245,9 @@ Cap `limit` at the controller level via Zod on the query schema (e.g. `z.coerce.
 
 Use `@nestjs/terminus` for structured health checks. These bypass the domain entirely.
 
-- `/health/live` — always 200 (liveness)
-- `/health/ready` — checks DB connectivity (readiness) via `TypeOrmHealthIndicator.pingCheck("database")`
+- `/health/live` — always 200 (liveness). **No indicators here** — a liveness probe that touches a flaky DB cascade-restarts every replica.
+- `/health/ready` — checks DB connectivity (readiness) via `TypeOrmHealthIndicator.pingCheck("database", { timeout: 1000 })`. Terminus returns **503** automatically on a failed indicator; the timeout keeps a hung DB from stalling the probe.
+- If a global guard/throttler is registered, exempt the health controller (`@SkipThrottle()`, public-route metadata) so probes don't 401/429.
 
 > Healthcheck example: `references/examples-adapters.md`
 
@@ -369,7 +370,21 @@ Mark with `@Global()` when the module should be available everywhere without exp
 
 ---
 
-## Reliability & Observability Ports
+## Enforce the Boundary (CI)
+
+"Domain never imports infrastructure" is a fitness function, not an honor system — and NestJS raises the stakes: DI resolves wiring at runtime, so a leaked import compiles and runs fine. A static rule must catch it (if the `software-architecture` skill is installed, this is its Stage-8 fitness functions at code level):
+
+```js
+// .dependency-cruiser.cjs (excerpt)
+forbidden: [
+  { name: "domain-stays-pure", severity: "error",
+    from: { path: "^src/domain" },
+    to: { path: "^src/(inbound|outbound)|^node_modules/(@nestjs|typeorm)",
+          pathNot: "^node_modules/@nestjs/common" } },  // the @Injectable() concession (§ Service)
+],
+```
+
+Run `depcruise src` in CI next to `tsc --noEmit`, lint, and tests; add `madge --circular src` — circular module imports are NestJS's most common architecture failure (`forwardRef` is the smell, the cycle is the disease).
 
 Cross-cutting infrastructure that must not leak into the domain. Define each as an abstract class (the same DI-token pattern used for repositories); implement as outbound adapters. The architecture-level pattern lives in the software-architecture skill's references (`reliability-patterns.md`, `observability.md`) if installed; otherwise apply the standard patterns inline — outbox, idempotency keys, retry/backoff, structured logging, RED/USE.
 
@@ -385,6 +400,8 @@ Cross-cutting infrastructure that must not leak into the domain. Define each as 
 **`UnitOfWork` over `@Transactional` — but both work**: `UnitOfWork` is the default. The `uow.run(async () => ...)` boundary is visible at the service call site, the implementation is a thin adapter that uses `nestjs-cls` to propagate the scoped `EntityManager`, and there's no third-party dependency. `@Transactional` (`typeorm-transactional`) is an acceptable opt-in trade-off if your team is already invested — same atomicity guarantee, less wiring per call site, but the tx boundary moves into decorator metadata and you take on the lib's maintenance risk. Pick one and stay consistent; don't mix.
 
 For **single-repo transactions** (no cross-repo orchestration), inline `repo.manager.transaction(...)` inside the adapter is still fine — UoW is only needed when multiple repositories must share a tx.
+
+**Optimistic concurrency (lost-update protection)**: any aggregate two clients can update concurrently carries `@VersionColumn()` on its entity. Do conditional updates — `em.update(AuthorEntity, { id, version: expected }, { ...changes, version: expected + 1 })` — and treat `affected === 0` as the conflict: domain conflict error → **409** (or **412** with `If-Match`/ETag, per `api-design.md`). (TypeORM's built-in optimistic check only fires on `save` with a `lock` option — the explicit conditional update is simpler and the boundary stays visible.) Idempotency keys cover the *same* client retrying; the version column covers *different* clients racing — you usually need both.
 
 → Adapter examples: `references/examples-adapters.md`
 
@@ -414,6 +431,7 @@ For **single-repo transactions** (no cross-repo orchestration), inline `repo.man
 |----------|--------|
 | Single-repo transaction? | `repo.manager.transaction(async (em) => ...)` inside the adapter |
 | Cross-repo transaction? | `UnitOfWork` port — `await this.uow.run(async () => { ... })` in the service. CLS propagates the scoped `EntityManager`. Don't open nested transactions. |
+| Lost updates? | `@VersionColumn()` + conditional `em.update(..., { id, version })`; `affected === 0` → 409/412 |
 | Validation? | `nestjs-zod` `createZodDto` + global `ZodValidationPipe` at transport boundary, domain constructors for business rules |
 | Error mapping? | `@Catch()` exception filter in inbound |
 | Business orchestration? | Service impl |
@@ -439,6 +457,8 @@ For **single-repo transactions** (no cross-repo orchestration), inline `repo.man
 - [ ] Repositories read the active `EntityManager` from CLS (`this.em()`) so they participate in any active `UnitOfWork`
 - [ ] Entity <-> domain mapper in outbound
 - [ ] Errors: domain hierarchy (`DomainError` base) -> exception filter -> RFC 9457
+- [ ] Racing aggregates carry `@VersionColumn()`; `affected === 0` writes map to 409/412
+- [ ] Boundary enforced in CI: dependency-cruiser rule + `madge --circular` (see Enforce the Boundary)
 
 ### Framework
 - [ ] Controllers in inbound/ with `@Controller()` decorators

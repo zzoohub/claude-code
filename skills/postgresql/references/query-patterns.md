@@ -154,10 +154,13 @@ SELECT pg_try_advisory_lock(hashtext('import:' || :resource_id));
 SELECT pg_advisory_unlock(hashtext('import:' || :resource_id));
 ```
 
+**Under PgBouncer transaction pooling** (the recommended pool mode — see `production-ops.md`), session-level advisory locks break: acquire and release can land on different backends and the lock leaks. Use the transaction-scoped variant inside one transaction instead — `pg_advisory_xact_lock()` / `pg_try_advisory_xact_lock()` (auto-released at COMMIT/ROLLBACK).
+
 ## 5. Optimistic Locking
 
 ```sql
--- Add version column (database-design includes this in audit patterns)
+-- Add version column (strategy selection — optimistic vs pessimistic — lives in
+-- the database-design skill's acid-transactions reference)
 ALTER TABLE orders ADD COLUMN version INT NOT NULL DEFAULT 1;
 
 -- Update with version check
@@ -265,16 +268,21 @@ REFRESH MATERIALIZED VIEW CONCURRENTLY mv_daily_revenue;
 
 ```sql
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders FORCE ROW LEVEL SECURITY;  -- without FORCE, the table OWNER bypasses RLS
 
 CREATE POLICY tenant_isolation ON orders
-    USING (tenant_id = current_setting('app.tenant_id')::BIGINT);
+    -- Scalar subquery → current_setting() evaluates once per query, not per row.
+    -- NULLIF(..., '') makes an unset/empty GUC fail CLOSED (zero rows) instead of erroring.
+    USING (tenant_id = (SELECT NULLIF(current_setting('app.tenant_id', true), ''))::BIGINT);
 
--- Set per connection/transaction
-SET app.tenant_id = '123';
+-- Set per transaction (SET LOCAL — survives pooled connections; plain SET leaks across reuse)
+BEGIN;
+SET LOCAL app.tenant_id = '123';
 SELECT * FROM orders;  -- automatically filtered to tenant 123
+COMMIT;
 ```
 
-**Pitfall**: Superusers and table owners bypass RLS by default. Test with non-superuser roles.
+**Pitfalls**: superusers and `BYPASSRLS` roles always bypass; the table owner bypasses unless `FORCE` is set — the app must connect as a **non-owner** role. Test with that role, not as yourself. (Tenancy-model choice and the full RLS wiring live in the database-design skill.)
 
 ## 11. Time-Series with Partitioning
 

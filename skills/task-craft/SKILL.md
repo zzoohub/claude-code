@@ -18,7 +18,9 @@ description: |
 # Task Craft — Initial Board from Design Docs
 
 Turn a complete set of design documents into a phased, parallel-safe task board.
-Use this once when starting a new project.
+Use this once when starting a new project. If the board already exists, stop —
+route additions through the add capability (e.g. task-add) instead; re-running
+the bootstrap would overwrite live task status.
 
 ## Inputs
 
@@ -75,6 +77,14 @@ The board is the single source of truth for task state.
 - **Between phases**: Phase N+1 starts only after all Phase N tasks are done.
 - Tasks with no cross-feature dependencies go in the earliest possible phase.
 - Infrastructure / setup tasks go in Phase 1.
+- **Slice vertically, not horizontally.** Get a thin end-to-end path (walking
+  skeleton: one input → core logic → visible output) done by Phase 2 so
+  integration risk surfaces early. Layering horizontally (all types → all
+  parsers → all UI) defers every integration bug to the final phase.
+- **A dependency is a needed output contract** (types, API shape, schema) —
+  not "same area". Depend on the contract task, not the implementation:
+  sequence contract tasks early and both sides parallelize behind them.
+  Over-linked `depends_on` serializes the board for no reason.
 - `task-craft` always groups by **phases**. The iterations grouping (see `references/board-schema.md`) is a brownfield alternative that `task-add` maintains — don't produce it here.
 
 ### Format
@@ -90,14 +100,14 @@ Canonical row schema: `references/board-schema.md`. All writers follow it: the c
 
 | id | feature | task | type | priority | status | assignee | touches |
 |----|---------|------|------|----------|--------|----------|---------|
-| T-001 | infra | Project scaffolding and CI setup | chore | high | backlog | — | package.json, tsconfig.json |
-| T-002 | file-parser | Input schema type definitions | feature | high | backlog | — | src/types/input.ts |
+| T-001 | infra | Scaffold project and CI pipeline | chore | high | backlog | — | package.json, tsconfig.json |
+| T-002 | file-parser | Define input schema types | feature | high | backlog | — | src/types/input.ts |
 
 ## Phase 2 — Core (all parallel, after Phase 1)
 
 | id | feature | task | type | priority | status | assignee | touches |
 |----|---------|------|------|----------|--------|----------|---------|
-| T-003 | file-parser | CSV streaming reader | feature | high | backlog | — | src/parsers/csv.ts |
+| T-003 | file-parser | Implement CSV streaming reader | feature | high | backlog | — | src/parsers/csv.ts |
 ```
 
 ### Task fields
@@ -136,7 +146,7 @@ immediately without reading the entire project.
 
 ## Tasks
 
-### T-002: Input schema type definitions
+### T-002: Define input schema types
 - **type:** feature
 - **phase:** 1
 - **priority:** high
@@ -177,7 +187,7 @@ Each task type implies a different shape for `context` and `acceptance`.
 ## Workflow
 
 1. Read all input documents.
-2. Build a dependency graph: identify which tasks can run in parallel vs. must be sequential.
+2. Build a dependency graph: identify which tasks can run in parallel vs. must be sequential. A dependency is a needed output contract, not topical proximity (see Phase Rules).
 3. Assign tasks to phases (earliest possible phase respecting dependencies).
 4. Create `tasks/board.md` with phase-grouped tables.
 5. Create `tasks/features/{feature}.md` for each feature with full task details.
@@ -198,6 +208,18 @@ Every task must satisfy:
 - **Feature-grouped** — One feature file per feature, matching `docs/prd/features/` filenames.
 - **Type-appropriate acceptance** — See Task Type Guide above.
 
+### Board sizing (sanity envelope)
+
+A typical MVP PRD (4–8 features) lands at **25–60 session-sized tasks in 3–5
+phases**. Outside that envelope, suspect the decomposition before trusting it:
+
+- **100+ tasks** → over-decomposed: you listed steps, not sessions — merge each
+  cluster back into its session-sized parent.
+- **Under ~15 for a multi-feature product** → under-decomposed: apply the
+  3–5-file split heuristic.
+- **7+ phases** → falsely serialized: hunt `depends_on` links that point at
+  implementations instead of contracts.
+
 ---
 
 ## Quality Gates (apply before saving)
@@ -209,6 +231,7 @@ Every task must satisfy:
 - [ ] Every feature in `docs/prd/features/` has a corresponding `tasks/features/` file
 - [ ] `board.md` phases correctly reflect dependency ordering (Phase N depends_on items must be in Phase < N)
 - [ ] Task descriptions are specific enough that a worker agent can start without reading the PRD
+- [ ] Task and phase counts sit inside the sizing envelope (or the deviation is explained)
 
 Fail a gate → revise before saving.
 
@@ -228,6 +251,13 @@ new one), do **not** run the generation workflow and do **not** overwrite
      tasks pointing at non-existent features.
    - **Acceptance quality** — each task is specific, session-sized, and
      type-appropriate.
+   - **State & reference integrity** (boards rot in these spots) — no dangling
+     `depends_on` pointing at an ID that no longer exists (e.g. left by a
+     hard-remove); no task `active` or `done` while one of its dependencies is
+     not `done`; every board row has its `### T-NNN` detail block where one is
+     warranted, and no orphan blocks without a row; `blocked` rows re-validated
+     against their logged reason — the blocker may have shipped, and a stale
+     block hides ready work.
 3. Output a prioritized findings list (🔴 blocker / 🟠 should-fix / 🟡 nit),
    each citing the offending `T-NNN` and a concrete fix. Do **not** rewrite the
    board — propose changes and let the user apply them via the add / status

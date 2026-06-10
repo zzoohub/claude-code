@@ -86,6 +86,8 @@ After drafting, review for: honesty (are competitor strengths acknowledged?), sp
 
 Produce the page in **markdown** by default. Include an HTML block at the top for meta tags (title, description). If the user specifies a different format (HTML, JSX, MDX), adapt accordingly.
 
+When asked to save the draft (and a file-write capability is present), write it to the competitor-pages dir (default `biz/marketing/competitor-pages/{slug}.md`; caller may redirect the `biz/<area>/` root) — the published page itself lives wherever the project's site content lives.
+
 ---
 
 ## Tone Calibration

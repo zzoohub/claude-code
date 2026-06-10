@@ -102,6 +102,14 @@ Trigger → Survey → Dynamic Offer → Confirmation → Post-Cancel
 - Route to customer success for a call
 - Personal email from founder for smaller companies
 
+### Save-Offer Abuse Guardrails
+
+Any repeatable concession gets farmed — same failure mode as referral fraud (see the growth-loops guardrails, if installed):
+- **Cooldown per customer** — one save discount per ~12 months; a repeat canceler gets the non-discount offers instead
+- **No stacking** — an active save discount and a dunning credit/concession never combine
+- **Track repeat-save rate** — an account "saved" twice in a year is churn with extra steps; route to downgrade or let it go
+- **LTV floor** — skip discounts where remaining expected margin can't cover the concession (the net-incremental-revenue metric below catches this after the fact; the floor prevents it up front)
+
 ---
 
 ## Refunds, Proration & Credits
@@ -218,7 +226,7 @@ Lead times below are directional rules-of-thumb from common SaaS practice, not m
 
 ## Metrics
 
-Save rate is a vanity metric on its own — only count a save that survives the post-save retention window at non-negative net margin (see Common Mistakes: "Not tracking save offer LTV"). Track the durability and economics metrics alongside it.
+Save rate is a vanity metric on its own — only count a save that survives the post-save retention window at non-negative net margin (see Common Mistakes: "Not tracking save offer LTV"). Track the durability and economics metrics alongside it. Benchmarks below skew B2C/PLG; B2B (sales-led, annual contracts) sees fewer impulse cancels and more renewal-time churn — calibrate per segment.
 
 | Metric | Target |
 |--------|--------|

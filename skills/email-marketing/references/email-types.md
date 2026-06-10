@@ -55,7 +55,7 @@ Complete catalog of email types by category for SaaS lifecycle marketing.
 | Daily/weekly summary | Scheduled | Show value, drive return |
 | Key event notification | Specific event | Real-time value |
 | Milestone celebration | User reaches milestone | Positive reinforcement |
-| Inactivity alert | 14-30 days of product inactivity | Re-engage |
+| Inactivity alert | 14-30 days of product inactivity | Re-engage (single nudge — the full re-engagement *sequence* triggers later, at 30-60d; see `sequence-templates.md`) |
 
 ---
 

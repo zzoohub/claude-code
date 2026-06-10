@@ -42,8 +42,8 @@ platform-specific hook strategy.
 
 ### Why Hook Rate Matters
 
-- 90% of TikTok ad recall impact occurs in the first 6 seconds
-- Memory embedding requires ~2.5 seconds of attention (research from The Research Agency)
+- 90% of TikTok ad recall impact occurs in the first 6 seconds (TikTok Marketing Science — "cumulative impact on ad recall")
+- Memory embedding requires ~2.5 seconds of attention (research from The Research Agency — vendor research, treat as directional)
 - Higher retention/watch-time raises the creative's quality score, which boosts delivery and lowers effective CPM
 - Strong hook + weak hold = fix the body; Weak hook = nothing else matters
 

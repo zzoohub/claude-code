@@ -1,6 +1,6 @@
 # Copy Editing: The Seven Sweeps Framework
 
-Systematic editing through seven sequential passes, each focusing on one dimension. After each sweep, loop back to check previous sweeps aren't compromised.
+Systematic editing through seven sequential passes, each focusing on one dimension (adapted from Copyhackers' "Seven Sweeps" editing method — Joanna Wiebe). After each sweep, loop back to check previous sweeps aren't compromised.
 
 ## Table of Contents
 

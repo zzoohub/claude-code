@@ -55,3 +55,25 @@ These auto-fail patterns apply everywhere regardless of domain:
 □ Sensitive data in error responses or logs (CWE-209, CWE-532)
 □ Weak or deprecated cryptographic algorithm (CWE-327)
 ```
+
+## Before You Report — Exploitability Discipline
+
+A security checklist that cries wolf gets ignored. Before reporting a finding:
+
+1. **Trace the source** — is the input actually attacker-controlled, or does it originate from config or a trusted service? Name the entry point.
+2. **Check one layer up** — middleware authz, framework auto-escaping, schema validation, or a gateway control may already guard what looks unguarded locally. A guard that lives upstream is still a guard; cite it instead of flagging its local absence.
+3. **Check context applicability** — webhook/cloud/storage items assume those features exist; don't apply bucket-policy findings to a CLI tool.
+4. **State the precondition with the finding** — "exploitable when X" beats "vulnerable"; it gives the reader both the risk and the test.
+
+## Review Output Contract
+
+This is **Pass 1 (blocking)**, alongside `correctness-checklists`: a confirmed critical/high finding stops the commit until fixed or explicitly accepted with written justification.
+
+```markdown
+- **[Issue Name]** (CWE-XXX, OWASP A0X) — `file:line` — severity: critical | high | medium
+  - Problem: [one line]
+  - Exploit path: [who controls the input, what they reach — the precondition]
+  - Fix: [specific remediation]
+```
+
+Severity = impact × exploitability: **critical** — remote compromise, auth bypass, secrets exposure, injection with attacker-controlled input; **high** — exploitable with preconditions, sensitive-data exposure; **medium** — hardening gaps (headers, rate limits, verbose errors). Medium escalates when findings chain (verbose error + IDOR = targeted exfiltration) — report chains explicitly.

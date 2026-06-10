@@ -57,9 +57,16 @@ Every interactive element and every screen exists in one of a finite set of stat
 | **Refreshing** | Content is being updated | Subtle indicator (pull-to-refresh spinner). Don't replace visible content with skeleton. |
 | **Offline** | No network connection | Show cached content if available. Queue actions for sync. Banner: "You're offline — changes will sync when connected." |
 
+The 7 states are primitives that **compose**: real screens hit combinations —
+Refreshing while Partial (retrying just the failed pane), an Error surfaced
+over Loaded (a background sync fails after content rendered), Offline on top
+of Partial. Design the two or three composites your data shape makes likely;
+the rule that resolves them: never blank content the user already has.
+
 ### State Checklist
 Before finalizing any screen:
 - [ ] Designed all 7 states (or explicitly documented why a state is impossible)
+- [ ] Likely composite states identified (e.g. Refreshing-while-Partial) and the existing-content rule holds
 - [ ] Empty state has actionable guidance
 - [ ] Error state has recovery path
 - [ ] Loading state matches expected wait time

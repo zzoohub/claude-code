@@ -23,7 +23,7 @@ AEO sits between traditional SEO and GEO. SEO gets you ranked. AEO gets you sele
 
 ### Why AEO Matters Now
 
-Zero-click searches are growing, driven largely by AI Overviews and other SERP features. Current estimates cluster around 58-69% of Google searches ending without a click to a traditional result (Similarweb ~69%, Semrush ~58-60%; figures vary by method and region). Users get the answer directly from the SERP. If your content is not formatted to be that answer, you lose visibility even if you rank well.
+Zero-click searches are growing, driven largely by AI Overviews and other SERP features. Current estimates cluster around 58-69% of Google searches ending without a click to a traditional result (SparkToro/Similarweb June 2026: ~68% of US searches, up from ~58.5% in 2024; Semrush ~58-60%; figures vary by method and region). Users get the answer directly from the SERP. If your content is not formatted to be that answer, you lose visibility even if you rank well.
 
 Voice search continues to exist via smart speakers and mobile assistants, though standalone voice-SEO has been deprioritized as AI assistants answer conversationally. Voice queries use natural, question-like phrasing, and voice assistants typically read a single answer, often pulled from featured snippets or structured content.
 

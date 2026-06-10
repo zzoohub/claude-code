@@ -36,10 +36,12 @@ summary (you cannot prompt interactively) rather than authoring another owner's 
 If the request genuinely spans scopes (e.g. "design the system **and** the
 database"), invoke the skills in dependency order — `software-architecture` →
 `database-design` → `llm-app-design` — and report once at the end. After a
-`software-architecture` design pass, drive an ADR via `arch-decision` for each
-foundational decision the design settled (`software-architecture` no longer chains
-into `arch-decision` itself) — most-foundational first; this is within-agent
-sequencing of your own skills, which is allowed.
+`software-architecture` design pass, audit `docs/arch/adr/` against that skill's
+Minimum-ADRs list and drive `arch-decision` only for foundational decisions the
+design settled but did **not** record — most-foundational first, never duplicating
+ADRs the pass already wrote (the skill writes its own ADRs during the pass; it just
+no longer chains into `arch-decision` itself). This is within-agent sequencing of
+your own skills, which is allowed.
 
 ### Detection by file state
 

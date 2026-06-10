@@ -16,7 +16,7 @@
 
 ## What Is Carrying Capacity?
 
-Carrying Capacity (CC) is the natural equilibrium MAU a product settles at without paid marketing. It's borrowed from ecology — just as an ecosystem can only sustain a certain population, a product can only sustain a certain user base given its organic inflow and churn rate.
+Carrying Capacity (CC) is the natural equilibrium MAU a product settles at without paid marketing. It's borrowed from ecology — just as an ecosystem can only sustain a certain population, a product can only sustain a certain user base given its organic inflow and churn rate. (The ecology metaphor is population biology's; as a product metric this framing was popularized by Toss founder Seung-gun Lee's PO SESSION lecture, 2022.)
 
 ```
 CC = Daily Organic Inflow / Daily Churn Rate
@@ -134,17 +134,19 @@ This is the master decision. Every product should be assessed regularly (weekly 
 | **Activation rate** | <10% | 10-30% | >30% |
 | **Organic inflow** | Near zero or declining | Steady | Growing without paid push |
 | **Usage frequency** | <1x/month | 1-3x/month | >3x/month |
-| **Time to Aha Moment** | >14 days or undefined | 3-14 days | <3 days |
+| **Time to Aha Moment** | >14 days (undefined → run Aha discovery first, don't kill on a missing metric) | 3-14 days | <3 days |
 | **Qualitative signal** | Users don't care it exists | Users say "nice to have" | Users say "very disappointed" without it |
 
 ### Kill Criteria
 
-A product should be killed (or pivoted) when:
+A product should be killed (or pivoted) when **several of these hold together** — no single bullet
+is sufficient on its own:
 - No retention plateau after 8+ weeks with real users
 - CC is declining despite product improvements
 - Activation rate stays <10% after 3+ onboarding iterations
 - Usage frequency <1x/month (habitual use is impossible)
-- Sean Ellis survey: <40% "very disappointed"
+- Sean Ellis survey: <25% "very disappointed", and not improving across waves (25-40% is
+  "approaching PMF" per the interpretation table below — a segment-and-fix signal, not a kill signal)
 
 **Important**: Kill decisions should be made on data, not emotion. The sunk cost fallacy is the biggest enemy.
 
@@ -167,7 +169,7 @@ Scale only when:
 - CC is rising consistently (30d trend)
 - Activation rate >30%
 - Organic inflow is growing
-- Unit economics are healthy (LTV:CAC > 3:1 or trending toward it)
+- Unit economics are healthy (margin-adjusted LTV:CAC > 3:1 or trending toward it)
 
 **Scaling before PMF = burning money.** Every dollar spent acquiring users who won't retain is wasted.
 
@@ -219,14 +221,16 @@ The raw percentage matters less than understanding **who** is very disappointed 
 3. **Cross-reference with Aha Moment**: Do "very disappointed" users overwhelmingly complete the Aha Moment action? If yes, the Aha Moment is validated. If not, the Aha Moment hypothesis may be wrong.
 4. **Track over time**: Run the survey quarterly. A rising "very disappointed" percentage after product changes confirms you're moving in the right direction.
 
-### PostHog MCP Implementation
+### PostHog Implementation
 
-| Step | MCP Tool | How |
-|------|----------|-----|
-| Create survey | `survey-create` | Set question, options, targeting rules |
-| Check responses | `survey-get` / `survey-stats` | Read response counts and distribution |
-| Analyze segments | `query-run` (HogQL) | Join survey responses with user properties to find patterns |
-| Track over time | `surveys-global-stats` | Compare response distributions across survey runs |
+Via a PostHog capability (MCP tools or the UI), if available:
+
+| Step | PostHog Feature | How |
+|------|----------------|-----|
+| Create survey | **Surveys** (create) | Set question, options, targeting rules |
+| Check responses | **Surveys** (per-survey stats) | Read response counts and distribution |
+| Analyze segments | **HogQL** | Join survey responses with user properties to find patterns |
+| Track over time | **Surveys** (cross-survey stats) | Compare response distributions across survey runs |
 
 ---
 
@@ -248,17 +252,21 @@ Each component has its own levers:
 
 ### Viral K and CC
 
-If your product has a referral loop:
+If your product has a referral loop, K amplifies CC (the K *model* — formula, amplification math,
+target-setting — is owned by a growth-loops capability; this skill owns measuring the live value
+and feeding it into CC):
 
 ```
-Viral K = Invitations per user × Conversion rate of invitations
+Measured live K (per cohort) = referral_completed events attributed to the cohort / cohort size
+                               (over the cohort's referral window — a per-lifetime K)
 
-If K < 1: CC = Organic Inflow / (Churn Rate - (K × Churn Rate))
+If K < 1: CC = Organic Inflow / (Churn Rate × (1 − K))   — the 1/(1−K) amplification
 If K = 1: CC → ∞ (theoretically, growth is self-sustaining)
 If K > 1: Exponential growth (extremely rare, usually temporary)
 ```
 
-Most products have K between 0.1 and 0.5. Even small K values meaningfully increase CC.
+Even small measured K values meaningfully increase CC. Instrument `invite_sent` /
+`referral_completed` (see the event-tracking reference) so K is a measured input, not a guess.
 
 ### Segment-Level CC
 
@@ -345,7 +353,7 @@ CC measures product health (user retention). It doesn't measure revenue health. 
 | CC rising + revenue rising | Healthy | Keep going. |
 | Both declining | Urgent | Fix retention first (see Kill/Keep/Scale above). |
 
-For products without paid acquisition, track your **organic ratio** (organic signups / total signups). Target > 70%. If it's high and CC is rising, your business is fundamentally healthy.
+If you run paid acquisition, track your **organic ratio** (organic signups / total signups). Target > 70% — above that, growth isn't ad-dependent. If it's high and CC is rising, your business is fundamentally healthy. (Without paid spend the ratio is ~100% by construction — watch the CC trend instead.)
 
 ---
 

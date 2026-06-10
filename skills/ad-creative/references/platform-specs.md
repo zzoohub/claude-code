@@ -39,7 +39,7 @@ Detailed character limits, image dimensions, and format variations for each ad p
 
 | Element | Limit |
 |---------|-------|
-| Short headline | 30 characters (up to 5) |
+| Headline | 30 characters (up to 15; keep ≥1 under 15 chars) |
 | Long headline | 90 characters (up to 5) |
 | Description | 90 characters (up to 5) |
 | Business name | 25 characters |

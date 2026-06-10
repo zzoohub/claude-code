@@ -126,7 +126,7 @@ From changed API files without matching tests, identify endpoints:
 3. **Find dev server port:**
    ```bash
    # Check common ports — any HTTP response (even 401/302) means the server is there
-   for port in 3000 3001 4000 5000 5173 8000 8080 9000; do
+   for port in 3000 3001 4000 4321 5000 5173 8000 8080 8787 9000; do
      curl -s -o /dev/null -w "%{http_code}" "http://localhost:$port" 2>/dev/null | grep -qv "^000$" && echo "Found: $port" && break
    done
    ```

@@ -82,6 +82,8 @@ Strategy, sequence design, and execution for email marketing across SaaS lifecyc
 
 ## Default Output Format
 
+**Output:** when asked to save a sequence/campaign and a file-write capability is present, write to the email content dir (default `biz/marketing/content/email/`; caller may redirect the `biz/<area>/` root) — otherwise return inline.
+
 When creating email sequences, produce this structure unless the user requests something different:
 
 ### Sequence Overview

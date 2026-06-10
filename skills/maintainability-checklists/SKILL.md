@@ -31,7 +31,7 @@ The review lens nothing else covers. Tests prove *behavior*; linters and type-ch
 | Type-checker (tsc strict/mypy/rustc) | within-language type errors, simple nullability |
 | Tests | behavioral correctness of deterministic logic |
 | `correctness-checklists` | races, idempotency, cache invalidation, partial-failure, boundary defects |
-| `/simplify`, `/code-review` | reuse / efficiency / micro-simplification cleanups |
+| A dedicated cleanup pass (e.g. `/simplify` in Claude Code), if available | reuse / efficiency / micro-simplification cleanups |
 
 This skill is for **staff-level design judgment** and the **survive-prod bugs** those miss. Pick sections by what the diff changes.
 
@@ -45,6 +45,7 @@ This skill is for **staff-level design judgment** and the **survive-prod bugs** 
 - **Shotgun surgery / change amplification** — one logical change forces edits across many files. The strongest signal a module boundary is drawn wrong.
 - **Inappropriate intimacy / circular dependency** — two modules know each other's details; neither can be understood, changed, or tested in isolation.
 - **God object / manager class** — one unit accumulates everything and becomes a gravity well for every future change.
+- **Dependency direction violation** — domain/policy code imports infrastructure or framework (ORM entities in business logic, HTTP types in the domain). If the project carries an import-boundary CI rule (dependency-cruiser, import-linter, workspace crates), point at it; hand-review this only where no such guard exists.
 
 ## Abstraction Fit
 
@@ -102,3 +103,5 @@ Coverage % says lines ran, not that they're guarded. Tests are code too; review 
 ```
 
 These are Pass 2 (informational). This is the non-blocking layer within the reviewer gate — security/correctness findings block, these inform (unless project policy escalates them). Don't block a PR on them unless project policy says so — but raise high coupling and missing abstractions early, because they get exponentially more expensive to fix the longer they live.
+
+If you can't fill the **Cost** line with a concrete future change that gets expensive, it isn't a finding — drop it. Design opinions without a named cost are noise.

@@ -46,6 +46,13 @@ A type scale, not ad-hoc font sizes. Every text in the UI maps to a named style.
 
 Why fixed scale: Prevents the "is this 15px or 16px?" decision. Every text element picks from the scale. If nothing fits, the scale needs a new entry — not a one-off value.
 
+The scale's line-heights are Latin-calibrated. Shipping CJK (ko/ja/zh)? Body
+line-height needs to loosen (~1.7×) and the font stack needs per-script
+families (Inter has no CJK coverage); translated strings run 30–40% longer
+than English, so avoid fixed-width buttons. Locale routing, formatting, and
+expansion testing belong to the i18n skill, if available — the tokens that
+absorb them belong here.
+
 → Full type tokens, responsive scaling, font stack: `references/typography.md`
 
 ## Motion
@@ -81,7 +88,7 @@ Shadows communicate depth and hierarchy. Like colors and spacing, shadow values 
 
 Dark mode shadows use higher opacity so they stay visible against an already-dark surface — subtle shadows disappear on dark backgrounds. The semantic shadow tokens remap automatically per theme.
 
-> Full shadow definitions, dark theme overrides, and platform implementation: `references/tokens.md`
+> Full shadow definitions and dark theme overrides: `references/tokens.md`. Platform implementation: `references/platform-web.md` / `references/react-native/platform.md`.
 
 ## Z-Index
 
@@ -157,6 +164,9 @@ Headless hooks own behavior: ARIA, keyboard, focus, state. Styled components own
 → React implementations (JSX, hooks, Context): `references/react/components.md`
 → React 19 API changes: `references/react/react-19.md`
 → shadcn/ui + cva + Radix: `references/shadcn.md`
+→ Deep React composition refactors (boolean-prop elimination, compound
+  migration paths): the `composition-patterns` skill, if available — this
+  skill owns the API choice and tokens, that one the refactoring playbook.
 
 ## Icons
 
@@ -174,7 +184,7 @@ Built into every component from the start. Not a review step after implementatio
 |-------------|---------|-----|
 | Text contrast | 4.5:1 | WCAG AA readability |
 | UI contrast | 3:1 | Controls must be distinguishable |
-| Focus indicator | 2px visible outline | Keyboard users need to see focus |
+| Focus indicator | 2px visible outline, 3:1 contrast | Keyboard users need to see focus |
 | Touch targets | 44×44pt | Fingers are imprecise |
 
 Color is never the sole indicator of state. Error states use color + icon + text. Disabled states use opacity + cursor change.
@@ -195,6 +205,22 @@ Color is never the sole indicator of state. Error states use color + icon + text
 - **Framework-specific patterns?** → See `references/react/` or `references/react-native/` for implementation details.
 - **Using Tailwind?** → For Tailwind v4, wire tokens via CSS `@theme` (the current default); for legacy v3, map them in `tailwind.config.js`. See `references/platform-web.md`.
 - **Cross-platform?** → Tokens defined once, transformed per platform. See `references/pipeline.md`.
+
+## Standing Guards (keep the system enforced)
+
+"Never hardcode" rules decay without automation — wire these once, then the
+system defends itself:
+
+- **Stylelint** (web): `declaration-strict-value` for `color`, `background-color`,
+  `border-color`, `fill`, `box-shadow`, `z-index`, `font-size` — values must be
+  `var(--*)` / theme tokens, not literals.
+- **Grep gate** (any stack, CI): hex literals (`#[0-9a-fA-F]{3,8}\b`), raw
+  `z-index: [0-9]`, inline `box-shadow:` with lengths, and raw `transition`
+  durations are allowed **only** under the tokens directory — fail the build
+  elsewhere.
+- **Escape hatch with a trail**: a justified exception gets a
+  `/* token-exempt: reason */` comment the gate whitelists — silent exceptions
+  are how drift starts.
 
 ## Platform References
 

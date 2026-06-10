@@ -66,7 +66,7 @@ This skill produces architecture-level decisions. It deliberately **excludes** t
 | Stage | Name | What It Answers | Output File |
 |---|---|---|---|
 | 0 | Auto-Classification | What type of software? What dimensions matter? | — |
-| 1 | Problem Definition | What problem, for whom, why now? | `docs/arch/context.md` §1-2, §5-6 |
+| 1 | Problem Definition | What problem, for whom, why now, at what scale? | `docs/arch/context.md` §1-2, §5-6 |
 | 2 | ASR Extraction & Utility Tree | Which quality attributes drive the architecture? | `docs/arch/context.md` §3 |
 | 3 | Domain Model | What are the core concepts and boundaries? | `docs/arch/context.md` §4 |
 | 4 | Pattern Selection & ATAM Gate | What patterns satisfy the architecture drivers? | `docs/arch/system.md` §1 |
@@ -186,6 +186,9 @@ Before finalizing, verify:
 
 - [ ] Every [H,H] ASR from the utility tree has a corresponding pattern in the design
 - [ ] ATAM gate passed — all [H,H] items verified against chosen patterns
+- [ ] Every [H,H] ASR also has a *standing guard* — a CI fitness function or a runtime SLO alert, not just the one-time ATAM check
+- [ ] Scale envelope computed from the PRD (peak RPS, data growth, working set) — and every pattern escalation cites one of its numbers or a non-scale driver
+- [ ] Every generic subdomain has a buy-over-build decision; any built in-house carries an ADR
 - [ ] Ubiquitous language terms match code terms 1:1 *within each bounded context* (the same term may legitimately differ across contexts)
 - [ ] Fitness functions defined for key architectural properties (3-5 CI checks)
 - [ ] Quality targets have numbers (not "fast" or "reliable" — actual thresholds)
@@ -225,22 +228,28 @@ instead — but say so explicitly first.
 2. Audit against the **Self-Review checklist** above, the utility tree's
    `[H,H]` ASRs, and the ATAM gate. Those checklist items *are* the review
    criteria — you are checking whether the existing design still passes them.
-3. Rank every finding with the severity rubric below.
-4. Disposition each finding:
+3. **Drift check** — if an implementation exists alongside the docs (an
+   `apps/` or `src/` tree), sample-verify the load-bearing claims: declared
+   containers exist, the declared service pattern is visible in the code
+   layout, declared fitness functions actually run in CI. Docs↔code drift on
+   a load-bearing claim is a finding (🟠 by default), whichever side is wrong.
+4. Rank every finding with the severity rubric below.
+5. Disposition each finding:
    - 🔴 / 🟠 fixable now and unambiguous → targeted patch to the affected doc.
    - Accepted risk / won't-fix → append to the Risk Register in `risks.md`.
    - Needs user input → append to Open Questions in `risks.md`.
    - Implies a new decision → new ADR via a standalone-ADR capability (e.g. the `arch-decision` skill, if available).
-5. **Never** create a separate `review.md` — findings live in the docs they
+6. **Never** create a separate `review.md` — findings live in the docs they
    concern. Return a severity-ranked summary of what you found and did.
 
 ### Severity rubric
 
 - 🔴 **Critical** — correctness / security / data-loss; ATAM gate failure; an
   `[H,H]` ASR from the utility tree has no covering pattern.
-- 🟠 **High** — deviates from a recorded ADR without justification; an external
-  dependency missing a timeout / retry / degradation strategy; an N+1 or
-  thundering-herd baked into the data flow.
+- 🟠 **High** — deviates from a recorded ADR without justification; docs↔code
+  drift on a load-bearing claim; an external dependency missing a timeout /
+  retry / degradation strategy; an N+1 or thundering-herd baked into the data
+  flow.
 - 🟡 **Medium** — structural improvement; a doc gap that fails the 6-Month Test.
 - 🟢 **Low** — wording, nits, optional consistency fixes.
 
@@ -254,7 +263,7 @@ Existing Schema" checklist, if available) rather than re-deriving criteria here.
 
 ### Reading Order
 
-**Always read**: `design-flow.md` + all three templates.
+**Always read**: `design-flow.md` + all four templates.
 
 **Read based on Stage 0 findings**:
 - Pattern selection -> `system-architecture.md`, `service-architecture.md`

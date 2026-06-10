@@ -168,9 +168,9 @@ If `checklist.md` exists at the project root or in `docs/`, read it and apply it
 
 | Level | Category | Examples |
 |-------|----------|----------|
-| CRITICAL | Security (OWASP A01-A10) | Secrets exposure, SQLi, RCE, Broken Auth, IDOR, Race condition on payment, SSRF to cloud metadata, Broken crypto |
-| HIGH | Security + Data Safety | XSS, CSRF, Mass assignment, Sensitive data in response, N+1 on hot path, Missing validation on file upload |
-| MEDIUM | Code Quality | Missing rate limiting, Verbose errors, Missing security headers, Weak logging, Dead code, Test gaps, Type coercion bugs |
+| CRITICAL | Security + money/data correctness | Secrets exposure, SQLi, RCE, Broken Auth, IDOR, SSRF to cloud metadata, Broken crypto; double-charge / lost update / TOCTOU on money or shared state |
+| HIGH | Security + data safety | XSS, CSRF, Mass assignment, Sensitive data in response, Missing validation on file upload; races / idempotency / cache-invalidation bugs off the money path, boundary type coercion that corrupts stored data, N+1 on a hot path |
+| MEDIUM | Hardening + Pass-2 design | Missing rate limiting, Verbose errors, Missing security headers, Weak logging, Test gaps, maintainability smells (Pass 2 — informational) |
 
 ---
 

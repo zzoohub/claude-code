@@ -13,8 +13,10 @@ description: |
   product's entire app structure (use ux-design — it produces the app-level UX
   plus all initial screens); conversion/funnel-driven flow optimization (use
   cro — it diagnoses the fix, this skill specs the resulting screen);
-  animation/motion polish (use motion); visual styling, color palettes, design
-  tokens (use design-system); or frontend/UI implementation code.
+  3D/XR/spatial screens (use ux-design — this skill carries no 3D/XR
+  methodology); animation/motion polish (use motion); visual styling, color
+  palettes, design tokens (use design-system); or frontend/UI implementation
+  code.
 ---
 
 # Screen Design — Single Screen on Existing App
@@ -49,8 +51,10 @@ Produces one `docs/ux/screens/{screen}.md` covering:
 - Accessibility notes
 
 It updates `docs/ux/ux-design.md` ONLY if IA changes (e.g., new nav entry, new
-route); otherwise it leaves that file alone. See **Workflow** below for the
-procedure.
+route); otherwise it leaves that file alone. A **brand-new screen is always an
+IA change** — at minimum its route and the ToC link to the new screen file
+(patch those entries, nothing else). A redesign of an existing screen touches
+nothing app-level. See **Workflow** below for the procedure.
 
 ## What This Skill Does NOT Do
 
@@ -73,6 +77,8 @@ covers visual tokens and components, if available.
 3. **Discover the screen** — minimum questions:
    - What is the user's ONE goal on this screen?
    - Where do they arrive from? Where do they go next?
+   - What data appears, and what is its worst case (none / slow / partially
+     failed / stale / huge)? — the answer drives the 7 states.
    - Any platform-specific constraints (mobile vs desktop)?
 4. **Design with all 7 states** — empty, loading, loaded, error, partial,
    refreshing, offline

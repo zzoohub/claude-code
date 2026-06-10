@@ -1,6 +1,6 @@
 # Persuasion Frameworks
 
-Canonical copywriting frameworks. Single source of truth for the structures — channel-specific skills (ad-creative, social-content) apply them to their medium; marketing-psychology cross-references them for completeness.
+Canonical copywriting frameworks. Single source of truth for the structures — channel-specific skills (ad-creative, social-content) apply them to their medium; email-marketing and marketing-psychology cross-reference them.
 
 ---
 
@@ -33,7 +33,7 @@ Schwartz's 5 Awareness Levels (Eugene Schwartz, *Breakthrough Advertising*, 1966
 
 ## PAS — Problem, Agitate, Solve
 
-The workhorse of direct response. Works because loss aversion makes losses feel roughly 2x stronger than equivalent gains (λ≈2.25; Tversky & Kahneman, 1992 — the concept was introduced in Kahneman & Tversky, 1979).
+The workhorse of direct response (folklore formula, popularized by Dan Kennedy). Works because loss aversion makes losses feel roughly 2x stronger than equivalent gains (λ≈2.25; Tversky & Kahneman, 1992 — the concept was introduced in Kahneman & Tversky, 1979).
 
 | Step | Purpose | Technique |
 |------|---------|-----------|
@@ -55,7 +55,7 @@ CTA:      [Single action]
 
 ## AIDA — Attention, Interest, Desire, Action
 
-The oldest framework (Elias St. Elmo Lewis, 1898). Still effective when you need to create awareness and desire from mild interest.
+The oldest framework (conventionally attributed to E. St. Elmo Lewis, 1898 — the historical record is murkier). Still effective when you need to create awareness and desire from mild interest.
 
 | Step | Purpose | Technique |
 |------|---------|-----------|
@@ -70,7 +70,7 @@ The oldest framework (Elias St. Elmo Lewis, 1898). Still effective when you need
 
 ## BAB — Before, After, Bridge
 
-Best for transformation-based messaging. The brain processes contrast — showing the gap between current pain and desired outcome creates motivation, and the product is the bridge.
+Best for transformation-based messaging (copywriting folklore; popularized by Buffer's content team, ~2014). The brain processes contrast — showing the gap between current pain and desired outcome creates motivation, and the product is the bridge.
 
 | Step | Purpose | Technique |
 |------|---------|-----------|
@@ -84,7 +84,7 @@ Best for transformation-based messaging. The brain processes contrast — showin
 
 ## 4Ps — Promise, Picture, Proof, Push
 
-Effective for product-aware audiences where trust and skepticism management are the bottleneck. Each P builds on the last.
+Effective for product-aware audiences where trust and skepticism management are the bottleneck (credited to Henry Hoke Sr.; the P-order varies by teacher). Each P builds on the last.
 
 | Step | Purpose | Technique |
 |------|---------|-----------|
@@ -99,7 +99,7 @@ Effective for product-aware audiences where trust and skepticism management are 
 
 ## SSS — Star, Story, Solution
 
-The framework for UGC and testimonial-style copy. A relatable protagonist (the Star) tells their story of struggle and discovery.
+The framework for UGC and testimonial-style copy (popularized by Gary Halbert). A relatable protagonist (the Star) tells their story of struggle and discovery.
 
 | Step | Purpose | Technique |
 |------|---------|-----------|

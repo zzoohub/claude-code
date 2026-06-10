@@ -271,6 +271,8 @@ export class TypeOrmAuthorRepository extends AuthorRepository {
     // resumes AFTER it (no duplicates, no skips).
     const pageEntities = entities.slice(0, limit);
     const items = pageEntities.map(AuthorMapper.toDomain);
+    // `last` is the ENTITY row, not the mapped domain model — the cursor needs
+    // created_at, which the entity carries and domain Author deliberately omits.
     const last = pageEntities[pageEntities.length - 1];
     const nextCursor = hasMore && last ? encodeCursor(last.createdAt, last.id) : null;
 

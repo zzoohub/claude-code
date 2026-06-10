@@ -46,6 +46,8 @@ Bounded palette of raw values. These exist so semantic tokens have something to 
     },
     "blue": {
       "50":  { "$value": "#eff6ff", "$type": "color" },
+      "300": { "$value": "#93c5fd", "$type": "color" },
+      "400": { "$value": "#60a5fa", "$type": "color" },
       "500": { "$value": "#3b82f6", "$type": "color" },
       "600": { "$value": "#2563eb", "$type": "color" },
       "700": { "$value": "#1d4ed8", "$type": "color" },

@@ -26,6 +26,8 @@
 | Error responses use consistent format (same structure for all errors) | Error type enumeration | CWE-203 |
 | HTTP status codes don't reveal business logic state | State inference | CWE-203 |
 
+A structured error envelope (e.g. RFC 9457 `application/problem+json`) satisfies all of the above — and helps the consistent-format item — as long as `detail` stays generic to clients and the internals (stack, query, paths) live only in server-side logs keyed by a correlation id.
+
 **Patterns to catch:**
 - Try/catch that returns `err.message` or `err.stack` to client
 - Framework default error handler enabled in production (Django DEBUG, Express default)

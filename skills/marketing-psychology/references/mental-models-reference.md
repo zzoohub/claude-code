@@ -425,7 +425,7 @@ This catalog distinguishes **persuasion** (psychology applied transparently to h
 - **FTC** has pursued companies for "negative option" and dark-pattern practices (Amazon Prime case, 2023-2025; rule-making continued after the 8th Circuit vacatur in July 2025 — see `churn-prevention/SKILL.md`)
 - **GDPR Art. 7** requires consent to be freely given, specific, informed, and unambiguous, with affirmative action (Recital 32). Pre-ticked boxes are explicitly invalid.
 - **California AB 2863** (eff. 2025-07-01) requires express affirmative consent + same-medium cancellation for subscriptions.
-- **EU Digital Services Act / Digital Markets Act** prohibit dark patterns affecting consumer decisions on platforms.
+- **EU:** the Unfair Commercial Practices Directive (2005/29/EC) is the general dark-pattern rule for any seller; the Digital Services Act's dark-pattern ban (Art. 25) adds to it for designated **online platforms** only — a typical SaaS seller answers to the UCPD, not the DSA (see `churn-prevention/SKILL.md` for the precise scope).
 
 ### The Anti-Catalog
 

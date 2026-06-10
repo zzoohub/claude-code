@@ -54,7 +54,7 @@ Score each recommendation using **ICE**:
 - **Confidence** (1-10): How sure are we this will work? (data > best practice > gut)
 - **Ease** (1-10): How quickly can this be implemented?
 
-ICE Score = (Impact + Confidence + Ease) / 3. Rank recommendations by score. Present the top items first.
+ICE Score = (Impact + Confidence + Ease) / 3. Rank recommendations by score. Present the top items first. (When a reference's output format uses Priority: High/Medium/Low, bucket the ICE ranking into those bands — top third = High.)
 
 ### 5. Generate Recommendations
 Structure output as:
@@ -75,6 +75,7 @@ Structure output as:
 | Popups/modals/overlays/banners | `references/popup-cro.md` |
 | In-app upgrade/paywall/upsell | `references/paywall-upgrade-cro.md` |
 | Checkout/cart/purchase flow (incl. checkout/payment forms) | `references/checkout-cro.md` |
+| Pricing page content defaults (plan order, annual toggle/discount depth, tier count) | `pricing` skill (separate) — cro diagnoses that page's conversion via `references/page-cro.md` |
 | Referral programs, viral loops, K Factor | `growth-loops` skill (separate) |
 | A/B test design (hypothesis, sample size, variants, ramp) | `references/experiments.md` |
 | A/B test analysis (significance, segments, revenue impact) | `product-analytics` skill |
@@ -102,6 +103,9 @@ No dark patterns. Easy to dismiss, easy to cancel, easy to go back. Trust builds
 
 ### Test, Don't Assume
 Every hypothesis needs validation. What works on one site may fail on another. See `references/experiments.md` for rigorous test design — and, when traffic is too low to power an A/B test, for how to validate another way instead of defaulting to an unrunnable test.
+
+### Accessibility Is Conversion Recovery
+Contrast (~4.5:1 text, 3:1 UI), a visible focus ring, and errors announced to screen readers recover users who would otherwise fail silently — treat them as conversion fixes, not compliance chores. Specifics: `form-cro.md` / `checkout-cro.md`; token/system details belong to a design-system capability.
 
 ---
 

@@ -174,7 +174,7 @@ For paginated content (category pages, blog archives):
 
 ### AI Crawlers Execute Zero JavaScript (a binary extractability prerequisite)
 
-The dedicated AI crawlers **fetch JavaScript files but never execute them**: the Vercel/MERJ study (Dec 17 2024, 500M+ GPTBot fetches) found GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, and PerplexityBot do no JS rendering; independent hands-on tests (Glenn Gabe, gsqi.com) confirmed ChatGPT/Claude/Perplexity could not read JS-dependent pages. Only Google (Gemini via Googlebot/Chromium) renders JS; Bingbot renders partially and inconsistently (so ChatGPT Search, which leans on Bing's index, is the partial exception). **Consequence:** any content that appears only after client-side JS (React/Vue/Angular SPAs — pricing tables, FAQ answers, comparison data) is **invisible** to the largest AI engines unless it is in server-delivered HTML. **Decision:** for JS-framework sites, move every citation-worthy passage into SSR/SSG/prerendered HTML — this is the difference between being citable and being absent from ChatGPT, Claude, and Perplexity, not a nice-to-have.
+The dedicated AI crawlers **fetch JavaScript files but never execute them**: the Vercel/MERJ study (Dec 17 2024, 500M+ GPTBot fetches) found GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, and PerplexityBot do no JS rendering; independent hands-on tests (Glenn Gabe, gsqi.com) confirmed ChatGPT/Claude/Perplexity could not read JS-dependent pages. Only Google (Gemini via Googlebot/Chromium) renders JS; Bingbot renders partially and inconsistently (so ChatGPT Search — which historically leaned on Bing's index but now increasingly runs on OpenAI's own crawl/index — is at most a partial exception). **Consequence:** any content that appears only after client-side JS (React/Vue/Angular SPAs — pricing tables, FAQ answers, comparison data) is **invisible** to the largest AI engines unless it is in server-delivered HTML. **Decision:** for JS-framework sites, move every citation-worthy passage into SSR/SSG/prerendered HTML — this is the difference between being citable and being absent from ChatGPT, Claude, and Perplexity, not a nice-to-have.
 
 ### Pre-rendering / Static Site Generation (SSG)
 
@@ -281,6 +281,7 @@ For sites serving multiple languages or regions, hreflang tells Google which lan
 - **Use correct codes**: ISO 639-1 language (`en`), optional ISO 3166-1 Alpha-2 region (`en-gb`). Region without language is invalid.
 - **Pick one placement** and be consistent: HTML `<head>` link tags, an XML sitemap `xhtml:link` annotation (best for large sites), or HTTP headers (for non-HTML files like PDFs). Do not mix methods for the same URLs.
 - hreflang is a targeting signal, **not** a duplicate-content fix — pair it with self-referencing canonicals (canonical to self, not to another language).
+- This section owns the search-signal layer; the application-side implementation (locale routing, URL strategy, translation structure, generating the tags) belongs to an i18n capability (the `i18n` skill, if available). Localized content must be net-new per locale to earn AI citations — see `ai-platform-optimization.md` § Non-English Surfaces.
 
 ## 8. Image and Video SEO
 

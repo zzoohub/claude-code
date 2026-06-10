@@ -29,21 +29,20 @@ Use **Object-Action** format, lowercase with underscores.
 - `signup_completed` (not `user_signed_up` or `signupComplete`)
 - `feature_used` (not `used_feature`)
 - `purchase_completed` (not `bought` or `purchase`)
-- `cta_hero_clicked` (not `button_clicked`)
+- `cta_clicked` (not `button_clicked` — placement goes in a `cta_location` property)
 
 ### Rules
 
 1. **Object first, then action.** This groups related events together when sorted alphabetically.
-2. **Past tense for completed actions.** `signup_completed`, `email_sent`, `file_uploaded`.
-3. **Present tense for ongoing states.** `page_viewed`, `feature_used`.
-4. **Be specific.** Include context in the event name when it clarifies: `cta_hero_clicked` tells you which CTA. `button_clicked` tells you nothing.
-5. **Context in properties, not name.** Don't create `signup_email_completed` and `signup_google_completed`. Use `signup_completed` with a `method` property.
+2. **Past tense, always.** Completed actions and recorded observations alike: `signup_completed`, `email_sent`, `page_viewed`, `feature_used`.
+3. **Be specific about the object, not its placement.** `checkout_button_clicked` names a semantically distinct element; `button_clicked` names nothing. Placement variants of the *same* element (hero vs footer CTA) are one event plus a property (rule 4).
+4. **Context in properties, not name.** Don't create `signup_email_completed` and `signup_google_completed` — use `signup_completed` with a `method` property. Same for placement: `cta_clicked` with `cta_location`, never `cta_hero_clicked`.
 
 ### Anti-Patterns
 
 | Bad | Why | Better |
 |-----|-----|--------|
-| `click` | Too generic | `cta_hero_clicked` |
+| `click` | Too generic | `cta_clicked` + `cta_location` property |
 | `button_clicked` | No context about what button | `checkout_button_clicked` |
 | `user_did_thing` | Redundant "user" prefix | `thing_completed` |
 | `signupCompleted` | camelCase breaks convention | `signup_completed` |
@@ -74,13 +73,19 @@ Use **Object-Action** format, lowercase with underscores.
 | `feature_used` | Core feature interaction | `feature_name`, `context` |
 | `aha_moment_reached` | User hits the Aha Moment action | `time_since_signup`, `method` |
 | `purchase_completed` | Subscription or payment | `plan_type`, `amount`, `currency`, `interval` |
-| `subscription_upgraded` | Plan upgrade | `from_plan`, `to_plan`, `revenue_delta` |
-| `subscription_downgraded` | Plan downgrade | `from_plan`, `to_plan`, `revenue_delta` |
+| `subscription_renewed` | Billing period renews (server-side, from billing webhook) | `plan_type`, `amount`, `interval` |
+| `subscription_upgraded` | Plan upgrade | `from_plan`, `to_plan`, `revenue_delta`, `amount` (new recurring) |
+| `subscription_downgraded` | Plan downgrade | `from_plan`, `to_plan`, `revenue_delta`, `amount` (new recurring) |
 | `subscription_cancelled` | Cancellation | `reason`, `plan_type`, `lifetime_days` |
 | `invite_sent` | User invites someone | `invite_method`, `recipient_count` |
 | `referral_completed` | Referred user signs up | `referrer_id`, `referral_source` |
 
-### Engagement (Product)
+> **`aha_moment_reached` is derived, then instrumented.** During discovery, compute Aha candidates
+> from the underlying action events (so the hypothesis can change without re-instrumenting and you
+> can backfill history). Only emit this synthetic event once the definition is validated — as a
+> funnel convenience, not the source of truth.
+
+### Engagement (Product — add on demand, beyond the day-one set)
 
 | Event | Trigger | Key Properties |
 |-------|---------|----------------|
@@ -130,7 +135,7 @@ PostHog captures UTMs automatically as `$initial_utm_*` person properties on fir
 
 ## Tracking Plan Template
 
-A tracking plan is the single source of truth for what to track. Store it at `biz/analytics/tracking-plan.md`.
+A tracking plan is the single source of truth for what to track. Store it in the analytics dir (default `biz/analytics/tracking-plan.md`; caller may redirect).
 
 ```markdown
 # Tracking Plan — [Product Name]
@@ -158,6 +163,7 @@ A tracking plan is the single source of truth for what to track. Store it at `bi
 | Event | Trigger | Properties | Tool |
 |-------|---------|------------|------|
 | `purchase_completed` | Payment success | plan_type, amount, currency | PostHog + GA4 |
+| `subscription_renewed` | Billing webhook | plan_type, amount, interval | PostHog |
 
 ## User Properties
 | Property | Set When | Example Values |

@@ -92,6 +92,8 @@ Optimize popups, modals, overlays, slide-ins, and banners for conversion.
 
 ## Copy Formulas
 
+(These formulas are copy *direction* — patterns to diagnose against and angles to brief. Final variant copy ships via a copywriting capability, if available.)
+
 ### Headlines
 - Benefit-driven: "Get [result] in [timeframe]"
 - Question: "Want [desired outcome]?"

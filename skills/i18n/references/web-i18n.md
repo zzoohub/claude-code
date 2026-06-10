@@ -1,5 +1,7 @@
 # Web i18n with Paraglide JS v2
 
+**Docs: [inlang.com/m/gerre34r/library-inlang-paraglideJs](https://inlang.com/m/gerre34r/library-inlang-paraglideJs)**
+
 > **Version:** Paraglide JS v2.x (`@inlang/paraglide-js@^2.0.0`). v1 framework-specific adapters (`@inlang/paraglide-sveltekit`, `@inlang/paraglide-next`, `@inlang/paraglide-astro`) are deprecated — all functionality is consolidated into the core package.
 
 Compiler-based i18n — translations compile into tree-shakable JS functions. Unused messages are eliminated from the bundle. Full TypeScript type safety is automatic. Framework-agnostic: SvelteKit, TanStack Start, Astro, React Router, or any Vite-based setup.
@@ -364,7 +366,8 @@ function createLocaleSwitcher(container: HTMLElement) {
 <link rel="alternate" hrefLang="en" href="https://example.com/about" />
 <link rel="alternate" hrefLang="es" href="https://example.com/es/about" />
 <link rel="alternate" hrefLang="ko" href="https://example.com/ko/about" />
-<!-- ... one per locale -->
+<link rel="alternate" hrefLang="x-default" href="https://example.com/about" />
+<!-- ... one per locale, plus x-default; every page must emit the full reciprocal set (including itself) or engines ignore the cluster -->
 ```
 
 ```typescript
@@ -378,6 +381,8 @@ const hreflangs = locales.map((loc) => ({
 }));
 // Inject into <head> using your framework's head management
 ```
+
+This section owns the implementation mechanics only. Site-level international *search* strategy — which locales to target, hreflang correctness rules, localized keyword/content strategy — belongs to a search-visibility capability (the `search-visibility` skill, if available).
 
 ---
 

@@ -15,12 +15,13 @@ The Aha Moment is the single action (or set of actions) that predicts long-term 
 
 > **"[Action X] within [Y days] of signup, [Z times]"**
 
-Examples from well-known products:
+Examples from well-known products (folklore-canon — Facebook per Chamath Palihapitiya, Twitter per
+Josh Elman, Slack per Stewart Butterfield, Dropbox per ChenLi Wang; treat the exact numbers as
+those products' discoveries, not transferable targets):
 - **Facebook**: 7 friends in 10 days
 - **Twitter**: Follow 30 people
-- **Slack**: Team sends 2,000 messages
-- **Dropbox**: File saved on multiple devices
-- **Stripe**: Use 3+ products in first 30 days (95% 12-month retention vs 65%)
+- **Slack**: Team has exchanged 2,000 messages
+- **Dropbox**: Put at least one file in one Dropbox folder on one device
 
 The Aha Moment defines the entire product strategy. Once found, the company's single goal becomes: get more users to complete X within Y days, Z times.
 
@@ -65,7 +66,7 @@ RPV = A / (A + B)
 RPV answers: "Of all retained users, what percentage did this action?"
 Target: RPV > 95% (nearly all retained users did this action)
 
-**Intersection (Precision)**:
+**Intersection (Jaccard overlap)**:
 ```
 Intersection = A / (A + B + C)
 ```
@@ -74,11 +75,18 @@ Maximize this — it balances false positives (C: did action but churned) with c
 
 ### Step 4: Sweep Parameters
 
-For each promising candidate (RPV > 80%), sweep:
+For each promising candidate (RPV > 80% — the looser bar exists because tuning Z and Y can lift a
+borderline candidate past the 95% target), sweep:
 - **Frequency (Z)**: How many times? (1, 2, 3, 5, 10...)
 - **Time window (Y)**: Within how many days? (1, 3, 7, 14, 30...)
 
 Plot Intersection across these combinations. The sweet spot is where Intersection peaks — the specific frequency within the specific time window.
+
+**Multiple-comparisons guard (FDR).** Sweeping 5-10 candidates × frequencies × windows is dozens to
+hundreds of hypotheses — the peak you pick will partly be noise. Treat the sweep as *exploratory*:
+either apply a false-discovery-rate control (Benjamini-Hochberg across candidate correlations), or
+re-check the winning (X, Y, Z) on a holdout cohort the sweep never saw. Only the Step 5 experiment
+confirms it.
 
 ### Step 5: Validate
 
@@ -132,7 +140,7 @@ Both should be tracked by cohort, by segment, and over time. Improvements to onb
 
 ## Implementation in PostHog
 
-All Aha Moment discovery is executed via PostHog MCP server:
+Execute Aha Moment discovery via a PostHog capability (MCP tools or the UI), if available:
 
 | Step | PostHog Feature | How |
 |------|----------------|-----|

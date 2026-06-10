@@ -32,9 +32,27 @@ ADRs are written immediately when decisions occur, not batched at the end.
 3. **Quantify success criteria**: Every goal needs a number. "Fast" -> "p99 < 500ms". "Reliable" -> "99.5% uptime". "Lightweight" -> "< 50MB memory".
 4. **Identify system boundary**: What this system does / does not do / what external systems it connects to.
 
+### Quantitative Envelope (back-of-envelope)
+
+Size the problem **before any pattern talk** — architecture choices are legitimate only relative to these numbers:
+
+- **Load**: DAU × actions/user/day ÷ 86,400 × peak factor (default ×5-10 consumer, ×2-3 B2B working-hours) → peak RPS, split read vs write.
+- **Data**: rows/day × bytes/row → growth/year; working set (data actually queried hot) vs total; largest single payload.
+- **Anchors** (orders of magnitude, not benchmarks): one well-tuned Postgres sustains low-thousands of simple read QPS and hundreds of write QPS before heroics; 1M rows × 1KB ≈ 1GB; a single region carries most products to ~low-millions DAU.
+
+Classify the **scale class** and record it with the envelope in `context.md` §2:
+
+| Class | Envelope (any of) | Legitimate default |
+|---|---|---|
+| **S** | < ~100 peak RPS, < 10 GB working set | Single node + managed Postgres; distributed patterns are illegitimate |
+| **M** | < ~2K peak RPS, < 500 GB working set | Single region; replicas + cache; async offload where flows demand it |
+| **L** | Beyond M, or multi-region data residency | Distributed patterns now earn their complexity |
+
+Crude is fine — a ×3 error changes nothing, a ×100 error changes everything. State the inputs so the arithmetic is checkable. Stage 4 holds every pattern escalation against this class; Stage 7 prices the same numbers.
+
 ### Output
 
-Write to `docs/arch/context.md` §1 (Problem), §2 (System Boundary), §5 (Constraints), and §6 (Assumptions). The constraint/assumption inputs come from Stage 0 auto-classification (scale, latency, deployment, regulatory, PRD gaps).
+Write to `docs/arch/context.md` §1 (Problem), §2 (System Boundary + Scale Envelope), §5 (Constraints), and §6 (Assumptions). The constraint/assumption inputs come from Stage 0 auto-classification (scale, latency, deployment, regulatory, PRD gaps).
 
 ---
 
@@ -81,6 +99,8 @@ Each scenario gets an **[Importance, Difficulty]** rating:
 - **Difficulty**: How hard to achieve architecturally (H/M/L)
 
 **[H,H] items are architecture drivers** — they demand explicit patterns and trade-off analysis. Every [H,H] scenario must have a corresponding pattern in stage 4.
+
+**Write each [H,H] leaf as a full quality-attribute scenario** (Bass/SEI six-part, compressed to one sentence): *"When {stimulus} from {source} during {environment}, the {artifact} shall {response}, measured as {response measure}."* — e.g. "When 500 concurrent users search during peak load (normal operations), the search path returns results in < 1s p99." One-line shorthand stays fine for [M,·] and [L,·] leaves. The reason: the ATAM gate verifies drivers against their *measure*, and a driver without stimulus, environment, and measure cannot gate anything.
 
 ### AI ASR Questions
 
@@ -138,6 +158,18 @@ Same term, different rules = different bounded context.
 - If two modules could evolve independently without breaking each other, they're separate contexts.
 - If changing one always requires changing the other, they're the same context.
 
+### Subdomain Classification & Build-vs-Buy
+
+Classify every bounded context (Evans/Vernon strategic DDD) — this is the budget allocator for everything downstream:
+
+| Type | Definition | Strategy |
+|---|---|---|
+| **Core** | Differentiates the product — why users pay | Build and invest: hexagonal rigor, deepest tests, evolution headroom |
+| **Supporting** | Necessary and specific to this product, but not differentiating | Build thin: simplest structure that works (plain CRUD is fine) |
+| **Generic** | Solved industry-wide — auth, billing, email, search, analytics | **Buy/SaaS by default** (see a house-stack catalog's External Services, if available); building one in-house requires an ADR |
+
+The most expensive architecture mistake is not a bad pattern — it's spending core-domain rigor on a generic subdomain, or core-domain *negligence* on the actual differentiator. Record the classification in `context.md` §4; Stage 5 varies internal rigor per type.
+
 ### Ubiquitous Language Glossary
 
 Code terms must match PRD terms 1:1 **within a bounded context**. No synonyms, no abbreviations that diverge from business language. Across contexts the *same* term may carry different meaning (e.g. "User" in auth vs. billing) — that is correct, not a violation; keep the glossary per-context.
@@ -167,6 +199,8 @@ Escalate when:
 - **CQRS**: Read/write ratio > 10:1 or fundamentally different read/write models
 - **Event-driven**: Clear async boundaries, eventual consistency acceptable
 - **Event sourcing**: Audit trail is a first-class requirement, need to reconstruct past state
+
+**Escalations must cite evidence**: a Stage-1 envelope number (class M/L load, measured ratio) or a non-scale driver (fault isolation, compliance boundary, team boundary). A class-S envelope plus growth hopes does not justify a distributed pattern — record the trigger that *would* justify it in the Scaling Ladder (Stage 7) instead.
 
 Read `references/system-architecture.md` for the full composition flowchart and pattern catalog.
 Read `references/service-architecture.md` for internal service structure decision guide.
@@ -199,6 +233,7 @@ For every **[H,H] ASR** from stage 2:
 If a [H,H] ASR has no satisfactory pattern:
 - Revisit the utility tree — is the importance/difficulty rating correct?
 - Consider hybrid patterns
+- If the blocker is an *unverified assumption* (vendor latency, model quality, throughput ceiling): specify a time-boxed **spike** with a numeric pass/fail criterion as the first implementation task, and record the assumption in `context.md` §6 — don't let the whole design rest on an unmeasured guess
 - If still unsatisfied: document the best-effort pattern and its gaps in `docs/arch/system.md` §1, add to the `docs/arch/risks.md` Risk Register as high-impact risk
 
 ### Output
@@ -225,7 +260,9 @@ One iteration through stages 2->3->4->(back to 2 if needed) is usually sufficien
 
 ### Tech Stack Selection
 
-Choose technologies that fit the ASRs and patterns from stages 2-4. Record each choice with rationale in the "Core Technology" table of `docs/arch/system.md` §2. Use `references/house-stack.md` as a reference — selections outside the list are fine if justified.
+Choose technologies that fit the ASRs and patterns from stages 2-4. Record each choice with rationale in the "Core Technology" table of `docs/arch/system.md` §2. Default to `references/house-stack.md`; deviating is fine but carries an ADR per that file's deviation contract (capability gap, cost of deviation, revisit condition).
+
+**Match rigor to Stage 3's subdomain classification**: full hexagonal discipline for core contexts; a generic context bought as SaaS needs only a driven adapter (and an anti-corruption layer if its model leaks — see `service-architecture.md` § Strategic Context Mapping).
 
 ### Hexagonal Architecture (Default)
 
@@ -257,6 +294,17 @@ src/
 |   +-- external/     # Driven adapter: third-party API clients
 +-- config/           # Wiring: dependency injection, app bootstrap
 ```
+
+### Interface Contract
+
+When the system has external consumers, the API *philosophy* is an architectural decision even though the endpoint catalog is not (see SKILL.md Scope Boundaries). Decide and record:
+
+- **Protocol style**: REST (default for product/public APIs) · RPC (internal service-to-service, latency-critical) · GraphQL (only with many heterogeneous clients aggregating varied data) · MCP server (when AI agents are a first-class consumer — see `ai-agents.md` § MCP as Product API)
+- **Versioning posture**: additive-only by default (see `system-architecture.md` § API Versioning Strategy)
+- **Error contract**: one machine-readable error shape everywhere (RFC 9457 `application/problem+json` or equivalent)
+- **Pagination default**: cursor-based (see `operational-patterns.md` § Pagination Strategy)
+
+This becomes the "API design philosophy" ADR from the Stage 9 minimum list.
 
 ### AI Components
 
@@ -310,11 +358,13 @@ Partitioning/sharding-key choice and read-replica execution are a *schema* conce
 
 **Versioned migrations are mandatory** for relational databases — no manual schema changes in production.
 
+**Durability & recovery** — for each store holding the only copy of anything, set **RPO** (max acceptable data loss) and **RTO** (max acceptable restore time), choose the backup mechanism that meets them (PITR vs scheduled snapshots), and set a restore-test cadence. An untested backup is a hypothesis, not a backup — and data loss is the one failure you cannot roll forward from.
+
 ### AI Data
 
 | Concern | Guidance |
 |---|---|
-| Chunking | Semantic chunking with 10-20% overlap. Start at ~400-512 tokens; size up to 512-1024 for long-form. See `ai-architecture.md` §3 for per-document-type sizing. |
+| Chunking | Semantic chunking with 10-20% overlap. Start at ~400-512 tokens; size up to 512-1024 for long-form. Architecture slice (storage sizing consequences) in `ai-architecture.md` §3; per-document-type sizing is retrieval design — see an LLM-app-design capability (e.g. the `llm-app-design` skill's RAG reference), if available. |
 | Search | Hybrid search (dense vectors + BM25 keyword) outperforms either alone. |
 | Context window | Budget tokens: system prompt + retrieved context + conversation history + output must fit model limit. Track and alert on overflow. |
 
@@ -353,6 +403,17 @@ How a release reaches production is an architectural decision with a deployabili
 - **Schema-during-deploy**: expand-contract ordering so a migration and the code needing it ship safely under live traffic (execution is owned by a migration capability such as the `postgresql` skill, if available).
 
 This stage decides the strategy and records the ADR; the lock-safe **execution** of a release and rollback is a release-engineering concern (e.g. the `release-engineer` agent) — define the boundary, don't do its job here.
+
+### Scaling Ladder
+
+For the chosen architecture, name **what breaks first** as load grows — so growth becomes an execution problem, not a redesign:
+
+| Load | First bottleneck | Trigger metric | Planned response |
+|---|---|---|---|
+| 10x | e.g. Postgres write IOPS on the events table | p95 write latency > 50ms sustained | Partition events table; move analytics reads to a replica |
+| 100x | e.g. single-region origin saturation | ... | One honest sentence is enough — often "redesign, and that's fine" |
+
+Two rules: the **trigger is a metric that already exists on a Stage-8 dashboard** (a ladder nobody watches is fiction), and every planned response is a two-way door or pre-recorded as an ADR. This is also where deferred Stage-4 escalations land — "adopt CQRS when read p99 breaches X" belongs here, not in the current design.
 
 ### Cost Estimation
 
@@ -400,6 +461,8 @@ Pick tools that fit the language of each module. The check matters; the specific
 
 These are the immune system of your architecture — they prevent silent erosion of design decisions. Run in CI on every commit.
 
+**Coverage rule**: every [H,H] ASR gets a *standing guard* — a CI fitness function (structural properties) or a runtime SLO alert (behavioral properties). The ATAM gate verified the design once, at design time; guards keep it true under every commit and every deploy. Record the ASR → guard mapping in `system.md` §5; an unguarded driver goes to the Risk Register.
+
 ### Observability
 
 **RED method** for every service:
@@ -416,6 +479,8 @@ These are the immune system of your architecture — they prevent silent erosion
 - "Error rate > 1% over 5 minutes" (availability SLO)
 - "p99 latency > 500ms over 10 minutes" (latency SLO)
 - "Successful login rate < 95% over 15 minutes" (business SLO)
+
+**SLOs derive from ASRs and carry error budgets** (canon: Google SRE). Each availability/latency ASR becomes: an **SLI** (what you measure) → an **SLO target** (the ASR's number) → an **error budget** (1 − target; 99.5% ⇒ 3.6h/month). Alert on **burn rate** — how fast the budget is being consumed — with a fast window that pages and a slow window that tickets, not on raw threshold blips. The budget doubles as a release governor: budget exhausted ⇒ reliability work preempts features. Record the SLO table in `system.md` §5.
 
 Day 1 priorities: error tracking, structured logging (JSON to stdout), health checks, uptime monitoring.
 
@@ -541,6 +606,7 @@ Use this structured ADR format (Nygard/MADR-style fields) for consistency:
 - Offline/sync strategy — when offline capability is needed
 - Distribution/packaging — for libraries, CLIs, desktop apps
 - Concurrency model — for high-throughput or real-time systems
+- Build-vs-buy — when a generic/supporting subdomain (Stage 3) is built in-house rather than bought
 
 ### Risk Register
 

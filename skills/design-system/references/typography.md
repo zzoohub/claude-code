@@ -13,6 +13,15 @@
 
 Inter is the default recommendation — it has optical sizing, variable weight support, and excellent screen readability. Replace with project's brand font; the scale below stays the same.
 
+**Non-Latin scripts:** Inter carries no CJK glyphs — shipping ko/ja/zh means
+adding a per-script family to the stack (e.g. `'Inter', 'Pretendard'` for
+Korean, `'Noto Sans JP'`/`'Noto Sans SC'` for ja/zh) so CJK doesn't fall to
+system default while Latin renders Inter. CJK body text also wants looser
+line-height (~1.7× vs the Latin-calibrated values below — dense ideographs
+need the air) and no italic styling (CJK fonts don't carry true italics).
+Keep the scale's size steps; override `lineHeight` per script via a theme
+layer, not per component.
+
 ## Type Scale
 
 Named styles, not raw sizes. Every text element in the UI maps to one of these.

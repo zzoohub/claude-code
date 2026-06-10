@@ -34,7 +34,7 @@ Before writing any code, execute these steps in order:
    | `motion` | Animation, transitions, scroll, gestures |
    | `web3d` | 3D, WebGL, WebGPU, WebXR |
 4. **Read UX specs** — `docs/ux/ux-design.md` for global patterns, `docs/ux/screens/{screen}.md` for the target screen. If UX docs don't exist, work from the user's request and flag the gap.
-5. **Read task context** — `tasks/features/{feature}.md` for acceptance criteria. If the task system isn't in use, work from the user's request.
+5. **Read task context** — `tasks/features/{feature}.md` for acceptance criteria (one-off tasks keep their detail block in `tasks/features/_misc.md`). If the task system isn't in use, work from the user's request.
 
 ## Your Domain
 

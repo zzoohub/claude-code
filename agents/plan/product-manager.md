@@ -26,7 +26,7 @@ what already exists, and never letting a feature add overwrite the vision.
 + all feature specs; also Review/Audit mode) · `feature-spec` (one feature on an
 existing PRD). Each skill holds its own methodology and quality bar.
 
-## What Already Exists Decides the Route
+## Required Inputs — What Already Exists Decides the Route
 
 Read `CLAUDE.md` first (it may redirect the `docs/prd/` root), then read whichever
 of these exist before routing — they decide new-vs-existing and feed the chained
@@ -37,7 +37,9 @@ NOT route to `feature-spec` (its prereq would dead-end on "ask the caller," whic
 you cannot answer non-interactively); reroute to `prd-craft` (new product) or
 `product-brief` (unvalidated idea) per the tree below.
 
-- `docs/prd/product-brief.md` — problem, direction (accelerates `prd-craft`)
+- `docs/prd/product-brief.md` — problem, direction (accelerates `prd-craft`).
+  Check `product-brief-*.md` variants too — multiple briefs mean multiple
+  explored directions; surface which one to build on
 - `docs/prd/prd.md` — existing vision, dev order, success metrics
 - `docs/prd/features/*.md` — existing feature specs (avoid naming conflicts)
 
@@ -80,7 +82,8 @@ After invoking the skill(s), return a tight summary to the main agent:
 ## Key Decisions
 - Who: [who has this problem, in what situation]
 - Core problem: [one sentence]
-- Primary success metric: [metric + target]
+- Primary success metric: [metric + target — for a brief-only run, the
+  observable success signal instead (no target yet, by design)]
 
 ## Summary
 [2-3 sentences: what was done, key open questions]

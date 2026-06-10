@@ -72,6 +72,8 @@ Read `references/prompting.md` before designing any shape — prompt structure u
 
 Follow this sequence when designing a new LLM feature. Skipping steps is a false economy — each one takes minutes and saves hours of rework.
 
+**Inputs first**: if architecture docs exist (default `docs/arch/`; caller may redirect), read the AI ASR answers in `context.md` §3 — cost ceiling, hallucination tolerance, streaming, agent capability. They are design constraints, not suggestions: the failure path (step 5) consumes hallucination tolerance; the production envelope (step 8) consumes the cost ceiling. If no architecture docs exist, ask the caller for the two numbers that gate everything: the cost ceiling and the tolerated error rate.
+
 **1. Name the task in one sentence.**
 "Given X, produce Y, so that Z." If you can't, the task isn't defined well enough to prompt. Example: "Given a customer support ticket, produce a category label and confidence, so that we route high-confidence tickets automatically."
 
@@ -83,11 +85,16 @@ Structured (JSON schema, regex-parseable) or free-form? Structured outputs cost 
 
 **4. Pick the shape (table above).** Start with the simplest. Don't add an agent because it feels modern — add one when a simpler shape demonstrably fails your eval set.
 
-**5. Write the system prompt.** Role, task, constraints, output format, examples. See `references/prompting.md`.
+**5. Design the failure path.** The model will be wrong, unsure, or down — decide each before writing the prompt:
+- **Wrong** — what catches it: schema validation, citation checks, judge-sampled traces, human review. Calibrate the depth to the hallucination-tolerance ASR (a brainstorming feature tolerates much; an invoice extractor doesn't).
+- **Unsure** — design the confidence boundary: below threshold → abstain ("I can't determine this from the available information") or escalate to a human queue. A feature without an abstain path converts uncertainty into confident error.
+- **Down** — degrade, don't break: fallback model, cached response, or feature-off state (see `references/production.md` § Reliability).
 
-**6. Run your hand-written examples.** If it passes, expand the eval set. If it fails, read `references/evaluation.md` for how to diagnose.
+**6. Write the system prompt.** Role, task, constraints, output format, examples. See `references/prompting.md`.
 
-**7. Plan production concerns.** Before shipping: caching strategy, rate limiting, cost estimation, latency budget, error handling, observability. See `references/production.md`.
+**7. Run your hand-written examples — and pick the model by proving down.** Prototype on a frontier model to establish that the task is possible at all: if the strongest model can't pass your examples, redesign the task instead of shopping models. Once it passes, walk down tiers and ship the cheapest model that still passes the eval set. If it fails, read `references/evaluation.md` for how to diagnose.
+
+**8. Plan production concerns — with arithmetic.** Compute the envelope, don't estimate it by adjective: (system + examples + retrieved + history + output) tokens/request → check it fits the context window with headroom; × requests/day × provider rate → $/month, compared against the cost ceiling; name the latency target (TTFT < 1s for streamed chat, < 500ms for inline suggestions — `references/production.md`). Then caching strategy, rate limiting, error handling, observability. A feature whose envelope was never computed ships as a surprise invoice.
 
 ## Anti-patterns to avoid
 
@@ -116,6 +123,7 @@ Structure (≤200 lines):
 2. **Shape** — single-prompt / RAG / tool use / agent / multi-agent (from the table in this skill)
 3. **Context** — system prompt outline, retrieval sources, tool list
 4. **Output contract** — structured (JSON schema) or free-form; validation strategy
-5. **Eval set** — link to golden examples, metric, judging strategy, and baseline pass rate (record whether the hand-written examples currently pass — closes design-flow step 6)
-6. **Production concerns** — latency budget, cost ceiling, caching, rate limits, observability
-7. **Open questions / risks**
+5. **Failure path** — wrong / unsure / down: validation depth, abstain & escalation thresholds, fallback (from design-flow step 5)
+6. **Eval set** — link to golden examples, metric, judging strategy, and baseline pass rate (record whether the hand-written examples currently pass — closes design-flow step 7)
+7. **Production envelope** — tokens/request and $/month vs the cost ceiling, latency target, caching, rate limits, observability
+8. **Open questions / risks**

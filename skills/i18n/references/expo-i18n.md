@@ -1,5 +1,7 @@
 # Expo / React Native i18n with react-i18next
 
+**Docs: [docs.expo.dev — Localization](https://docs.expo.dev/versions/latest/sdk/localization/) | [react.i18next.com](https://react.i18next.com/) | [i18next.com](https://www.i18next.com/)**
+
 Stack: `expo-localization` + `i18next` + `react-i18next`. TypeScript 5+.
 
 ## Table of Contents

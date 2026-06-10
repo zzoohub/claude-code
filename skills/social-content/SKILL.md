@@ -4,12 +4,12 @@ description: |
   Social media content creation, content strategy, and multi-platform publishing.
   Use when: creating social posts, planning content calendars, developing content pillars,
   writing LinkedIn/Twitter/Instagram/TikTok/YouTube content, repurposing across platforms,
-  building topic clusters, planning launch campaigns, analyzing viral content,
+  building topic clusters, writing launch posts and threads, analyzing viral content,
   reverse-engineering top creators, building in public,
   or when user mentions "social media", "content strategy", "content calendar", "social post",
   "LinkedIn post", "Twitter thread", "Instagram carousel", "TikTok script", "YouTube script",
   "content pillar", "content repurposing", "topic cluster", "editorial calendar",
-  "build in public", "launch strategy", "Product Hunt", "Hacker News", "Reddit marketing",
+  "build in public", "Product Hunt", "Hacker News", "Reddit marketing",
   "viral content", "hook formula", "social media analytics", "engagement rate".
   Do NOT use for: email content (use email-marketing), ad creative (use ad-creative),
   SEO/blog optimization (use search-visibility), UX copy (use copywriting).
@@ -20,6 +20,8 @@ description: |
 Social media content creation, strategy, and multi-platform publishing -- built on research from 50+ sources including academic papers on virality, platform algorithm documentation, and methods from top practitioners (Justin Welsh, Alex Hormozi, Naval Ravikant, Sahil Bloom).
 
 **Read product context first.** If `docs/prd/product-brief.md` exists, read it for product and audience info. If `biz/marketing/strategy.md` exists, read it for brand voice and channel priorities. If neither exists, ask the user or infer from the request.
+
+**Output:** when asked to save deliverables (posts, calendars, pillar docs) and a file-write capability is present, write to the social content dir (default `biz/marketing/content/social/`; caller may redirect the `biz/<area>/` root) — otherwise return inline.
 
 ---
 
@@ -56,7 +58,10 @@ Not every platform matters. Pick 2-3 based on your audience and goal.
 
 **Primary Hub** (choose one): Newsletter, YouTube, or Blog
 **Distribution** (choose 2-3): Twitter/X, LinkedIn, Instagram
-**Launch platforms** (use strategically): Product Hunt, Hacker News, Reddit
+**Launch platforms** (use strategically): Product Hunt, Hacker News, Reddit —
+launch *strategy* and one-off assets (PH tagline, HN title, channel sequencing)
+come from the marketing-strategy capability's launch playbook; this skill owns
+the ongoing launch threads and comment engagement
 
 **Weekly workflow:**
 1. Create one long-form piece (hub content)
@@ -112,7 +117,7 @@ Track engagement per pillar and platform. Double down on what works. See `refere
 4. **Apply viral psychology** -- Content spreads via high-arousal emotions: awe (positive), anger and anxiety (negative) all boost sharing; low-arousal sadness suppresses it (Berger & Milkman, 2012). Optimize for shares, not just likes. See `references/reverse-engineering.md` for the science.
 5. **Follow 80/20 rule** -- 80% pure value, 20% product mention (stricter on Reddit: 90/10)
 6. **Plan repurposing** -- How does this fragment for other platforms?
-7. **Engage after posting** -- Respond to comments within 30-60 min. Comments-as-content is one of the most underused growth tactics.
+7. **Engage after posting** -- Respond to comments within 30-60 min. Comments-as-content — replies with standalone-quality insight, later mined as new posts — is one of the most underused growth tactics.
 
 ---
 

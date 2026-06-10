@@ -53,6 +53,8 @@ route there if such a capability is available.
      than inventing one.
    - Touch the problem/users/metrics sections only if the feature changes the
      problem framing or success metric — usually it doesn't.
+   - Bump the PRD's **Last Updated** field — the patch is an update; an old date
+     on a just-patched PRD reads as stale (PRD anti-pattern #9).
 
 ## What This Skill Does NOT Do
 
@@ -88,7 +90,9 @@ limit/quota exceeded, upstream/dependency failure, partial success — not a fix
 checklist.
 
 ## Technical Decisions
-Decisions specific to this feature (not architectural).
+Feature-level choices — dedupe window, retention period, validation strictness,
+default formats. Stack/infra picks are architectural: route those to an
+architecture-decision capability instead of recording them here.
 
 ## Out of Scope
 What this feature does NOT do, with rationale.
@@ -118,13 +122,13 @@ Unknowns still being resolved. Flag them — don't invent answers. Remove as the
 - [ ] Edge cases cover the failure modes relevant to this feature (invalid/empty input, unauthorized, concurrent/duplicate, limit exceeded, upstream failure, partial success)
 - [ ] Open questions are flagged — no invented answers
 - [ ] Passes the critical PRD anti-patterns: no solution-as-problem Overview, no library/framework names in Requirements, every requirement has evidence (see the PRD anti-patterns reference, e.g. `prd-craft/references/anti-patterns.md`, if available)
-- [ ] Feature appears exactly once in the PRD's Feature Overview and once in Dev Order (update in place on re-run, don't duplicate)
+- [ ] Feature appears exactly once in the PRD's Feature Overview and once in Dev Order (update in place on re-run, don't duplicate), and the PRD's Last Updated is bumped
 - [ ] Filename matches the kebab-case feature name from the PRD
 
 ## Output
 
 - `docs/prd/features/{feature}.md` (or the caller's chosen features directory) — new file
-- the PRD (default `docs/prd/prd.md`) — patched (Feature Overview table + Dev Order)
+- the PRD (default `docs/prd/prd.md`) — patched (Feature Overview table + Dev Order, Last Updated bumped)
 
 **Line limit:** the feature spec — 200 lines. Consolidate if over.
 

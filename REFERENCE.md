@@ -59,7 +59,7 @@ one agent.
 | Artifact | Path | Written by | Read by |
 |---|---|---|---|
 | Product brief | `docs/prd/product-brief.md` | product-manager | architect, ux-designer, biz agents |
-| PRD | `docs/prd/prd.md` | product-manager | architect, ux-designer, task-manager, biz agents |
+| PRD | `docs/prd/prd.md` | product-manager | architect, ux-designer, task-manager |
 | Feature spec | `docs/prd/features/{feature}.md` | product-manager | architect, task-manager, developers |
 | Arch context (greenfield sentinel) | `docs/arch/context.md` | architect (software-architecture) | architect (brownfield detection), developers |
 | Architecture | `docs/arch/system.md` | architect (software-architecture) | developers, release-engineer, reviewer |
@@ -72,14 +72,17 @@ one agent.
 | Task board | `tasks/board.md` | task-manager | developers, release-engineer |
 | Task details | `tasks/features/{feature}.md` | task-manager | developers |
 | Project checklist (optional) | `checklist.md` (repo root or `docs/`) | *(project-defined)* | reviewer |
+| QA reports + regression baseline | `.qa/reports/` | qa skill (callers with file-write; verifier returns findings inline instead) | qa (regression mode) |
 | Deploy runbook | `docs/ops/runbook.md` | release-engineer | release-engineer (next release) |
 | Marketing strategy | `biz/marketing/strategy.md` | marketer | content-marketer, growth-optimizer, data-analyst |
 | Launch materials | `biz/marketing/launch/` | marketer | content-marketer |
 | Pricing (public tiers) | `biz/marketing/pricing.md` | marketer | growth-optimizer |
 | Competitor analysis | `biz/marketing/competitors.md` | marketer | content-marketer |
+| Competitor page drafts | `biz/marketing/competitor-pages/{slug}.md` | marketer (competitor-pages) | content-marketer (search-visibility layer) |
 | Marketing assets | `biz/marketing/assets/` | marketer, content-marketer | — |
 | Content strategy | `biz/marketing/content/strategy.md` | content-marketer | — |
 | Content (social/email/blog/changelog) | `biz/marketing/content/{social,email,blog,changelog}/` | content-marketer | — |
+| SEO/AEO/GEO audits + search strategy | `biz/marketing/seo/` | content-marketer (search-visibility) | — |
 | Tracking plan + Aha moment | `biz/analytics/tracking-plan.md` | data-analyst | marketer, content-marketer, growth-optimizer |
 | Funnels + retention | `biz/analytics/funnels.md` | data-analyst | ux-designer, growth-optimizer |
 | Dashboards | `biz/analytics/dashboards.md` | data-analyst | — |

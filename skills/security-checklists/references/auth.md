@@ -161,6 +161,7 @@ Default to passkeys for new auth systems where supported (Chrome, Safari, Edge, 
 | Check | Why | CWE |
 |-------|-----|-----|
 | Algorithm explicitly verified (whitelist, not blacklist) | Algorithm confusion attack ("none", HS256/RS256 swap) | CWE-327 |
+| Algorithm fits the topology — asymmetric (ES256/EdDSA via JWKS) when verifiers are not the issuer; HS256 only when one service both issues and verifies | Shared-secret sprawl: every HS256 verifier can also mint valid tokens | CWE-321 |
 | Short-lived access tokens (5-15 minutes) | Token theft window | CWE-613 |
 | Refresh token rotation (new refresh token on each use) | Refresh token theft detection | CWE-613 |
 | Stateless JWTs have a revocation strategy — jti deny-list, server-side token-version/sessions table checked per request, or short access TTL + revocable refresh token; logout, password change, and role change must invalidate already-issued access tokens | Stolen/stale token usable until `exp` | CWE-613 |

@@ -50,7 +50,7 @@ Email 2: Quick Win
 
 ## Welcome Sequence (Post-Signup)
 
-**Length**: 5-7 emails over 12-14 days
+**Length**: 5-7 emails over 12-14 days (enterprise/long-cycle: extend to 8-12 by adding proof stages — case study, ROI/security review, stakeholder-share — on the same skeleton)
 **Goal**: Activate, build trust, convert
 
 | # | Email | Timing | Purpose | Branch |

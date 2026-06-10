@@ -66,7 +66,7 @@ When something "feels wrong" or needs improvement:
 | User can't find content | IA failure | Restructure navigation, validate with tree test | `references/information-architecture.md` |
 | User doesn't know what happened | Feedback gap | Add system feedback (toast, inline, state change) | `references/interaction-patterns.md` |
 | User doesn't know what to do | Copy failure | Rewrite labels, add guidance, fix empty states | `references/ux-writing.md` |
-| System feels slow | Doherty Threshold | Optimistic UI, skeleton screens, background processing | `references/interaction-patterns.md` |
+| System feels slow | Doherty Threshold | Optimistic UI, skeleton screens, background processing | `references/cognitive-principles.md` (threshold) + `references/interaction-patterns.md` (loading patterns) |
 | 3D/XR issue | See dedicated reference | Load the appropriate reference for diagnosis | `references/3d-design.md` / `references/xr-design.md` |
 | AI feature issue | See dedicated reference | Streaming, citations, agent transparency, AI error states | `references/ai-feature-ux.md` |
 
@@ -158,6 +158,24 @@ specs for the screens you're designing. Reference the dev order in
 
 ---
 
+## Workflow (greenfield pass)
+
+Run the 5 steps of `references/design-process.md` at app scale:
+
+1. **Research & define** — read the PRD + feature specs; write the JTBD per
+   persona (First Principles #1).
+2. **Map the critical paths** — one entry→goal flow per JTBD. These flows are
+   the app's spine; design them before any individual screen.
+3. **Derive the screen inventory** — every critical-path step lands on a
+   screen; every PRD feature maps to ≥1 screen or an explicit "no UI" note.
+   This list becomes `docs/ux/screens/`. Then structure it into the IA
+   (validate: ≤3 taps to core content; ≤5 top-level items on mobile).
+4. **Design each screen** — all 7 states, per the Output format below.
+5. **Remove, then validate** — strip what doesn't serve the goal; run the
+   Quick Checklist as the gate before writing files.
+
+---
+
 ## Quick Checklist
 
 Before finalizing any UX decision:
@@ -167,6 +185,8 @@ Before finalizing any UX decision:
 - [ ] Every element passes "does this help the goal?" test
 - [ ] Information architecture validated (≤3 taps to core content)
 - [ ] Navigation pattern appropriate for content type
+- [ ] Every PRD feature maps to ≥1 screen, or carries an explicit "no UI" note
+- [ ] `ux-design.md`'s ToC links every screen file — no orphan files, no dead links
 
 ### Screen Design
 - [ ] Primary action is ONE and visually dominant per screen
@@ -220,6 +240,11 @@ read-only:
 2. **Score against the rubric.** Walk the flow against the Quick Diagnosis
    table, the Anti-patterns list, and the Quick Checklist above. For 3D/XR/AI
    surfaces, also run the relevant reference's validation checklist.
+   Also check **structural drift** — where these docs rot: ToC ↔
+   `docs/ux/screens/` bijection (orphan files, dead links); sitemap nodes with
+   no screen spec; screen files missing any of the 7 states; screen-local
+   patterns contradicting the global conventions (e.g. inline errors where the
+   app standard is toast).
 3. **Output a prioritized critique, not a rewritten doc.** Produce a findings
    list: each finding = location + the principle it violates (cite the
    reference) + severity + a concrete fix. Lead with the highest-impact issues.

@@ -53,7 +53,7 @@ If you're not running Google Ads, the only reason to add GA4 is Search Console i
 1. **Create GA4 property** at analytics.google.com — get the Measurement ID (G-XXXXXXXXXX)
 2. **Install** via gtag.js snippet, GTM, or Next.js `<Script>` component
 3. **Enable Enhanced Measurement** — free automatic tracking for scrolls, outbound clicks, site search, file downloads
-4. **Mark conversions** — toggle "Mark as conversion" for `signup_completed`, `purchase` events
+4. **Mark key events** — toggle "Mark as key event" for `signup_completed`, `purchase` events (GA4 renamed "conversions" → "key events" in March 2024; "conversions" now means Google-Ads-side conversions only)
 5. **Link Search Console** — GA4 Admin > Product links > Search Console
 
 For SPAs (Next.js, React), track page views on route change:

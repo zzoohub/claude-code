@@ -26,30 +26,28 @@ before you analyze** (see Core Responsibility 0).
 
 ## Primary Tool: PostHog (via MCP)
 
-> Tool names verified against the current PostHog MCP (`services/mcp`): **2026-05**. PostHog's MCP surface moves fast — re-verify against https://posthog.com/docs/model-context-protocol/tools before trusting a name, and prefer the typed query wrappers over hand-written HogQL where one exists.
+> Tool names verified against the official tools reference (https://posthog.com/docs/model-context-protocol/tools): **2026-06**. PostHog's MCP surface moves fast — `query-run`, `query-validate`, `query-generate-hogql-from-question`, `event-definitions-list`, `property-definitions`, and `entity-search` were all removed in the past year — so re-verify before trusting a name, and prefer the typed query wrappers over hand-written HogQL where one exists.
 
-All analytics execution goes through the PostHog MCP server. Use the specific MCP tools below — don't guess tool names. (Runtime tool IDs are prefixed `mcp__posthog__`, e.g. the `query-run` row is invoked as `mcp__posthog__query-run`; the `tools` allowlist exposes them via `mcp__posthog__*`. This requires the `posthog` MCP server to be configured in the session — under plugin distribution the `mcpServers:` field is ignored, so the host must configure it.)
+All analytics execution goes through the PostHog MCP server. Use the specific MCP tools below — don't guess tool names. (Runtime tool IDs are prefixed `mcp__posthog__`, e.g. the `execute-sql` row is invoked as `mcp__posthog__execute-sql`; the `tools` allowlist exposes them via `mcp__posthog__*`. This requires the `posthog` MCP server to be configured in the session — under plugin distribution the `mcpServers:` field is ignored, so the host must configure it.)
 
 **Scope first.** PostHog MCP is project-scoped. Confirm you're on the right project before running anything — use `projects-get` / `switch-project` (and `switch-organization` for multi-org) so a query doesn't silently return another project's data.
 
 | Capability | MCP Tool | Use For |
 |-----------|----------|---------|
 | **Typed analytics queries** | `query-trends` / `query-funnel` / `query-retention` / `query-lifecycle` / `query-stickiness` / `query-paths` | Prefer these over raw HogQL for standard insight types — fewer errors than hand-written SQL |
-| **Generic / custom query** | `query-run` (TrendsQuery / FunnelsQuery / HogQLQuery) | Anything the typed wrappers don't cover; custom HogQL |
-| **Raw SQL + validation** | `execute-sql` / `query-validate` | Revenue analysis, CC calculation, custom cohorts; validate HogQL before running |
-| **Natural language → SQL** | `query-generate-hogql-from-question` | When you're unsure of exact HogQL syntax |
+| **Raw SQL / custom query** | `execute-sql` | Anything the typed wrappers don't cover — custom HogQL: revenue analysis, CC calculation, custom cohorts |
 | **Insights (CRUD)** | `insight-create` / `insight-get` / `insight-query` / `insights-list` / `insight-update` | Save successful queries as reusable insights; read / list / update existing |
-| **Dashboards** | `dashboard-create` / `dashboard-get` / `dashboards-get-all` / `dashboard-update` | Create, read, and attach insight tiles (`dashboard-update` adds a tile — there is no `add-insight-to-dashboard`) |
-| **Experiments** | `experiment-get` / `experiment-results-get` | Read A/B test results |
+| **Dashboards** | `dashboard-create` / `dashboard-get` / `dashboards-get-all` / `dashboard-update` | Create, read, and attach insight tiles (no `add-insight-to-dashboard` — attach via `dashboard-update`, or the newer `dashboard-widgets-batch-add` / `dashboard-tile-copy`) |
+| **Experiments** | `experiment-get` / `experiment-results-get` / `experiment-timeseries-results` | Read A/B test results + metric trend over the run |
 | **Feature flags** | `feature-flag-get-definition` / `feature-flag-get-all` | Check experiment assignments |
 | **Cohorts** | `cohorts-list` / `cohorts-create` | Enumerate and build behavioral segments (e.g. revenue-retention cohorts) |
 | **Persons** | `persons-list` | Enumerate / investigate individual users at small scale |
-| **Event & property discovery** | `event-definitions-list` / `property-definitions` | Discover available events/properties when designing a tracking plan |
-| **Search by name** | `entity-search` | Fuzzy-find existing insights, dashboards, cohorts, events by name |
-| **Surveys** | `survey-get` / `surveys-get-all` | Sean Ellis survey results, NPS data |
+| **Event & property discovery** | `read-data-schema` | Discover available events/properties when designing a tracking plan |
+| **Search by name** | per-domain list tools (`insights-list`, `dashboards-get-all`, `cohorts-list`, `surveys-get-all`) | Find existing assets by name — there is no global search tool |
+| **Surveys** | `survey-create` / `survey-get` / `surveys-get-all` / `survey-stats` / `surveys-global-stats` | Create + read Sean Ellis / NPS surveys; per-survey response stats and cross-wave comparison |
 | **Docs** | `docs-search` | Look up PostHog feature / HogQL docs |
 
-**Revenue cohorts (GRR/NRR)**: PostHog has no built-in revenue analytics. Use `execute-sql` / `query-run` (HogQLQuery) to query revenue events directly and build custom revenue retention cohorts.
+**Revenue cohorts (GRR/NRR)**: PostHog's built-in Revenue analytics (Stripe-synced MRR, still in flux) has no cohort-level GRR/NRR. Use `execute-sql` to query revenue events directly and build custom revenue retention cohorts.
 
 **Execution rule**: Always use PostHog MCP tools first, and prefer a typed wrapper over raw HogQL when one exists. Fall back to manual analysis only if PostHog lacks the data.
 

@@ -52,6 +52,8 @@ Each fully written ad must include:
 For video ads, include a timestamped script table:
 `| Time | Visual | Audio/Text Overlay |`
 
+**Output:** when asked to save deliverables, write them to the marketing-assets dir (default `biz/marketing/assets/`; caller may redirect the `biz/<area>/` root). If no file-write capability is present, return the ads inline.
+
 ---
 
 ## The Creative Development Process
@@ -220,7 +222,7 @@ The core loop:
 ## Platform-Native Creative Philosophy
 
 Each platform has a native content style. Ads that match this style outperform
-those that don't — often dramatically. **Creative is the dominant lever in paid media** — Nielsen Catalina Solutions (2017, ~500 CPG campaigns) attributed ~47% of advertising-driven sales lift to creative, the single largest factor; Google puts ~70% of campaign performance on creative, and AppsFlyer calls it the single biggest driver of UA performance. Whatever the exact figure, invest in creative before targeting or budget.
+those that don't — often dramatically. **Creative is the dominant lever in paid media** — Nielsen Catalina Solutions (2017, ~500 CPG campaigns) attributed ~47% of advertising-driven sales lift to creative, the single largest factor; Google's "~70% of campaign performance" line is a Google exec's rule of thumb (not a formal study), and AppsFlyer calls creative the single biggest driver of UA performance. Whatever the exact figure, invest in creative before targeting or budget.
 
 ### Meta (Facebook/Instagram)
 - **Video dominates**: 60%+ of user time is video; Meta recommends 4:5 for Feed (fills ~20% more screen than 1:1)
@@ -232,12 +234,12 @@ those that don't — often dramatically. **Creative is the dominant lever in pai
 - **Native-first**: Ads must feel like organic FYP content, not commercials
 - **UGC ROI**: +55% ROI over non-UGC; unbranded UGC +19% better than branded (vendor figures, 2025-2026 — re-verify quarterly)
 - **Lo-fi wins**: +81% ROI for content without logos or heavy overlays (vendor figures, 2025-2026 — re-verify quarterly)
-- **Speed**: 90% of ad recall happens in first 6 seconds; refresh every 7 days
+- **Speed**: 90% of cumulative ad-recall impact lands in the first 6 seconds (TikTok Marketing Science); refresh every 7 days
 - **Production**: Smartphone-shot, quick cuts every 2-3 seconds, TikTok-native editing (captions, green screen)
 
 ### Google Ads
 - **RSA optimization**: Use all 15 headline slots; mix keyword-focused, benefit-focused, and CTA headlines
-- **PMax assets**: 15 headlines + 5 descriptions + 20 images + 5 videos; more = better
+- **PMax assets**: 15 headlines + 5 long headlines + 5 descriptions + 20 images + 5 videos; more = better
 - **Intent matching**: Search ads must match the user's search intent exactly — keyword in headline 1
 - **Refresh**: Replace low-rated assets every 4-6 weeks
 
@@ -291,7 +293,7 @@ and modern performance data all converge on the same truths:
 3. **One message per ad** — Trying to say two things means saying nothing
 4. **Message match is mandatory** — Ad headline must match landing page headline
 5. **Test, don't guess** — Write 15-25+ headlines before picking (a direct-response discipline; Ogilvy's point was to *test* them, not a fixed count)
-6. **Emotion drives action** — Loss aversion is 2x stronger than gain; use it (for selecting which psychological principle to apply, see the marketing-psychology skill)
+6. **Emotion drives action** — Losses feel roughly 2x heavier than gains in lab estimates (varies by context); use loss framing where it's real (for selecting which psychological principle to apply, see the marketing-psychology skill)
 7. **Hook earns attention, body earns the click** — Without the hook, nothing else matters
 8. **Platform-native beats platform-agnostic** — Reformat for each platform, don't just resize
 9. **Creative quality > budget or targeting** — ~47% of CPG sales lift (Nielsen Catalina, 2017); ~70% of campaign performance (Google). Invest in creative first.
@@ -306,7 +308,7 @@ Platform-reported ROAS lies post-iOS 14.5. Build a real measurement stack:
 | Layer | What it does | Tools |
 |---|---|---|
 | Server-side conversion API | Bypasses ITP/ETP cookie loss; deduplicates with pixel | **Meta CAPI**, **Google Enhanced Conversions**, **TikTok Events API**, **LinkedIn CAPI**, **Reddit CAPI**, **Pinterest Conversions API** |
-| Mobile attribution | SKAdNetwork + AppsFlyer / Adjust / Singular postback | SKAN 4.0, AEM |
+| Mobile attribution | AdAttributionKit / SKAdNetwork + AppsFlyer / Adjust / Singular postback | **AdAttributionKit** (Apple's SKAN successor — no SKAN 5.0 is coming), SKAN 4.0, AEM |
 | Blended / cross-channel | MER (Marketing Efficiency Ratio) = total revenue / total ad spend | **Triple Whale**, **Northbeam**, **Polar**, **Lifesight**, **Rockerbox** |
 | Incrementality | Geo holdouts, ghost-ad tests, conversion lift studies | Meta Conversion Lift, Google Geo Experiments, in-house geo splits |
 | Marketing Mix Modeling | Bayesian / classical MMM at scale | Robyn (Meta OSS), LightweightMMM (Google OSS), Recast |

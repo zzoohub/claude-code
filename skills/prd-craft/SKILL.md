@@ -71,8 +71,9 @@ These are writing **targets**. The hard cap before consolidation is 400 lines (s
 ### Phase 0: Check for Existing Context
 
 Before discovery, check if a product brief already exists at
-`docs/prd/product-brief.md`. If a brief exists, use it as a starting point to
-accelerate discovery.
+`docs/prd/product-brief.md` — also `product-brief-*.md` variants: multiple
+briefs mean multiple explored directions, so confirm which one this PRD builds
+on. If a brief exists, use it as a starting point to accelerate discovery.
 
 Also check if `docs/prd/prd.md` already exists. If yes, do **not** rewrite it
 blindly — branch:
@@ -82,7 +83,9 @@ blindly — branch:
 - The product has **genuinely pivoted** — the problem, target users, or success
   metric have changed, not just the feature set → run the creation flow to
   rewrite the vision in place. Confirm the pivot scope with the user first so
-  you don't discard a still-valid vision.
+  you don't discard a still-valid vision. A pivot rewrite also refreshes the
+  brief's Problem/Direction (`product-brief.md`) — marketing-side agents read
+  the brief, not the PRD, as product context, and a stale brief poisons them.
 - Otherwise it's probably a **single-feature add** → return to the user and
   suggest a single-feature-spec capability if available (e.g. the `feature-spec`
   skill), which patches the PRD in place without rewriting the vision.
@@ -216,8 +219,8 @@ all four so downstream skills can join on it.
 ## 6. Dev Order
 
 Features ordered by dependency and priority. State **why** this order, don't just
-assert it: for each version bucket give a one-line rationale (riskiest-assumption-first,
-core-value-first, or unblocks-the-most). For moderate/large products, tag each
+assert it — one rationale line per version bucket, or one global ordering
+principle (riskiest-assumption-first, core-value-first, unblocks-the-most). For moderate/large products, tag each
 feature Must / Should / Could (MoSCoW) or note its value-vs-effort. Annotate
 cross-feature dependencies inline (`depends on: file-parser`) so task-craft can
 consume the graph rather than re-deriving it.
@@ -226,11 +229,11 @@ consume the graph rather than re-deriving it.
 1. file-parser — everything depends on parsed input [Must]
 2. transform-engine — core value of the tool [Must] (depends on: file-parser)
 
-### v0.2 — Workflow
+### v0.2 — Workflow — unblocks daily use
 3. config-loader — user-defined rules [Should] (depends on: transform-engine)
 4. output-formatter — multiple output formats [Should] (depends on: transform-engine)
 
-### v0.3 — Polish
+### v0.3 — Polish — friction cuts, nothing load-bearing
 5. error-reporting — detailed diagnostics [Could]
 6. watch-mode — re-run on file changes [Could] (depends on: file-parser)
 
@@ -277,7 +280,9 @@ Links to supporting materials (don't inline them).
 
 For each feature in the PRD's Feature Overview table, create a feature spec
 under the PRD's `features/` directory (default `docs/prd/features/{feature}.md`;
-kebab-case filename matching the §5 name).
+kebab-case filename matching the §5 name). Lightweight products may skip specs
+(per Complexity Calibration) — then omit the §5 Spec column entirely rather
+than leaving dead links.
 
 A dedicated feature-spec capability (e.g. the `feature-spec` skill) owns the
 canonical template, field guidance, and quality bar — use it per feature if
@@ -298,10 +303,15 @@ the document.
    - The **5 Qualities of an Excellent PRD** (above).
    - The **anti-patterns** in `references/anti-patterns.md` — treat each as a
      checklist item.
-3. **Report** a prioritized findings list: for each issue, name the section, quote
+3. **Check structural integrity:** Feature Overview ↔ `features/*.md` ↔ Dev
+   Order agree one-to-one — no spec-less rows (unless the lightweight tier
+   skipped specs), no orphan spec files, no feature missing from Dev Order;
+   names kebab-case and matching filenames; every `depends on:` target exists;
+   Last Updated present and recent enough to believe (anti-pattern #9).
+4. **Report** a prioritized findings list: for each issue, name the section, quote
    the problem, and give a concrete section-level fix. Lead with the highest-impact
    gaps (missing/weak problem evidence, no metrics, scope undefined).
-4. **Do not edit unless asked.** Offer to apply fixes section-by-section; if the
+5. **Do not edit unless asked.** Offer to apply fixes section-by-section; if the
    user accepts, follow Iteration & Feedback below.
 
 Output a critique, not a rewritten PRD.
@@ -318,6 +328,17 @@ The most critical to catch:
 2. **The metrics-free zone** — No numbers anywhere
 3. **The technical spec in disguise** — Names specific libraries or frameworks in requirements (tech stack belongs in the architecture design doc)
 4. **The design document in disguise** — Contains wireframes or UI specs
+
+## Quality Gate (before presenting)
+
+- [ ] §1 problem is quantified with evidence — baselines and frequencies, not adjectives
+- [ ] §4 metrics match the complexity tier; large products pair every goal with a counter-metric
+- [ ] §5 names are kebab-case; §5 ↔ §6 ↔ `features/*.md` agree one-to-one (lightweight: Spec column omitted, never dead links)
+- [ ] §6 states an ordering rationale and annotates `depends on:` inline
+- [ ] §7 names specific out-of-scope temptations, each with a reason
+- [ ] §8 weighs value/usability/feasibility/viability — not only technical risk
+- [ ] No tech stack in requirements, no wireframes (the critical anti-patterns above)
+- [ ] Line limits hold: prd.md ≤ 400, each feature spec ≤ 200
 
 ## Line Limits
 

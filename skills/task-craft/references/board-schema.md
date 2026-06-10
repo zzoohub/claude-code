@@ -7,7 +7,7 @@ Single source of truth for the task board format. Any skill that writes to `task
 ```markdown
 | id | feature | task | type | priority | status | assignee | touches |
 |----|---------|------|------|----------|--------|----------|---------|
-| T-001 | infra | Project scaffolding | chore | high | backlog | — | package.json, tsconfig.json |
+| T-001 | infra | Scaffold project and CI | chore | high | backlog | — | package.json, tsconfig.json |
 ```
 
 ## Fields
@@ -15,7 +15,7 @@ Single source of truth for the task board format. Any skill that writes to `task
 | Field | Values | Notes |
 |---|---|---|
 | `id` | `T-NNN`, monotonically increasing | Survives across batches and phases. Never reused. |
-| `feature` | feature name | Maps to `tasks/features/{feature}.md` **when that file exists**. One-off `infra` / `chore` / `bugfix-{slug}` rows may have no feature file (`task-add` skips it for trivial work) — those rows must be self-contained, and any later block/abandon note goes to `tasks/features/_misc.md`. |
+| `feature` | feature name | Maps to `tasks/features/{feature}.md` **when that file exists**. One-off `infra` / `chore` / `bugfix-{slug}` rows may have no feature file (`task-add` skips it for trivial work) — those rows must be self-contained, and `tasks/features/_misc.md` hosts their overflow: block/abandon notes, plus the `### T-NNN` detail block whenever acceptance needs recording (e.g. a bugfix's repro). |
 | `task` | one-line description | Imperative voice. Avoid duplicating info from feature file. |
 | `type` | `feature \| bugfix \| refactor \| chore \| spike \| hotfix` | Required column. |
 | `priority` | `high \| medium \| low` | **Lowercase. Not `P0/P1/P2/P3`.** |

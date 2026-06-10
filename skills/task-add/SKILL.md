@@ -44,15 +44,20 @@ The board (default `tasks/board.md`; the caller may redirect the `tasks/` root) 
      has elapsed (its ISO week is in the past) or its heading is tagged
      `(closed)`; otherwise treat it as open. Never create a `Phase N` heading
      on an iterations board.
-6. Updates or creates `tasks/features/{feature}.md` with task details. For
-   one-off bugfixes / chores, skip the feature file unless the user explicitly
-   asks for a spec (`--with-spec` forces a feature file to be created) or the
-   change is non-trivial. When you skip it, keep the
-   board row self-contained (clear `task` + `touches`) and use a stable
-   `feature` bucket (`infra` / `chore` / `bugfix-{slug}`); any later
-   block/abandon note for such a task goes to `tasks/features/_misc.md`.
-7. Appends a dated entry to the feature file's `Changes` section (skip if no
-   feature file was created).
+6. Updates or creates `tasks/features/{feature}.md` with task details (when
+   creating it fresh, scaffold task-craft's feature-file shape: title,
+   `> Sources:`, `## Changes`, `## Tasks`). Skip the feature file only when the
+   row's done-state is self-evident from the board row alone (one-off chores).
+   Acceptance that needs recording — every bugfix's repro, anything a reviewer
+   or verifier will check against — must live in a `### T-NNN` detail block:
+   in the feature file, or in `tasks/features/_misc.md` for one-offs. When you
+   skip, keep the board row self-contained (clear `task` + `touches`) and use
+   a stable `feature` bucket (`infra` / `chore` / `bugfix-{slug}`); later
+   block/abandon notes for such a task also go to `_misc.md`. A caller may
+   explicitly ask for a full spec file — honor that over the skip heuristic.
+7. Appends a dated entry to the feature file's `Changes` section (when the
+   detail block went to `_misc.md`, log there; skip only when no detail was
+   written anywhere).
 8. Bumps the board's `> Last updated:` header to today's date.
 
 ## What This Skill Does NOT Do
@@ -77,9 +82,17 @@ Type Guide** in `task-craft`.
 | `spike` | Time-boxed investigation |
 | `hotfix` | Production incident; deploy fast |
 
+Inbound proposals (e.g. from a plan-review capability) may carry an effort tag
+(S–XL). The board has no effort column by design — **session-sized is the
+unit**: split an L/XL proposal into several session-sized tasks wired with
+`depends_on`, rather than carrying the label onto the board.
+
 ## Workflow
 
-1. **Read current board** — `tasks/board.md` for grouping + highest ID
+1. **Read current board** — `tasks/board.md` for grouping + highest ID. Scan
+   for an existing row already covering this work (same intent or overlapping
+   `touches`): boards rot fastest through near-duplicates — if one exists,
+   revise it (see below) instead of appending a twin.
 2. **Read context for the task type:**
    - Feature task → `docs/prd/features/{feature}.md`, `docs/arch/system.md`
    - Bugfix → user's repro description (ask for steps to reproduce, observed
@@ -93,10 +106,11 @@ Type Guide** in `task-craft`.
    one is available) so two adds can't claim the same number.
 4. **Choose the group** — see step 5 above (phases vs iterations)
 5. **Write the row** — append to `tasks/board.md` in the right group
-6. **Write task details** — append to `tasks/features/{feature}.md` (or
-   create it if absent). For one-off non-feature work, default to skipping
-   the feature file unless the work is non-trivial; keep the board row
-   self-contained when you skip it.
+6. **Write task details** — append to `tasks/features/{feature}.md` (create it
+   if absent, scaffolding title, `> Sources:`, `## Changes`, `## Tasks`). For
+   one-off work, skip the file only when done-state is self-evident from the
+   row; recorded acceptance (a bugfix's repro, verifier-checkable criteria)
+   goes in a detail block — `_misc.md` hosts one-offs' blocks.
 7. **Log the change** — append a dated entry to the feature file's `Changes`
    section (skip if no feature file was created).
 8. **Bump the header** — set `> Last updated:` to today's date.
@@ -164,6 +178,10 @@ Keep upgrades minimal; don't reformat unrelated rows.
 ## Quality Bar
 
 - [ ] ID is unique and monotonically increasing
+- [ ] Not a near-duplicate — the board was scanned first; overlapping work
+      became a revise, not a new row
+- [ ] Every `depends_on` ID exists on the board; on a phases board each sits
+      in an earlier phase
 - [ ] Type is appropriate for the work
 - [ ] `touches` is specific (no "various files")
 - [ ] No conflict on the same files with another task in the same group
@@ -176,6 +194,9 @@ Keep upgrades minimal; don't reformat unrelated rows.
 - [ ] For a revise: only definition fields changed (state fields left to
       `task-status`); the `Changes` log says what moved and why
 - [ ] Feature file `Changes` section has a dated entry
+- [ ] If the board has outgrown its line target (task-craft's Publication
+      Standard), flag it in your output for consolidation — don't reflow
+      unrelated rows yourself
 
 ## Output
 

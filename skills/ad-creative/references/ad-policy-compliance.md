@@ -23,8 +23,9 @@ produces.
   the caption), in the spoken audio for audio-only formats, and before any "See more"
   truncation on social.
 - **Acceptable**: "#ad", "#sponsored", "Paid partnership with [brand]", the platform's
-  Paid Partnership label. **Not acceptable**: "#sp", "#collab", "thanks [brand]", or
-  disclosures buried in a hashtag wall.
+  Paid Partnership label — though the FTC cautions a platform tool *alone* may not be
+  adequate; pair it with an in-creative disclosure. **Not acceptable**: "#sp", "#collab",
+  "thanks [brand]", or disclosures buried in a hashtag wall.
 - **Typicality**: results shown must be typical, or carry a clear "results not typical" /
   "individual results vary" qualifier alongside the generally expected result.
 
@@ -43,8 +44,10 @@ produces.
 
 Finance, health/medical, crypto, gambling, alcohol, supplements, and political ads
 often require pre-authorization, restricted targeting, and restricted claims. Note
-that **Meta Special Ad Categories** (housing, employment, credit, social/political)
-remove age, gender, and ZIP targeting — which changes the creative angles available.
+that **Meta Special Ad Categories** (housing, employment, financial products and
+services — the former "credit" category, broadened Jan 2025 — and social
+issues/elections/politics) remove age, gender, and ZIP targeting — which changes the
+creative angles available.
 Check category status **before** briefing, not after.
 
 ## 4. Claims Substantiation

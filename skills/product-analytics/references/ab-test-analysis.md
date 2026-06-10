@@ -26,7 +26,7 @@ Follow this sequence for every experiment. Skipping steps leads to bad shipping 
 
 Before looking at results:
 
-- **Minimum sample size reached?** Use power analysis to determine required sample. Rule of thumb: for a 10% MDE (minimum detectable effect), you need ~1,600 users per variant. For 5% MDE, ~6,400 per variant.
+- **Minimum sample size reached?** Check against the sample size the experiment *pre-committed at design time* (the cro skill's experiments reference owns the design table). The required n depends heavily on the baseline rate: n per variant ≈ 16·p(1−p)/(absolute MDE)² at 80% power. The often-quoted "~1,600 per variant for a 10% lift" holds only at a ~50% baseline — at a 5% baseline the same relative lift needs ~32,000 per variant.
 - **Minimum runtime reached?** At least 1 full business cycle (7 days minimum, 14 days recommended). Weekend behavior often differs from weekday.
 - **No data quality issues?** Check for logging errors, bot traffic, assignment imbalance between variants.
 
@@ -40,7 +40,7 @@ Answer: **Did the variant beat control on the primary metric?**
 |--------|---------------|--------|
 | Significant improvement (p < 0.05) | Variant is better | Proceed to secondary analysis |
 | Significant decline (p < 0.05) | Variant is worse | Kill the variant |
-| Not significant | Inconclusive | Check if more time/sample would help, or accept null result |
+| Not significant | Inconclusive | If the pre-committed sample/duration was reached, accept the null — don't extend a running test to chase significance (that reintroduces peeking). If it never reached its planned N, let it finish first. |
 
 **Report both**:
 - **Statistical significance**: p-value or confidence interval
@@ -73,7 +73,7 @@ A segment-level win can hide in an overall null result. An overall win might be 
 
 Compare **week 1 lift vs. week 2+ lift**.
 
-- If week 1 lift > week 2+: Novelty effect. The improvement will fade. Be cautious about shipping.
+- If week 1 lift > week 2+: Novelty effect. The improvement will fade. Be cautious about shipping. (Heuristic: week-2+ lift below ~half of week-1 = treat as novelty; smaller gaps are usually noise.)
 - If week 1 lift ≈ week 2+: Sustained effect. Safe to ship.
 - If week 1 lift < week 2+: Compound effect. Even better — the improvement grows with time.
 
@@ -82,11 +82,13 @@ Compare **week 1 lift vs. week 2+ lift**.
 Annualize the observed effect:
 
 ```
-Daily revenue impact = (Variant conversion rate - Control conversion rate) × Daily traffic × ARPU
+Daily revenue impact = (Variant conversion rate - Control conversion rate) × Daily traffic × revenue per conversion
 Annual revenue impact = Daily impact × 365
 ```
 
-Include confidence intervals. The point estimate is rarely the actual outcome.
+Use revenue per *converting* user (ARPPU/first-order value), not blended ARPU, and annualize the
+sustained post-novelty lift, not week-1. Include confidence intervals. The point estimate is rarely
+the actual outcome.
 
 ### 7. Final Recommendation
 
@@ -122,6 +124,14 @@ Testing 5 metrics? Each needs p < 0.01 to claim significance at the 0.05 family-
 
 Report confidence intervals, not just p-values. A CI of [+2%, +15%] tells you more than "p = 0.03". It shows the range of plausible effect sizes.
 
+### Ratio Metrics Need the Delta Method
+
+Standard tests assume one independent observation per randomization unit. Ratio metrics violate
+that — revenue per user (heavy-tailed spend), clicks per *session* when you randomized by *user*,
+AOV — so naive per-row t-tests understate variance and inflate false positives. Approximate the
+ratio's variance with the **delta method** (or bootstrap by randomization unit), and winsorize
+heavy-tailed revenue metrics before testing.
+
 ### Sequential Testing Caution
 
 If using PostHog's experiment tool with sequential testing (which allows checking results before the experiment ends):
@@ -149,7 +159,9 @@ An experiment running only on weekdays or only during a holiday period may not g
 Each concurrent experiment risks interaction effects. If experiments A and B both affect the signup flow, their combined effect may differ from either alone. Limit concurrent experiments on the same user flow.
 
 ### SRM (Sample Ratio Mismatch)
-If variant assignment is 50/50 but you see 48/52 or worse, there's a bug. Check:
+Run a chi-squared test on the assignment counts — **p < 0.001 means SRM** (the standard threshold).
+The raw ratio alone can't tell: 48/52 is normal noise at 1,000 users and a screaming bug at 100,000.
+On SRM, check:
 - Is the assignment happening before any filtering?
 - Are bots being assigned unevenly?
 - Is there a redirect that drops users from one variant?
@@ -167,21 +179,30 @@ PostHog experiments show:
 - **Credible interval**: Range of plausible effect sizes
 - **Trend over time**: How the metric changed during the experiment
 
-### Using PostHog MCP for Analysis
+Bayesian is PostHog's default; its newer experimentation engine also offers a **frequentist mode**
+(selectable per experiment or org-wide). The >95% win-probability bar applies to the default
+Bayesian readout.
 
-| Analysis | MCP Tool | How |
-|----------|----------|-----|
-| Get experiment results | `experiment-get` + `experiment-results-get` | Retrieve results by experiment ID |
-| Custom metric analysis | `query-run` with HogQL | Filter events by feature flag variant |
-| Segment analysis | `query-run` with breakdown | Break down experiment events by user properties |
-| Retention impact | `query-run` with retention query | Compare D7/D30 retention between variants |
+### Using PostHog for Analysis
+
+Via a PostHog capability (MCP tools or the UI), if available:
+
+| Analysis | PostHog Feature | How |
+|----------|----------------|-----|
+| Get experiment results | **Experiments** (results readout) | Retrieve results by experiment ID |
+| Custom metric analysis | **HogQL** | Filter events by feature flag variant |
+| Segment analysis | **HogQL** breakdown | Break down experiment events by user properties |
+| Retention impact | **Retention** insight / HogQL | Compare D7/D30 retention between variants |
 
 ### HogQL for Custom Experiment Analysis
 
 ```sql
--- Compare conversion rate between variants
+-- Compare conversion rate between variants.
+-- Filter on the $feature/<flag-key> property: PostHog stamps it on every event sent
+-- while the flag is active. ($feature_flag / $feature_flag_response exist only on
+-- $feature_flag_called events — filtering on those would exclude all conversion events.)
 SELECT
-  properties.$feature_flag_response AS variant,
+  properties['$feature/experiment-key'] AS variant,
   COUNT(DISTINCT person_id) AS users,
   COUNT(DISTINCT CASE WHEN event = 'purchase_completed' THEN person_id END) AS conversions,
   ROUND(
@@ -189,8 +210,7 @@ SELECT
     COUNT(DISTINCT person_id), 2
   ) AS conversion_rate
 FROM events
-WHERE properties.$feature_flag_response IS NOT NULL
-  AND properties.$feature_flag = 'experiment-key'
+WHERE properties['$feature/experiment-key'] IN ('control', 'test')
   AND timestamp >= '2025-01-01'
 GROUP BY variant
 ```
@@ -199,7 +219,7 @@ GROUP BY variant
 
 ## Experiment Report Template
 
-Store at `biz/analytics/reports/{experiment-name}-results.md`:
+Store in the analytics reports dir (default `biz/analytics/reports/{experiment-name}-results.md`; caller may redirect):
 
 ```markdown
 # Experiment: [Name]

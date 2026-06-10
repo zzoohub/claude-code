@@ -23,7 +23,7 @@ Guidelines for creating high-converting digital product copy, UX microcopy, bran
 
 | File | When to Use |
 |------|------------|
-| `references/persuasion-frameworks.md` | Choosing and applying PAS / AIDA / BAB / 4Ps / SSS + psychological triggers (single source of truth used by ad-creative, social-content) |
+| `references/persuasion-frameworks.md` | Choosing and applying PAS / AIDA / BAB / 4Ps / SSS + psychological triggers (single source of truth — templated by ad-creative and social-content; cross-referenced by email-marketing and marketing-psychology) |
 | `references/copy-frameworks.md` | Writing new pages, restructuring copy, CTA optimization |
 | `references/editing-sweeps.md` | Reviewing/editing existing copy, quality improvement |
 | `references/plain-english.md` | Simplifying language, removing jargon, tone checks |
@@ -59,7 +59,7 @@ Why: When benefits pile up, the sentence becomes complex and the message blurs. 
 
 ### Principle 2: Certainty Beats Maximum Reward
 
-Users respond more to small guaranteed rewards than large uncertain ones. "You'll definitely get X" outperforms "Up to Y" every time.
+Users respond more to small guaranteed rewards than large uncertain ones. "You'll definitely get X" consistently outperforms "Up to Y".
 
 - Bad: "Get up to $100 in random points"
 - Good: "Get $1 to $100 — guaranteed"
@@ -115,7 +115,7 @@ Solve one acute, pressing problem — not a vague, catch-all solution. Tailored 
 - Bad: "The all-in-one solution for your business"
 - Good: "Fix your checkout abandonment rate in 3 steps"
 
-Why: Audiences are more savvy than ever. Algorithms serve hyper-personalized ads, so vague messaging feels outdated. Speak directly to one pain point and deliver a focused solution. Personalized beats generic every time.
+Why: Audiences are more savvy than ever. Algorithms serve hyper-personalized ads, so vague messaging feels outdated. Speak directly to one pain point and deliver a focused solution. Personalized beats generic.
 
 ## Voice & Authenticity
 
@@ -151,7 +151,7 @@ When creating or refining brand voice guidelines, deliver:
 - **Vocabulary preferences**: Preferred terms and terms to avoid
 - **Formatting standards**: Punctuation, capitalization, emoji usage rules
 
-Output a reusable reference document that any team member can apply consistently.
+Output a reusable reference document that any team member can apply consistently. Its default home is the marketing strategy doc's Brand Voice section (`biz/marketing/strategy.md`, owned by the caller's marketing-strategy context; caller may redirect) — if no file-write capability is present, return it inline.
 
 ### 3. Writing Approach
 

@@ -49,6 +49,8 @@ comparison.
   skip items marked skip). Those review skills propose rows but no longer place
   them — you are the owner that writes them onto the board.
 
+## Required Inputs
+
 Resolve the doc roots first — read `CLAUDE.md` (it may redirect `tasks/`,
 `docs/prd`, `docs/arch`, `docs/ux`) and pass the resolved paths to the skill so its
 "ask the caller" fallback never fires into this non-interactive context; the skills
@@ -66,7 +68,9 @@ each other):
 - **Left edge — open the task.** On `start T-NNN`, move `backlog` → `active` and
   set `assignee` (the board ships assignees as `—`; you set them, per
   `task-craft`/`task-add` — creation never does). Do this *before* the developer
-  agent runs, so the worker has an `active` task to implement.
+  agent runs, so the worker has an `active` task to implement. `task-status`
+  checks readiness (all `depends_on` `done`) — when it flags an unmet
+  dependency, carry that flag back to the main session instead of overriding.
 - **Right edge — close the task.** Mark `active` → `done` **only** after the main
   session confirms reviewer AND verifier both passed (the documented
   developer → reviewer → verifier chain). Developer agents do **not** self-certify
@@ -111,8 +115,8 @@ For a **board audit** (task-craft review mode), mirror the skill's findings —
 
 ```
 ## Audit — tasks/board.md
-- 🔴 blocker: [count] — broken dependency ordering; same-group file conflict; task with no acceptance; board/feature-file `phase:` mismatch
-- 🟠 should-fix: [count] — task not session-sized; unverifiable acceptance; missing `touches`; feature with no task file
+- 🔴 blocker: [count] — broken dependency ordering (incl. dangling `depends_on`, or a task `active`/`done` over a not-`done` dependency); same-group file conflict; task with no acceptance; board/feature-file `phase:` mismatch
+- 🟠 should-fix: [count] — task not session-sized; unverifiable acceptance; missing `touches`; feature with no task file; stale `blocked` row (the blocker may have shipped)
 - 🟡 nit: [count] — vague wording; line-limit pressure; stale `Changes`; ID gaps
 
 [Per-finding list; route each fix to task-add (definition) / task-status (state).]

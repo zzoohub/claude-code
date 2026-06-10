@@ -81,8 +81,18 @@ async fn main() -> anyhow::Result<()> {
 
 ```bash
 # SQLx 0.8+: one file per query (not merged). Commit .sqlx/ directory.
-cargo sqlx prepare && git add .sqlx/    # generate offline query data
-SQLX_OFFLINE=true cargo build           # CI without DB
+cargo sqlx prepare && git add .sqlx/        # generate offline query data (local)
+
+# CI pipeline — every PR:
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+cargo sqlx prepare --check                  # .sqlx/ in sync with queries
+SQLX_OFFLINE=true cargo test                # build + tests without a DB
+
+# Boundary fitness function — domain must stay infrastructure-free.
+# (Compiler-enforced once domain/ is its own workspace crate; until then:)
+! grep -rE 'use (axum|sqlx|tower|utoipa)' src/domain/ \
+  || { echo "domain imports infrastructure"; exit 1; }
 ```
 
 ---
