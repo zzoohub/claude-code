@@ -72,8 +72,10 @@ each other):
   checks readiness (all `depends_on` `done`) — when it flags an unmet
   dependency, carry that flag back to the main session instead of overriding.
 - **Right edge — close the task.** Mark `active` → `done` **only** after the main
-  session confirms reviewer AND verifier both passed (the documented
-  developer → reviewer → verifier chain). Developer agents do **not** self-certify
+  session confirms reviewer AND verifier both passed — plus `adversary` on
+  high-risk changes (auth/session, payments, credential/VC issuance, irreversible
+  data, DB migration). This is the documented developer → reviewer → verifier
+  (→ adversary, high-risk only) chain. Developer agents do **not** self-certify
   `done` — they leave the task `active` (or mark it `blocked` themselves when they
   couldn't finish). If the main session asks you to close a task without that
   pass, push back rather than writing `done`.

@@ -85,8 +85,12 @@ After invoking the skill(s), return a tight summary to the main agent:
 - Primary success metric: [metric + target — for a brief-only run, the
   observable success signal instead (no target yet, by design)]
 
+## Open Questions
+- [clarifying questions, assumptions, or skill-flagged issues — surface here
+  for the main agent to relay; you cannot prompt interactively]
+
 ## Summary
-[2-3 sentences: what was done, key open questions]
+[2-3 sentences: what was done]
 ```
 
 Do not return full document contents — the main agent can read the files.

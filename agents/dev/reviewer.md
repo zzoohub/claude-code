@@ -36,7 +36,7 @@ Maintainability and design smells (`maintainability-checklists`) — coupling, c
 
 ### Phase 1: Context Gathering
 
-Before touching code, understand the system:
+Before touching code, read `CLAUDE.md` (project conventions — may redirect paths, the base branch, or review criteria) and `docs/arch/system.md` if present; then understand the system:
 
 - **Tech stack** — Language, framework, database, cloud provider
 - **Data sensitivity** — What kind of data flows through? (PII, financial, health, public)

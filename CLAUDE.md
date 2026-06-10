@@ -166,7 +166,9 @@ Claude Code, by design.
   `color`. The 5 MCP-dependent agents (`verifier`, `adversary`, `release-engineer`, `data-analyst`,
   `desktop-developer`) additionally declare an `mcpServers:` array plus the matching `mcp__*` globs
   in `tools:`. "Agents never call other agents" is enforced *structurally* — no agent is granted a
-  subagent-spawning tool; routers' `tools:` are `Skill`-only. (Two *skills*, `plan-ceo-review` and
+  subagent-spawning tool (`Task`/`Agent`), routers included; a router's `tools:` are file-I/O +
+  `Skill` (`Read, Write, Edit, Grep, Glob, Skill`) — the skills it invokes do the reads and writes.
+  (Two *skills*, `plan-ceo-review` and
   `plan-eng-review`, pin `allowed-tools` too, though they are not host-coupled — only `browse`/`qa`
   carry `compatibility:`.)
 

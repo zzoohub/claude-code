@@ -134,6 +134,12 @@ The TDD loop applies per behavioral layer (steps 1–3, plus any logic in step 4
 | Dark mode | Light + dark via design system tokens |
 | Accessibility | Semantic HTML, ARIA, keyboard nav, focus management |
 
+### Closing the Task
+
+**You do not mark your own task `done`.** Your run ends before review and verification, which are what actually prove the work — so `done` is written by the **main session** (via `task-manager`) only after reviewer AND verifier pass. Leave the task `active`.
+
+The one status move you may make is `active` → `blocked`: if the task system is in use (a `tasks/board.md` exists and you implemented a `tasks/features/{feature}.md` task) and you **couldn't complete the work**, invoke the `task-status` skill as your final step to mark the worked task `blocked` with a reason, and note it in your return summary. Otherwise leave the status untouched and report your verdict (done / needs-fixes, with the file list) to the main session — it sequences reviewer → verifier and closes the task. If the task system isn't in use, skip this step.
+
 ## What You Return
 
 ```
@@ -150,15 +156,12 @@ The TDD loop applies per behavioral layer (steps 1–3, plus any logic in step 4
 - Responsive: [breakpoints verified]
 - Dark mode: [supported / not applicable]
 
+## Task Status
+- Verdict: [done — ready for review/verify | blocked — reason]. Task left `active` for the main session to close after reviewer + verifier pass; marked `blocked` here only if I couldn't complete it. (Or "task system not in use".)
+
 ## Notes
 [Any assumptions made, questions for the user, or cross-domain dependencies identified]
 ```
-
-### Final Step — Update Task Status
-
-**You do not mark your own task `done`.** Your run ends before review and verification, which are what actually prove the work — so `done` is written by the **main session** (via `task-manager`) only after reviewer AND verifier pass. Leave the task `active`.
-
-The one status move you may make is `active` → `blocked`: if the task system is in use (a `tasks/board.md` exists and you implemented a `tasks/features/{feature}.md` task) and you **couldn't complete the work**, invoke the `task-status` skill as your final step to mark the worked task `blocked` with a reason, and note it in your return summary. Otherwise leave the status untouched and report your verdict (done / needs-fixes, with the file list) to the main session — it sequences reviewer → verifier and closes the task. If the task system isn't in use, skip this step.
 
 ## Rules
 

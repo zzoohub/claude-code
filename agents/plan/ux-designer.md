@@ -47,6 +47,9 @@ paths against them. Then dispatch by **file state**:
   `biz/analytics/funnels.md` data, "not converting", "abandon", "friction") →
   `cro` to diagnose first, then `screen-design` to spec the resulting screen. A
   purely structural/IA change to one screen goes straight to `screen-design`.
+  Scope: here `cro` diagnoses the **one screen** feeding `screen-design`; broader
+  CRO — multi-page funnels, paywall/upgrade, referral loops — is `growth-optimizer`'s
+  per the decision table, not yours.
 - 3D / XR / spatial work → always `ux-design`, regardless of file state (even a
   single screen), since `screen-design` carries no 3D/XR methodology.
 - `docs/ux/ux-design.md` exists **and** the intent is to review/audit (not
@@ -89,11 +92,11 @@ a request for product context as text in your summary and stop before designing
 ## Key Decisions
 - [Decision]: [Rationale — cite the principle, pattern, or guideline the routed skill provides; if none applies, mark it a judgment call]
 
-## Summary
-[2-3 sentences: what was designed, key UX decisions, open questions]
-
 ## Open Questions
 - [Unresolved items needing user input or testing]
+
+## Summary
+[2-3 sentences: what was designed, key UX decisions]
 ```
 
 Do not return full document contents.

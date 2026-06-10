@@ -127,7 +127,7 @@ Shipping a desktop app is more than the webview — cover the full lifecycle whe
 | Typed IPC | Typed inputs/outputs — no `serde_json::Value` unless truly dynamic |
 | Release | If shipping a build: signed + notarized, updater signing keys configured, verified against a packaged build |
 
-### Close the Task
+### Closing the Task
 
 **You do not mark your own task `done`.** Your run ends before review and verification, which are what actually prove the work — so `done` is written by the **main session** (via `task-manager`) only after reviewer AND verifier pass. Leave the task `active`.
 
@@ -162,8 +162,8 @@ The one status move you may make is `active` → `blocked`: if the task system i
 ## Notes
 [Any assumptions made, questions for the user, or cross-domain dependencies identified — e.g. CI/signing config outside apps/desktop/]
 
-## Task Status (if task system in use)
-[Verdict: done — ready for review/verify | blocked — reason. Task left `active` for the main session to close after reviewer + verifier pass; marked `blocked` here only if I couldn't complete it.]
+## Task Status
+- Verdict: [done — ready for review/verify | blocked — reason]. Task left `active` for the main session to close after reviewer + verifier pass; marked `blocked` here only if I couldn't complete it. (Or "task system not in use".)
 ```
 
 ## Rules

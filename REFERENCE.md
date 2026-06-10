@@ -43,7 +43,7 @@ appear under hyphenated dir names in `skills/` when repo-owned.
 - `marketer` → copywriting · competitor-pages · pricing · ad-creative · marketing-psychology
 - `content-marketer` → copywriting · social-content · email-marketing · search-visibility
 - `growth-optimizer` → cro · growth-loops · churn-prevention · pricing · marketing-psychology · copywriting
-- `data-analyst` → product-analytics + PostHog MCP
+- `data-analyst` → product-analytics · churn-prevention (health-score framework, loaded on demand) + PostHog MCP
 
 > Agent **sequencing** — how these chain end to end — lives in [`PLAYBOOK.md`](PLAYBOOK.md).
 

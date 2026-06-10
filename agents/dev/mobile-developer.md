@@ -116,6 +116,12 @@ src/
 | Build/Release | EAS Build + EAS Update (OTA) channels; native config via `app.config`/config plugins; permissions, deep linking, push, secure storage handled where required |
 | Test tooling | Unit/component: Jest + React Native Testing Library (jest-expo preset). E2E (if specified): Detox or Maestro |
 
+### Closing the Task
+
+**You do not mark your own task `done`.** Your run ends before review and verification, which are what actually prove the work — so `done` is written by the **main session** (via `task-manager`) only after reviewer AND verifier pass. Leave the task `active`.
+
+The one status move you may make is `active` → `blocked`: if the task system is in use (a `tasks/board.md` exists and you implemented a `tasks/features/{feature}.md` task) and you **couldn't finish the work**, invoke the `task-status` skill as your final step to mark the worked task `blocked` with a reason, and note it in your return summary. Otherwise leave the status untouched and report your verdict (done / needs-fixes, with the file list) to the main session — it sequences reviewer → verifier and closes the task. If the task system isn't in use, skip this step.
+
 ## What You Return
 
 ```
@@ -133,15 +139,12 @@ src/
 - Dark mode: [supported]
 - Platform: [iOS + Android considerations]
 
+## Task Status
+- Verdict: [done — ready for review/verify | blocked — reason]. Task left `active` for the main session to close after reviewer + verifier pass; marked `blocked` here only if I couldn't complete it. (Or "task system not in use".)
+
 ## Notes
 [Any assumptions made, questions for the user, or cross-domain dependencies identified]
 ```
-
-### Update Task Status
-
-**You do not mark your own task `done`.** Your run ends before review and verification, which are what actually prove the work — so `done` is written by the **main session** (via `task-manager`) only after reviewer AND verifier pass. Leave the task `active`.
-
-The one status move you may make is `active` → `blocked`: if the task system is in use (a `tasks/board.md` exists and you implemented a `tasks/features/{feature}.md` task) and you **couldn't finish the work**, invoke the `task-status` skill as your final step to mark the worked task `blocked` with a reason, and note it in your return summary. Otherwise leave the status untouched and report your verdict (done / needs-fixes, with the file list) to the main session — it sequences reviewer → verifier and closes the task. If the task system isn't in use, skip this step.
 
 ## Rules
 

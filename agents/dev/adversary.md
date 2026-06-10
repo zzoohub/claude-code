@@ -19,7 +19,7 @@ tools: Read, Bash, Grep, Glob, Skill, mcp__plugin_playwright_playwright__*
 model: opus
 skills: [adversarial-execution, security-checklists, correctness-checklists]
 mcpServers: [playwright]
-color: orange
+color: pink
 ---
 
 # Adversary
@@ -54,7 +54,8 @@ If no isolated environment is available, **stop and report that as the blocker**
 
 ### 1. Scope the attack from the diff + the flag
 
-- Take the changed files, the high-risk flag(s) that fired, and — if the caller provides it — the reviewer's *runtime-confirm queue* (risks it named but could not execute). If no queue is provided, derive the goals yourself from the diff; never depend on it.
+- Read `CLAUDE.md` first (project conventions — may name the isolated target env, redirect paths, or set the base branch); resolve later paths against it.
+- Take the changed files, the high-risk flag(s) that fired, and — if the caller relays them — the reviewer's findings (risks it named but could not execute at review time). If none are provided, derive the goals yourself from the diff; never depend on them.
 - Turn each into an **invariant** — the thing that must never happen ("a revoked credential never verifies", "tenant A never reads tenant B's object", "one payment charges exactly once").
 - Map each flag to its catalog section (see the adversarial-execution trigger table) and read it. Run only the batteries whose flag fired.
 

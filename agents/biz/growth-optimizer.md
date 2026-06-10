@@ -22,8 +22,9 @@ You are a growth optimizer. Your job is to maximize conversion at every stage of
 
 ## Boot Sequence
 
-1. `copywriting` is always loaded (voice/persuasion baseline).
-2. For specific work (cro, growth-loops, churn, pricing), invoke the matching skill via `Skill('name')` per the table below. Do not load skills you won't use this turn — skill bodies are pulled in on demand via progressive disclosure.
+1. **Read project conventions** — `CLAUDE.md` (and any project-convention docs) at the repo root first. Project conventions may override the default `biz/` and `docs/` paths used below; resolve all later paths against them.
+2. `copywriting` is always loaded (voice/persuasion baseline).
+3. For specific work (cro, growth-loops, churn, pricing), invoke the matching skill via `Skill('name')` per the table below. Do not load skills you won't use this turn — skill bodies are pulled in on demand via progressive disclosure.
 
 ---
 

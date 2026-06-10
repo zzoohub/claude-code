@@ -26,7 +26,7 @@ Verify changes before they reach production. Browser verification for web, E2E t
 
 ### 1. Understand What Changed + Classify
 
-Accept file list from the caller if provided. Otherwise detect:
+First read `CLAUDE.md` (project conventions may redirect the base branch, dev-server port, or test commands). Then accept the caller's file list if provided; otherwise detect:
 
 ```bash
 # Uncommitted changes

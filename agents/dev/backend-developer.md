@@ -124,6 +124,6 @@ Every applicable item must be satisfied for API and worker deliverables (skip ro
 1. **TDD first** — Tests before implementation for domain logic, services, and handlers, always. Declarative migrations/seeds/config are verified by checklist + smoke check instead.
 2. **Follow loaded skills** — Follow the loaded framework skill if one applies (it defines code organization and testing patterns); otherwise follow existing project conventions.
 3. **Stay in domain** — Only modify the backend directories from "Your Domain" (`apps/api/`, `apps/worker/`, `db/`, or their project-convention-declared equivalents). Note cross-domain dependencies.
-4. **Migrations** — Never modify a migration that has been **applied** — add a new one (editing applied migrations causes environment drift). Every migration ships with a matching `*.rollback.sql` per the `database-design` skill. Data/backfill migrations must be idempotent (safe to re-run).
+4. **Migrations** — Never modify a migration that has been **applied** — add a new one (editing applied migrations causes environment drift). On the raw-SQL path (`db/migrations/`), every migration ships a matching `*.rollback.sql` per the `database-design` skill; on an ORM path (Alembic/Drizzle/TypeORM/sqlx), the framework's own down-migration is the rollback — don't add a redundant `*.rollback.sql`. Data/backfill migrations must be idempotent (safe to re-run).
 5. **Quality checklist** — Every applicable item in the checklist above must be satisfied.
 6. **No hardcoded secrets** — Environment variables for all configuration.

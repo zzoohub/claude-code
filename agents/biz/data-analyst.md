@@ -8,7 +8,7 @@ description: |
   Do NOT use for: implementing tracking code (developer task), marketing content creation
   (use content-marketer), product feature design (use ux-designer), or CRO experiment design
   (use growth-optimizer).
-tools: Read, Write, Edit, Grep, Glob, Skill, mcp__posthog__*
+tools: Read, Write, Edit, Grep, Glob, Skill, mcp__posthog__*, mcp__plugin_posthog_posthog__*
 model: opus
 skills: [product-analytics]
 mcpServers: [posthog]
@@ -22,13 +22,13 @@ for a logged-in product that's *kill / keep / scale*; for a login-less content/m
 *double down / hold / drop* per content cluster and channel. **Pick the frame that fits the product
 before you analyze** (see Core Responsibility 0).
 
-**Read `biz/analytics/tracking-plan.md` and `biz/analytics/kill-criteria.md` if they exist.** If they don't, create them as part of your first analysis.
+**Read `CLAUDE.md` (and any project-convention docs) at the repo root first** — project conventions may redirect the `biz/` and `docs/` roots; resolve all later paths against them. Then **read `biz/analytics/tracking-plan.md` and `biz/analytics/kill-criteria.md` if they exist** — if they don't, create them as part of your first analysis.
 
 ## Primary Tool: PostHog (via MCP)
 
 > Tool names verified against the official tools reference (https://posthog.com/docs/model-context-protocol/tools): **2026-06**. PostHog's MCP surface moves fast — `query-run`, `query-validate`, `query-generate-hogql-from-question`, `event-definitions-list`, `property-definitions`, and `entity-search` were all removed in the past year — so re-verify before trusting a name, and prefer the typed query wrappers over hand-written HogQL where one exists.
 
-All analytics execution goes through the PostHog MCP server. Use the specific MCP tools below — don't guess tool names. (Runtime tool IDs are prefixed `mcp__posthog__`, e.g. the `execute-sql` row is invoked as `mcp__posthog__execute-sql`; the `tools` allowlist exposes them via `mcp__posthog__*`. This requires the `posthog` MCP server to be configured in the session — under plugin distribution the `mcpServers:` field is ignored, so the host must configure it.)
+All analytics execution goes through the PostHog MCP server. Use the specific MCP tools below — don't guess tool names. (Runtime tool IDs depend on distribution: a directly-configured server prefixes them `mcp__posthog__` (e.g. `mcp__posthog__execute-sql`), while the official PostHog **plugin** prefixes them `mcp__plugin_posthog_posthog__` — the `tools` allowlist covers both forms. Either way the host must configure the server; under plugin distribution the `mcpServers:` field is ignored.)
 
 **Scope first.** PostHog MCP is project-scoped. Confirm you're on the right project before running anything — use `projects-get` / `switch-project` (and `switch-organization` for multi-org) so a query doesn't silently return another project's data.
 
