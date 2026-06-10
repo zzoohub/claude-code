@@ -36,6 +36,7 @@ appear under hyphenated dir names in `skills/` when repo-owned.
 - `desktop-developer` → same web UI skill as frontend + Tauri-specific work
 - `reviewer` → security-checklists · correctness-checklists · maintainability-checklists
 - `verifier` → qa (browse) + playwright (preferred) / claude-in-chrome fallbacks
+- `adversary` → adversarial-execution · security-checklists · correctness-checklists (executes their catalog at runtime) + playwright
 - `release-engineer` → vercel:deploy · vercel:env · vercel:deployments-cicd · vercel:status · cloudflare:wrangler · cloudflare:workers-best-practices · Supabase MCP (by target)
 
 **Biz layer (doers):**
@@ -115,7 +116,7 @@ These power specific agents. If one is unavailable, the agent falls back as note
 | Supabase MCP | release-engineer | Migrations, edge functions, advisors, logs | `supabase` CLI via Bash |
 | PostHog MCP | data-analyst | Live funnels, insights, cohorts, experiments | methodology only (no live data) |
 | `@hypothesi/tauri-mcp-server` | desktop-developer | Tauri dev/inspection | `design-system` + general Tauri practice |
-| claude-in-chrome / playwright MCP | verifier | Real-browser verification, E2E | the other of the two |
+| claude-in-chrome / playwright MCP | verifier, adversary | Real-browser verification & E2E; adversary drives playwright for runtime attacks | the other of the two (verifier) |
 
 ---
 
@@ -134,7 +135,8 @@ Be honest about what this library does **not** do yet, so you don't assume an ow
 - **Native release depth** — mobile (Expo EAS, deep links, push) and desktop (Tauri signing,
   notarization, auto-update) lean on the developer agents + `release-engineer` without a dedicated
   in-house skill; expect more hands-on steps.
-- **Security/compliance ops** — code-level security is covered (`reviewer` + `security-checklists`),
+- **Security/compliance ops** — code-level security is covered, static *and* runtime (`reviewer` +
+  `security-checklists`; `adversary` + `adversarial-execution` for runtime DAST on high-risk changes),
   but SOC2/ISO, secrets-rotation policy, and vendor risk are not.
 - **Validation/PMF method** — `product-brief` captures the problem; it does not prescribe how to
   validate it (interviews, landing-page smoke tests, Sean Ellis survey).

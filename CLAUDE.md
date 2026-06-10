@@ -20,15 +20,15 @@ renamed so Claude Code auto-loads `CLAUDE.md` as project instructions.)
 This repo is **not an application** — it is a **portable skill library + a Claude Code agent layer**.
 There is no product source code here. It ships three things:
 
-- **`skills/`** — **45** framework-agnostic skills, each `skills/<kebab-name>/SKILL.md` plus optional
+- **`skills/`** — **46** framework-agnostic skills, each `skills/<kebab-name>/SKILL.md` plus optional
   `references/` (deep-dive docs loaded on demand — 32 skills), `rules/` (per-rule guideline files —
   `composition-patterns`, `react-best-practices`, `react-native-skills`), `templates/` (output scaffolds
   — `qa`, `software-architecture`), and `scripts/` (helpers — `database-design`, `postgresql`; both `.sql`).
   A `SKILL.md` runs on any Agent-Skills-compatible runtime; only `name` + `description` frontmatter
   is load-bearing.
-- **`agents/`** — **15** Claude-Code-only subagent definitions, split `agents/plan/` (4) ·
-  `agents/dev/` (7) · `agents/biz/` (4). Each `.md` carries `name`, `description`, `tools`, `model`,
-  `skills`, `color` frontmatter (+ an `mcpServers` array on the 4 MCP-bound agents: `verifier`,
+- **`agents/`** — **16** Claude-Code-only subagent definitions, split `agents/plan/` (4) ·
+  `agents/dev/` (8) · `agents/biz/` (4). Each `.md` carries `name`, `description`, `tools`, `model`,
+  `skills`, `color` frontmatter (+ an `mcpServers` array on the 5 MCP-bound agents: `verifier`, `adversary`,
   `release-engineer`, `data-analyst`, `desktop-developer`). `agents/` is the source of truth; Claude
   Code consumes agents from `.claude/agents/` — this repo does **not** vendor that mapping (deploy or
   symlink per environment). The only `.claude/` content here is `settings.local.json`.
@@ -155,13 +155,15 @@ Claude Code, by design.
 - **Task lifecycle has one owner per transition.** `task-manager` writes the **left
   edge** (`backlog`→`active` + assignee, on dispatch) and the **close**
   (`active`→`done`) — the close only after the main session confirms reviewer *and*
-  verifier passed. Builder agents never self-certify `done` (they leave the task
-  `active`, or mark `blocked` if they couldn't finish); the verifier *proves* behavior
-  but writes no status. The main session sequences the chain and triggers the close.
+  verifier passed (plus `adversary` on high-risk changes). Builder agents never
+  self-certify `done` (they leave the task `active`, or mark `blocked` if they couldn't
+  finish); the verifier *proves* behavior (and the adversary, high-risk only,
+  *reproduces exploits*) — neither writes status. The main session sequences the chain
+  and triggers the close.
 - **Model policy is intentionally uniform `opus`** (reviewer/verifier = `sonnet`).
   Not a cost oversight — leave it.
 - **Frontmatter fields.** Every agent sets `name`, `description`, `tools`, `model`, `skills`,
-  `color`. The 4 MCP-dependent agents (`verifier`, `release-engineer`, `data-analyst`,
+  `color`. The 5 MCP-dependent agents (`verifier`, `adversary`, `release-engineer`, `data-analyst`,
   `desktop-developer`) additionally declare an `mcpServers:` array plus the matching `mcp__*` globs
   in `tools:`. "Agents never call other agents" is enforced *structurally* — no agent is granted a
   subagent-spawning tool; routers' `tools:` are `Skill`-only. (Two *skills*, `plan-ceo-review` and
@@ -194,6 +196,7 @@ Find the row that matches what you want, call that agent.
 | Build/modify a desktop app: Tauri core + web UI (`apps/desktop`) | `desktop-developer` | dev |
 | Pre-landing code review: security + correctness + maintainability | `reviewer` | dev |
 | Verify behavior in a real browser / smoke-test endpoints before merge | `verifier` | dev |
+| Red-team a high-risk change: reproduce exploits against a running app in an isolated env | `adversary` | dev |
 | **Ship to production: deploy, env/secrets, migrations, CI/CD, rollback** | **`release-engineer`** | dev |
 | Marketing strategy, launch, positioning, competitor angle, pricing strategy, ad creative | `marketer` | biz |
 | Ongoing content: social, email sequences, blog/SEO, changelog, build-in-public | `content-marketer` | biz |

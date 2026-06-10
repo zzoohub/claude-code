@@ -24,6 +24,7 @@ frontend-developer├ implement tasks (mobile/desktop as the product needs)
                   ┘
 reviewer          → security + correctness + maintainability (blocking gate)
 verifier          → real-browser / API verification (behavior gate)
+adversary          → runtime exploit reproduction, isolated env (high-risk tasks only)
 release-engineer   → ship to production + post-deploy health check
 ```
 
@@ -35,8 +36,9 @@ never call each other):
   board ships assignees as `—`).
 - A builder leaves its task `active` and returns a verdict; it only ever moves the task
   to `blocked` itself, when it couldn't finish.
-- The main session marks the task `done` (via `task-manager`) **only after both reviewer
-  and verifier pass** — `verifier` proves behavior but writes no status by design.
+- The main session marks the task `done` (via `task-manager`) **only after reviewer
+  and verifier pass** (plus `adversary` on high-risk changes) — `verifier` proves behavior,
+  `adversary` reproduces exploits, and neither writes status by design.
 
 This keeps the closer unambiguous and matches `task-status`'s rule that completion is
 verified before `done` is written.
@@ -48,7 +50,7 @@ and task-manager, once the design doc locks scope.
 ```
 product-manager (feature-spec) → architect (arch-decision, if it shifts architecture)
 → ux-designer (screen-design) → task-manager (task-add)
-→ developer(s) → reviewer → verifier → release-engineer
+→ developer(s) → reviewer → verifier → (adversary, if high-risk) → release-engineer
 ```
 
 ## 3. Growth optimization cycle
@@ -56,7 +58,7 @@ product-manager (feature-spec) → architect (arch-decision, if it shifts archit
 data-analyst (find the drop-off / Aha / retention gap)
 → growth-optimizer (design the CRO / loop / churn fix)
 → ux-designer (screen-design) + frontend-developer (implement)
-→ reviewer → verifier → release-engineer
+→ reviewer → verifier → (adversary, if high-risk) → release-engineer
 → data-analyst (measure the result)
 ```
 
@@ -86,7 +88,7 @@ You don't need every agent on day one. The minimum spine from idea to live produ
 
 ```
 product-manager → architect → ux-designer → task-manager
-→ (one) developer → reviewer → verifier → release-engineer
+→ (one) developer → reviewer → verifier → (adversary, if high-risk) → release-engineer
 ```
 
 Defer until you actually need them: `mobile-developer` / `desktop-developer` (web-only start),
